@@ -215,14 +215,66 @@ All databutton dependencies removed and replaced with industry standard componen
 - Database: ✅ MySQL running and configured  
 - Instance: ✅ Running with web server accessible
 - SSH Access: ✅ Working as ROOT USER with SSH key authentication
-- Application: 🔄 Ready for code deployment
+- Application: 🔄 Ready for deployment via new git-based workflow
 
 #### Next Steps:
-1. ✅ SSH into instance: `ssh root@159.100.250.145` (SSH key auth working)
-2. 🔄 Clone application code to /opt/foi-archive
-3. 🔄 Start services: `systemctl start foi-archive`
-4. 🔄 Access application at http://159.100.250.145
+1. SSH into instance: `ssh root@159.100.250.145`
+2. Deploy application: Use new `./deploy.sh` script with git workflow
+3. Configure production settings in .env file on server
+4. Test application functionality
 
-#### Key Learning:
-- Ubuntu 24.04 on Exoscale: SSH keys work for ROOT user, not ubuntu user
-- No password needed when SSH key authentication is properly configured 
+#### Git-Based Deployment Workflow (COMPLETED ✅):
+1. **GitHub Repository Setup**:
+   - Created repository: https://github.com/main-salman/fadih.git
+   - Fixed security issues by removing real API keys from template files
+   - Clean git history without any sensitive data
+   - Comprehensive .gitignore to protect credentials
+
+2. **Modern deploy.sh Script**:
+   - Git-based workflow: Local → GitHub → Server
+   - Automatic git status checking and commit prompting
+   - Pushes latest code to GitHub before deployment
+   - Server pulls latest code from GitHub repository
+   - Automated service setup: systemd + nginx configuration
+   - Built-in error handling and SSH connection testing
+   - Clean, maintainable deployment process
+
+3. **Enhanced Local Development (run-local.sh)**:
+   - Fixed Python 3.13 compatibility issues
+   - Removed problematic packages (Pillow, spaCy) from local development
+   - Better dependency management with UV package manager
+   - Automatic virtual environment setup
+   - SQLite for local development (no MySQL dependency)
+   - Comprehensive error handling and version checking
+   - Auto-generated stop-local.sh script for easy cleanup
+   - Better logging and troubleshooting guides
+
+4. **Dependencies & Configuration Improvements**:
+   - Updated requirements-local.txt to avoid build issues
+   - Simplified local dependencies for faster setup
+   - Clear separation of local vs production packages
+   - Better environment setup and validation
+
+#### Production Deployment Ready (WORKFLOW COMPLETE ✅):
+- Infrastructure: ✅ Deployed and running on Exoscale
+- SSH Access: ✅ Working with key authentication  
+- Code Repository: ✅ GitHub with clean history
+- Deployment Script: ✅ Modern git-based workflow
+- Local Development: ✅ Fixed compatibility issues
+- Configuration: ✅ Secure templates and examples
+
+**To deploy your application now:**
+```bash
+./deploy.sh
+```
+
+This will:
+1. Check for uncommitted changes and prompt to commit
+2. Push latest code to GitHub automatically
+3. SSH to your Exoscale server
+4. Pull latest code from GitHub
+5. Install/update all dependencies
+6. Configure services (systemd + nginx)
+7. Start the application
+
+**Your application will be available at: http://159.100.250.145** 
