@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@layer base {
+  :root {
+    /* Theme: Transparent Minimalism with civic-oriented info arch. */
+    /* Colors: Red, White, Green, Black */
+
+    /* White background */
+    --background: 0 0% 100%; /* White */
+
+    /* Black foreground/text */
+    --foreground: 0 0% 10%; /* Dark Gray / Near Black for text */
+
+    /* Cards: Off-white or very light gray, with black text */
+    --card: 0 0% 98%; /* Very light gray, almost white for cards */
+    --card-foreground: 0 0% 10%; /* Dark Gray / Near Black for card text */
+
+    /* Popovers: Similar to cards */
+    --popover: 0 0% 98%;
+    --popover-foreground: 0 0% 10%;
+
+    /* Primary: Green (for primary actions, branding) */
+    --primary: 145 63% 42%; /* A moderate Green */
+    --primary-foreground: 0 0% 100%; /* White text on primary green */
+
+    /* Secondary: Lighter green or neutral gray */
+    --secondary: 145 50% 92%; /* Light Green tint */
+    --secondary-foreground: 145 63% 30%; /* Darker Green for text on light green */
+
+    /* Muted: Light grays for less important elements */
+    --muted: 0 0% 94%; /* Light Gray */
+    --muted-foreground: 0 0% 40%; /* Medium Gray for muted text */
+
+    /* Accent: Can be a brighter green or another contrasting color if needed */
+    /* For now, let's use a slightly brighter green for accents if not primary */
+    --accent: 145 55% 50%; /* Brighter Green */
+    --accent-foreground: 0 0% 100%; /* White text on accent */
+
+    /* Destructive: Red (for warnings, errors, delete actions) */
+    --destructive: 0 72% 51%; /* A clear Red */
+    --destructive-foreground: 0 0% 100%; /* White text on red */
+
+    /* Borders and Inputs: Light grays */
+    --border: 0 0% 88%; /* Light Gray border */
+    --input: 0 0% 88%; /* Light Gray for input backgrounds, usually with a border */
+    --ring: 145 63% 49%; /* Green for focus rings, matching primary but slightly brighter */
+
+    --radius: 0.5rem;
+
+    /* Chart colors (can be adjusted based on theme if charts are used extensively) */
+    --chart-1: 145 70% 45%; /* Green */
+    --chart-2: 0 70% 55%;   /* Red */
+    --chart-3: 210 60% 50%; /* Blue (as a contrasting option) */
+    --chart-4: 40 80% 55%;  /* Yellow/Orange (as another option) */
+    --chart-5: 0 0% 50%;    /* Neutral Gray */
+  }
+
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}

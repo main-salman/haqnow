@@ -1,0 +1,36 @@
+# Exoscale API credentials (from IAM → API Keys)
+exoscale_api_key    = "your-exoscale-api-key"
+exoscale_secret_key = "your-exoscale-secret-key"
+
+# Project configuration
+project_name = "foi-archive"
+environment  = "prod"
+zone         = "ch-dk-2"
+
+# Custom domain (optional)
+custom_domain = "your-domain.com"
+
+# S3 Storage configuration  
+s3_bucket_name = "foi-archive-terraform"
+s3_access_key  = "your-s3-access-key"
+s3_secret_key  = "your-s3-secret-key"
+s3_endpoint    = "sos-ch-dk-2.exo.io"
+s3_region      = "ch-dk-2"
+
+# Admin configuration
+admin_email    = "your-email@example.com"
+admin_password = "your-secure-admin-password"
+
+# JWT secret key (generate a secure random string)
+jwt_secret_key = "your-jwt-secret-key-change-this-in-production"
+
+# MySQL configuration (will be automatically created by Terraform)
+mysql_user     = "foi_user"
+mysql_password = "your-secure-mysql-password"
+mysql_database = "foi_archive"
+
+# SendGrid configuration for email notifications
+sendgrid_api_key = "your-sendgrid-api-key"
+
+# SSH Key configuration
+ssh_key_name = "foi-archive-key"  # This will be created automatically 

@@ -1,0 +1,80 @@
+ I want to build an app that allows people from all over the world to upload PDFs and any other image or document type related to Freedom Of Information (FOI/FOIA) documents. There should be an administrator backend that allows the administrator to approve which documents end up appearing on the website. The documents should appear by country and then by state/province. There should be a "federal/national" section available as an option for each country as well. All documents uploaded should go through OCR. All documents on the entire website should be searchable. Tags should be generated for all documents based on the words in the documents and documents should also be searchable by tags. When documents come up in a search, there should be an option to preview the document and also option to download the document. The front end user facing GUI should look modern and simple/easy to use. Any user on the internet should be able to add tags to each document up to 1000 tags per document in total. The documents should then be searchable not only using tags in the document but aso text in the document. When searches are done, documents should be listed by country in the order of the most number of documents matching per country, with the highest number of documents on top. There should be a word heat map from the words both in tags as well as the words in the documents. The administrator should have the ability to permanently ban use of specific tags. Any user should be able to upload Freedom of Information documents, no login required. Some basic captcha and rate limiting should be done to avoid abuse. 
+
+ I already built this app in service call databutton.com which has most of the functionality, but I want to migrate it to exoscale.com. The code for the existing app is in the frontend and backend folders. The code needs to be modified to remove databutton.com proprietary components and replace them with other industry standard components
+
+
+I want to eventually deploy this application on Exoscale, creds are in @.env file. I want to use terraform to deploy it. 
+
+
+The PDF, images, documents files should be stored in an exoscale bucket already defined in @.env file
+
+the databutton app was using supabase for database - replace that with a mysql database and object storage with Exoscale object storage as defined in .env file. Make it easy for me to test this application locally and also push it to exoscale instance and db and object storage. Use exoscale API to built the instance, db and use existing object storage bucket defined in .env file. Both the local and instance deployed version should use the exoscale DB and exoscale object storage.
+
+
+Here are 20 important questions to clarify before building your FOI document app:
+
+1. **User Roles & Permissions**
+   - Should there be any user accounts or roles beyond “admin” and “anonymous user”? (e.g., moderators, power users, etc.)
+
+2. **Admin Backend**
+   - What specific features do you want in the admin backend besides document approval and tag banning? (e.g., analytics, user management, audit logs)
+
+3. **Document Approval Workflow**
+   - Should admins be able to edit or redact documents before approval, or only approve/reject?
+
+4. **Document Metadata**
+   - What metadata should be captured for each document? (e.g., upload date, uploader IP, document title, description, etc.)
+
+5. **Country/State/Province Data**
+   - Do you have a source or list for all countries and their states/provinces, or should we use a standard dataset?
+
+6. **Federal/National Section**
+   - Should every country have a “federal/national” section by default, or only some?
+
+7. **OCR Processing**
+   - Is there a preferred OCR engine (e.g., Tesseract, AWS Textract, Google Vision), or should we choose the best fit?
+
+8. **Search Functionality**
+   - Should search support advanced features (e.g., boolean operators, phrase search, filters by date, etc.)?
+
+9. **Tagging System**
+   - Should tags be free-form, or do you want to suggest tags or have a controlled vocabulary?
+
+10. **Tag Moderation**
+    - How should banned tags be handled for existing documents? (e.g., removed automatically, flagged for review)
+
+11. **Document Preview**
+    - What kind of preview do you want? (e.g., first page image, embedded PDF viewer, text snippet)
+
+12. **Download Options**
+    - Should downloads be rate-limited or require captcha, or is this only for uploads?
+
+13. **Word Heat Map**
+    - Should the heat map be per-document, per-country, or global? How should it be visualized?
+
+14. **Rate Limiting & Abuse Prevention**
+    - What upload/download limits do you want per IP or per time period?
+
+15. **Captcha**
+    - Do you have a preferred captcha provider (e.g., Google reCAPTCHA, hCaptcha), or should we choose?
+
+16. **File Size & Type Limits**
+    - What is the maximum PDF file size allowed? Should we restrict to PDF only?
+
+17. **Storage & Retention**
+    - Should documents ever expire or be deleted, or are they permanent unless removed by admin?
+
+18. **Search Indexing**
+    - Should the search index update immediately after upload/approval, or on a schedule?
+
+19. **Notifications**
+    - Should admins receive notifications (email, dashboard) for new uploads or flagged content?
+
+20. **Internationalization**
+    - Should the app support multiple languages, or is English-only sufficient for now?
+
+Let me know your answers or if you want to discuss any of these in more detail!
+
+
+
+1. no 2. keep it to approval and banning tags only 3. only approve/reject 4. all of these - but description should be options 5. @countriesData.ts 6. all 7. tesseract 8. no 9. free-form 10. there are no existing documents 11. embedded pdf viewer 12. both should be rate limited, one document every 2 min, there should be a visibile warning when rate limit is reached 13. use any existing library to do this - anything that's simple to implement 14. one document per ip per 2 min 15. no 16. any type of document should be allowed - max 100 mb 17. no 18. upon approval 19. yes, email notification, email specified in .env file 20. english only to start - add french, german, spanish if it's easy - add whichever languages are easy.

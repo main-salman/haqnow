@@ -1,0 +1,286 @@
+#cloud-config
+
+# Update system and install required packages
+package_update: true
+package_upgrade: true
+
+packages:
+  - docker.io
+  - docker-compose
+  - nginx
+  - certbot
+  - python3-certbot-nginx
+  - git
+  - curl
+  - wget
+  - unzip
+
+# Create foi user
+users:
+  - name: foi
+    groups: docker
+    shell: /bin/bash
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+
+# Create application directory structure
+runcmd:
+  # Setup Docker
+  - systemctl enable docker
+  - systemctl start docker
+  - usermod -aG docker ubuntu
+  - usermod -aG docker foi
+
+  # Create application directories
+  - mkdir -p /opt/foi-archive
+  - chown foi:foi /opt/foi-archive
+  - cd /opt/foi-archive
+
+  # Create environment file
+  - |
+    cat > /opt/foi-archive/.env << EOF
+    # Exoscale S3 Configuration
+    EXOSCALE_S3_ACCESS_KEY=${s3_access_key}
+    EXOSCALE_S3_SECRET_KEY=${s3_secret_key}
+    EXOSCALE_S3_ENDPOINT=${s3_endpoint}
+    EXOSCALE_S3_REGION=${s3_region}
+    EXOSCALE_BUCKET=${s3_bucket}
+    EXOSCALE_S3_PUBLIC_URL=https://${s3_endpoint}/${s3_bucket}
+
+    # Admin Configuration
+    admin_email=${admin_email}
+    admin_password=${admin_password}
+
+    # Rate limiting
+    UPLOAD_TIMEOUT_SECONDS=120
+
+    # JWT Configuration
+    JWT_SECRET_KEY=${jwt_secret}
+
+    # Database - MySQL
+    MYSQL_HOST=${mysql_host}
+    MYSQL_PORT=3306
+    MYSQL_USER=${mysql_user}
+    MYSQL_PASSWORD=${mysql_password}
+    MYSQL_DATABASE=${mysql_database}
+    DATABASE_URL=mysql+pymysql://${mysql_user}:${mysql_password}@${mysql_host}:3306/${mysql_database}
+
+    # Email Configuration
+    SENDGRID_API_KEY=${sendgrid_api_key}
+    FROM_EMAIL=noreply@foi-archive.com
+
+    # Redis Configuration
+    REDIS_URL=redis://localhost:6379
+
+    # Application Configuration
+    HOST=0.0.0.0
+    PORT=8000
+    DEBUG=false
+    EOF
+
+  # Create Docker Compose file
+  - |
+    cat > /opt/foi-archive/docker-compose.yml << 'EOF'
+    version: '3.8'
+
+    services:
+      redis:
+        image: redis:7-alpine
+        restart: unless-stopped
+        ports:
+          - "6379:6379"
+        volumes:
+          - redis_data:/data
+
+      backend:
+        build:
+          context: ./backend
+          dockerfile: Dockerfile
+        restart: unless-stopped
+        ports:
+          - "8000:8000"
+        env_file:
+          - .env
+        depends_on:
+          - redis
+        volumes:
+          - ./backend:/app
+          - /var/log/foi:/var/log/foi
+
+      frontend:
+        build:
+          context: ./frontend
+          dockerfile: Dockerfile
+        restart: unless-stopped
+        ports:
+          - "3000:3000"
+        depends_on:
+          - backend
+        volumes:
+          - ./frontend:/app
+          - /var/log/foi:/var/log/foi
+
+    volumes:
+      redis_data:
+    EOF
+
+  # Create backend Dockerfile
+  - mkdir -p /opt/foi-archive/backend
+  - |
+    cat > /opt/foi-archive/backend/Dockerfile << 'EOF'
+    FROM python:3.11-slim
+
+    WORKDIR /app
+
+    # Install system dependencies
+    RUN apt-get update && apt-get install -y \
+        tesseract-ocr \
+        poppler-utils \
+        libgl1-mesa-glx \
+        libglib2.0-0 \
+        && rm -rf /var/lib/apt/lists/*
+
+    # Copy requirements and install Python dependencies
+    COPY requirements.txt .
+    RUN pip install --no-cache-dir -r requirements.txt
+
+    # Download spaCy model
+    RUN python -m spacy download en_core_web_sm
+
+    # Copy application code
+    COPY . .
+
+    # Create log directory
+    RUN mkdir -p /var/log/foi
+
+    # Expose port
+    EXPOSE 8000
+
+    # Start application
+    CMD ["python", "main.py"]
+    EOF
+
+  # Create frontend Dockerfile
+  - mkdir -p /opt/foi-archive/frontend
+  - |
+    cat > /opt/foi-archive/frontend/Dockerfile << 'EOF'
+    FROM node:18-alpine
+
+    WORKDIR /app
+
+    # Copy package files
+    COPY package*.json ./
+
+    # Install dependencies
+    RUN npm ci
+
+    # Copy source code
+    COPY . .
+
+    # Build the application
+    RUN npm run build
+
+    # Expose port
+    EXPOSE 3000
+
+    # Start application
+    CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "3000"]
+    EOF
+
+  # Create nginx configuration
+  - |
+    cat > /etc/nginx/sites-available/foi-archive << 'EOF'
+    server {
+        listen 80;
+        server_name _;
+
+        client_max_body_size 100M;
+
+        # Frontend
+        location / {
+            proxy_pass http://localhost:3000;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection 'upgrade';
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_cache_bypass $http_upgrade;
+        }
+
+        # Backend API
+        location /api/ {
+            proxy_pass http://localhost:8000/;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection 'upgrade';
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_cache_bypass $http_upgrade;
+        }
+
+        # Health check
+        location /health {
+            proxy_pass http://localhost:8000/health;
+        }
+    }
+    EOF
+
+  # Enable nginx site
+  - ln -s /etc/nginx/sites-available/foi-archive /etc/nginx/sites-enabled/
+  - rm -f /etc/nginx/sites-enabled/default
+  - nginx -t
+  - systemctl enable nginx
+  - systemctl restart nginx
+
+  # Set permissions
+  - chown -R foi:foi /opt/foi-archive
+  - chmod 600 /opt/foi-archive/.env
+
+  # Create systemd service for the application
+  - |
+    cat > /etc/systemd/system/foi-archive.service << 'EOF'
+    [Unit]
+    Description=FOI Archive Application
+    After=docker.service
+    Requires=docker.service
+
+    [Service]
+    Type=oneshot
+    RemainAfterExit=yes
+    WorkingDirectory=/opt/foi-archive
+    User=foi
+    Group=foi
+    ExecStart=/usr/bin/docker-compose up -d
+    ExecStop=/usr/bin/docker-compose down
+    TimeoutStartSec=0
+
+    [Install]
+    WantedBy=multi-user.target
+    EOF
+
+  - systemctl daemon-reload
+  - systemctl enable foi-archive
+
+# Create log files
+write_files:
+  - path: /var/log/foi/application.log
+    content: ""
+    owner: foi:foi
+    permissions: '0644'
+
+# Final message
+final_message: |
+  FOI Archive server setup complete!
+  
+  To deploy your application:
+  1. Clone your repository to /opt/foi-archive
+  2. Update the .env file with your actual credentials
+  3. Start the application: sudo systemctl start foi-archive
+  
+  The application will be available at:
+  - Frontend: http://your-server-ip/
+  - Backend API: http://your-server-ip/api/
+  - Health check: http://your-server-ip/health 

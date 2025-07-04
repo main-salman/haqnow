@@ -1,0 +1,42 @@
+# STEP 1: Get your Exoscale API credentials
+# 1. Go to: https://portal.exoscale.com → IAM → API Keys
+# 2. Click "Create API Key"  
+# 3. Name: "foi-archive-terraform"
+# 4. Permissions: ✅ Compute, ✅ Database, ✅ Network, ✅ Storage
+# 5. Copy the API Key and Secret Key below:
+
+exoscale_api_key    = "EXO..."  # 👈 PASTE YOUR API KEY HERE
+exoscale_secret_key = "..."     # 👈 PASTE YOUR SECRET KEY HERE
+
+# Project configuration (pre-configured for you)
+project_name = "foi-archive"
+environment  = "prod"
+zone         = "ch-dk-2"
+
+# Custom domain (optional - set to "" if you don't have one)
+custom_domain = ""
+
+# S3 Storage configuration (update with your S3 credentials)
+s3_bucket_name = "foi-archive-terraform"
+s3_access_key  = "EXO..."  # 👈 PASTE YOUR S3 ACCESS KEY HERE
+s3_secret_key  = "..."     # 👈 PASTE YOUR S3 SECRET KEY HERE
+s3_endpoint    = "sos-ch-dk-2.exo.io"
+s3_region      = "ch-dk-2"
+
+# Admin configuration
+admin_email    = "your-email@example.com"  # 👈 SET YOUR EMAIL
+admin_password = "your-secure-admin-password"  # 👈 SET A SECURE PASSWORD
+
+# JWT secret key (generate a secure random string)
+jwt_secret_key = "your-jwt-secret-key-change-this-in-production"  # 👈 GENERATE A SECURE KEY
+
+# MySQL configuration (Terraform will create the database)
+mysql_user     = "foi_user"
+mysql_password = "your-secure-mysql-password"  # 👈 SET A SECURE PASSWORD
+mysql_database = "foi_archive"
+
+# SendGrid configuration for email notifications
+sendgrid_api_key = "SG.your_sendgrid_api_key_here"  # 👈 PASTE YOUR SENDGRID API KEY
+
+# SSH Key configuration
+ssh_key_name = "foi-archive-key"  # This will be created automatically 

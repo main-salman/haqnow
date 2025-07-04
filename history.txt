@@ -1,0 +1,228 @@
+FOI Document App Migration History
+=====================================
+
+## Migration from databutton.com to Exoscale
+
+### Current State Analysis (Initial)
+- App built on databutton.com platform with proprietary components
+- Uses databutton auth middleware and secrets management
+- Frontend built with React + TypeScript, backend with FastAPI
+- Features: document upload, OCR processing, admin approval, search, tagging
+- Supabase for database storage
+- Current file storage via databutton platform
+
+### Required Changes Identified:
+1. Replace databutton auth middleware with industry standard auth
+2. Replace databutton secrets management with environment variables
+3. Replace databutton file storage with Exoscale S3 bucket
+4. Remove databutton-specific configurations
+5. Add proper error handling and logging
+6. Implement rate limiting and captcha
+7. Add email notifications for admin
+8. Create Terraform infrastructure for Exoscale deployment
+9. Add multi-language support (English, French, German, Spanish)
+10. Implement word heat map functionality
+
+### Migration Plan:
+Phase 1: Backend Migration
+- Replace databutton auth with JWT-based authentication
+- Replace databutton secrets with environment variables
+- Implement Exoscale S3 file storage
+- Add proper error handling and logging
+- Add rate limiting middleware
+- Add email notification system
+
+Phase 2: Frontend Migration
+- Remove databutton-specific configurations
+- Update API endpoints
+- Add rate limiting indicators
+- Add multi-language support
+- Implement word heat map component
+
+Phase 3: Infrastructure
+- Create Terraform configuration for Exoscale
+- Set up CI/CD pipeline
+- Add monitoring and logging
+
+### Changes Made:
+
+#### Phase 1: Backend Migration (COMPLETED)
+1. **Dependencies Updated**: 
+   - Removed databutton package from requirements.txt
+   - Added JWT authentication (python-jose, passlib, bcrypt)
+   - Added S3 storage (boto3, botocore)
+   - Added rate limiting (slowapi, redis)
+   - Added email notifications (sendgrid)
+   - Added structured logging (structlog)
+   - Added environment management (python-dotenv)
+
+2. **JWT Authentication System**:
+   - Created app/auth/jwt_auth.py with comprehensive JWT auth
+   - Updated app/auth/user.py to use new JWT system
+   - Created app/apis/auth/__init__.py with login endpoints
+   - Replaced databutton auth middleware completely
+
+3. **Services Created**:
+   - app/services/s3_service.py for Exoscale S3 file storage
+   - app/services/email_service.py for admin notifications
+   - app/middleware/rate_limit.py for upload/download rate limiting
+
+4. **API Updates**:
+   - Updated app/apis/file_uploader/__init__.py to use S3 and remove databutton
+   - Updated app/apis/document_processing/__init__.py with new auth and services
+   - Added rate limiting to file uploads (1 per IP per 2 minutes)
+   - Added email notifications for document uploads
+
+5. **Main Application**:
+   - Completely rewrote main.py to remove databutton dependencies
+   - Added proper CORS and security middleware
+   - Added structured logging configuration
+   - Added startup/shutdown event handlers
+
+6. **Environment Configuration**:
+   - Updated .env file with all required environment variables
+   - Added JWT secret key configuration
+   - Added database and email service configuration
+
+7. **Remaining API Updates**:
+   - Updated app/apis/search/__init__.py to remove databutton dependencies
+   - Updated app/apis/statistics_api/__init__.py with environment variables
+   - Added comprehensive search, download, and tag management endpoints
+   - All APIs now use proper error handling and logging
+
+8. **Terraform Infrastructure**:
+   - Created terraform/main.tf with complete Exoscale deployment configuration
+   - Created terraform/cloud-init.yml for automated server setup
+   - Created terraform/terraform.tfvars.example for configuration
+   - Includes Docker containerization, Nginx reverse proxy, SSL support
+
+#### Phase 1: Backend Migration (COMPLETED ✅)
+All databutton dependencies removed and replaced with industry standard components.
+
+#### Next Steps (Phase 2 & 3):
+- Update frontend to remove databutton configurations
+- Add multi-language support (English, French, German, Spanish)
+- Add word heat map functionality  
+- Deploy using Terraform to Exoscale
+
+#### MySQL Migration (COMPLETED ✅)
+1. **Database Migration from Supabase to MySQL**:
+   - Updated requirements.txt to replace Supabase with MySQL/SQLAlchemy
+   - Added pymysql, mysqlclient, sqlalchemy, and alembic dependencies
+   - Created backend/app/database/ module with database configuration
+
+2. **Database Models**:
+   - Created backend/app/database/models.py with SQLAlchemy models
+   - Document model with comprehensive fields (status, timestamps, OCR text, tags)
+   - BannedTag model for admin tag management
+   - Added proper relationships and constraints
+
+3. **API Updates for MySQL**:
+   - Updated all API endpoints to use SQLAlchemy instead of Supabase
+   - app/apis/file_uploader/__init__.py: Database session management
+   - app/apis/document_processing/__init__.py: SQLAlchemy queries and updates
+   - app/apis/search/__init__.py: Complex search queries with JSON field support
+   - app/apis/statistics_api/__init__.py: Aggregation queries with GROUP BY
+
+4. **Database Configuration**:
+   - Updated .env file with MySQL connection parameters
+   - Added DATABASE_URL for SQLAlchemy connection string
+   - Updated main.py to initialize database on startup
+
+5. **Terraform Infrastructure Updates**:
+   - Added Exoscale MySQL database resource to terraform/main.tf
+   - Updated terraform/variables.tf with MySQL configuration variables
+   - Updated terraform/cloud-init.yml to use MySQL instead of Supabase
+   - Added MySQL connection outputs for deployment
+
+6. **Development and Deployment Scripts**:
+   - Created scripts/run-local.sh for local development with Exoscale MySQL
+   - Created scripts/deploy.sh for automated deployment to Exoscale
+   - Created scripts/update-local.sh for updating local development environment
+   - All scripts include database initialization and health checks
+
+7. **Environment Configuration**:
+   - Updated .env.example with MySQL configuration
+   - Updated terraform/terraform.tfvars.example with MySQL variables
+   - Both local and deployed versions connect to Exoscale MySQL
+
+#### Database Migration Benefits:
+- Industry standard MySQL database with proper indexing
+- Better performance with SQLAlchemy ORM
+- Proper database transactions and error handling
+- Easy backup and recovery with Exoscale database service
+- Unified database connection for local and production environments
+
+#### Deployment Instructions:
+1. Update terraform/terraform.tfvars with your credentials (including MySQL password)
+2. Run: terraform init && terraform plan && terraform apply
+3. Use scripts/deploy.sh for automated deployment
+4. For local development: ./scripts/run-local.sh
+5. For updates: ./scripts/update-local.sh 
+
+#### Terraform Configuration Fixes (COMPLETED ✅)
+1. **Variable Name Mismatch Fix**:
+   - Fixed terraform.tfvars variable name from "exoscale_api_secret" to "exoscale_secret_key"
+   - This resolves the issue where terraform apply was prompting for missing variables
+   - Updated zone setting from "de-fra-1" to "ch-dk-2" for consistency with S3 settings
+
+2. **Production-Ready Configuration**:
+   - Generated secure JWT secret key (64-character string)
+   - Set secure MySQL password
+   - Cleared custom domain placeholder (optional field)
+   - All sensitive variables properly configured in terraform.tfvars
+
+3. **Terraform Deployment Ready**:
+   - All required variables now properly set in terraform.tfvars
+   - No more variable prompts or warnings during terraform apply
+   - Ready for deployment with user's Exoscale API credentials 
+
+#### Terraform Provider Issues Fixed (COMPLETED ✅)
+1. **Updated Exoscale Provider Configuration**:
+   - Updated provider version from 0.59 to 0.62+ (using latest 0.64.3)
+   - Fixed deprecated resource names: exoscale_database → exoscale_dbaas
+   - Removed unsupported resources: exoscale_compute_template, exoscale_elastic_ip_attachment
+   - Used hardcoded Ubuntu 24.04 LTS template ID instead of data source
+
+2. **Database Configuration Fixes**:
+   - Added required mysql {} configuration block for exoscale_dbaas resource
+   - Implemented data source pattern: data.exoscale_database_uri for connection info
+   - Fixed all database connection attributes to use data source instead of direct resource access
+   - Updated outputs to use correct data source attributes (host, port)
+
+3. **Compute Instance Updates**:
+   - Fixed elastic IP attachment using elastic_ip_ids parameter instead of separate resource
+   - Updated ssh_key parameter to ssh_keys array format (deprecation fix)
+   - Ensured all security group and network configurations are compatible
+
+4. **Configuration Validation**:
+   - Terraform plan now runs successfully without errors
+   - All 9 resources will be created: security groups, SSH key, elastic IP, compute instance, dbaas
+   - Database connection information properly passed to cloud-init template
+   - Ready for terraform apply with user's API credentials
+
+4. **SSH Access Resolution (COMPLETED ✅)**:
+   - Identified password confusion: Multiple passwords in config for different purposes
+   - admin_password = "freepalestine" (application admin, NOT system login)
+   - mysql_password = "***REMOVED***" (database access)
+   - Console password = "***REMOVED***" (system login from Exoscale console)
+   - SOLUTION: SSH key authentication works for ROOT USER (not ubuntu user)
+   - Successfully connected: ssh root@159.100.250.145 (no password needed)
+   - Server accessible via web (nginx running) at 159.100.250.145
+
+#### Current Status (SSH ACCESS WORKING ✅):
+- Terraform infrastructure: ✅ Deployed successfully
+- Database: ✅ MySQL running and configured  
+- Instance: ✅ Running with web server accessible
+- SSH Access: ✅ Working as ROOT USER with SSH key authentication
+- Application: 🔄 Ready for code deployment
+
+#### Next Steps:
+1. ✅ SSH into instance: `ssh root@159.100.250.145` (SSH key auth working)
+2. 🔄 Clone application code to /opt/foi-archive
+3. 🔄 Start services: `systemctl start foi-archive`
+4. 🔄 Access application at http://159.100.250.145
+
+#### Key Learning:
+- Ubuntu 24.04 on Exoscale: SSH keys work for ROOT user, not ubuntu user
+- No password needed when SSH key authentication is properly configured 
