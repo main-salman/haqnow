@@ -46,17 +46,10 @@ check_git_status() {
         echo "Uncommitted files:"
         git status --porcelain
         echo
-        read -p "Do you want to commit these changes? (y/N): " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            read -p "Enter commit message: " commit_msg
-            git add .
-            git commit -m "$commit_msg"
-            success "Changes committed"
-        else
-            error "Please commit or stash your changes before deploying"
-            exit 1
-        fi
+        log "Auto-committing changes with message 'update'..."
+        git add .
+        git commit -m "update"
+        success "Changes committed automatically"
     fi
 }
 
@@ -139,6 +132,22 @@ if ! command -v git &> /dev/null; then
     apt-get update
     apt-get install -y git
 fi
+
+# Install system dependencies for Python packages
+echo "📦 Installing system dependencies..."
+apt-get update
+apt-get install -y \
+    pkg-config \
+    libmysqlclient-dev \
+    mysql-client \
+    python3-dev \
+    build-essential \
+    libffi-dev \
+    libssl-dev \
+    curl \
+    wget
+
+echo "✅ System dependencies installed"
 
 # Install/update Python dependencies
 echo "📦 Installing Python dependencies..."
@@ -257,16 +266,58 @@ nginx -t || {
 echo "🔄 Restarting services..."
 systemctl daemon-reload
 systemctl enable foi-archive
-systemctl restart foi-archive
-systemctl reload nginx
+
+# Stop service if running
+systemctl stop foi-archive 2>/dev/null || true
+
+# Start the service
+if systemctl start foi-archive; then
+    echo "✅ FOI Archive service started successfully"
+else
+    echo "❌ FOI Archive service failed to start"
+    echo "📋 Service logs:"
+    journalctl -u foi-archive --no-pager -n 20
+    exit 1
+fi
+
+# Reload nginx
+if systemctl reload nginx; then
+    echo "✅ Nginx reloaded successfully"
+else
+    echo "❌ Nginx reload failed"
+    nginx -t
+    exit 1
+fi
 
 echo "✅ Deployment completed successfully!"
 
-# Show service status
+# Show service status and helpful information
+echo
 echo "📊 Service Status:"
+echo "==================="
 systemctl status foi-archive --no-pager -l || true
 echo
-echo "🌐 Application should be available at: http://$(curl -s http://ipinfo.io/ip 2>/dev/null || echo 'YOUR_SERVER_IP')"
+echo "📊 Nginx Status:"
+echo "================"
+systemctl status nginx --no-pager -l || true
+echo
+echo "🔍 Port Status:"
+echo "==============="
+ss -tlnp | grep -E "(8000|80)" || echo "No services found on ports 80/8000"
+echo
+echo "🌐 Application URLs:"
+echo "==================="
+server_ip=$(curl -s http://ipinfo.io/ip 2>/dev/null || echo "YOUR_SERVER_IP")
+echo "• Frontend: http://$server_ip"
+echo "• Backend API: http://$server_ip/api"
+echo "• Health Check: http://$server_ip/api/health"
+echo
+echo "🔧 Troubleshooting:"
+echo "==================="
+echo "• Backend logs: journalctl -u foi-archive -f"
+echo "• Nginx logs: journalctl -u nginx -f"
+echo "• Config test: nginx -t"
+echo "• Service restart: systemctl restart foi-archive"
 
 DEPLOY_SCRIPT
 
