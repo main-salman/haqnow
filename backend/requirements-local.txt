@@ -1,48 +1,46 @@
-# FastAPI and server dependencies
-uvicorn[standard]==0.24.0
-fastapi==0.104.1
-python-multipart==0.0.6
+# =================================
+# Local Development Dependencies
+# =================================
+# This file excludes MySQL and other production-specific packages
+# Uses SQLite for local development
 
-# Authentication and security
+# Core Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Authentication & Security
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 bcrypt==4.1.2
 
-# Database - SQLAlchemy with SQLite (no MySQL for local development)
-sqlalchemy==2.0.25
+# Database (SQLite for local)
+sqlalchemy==2.0.23
 alembic==1.13.1
 
-# File storage and cloud services
-boto3==1.34.162
-botocore==1.34.162
-
-# Document processing
-pytesseract==0.3.10
-pdf2image==1.17.0
-Pillow==10.4.0
-
-# NLP and text processing
-spacy==3.7.6
-
-# HTTP requests and web scraping
+# HTTP & Requests
+httpx==0.25.2
 requests==2.31.0
-beautifulsoup4==4.12.3
 
-# Rate limiting
-slowapi==0.1.9
-redis==5.0.1
+# File Processing & Storage
+python-multipart==0.0.6
+boto3==1.35.9
+python-magic==0.4.27
 
-# Email notifications
-sendgrid==6.11.0
+# Document Processing (simplified for local)
+# Note: Removed spacy and pillow to avoid build issues in local development
+# For document processing features, use the production server
+PyPDF2==3.0.1
+python-docx==1.1.0
 
-# Environment and configuration
-python-dotenv==1.0.1
+# Development Tools
+python-dotenv==1.0.0
+pydantic==2.5.1
+pydantic-settings==2.1.0
 
-# Logging and monitoring
-structlog==23.2.0
+# Email (simplified)
+# Note: Using basic email instead of SendGrid for local dev
+email-validator==2.1.0
 
-# AI/ML
-openai==1.12.0
-
-# Development dependencies
-ipykernel==6.29.5 
+# Utilities
+pytz==2023.3
+python-dateutil==2.8.2 
