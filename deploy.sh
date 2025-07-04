@@ -110,14 +110,17 @@ if [ ! -d "$DEPLOY_PATH" ]; then
     cd "$DEPLOY_PATH"
     git clone "$GITHUB_REPO" .
 elif [ ! -d "$DEPLOY_PATH/.git" ]; then
-    echo "📁 Deployment directory exists but no git repo. Initializing..."
-    cd "$DEPLOY_PATH"
-    # Backup any existing files
-    if [ "$(ls -A .)" ]; then
-        echo "📦 Backing up existing files..."
-        mkdir -p /tmp/foi-backup-$(date +%s)
-        mv * /tmp/foi-backup-$(date +%s)/ 2>/dev/null || true
+    echo "📁 Deployment directory exists but no git repo. Reinitializing..."
+    # Backup existing directory and start fresh
+    if [ "$(ls -A $DEPLOY_PATH)" ]; then
+        echo "📦 Backing up existing directory..."
+        backup_dir="/tmp/foi-backup-$(date +%s)"
+        mv "$DEPLOY_PATH" "$backup_dir"
+        echo "📦 Backup saved to: $backup_dir"
     fi
+    # Create fresh directory and clone
+    mkdir -p "$DEPLOY_PATH"
+    cd "$DEPLOY_PATH"
     git clone "$GITHUB_REPO" .
 else
     echo "📦 Updating existing git repository..."
