@@ -103,14 +103,24 @@ GITHUB_REPO="https://github.com/main-salman/fadih.git"
 
 echo "🚀 Starting deployment on server..."
 
-# Create deployment directory if it doesn't exist
+# Handle deployment directory
 if [ ! -d "$DEPLOY_PATH" ]; then
-    echo "📁 Creating deployment directory..."
+    echo "📁 Creating deployment directory and cloning repository..."
     mkdir -p "$DEPLOY_PATH"
     cd "$DEPLOY_PATH"
     git clone "$GITHUB_REPO" .
+elif [ ! -d "$DEPLOY_PATH/.git" ]; then
+    echo "📁 Deployment directory exists but no git repo. Initializing..."
+    cd "$DEPLOY_PATH"
+    # Backup any existing files
+    if [ "$(ls -A .)" ]; then
+        echo "📦 Backing up existing files..."
+        mkdir -p /tmp/foi-backup-$(date +%s)
+        mv * /tmp/foi-backup-$(date +%s)/ 2>/dev/null || true
+    fi
+    git clone "$GITHUB_REPO" .
 else
-    echo "📦 Updating existing deployment..."
+    echo "📦 Updating existing git repository..."
     cd "$DEPLOY_PATH"
     
     # Ensure we're on the main branch and pull latest changes
@@ -120,20 +130,27 @@ fi
 
 echo "✅ Code updated successfully"
 
+# Install git if not present
+if ! command -v git &> /dev/null; then
+    echo "Installing git..."
+    apt-get update
+    apt-get install -y git
+fi
+
 # Install/update Python dependencies
 echo "📦 Installing Python dependencies..."
-cd backend
+cd "$DEPLOY_PATH/backend"
 
 # Install UV if not present
 if ! command -v uv &> /dev/null; then
     echo "Installing uv package manager..."
     curl -LsSf https://astral.sh/uv/install.sh | sh
-    export PATH="$HOME/.cargo/bin:$PATH"
+    export PATH="$HOME/.local/bin:$PATH"
 fi
 
 # Create virtual environment and install dependencies
 if [ ! -d ".venv" ]; then
-    uv venv
+    uv venv --python python3
 fi
 
 source .venv/bin/activate
@@ -143,13 +160,13 @@ echo "✅ Python dependencies installed"
 
 # Install/update Node.js dependencies
 echo "📦 Installing Node.js dependencies..."
-cd ../frontend
+cd "$DEPLOY_PATH/frontend"
 
 # Install Node.js if not present
 if ! command -v node &> /dev/null; then
     echo "Installing Node.js..."
     curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-    sudo apt-get install -y nodejs
+    apt-get install -y nodejs
 fi
 
 # Install dependencies and build
@@ -165,7 +182,8 @@ cd "$DEPLOY_PATH"
 if [ ! -f ".env" ]; then
     echo "Warning: .env file not found. Creating from template..."
     cp .env.example .env
-    echo "Please configure your .env file with actual values"
+    echo "⚠️  Please configure your .env file with actual values"
+    echo "Edit: nano /opt/foi-archive/.env"
 fi
 
 # Create or update systemd service
@@ -190,6 +208,14 @@ SERVICE_FILE
 
 # Create nginx configuration
 echo "🔧 Setting up Nginx..."
+
+# Install nginx if not present
+if ! command -v nginx &> /dev/null; then
+    echo "Installing nginx..."
+    apt-get update
+    apt-get install -y nginx
+fi
+
 cat << 'NGINX_CONFIG' > /etc/nginx/sites-available/foi-archive
 server {
     listen 80;
@@ -217,6 +243,12 @@ if [ ! -L "/etc/nginx/sites-enabled/foi-archive" ]; then
     ln -s /etc/nginx/sites-available/foi-archive /etc/nginx/sites-enabled/
     rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
 fi
+
+# Test nginx configuration
+nginx -t || {
+    echo "❌ Nginx configuration error"
+    exit 1
+}
 
 # Reload services
 echo "🔄 Restarting services..."
