@@ -272,8 +272,8 @@ async def approve_document(
 @router.post("/reject-document/{document_id}")
 async def reject_document(
     document_id: int, 
+    admin_user: AdminUser,
     reason: Optional[str] = None, 
-    admin_user: AdminUser = Depends(),
     db: Session = Depends(get_db)
 ):
     """
