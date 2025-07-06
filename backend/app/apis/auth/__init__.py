@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from datetime import timedelta
-from ..auth.jwt_auth import authenticate_admin, create_access_token, get_current_user, User
+from ...auth.jwt_auth import authenticate_admin, create_access_token, get_current_user, User
 
 router = APIRouter()
 security = HTTPBearer()
