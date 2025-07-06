@@ -182,7 +182,7 @@ if ! command -v node &> /dev/null; then
 fi
 
 # Install dependencies and build
-npm install
+npm install --legacy-peer-deps
 npm run build
 
 echo "✅ Frontend built successfully"
