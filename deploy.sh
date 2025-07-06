@@ -192,11 +192,55 @@ echo "🔧 Setting up environment..."
 cd "$DEPLOY_PATH"
 
 if [ ! -f ".env" ]; then
-    echo "Warning: .env file not found. Creating from template..."
-    cp .env.example .env
-    echo "⚠️  Please configure your .env file with actual values"
-    echo "Edit: nano /opt/foi-archive/.env"
+    echo "Warning: .env file not found. Creating production .env file..."
+    cat << ENV_FILE > .env
+# Production Environment Configuration
+ENVIRONMENT=production
+DEBUG=False
+
+# Database Configuration
+DATABASE_URL=${DATABASE_URL}
+
+# JWT Configuration
+JWT_SECRET_KEY=${JWT_SECRET_KEY}
+JWT_ALGORITHM=HS256
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES=1440
+
+# Admin User Configuration
+ADMIN_EMAIL=${ADMIN_EMAIL}
+ADMIN_PASSWORD=${ADMIN_PASSWORD}
+
+# S3 Configuration
+AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+AWS_BUCKET_NAME=foi-archive-documents
+AWS_REGION=ch-dk-2
+S3_ENDPOINT=https://sos-ch-dk-2.exo.io
+
+# Email Configuration
+SENDGRID_API_KEY=${SENDGRID_API_KEY}
+FROM_EMAIL=noreply@foiarchive.com
+
+# Security Configuration
+ALLOWED_ORIGINS=http://159.100.250.145,https://159.100.250.145
+ALLOWED_HOSTS=159.100.250.145,localhost,127.0.0.1
+
+# File Upload Configuration
+UPLOAD_DIR=/opt/foi-archive/uploads
+MAX_FILE_SIZE=50000000
+
+# Application Configuration
+HOST=0.0.0.0
+PORT=8000
+ENV_FILE
+    echo "✅ Production .env file created with proper configuration"
+else
+    echo "✅ Using existing .env file"
 fi
+
+# Create uploads directory
+mkdir -p /opt/foi-archive/uploads
+chmod 755 /opt/foi-archive/uploads
 
 # Create or update systemd service
 echo "🔧 Setting up systemd service..."
@@ -210,7 +254,7 @@ Type=simple
 User=root
 WorkingDirectory=/opt/foi-archive/backend
 Environment=PATH=/opt/foi-archive/backend/.venv/bin
-ExecStart=/opt/foi-archive/backend/.venv/bin/python main.py
+ExecStart=/opt/foi-archive/backend/.venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000
 Restart=always
 RestartSec=10
 
@@ -267,12 +311,84 @@ echo "🔄 Restarting services..."
 systemctl daemon-reload
 systemctl enable foi-archive
 
+# Initialize database
+echo "🔧 Initializing database..."
+cd "$DEPLOY_PATH/backend"
+source .venv/bin/activate
+
+# Test database connection first
+echo "🔍 Testing database connection..."
+python -c "
+import os
+from sqlalchemy import create_engine, text
+from dotenv import load_dotenv
+
+load_dotenv()
+db_url = os.getenv('DATABASE_URL')
+if not db_url:
+    raise Exception('DATABASE_URL not found in .env file')
+
+print(f'Connecting to database...')
+engine = create_engine(db_url)
+with engine.connect() as conn:
+    result = conn.execute(text('SELECT 1'))
+    print('✅ Database connection successful')
+" || {
+    echo "❌ Database connection failed"
+    echo "📋 Environment variables:"
+    cd "$DEPLOY_PATH/backend"
+    grep -E "(DATABASE_URL|MYSQL)" .env || echo "No database config found"
+    exit 1
+}
+
+# Initialize database tables
+echo "🔧 Creating database tables..."
+python -c "
+from app.database.database import init_db
+init_db()
+print('✅ Database tables created successfully')
+" || {
+    echo "❌ Database initialization failed"
+    exit 1
+}
+
 # Stop service if running
 systemctl stop foi-archive 2>/dev/null || true
 
 # Start the service
+echo "🚀 Starting FOI Archive service..."
 if systemctl start foi-archive; then
     echo "✅ FOI Archive service started successfully"
+    
+    # Wait a moment for service to start
+    sleep 3
+    
+    # Check if service is actually running
+    if systemctl is-active --quiet foi-archive; then
+        echo "✅ Service is running"
+        
+        # Test if the API is responding
+        echo "🔍 Testing API endpoint..."
+        for i in {1..10}; do
+            if curl -s http://localhost:8000/health > /dev/null; then
+                echo "✅ API is responding on port 8000"
+                break
+            elif [ $i -eq 10 ]; then
+                echo "❌ API not responding after 10 attempts"
+                echo "📋 Service logs:"
+                journalctl -u foi-archive --no-pager -n 20
+                exit 1
+            else
+                echo "⏳ Waiting for API to start (attempt $i/10)..."
+                sleep 2
+            fi
+        done
+    else
+        echo "❌ Service failed to start properly"
+        echo "📋 Service logs:"
+        journalctl -u foi-archive --no-pager -n 20
+        exit 1
+    fi
 else
     echo "❌ FOI Archive service failed to start"
     echo "📋 Service logs:"
@@ -347,6 +463,26 @@ show_deployment_info() {
     echo "   sudo journalctl -u $SERVICE_NAME -f"
 }
 
+# Load production environment variables
+load_production_env() {
+    if [ -f ".env.production" ]; then
+        log "Loading production environment variables..."
+        export $(cat .env.production | grep -v '^#' | xargs)
+        success "Production environment variables loaded"
+    else
+        error "Production environment file '.env.production' not found"
+        echo "Please create .env.production with your production secrets:"
+        echo "  DATABASE_URL=mysql://..."
+        echo "  JWT_SECRET_KEY=..."
+        echo "  ADMIN_EMAIL=..."
+        echo "  ADMIN_PASSWORD=..."
+        echo "  AWS_ACCESS_KEY_ID=..."
+        echo "  AWS_SECRET_ACCESS_KEY=..."
+        echo "  SENDGRID_API_KEY=..."
+        exit 1
+    fi
+}
+
 # Main execution
 main() {
     echo -e "${BLUE}🚀 FOI Archive - Git-Based Deployment${NC}"
@@ -354,6 +490,7 @@ main() {
     echo
     
     # Deployment workflow
+    load_production_env
     check_git_status
     push_to_github  
     test_ssh_connection
