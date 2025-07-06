@@ -132,14 +132,14 @@ async def startup_event():
     """Startup event handler."""
     logger.info("FOI Archive API starting up...")
     
-    # Initialize database
+    # Initialize database (non-blocking)
     from app.database.database import init_db
     try:
         init_db()
         logger.info("Database initialized successfully")
     except Exception as e:
-        logger.error("Failed to initialize database", error=str(e))
-        raise
+        logger.warning("Database initialization failed, will retry on first request", error=str(e))
+        # Don't raise - allow app to start even if database is temporarily unavailable
     
     # Verify essential services
     from app.services.s3_service import s3_service

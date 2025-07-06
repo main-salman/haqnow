@@ -29,11 +29,16 @@ if DATABASE_URL.startswith("sqlite"):
         echo=os.getenv("DEBUG", "false").lower() == "true"
     )
 else:
-    # MySQL/PostgreSQL configuration
+    # MySQL/PostgreSQL configuration with connection timeout
     engine = create_engine(
         DATABASE_URL,
         pool_pre_ping=True,
         pool_recycle=300,
+        connect_args={
+            "connect_timeout": 10,  # 10 second connection timeout
+            "read_timeout": 10,     # 10 second read timeout
+            "write_timeout": 10     # 10 second write timeout
+        },
         echo=os.getenv("DEBUG", "false").lower() == "true"
     )
 
