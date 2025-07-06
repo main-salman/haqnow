@@ -108,9 +108,7 @@
     "@solana/web3.js": "1",
     "@stackframe/react": "2.8.3",
     "@storyblok/react": "4.6.1",
-    "@stripe/firestore-stripe-payments": "0.0.6",
-    "@stripe/react-stripe-js": "2.9.0",
-    "@stripe/stripe-js": "5.0.0",
+
     "@suiet/wallet-kit": "0.3.3",
     "@supabase/auth-ui-react": "0.4.7",
     "@supabase/auth-ui-shared": "0.1.8",
