@@ -1,22 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-// import { List, ListItem } from "@/components/ui/list"; // Removed unused import
-import { Button } from "@/components/ui/button"; // Kept for potential future use, though not used in current list item action
+import { Button } from "@/components/ui/button";
 import { AlertCircle, Loader2 } from 'lucide-react';
 
-import brain from 'brain';
-import type { CountryStat, CountryStatsResponse } from 'types'; // Using 'types' which re-exports from brain/data-contracts
+// Remove brain import and use direct API call
+// import brain from 'brain';
 
-// Mock data - REMOVE THIS LATER
-// const mockCountryStats: CountryStat[] = [
-//   { country: "United States", doc_count: 178 },
-//   { country: "Canada", doc_count: 120 },
-//   { country: "United Kingdom", doc_count: 95 },
-//   { country: "Germany", doc_count: 60 },
-//   { country: "Australia", doc_count: 45 },
-//   { country: "France", doc_count: 30 },
-// ];
+// Updated type definitions to match backend API
+interface CountryStat {
+  country: string;
+  doc_count: number;
+}
+
+interface CountryStatsResponse {
+  countries: CountryStat[];
+  total_countries: number;
+  total_documents: number;
+}
 
 export interface Props {}
 
@@ -31,19 +32,20 @@ const CountryDocStatsList: React.FC<Props> = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await brain.get_docs_by_country();
-        // Assuming brain client directly returns the parsed JSON data (CountryStatsResponse)
-        // If it returns a HttpResponse, you might need: const data: CountryStatsResponse = await response.json();
-        // Based on current setup, brain client methods return HttpResponse, so .json() is needed.
+        // Make direct API call to statistics endpoint
+        const response = await fetch('/api/statistics/country-stats');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const data: CountryStatsResponse = await response.json();
-        setStats(data.stats);
+        // Use the 'countries' field from the API response
+        setStats(data.countries);
       } catch (err) {
         console.error("Error fetching country stats:", err);
         let errorMessage = "Failed to load document statistics.";
         if (err instanceof Error) {
           errorMessage = err.message;
         }
-        // Consider more specific error messages based on err type if possible
         setError(errorMessage);
       } finally {
         setIsLoading(false);

@@ -363,9 +363,9 @@ export default function UploadDocumentPage() {
       <Card className="w-full max-w-2xl shadow-xl">
         <form onSubmit={handleSubmit} noValidate>
           <CardHeader className="text-center">
-            <CardTitle className="text-3xl font-serif">Upload FOI Document</CardTitle>
+            <CardTitle className="text-3xl font-serif">Upload Corruption Document</CardTitle>
             <CardDescription>
-              Contribute to the archive. All submissions are reviewed before publication.
+              Expose corruption anonymously. All submissions are reviewed before publication.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -481,7 +481,7 @@ export default function UploadDocumentPage() {
           </CardContent>
           <CardFooter className="flex flex-col items-center space-y-3">
             <p className="text-xs text-muted-foreground text-center px-4">
-                By submitting, you confirm that this document is a legitimate Freedom of Information disclosure and that you have the right to share it.
+                By submitting, you confirm that this document exposes legitimate corruption and that you have the right to share it anonymously.
             </p>
             <Button type="submit" className="w-full md:w-1/2 py-3 text-base" disabled={isSubmitting}>
               {isSubmitting ? (

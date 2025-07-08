@@ -97,8 +97,8 @@ def setup_routers(app: FastAPI):
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
     app = FastAPI(
-        title="FOI Archive API",
-        description="Freedom of Information Document Archive API",
+        title="Fadih.org API",
+        description="Anonymous Corruption Document Exposure Platform API",
         version="1.0.0"
     )
     
@@ -113,13 +113,13 @@ def create_app() -> FastAPI:
     @app.get("/health")
     async def health_check():
         """Health check endpoint."""
-        return {"status": "healthy", "message": "FOI Archive API is running"}
+        return {"status": "healthy", "message": "Fadih.org API is running"}
     
     # Root endpoint
     @app.get("/")
     async def root():
         """Root endpoint."""
-        return {"message": "FOI Archive API", "version": "1.0.0"}
+        return {"message": "Fadih.org API", "version": "1.0.0"}
     
     return app
 
@@ -130,7 +130,7 @@ app = create_app()
 @app.on_event("startup")
 async def startup_event():
     """Startup event handler."""
-    logger.info("FOI Archive API starting up...")
+    logger.info("Fadih.org API starting up...")
     
     # Initialize database (non-blocking)
     from app.database.database import init_db
@@ -155,12 +155,12 @@ async def startup_event():
     else:
         logger.info("Email service initialized successfully")
     
-    logger.info("FOI Archive API startup complete")
+    logger.info("Fadih.org API startup complete")
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Shutdown event handler."""
-    logger.info("FOI Archive API shutting down...")
+    logger.info("Fadih.org API shutting down...")
 
 if __name__ == "__main__":
     import uvicorn
@@ -170,7 +170,7 @@ if __name__ == "__main__":
     port = int(os.getenv("PORT", "8000"))
     debug = os.getenv("DEBUG", "false").lower() == "true"
     
-    logger.info("Starting FOI Archive API server", host=host, port=port, debug=debug)
+    logger.info("Starting Fadih.org API server", host=host, port=port, debug=debug)
     
     uvicorn.run(
         "main:app",

@@ -13,7 +13,7 @@ class EmailService:
     
     def __init__(self):
         self.sendgrid_api_key = os.getenv("SENDGRID_API_KEY")
-        self.from_email = os.getenv("FROM_EMAIL", "noreply@foi-archive.com")
+        self.from_email = os.getenv("FROM_EMAIL", "noreply@fadih.org")
         self.admin_email = os.getenv("admin_email")
         self.client = None
         
@@ -55,12 +55,12 @@ class EmailService:
             logger.warning("Admin email not configured, skipping notification")
             return False
         
-        subject = f"New FOI Document Uploaded - {title}"
+        subject = f"New Corruption Document Uploaded - {title}"
         content = f"""
         <html>
         <body>
-            <h2>New FOI Document Uploaded</h2>
-            <p>A new Freedom of Information document has been uploaded and is pending your approval.</p>
+            <h2>New Corruption Document Uploaded</h2>
+            <p>A new corruption exposure document has been uploaded and is pending your approval.</p>
             
             <h3>Document Details:</h3>
             <ul>
@@ -73,7 +73,7 @@ class EmailService:
             
             <p>Please review and approve or reject this document in the admin dashboard.</p>
             
-            <p>Best regards,<br>FOI Archive System</p>
+            <p>Best regards,<br>Fadih.org System</p>
         </body>
         </html>
         """
@@ -85,14 +85,14 @@ class EmailService:
         if not self.admin_email:
             return False
         
-        subject = f"FOI Document Approved - {title}"
+        subject = f"Corruption Document Approved - {title}"
         content = f"""
         <html>
         <body>
-            <h2>FOI Document Approved</h2>
+            <h2>Corruption Document Approved</h2>
             <p>Document <strong>{title}</strong> (ID: {document_id}) has been approved and is now publicly available.</p>
             
-            <p>Best regards,<br>FOI Archive System</p>
+            <p>Best regards,<br>Fadih.org System</p>
         </body>
         </html>
         """
@@ -104,16 +104,16 @@ class EmailService:
         if not self.admin_email:
             return False
         
-        subject = f"FOI Document Rejected - {title}"
+        subject = f"Corruption Document Rejected - {title}"
         content = f"""
         <html>
         <body>
-            <h2>FOI Document Rejected</h2>
+            <h2>Corruption Document Rejected</h2>
             <p>Document <strong>{title}</strong> (ID: {document_id}) has been rejected.</p>
             
             {f"<p><strong>Reason:</strong> {reason}</p>" if reason else ""}
             
-            <p>Best regards,<br>FOI Archive System</p>
+            <p>Best regards,<br>Fadih.org System</p>
         </body>
         </html>
         """

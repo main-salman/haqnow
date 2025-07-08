@@ -8,14 +8,14 @@ import { useNavigate } from "react-router-dom";
 // Mock data for the document - replace with actual data fetching later
 const mockDocument = {
   id: "doc123",
-  title: "FOIA Request Results: UFO Sightings Q4 2023",
+  title: "Municipal Contracts: Corruption in Public Works Bidding",
   description:
-    "This document contains a summary of UFO sighting reports collected by the National UFO Reporting Center in the fourth quarter of 2023, released under a Freedom of Information Act request. It includes dates, locations, and brief descriptions of each reported incident.",
+    "This document exposes a pattern of corruption in municipal public works contracts, showing evidence of bid rigging, kickbacks, and favoritism in contractor selection. The leaked documents include email communications, financial records, and meeting minutes that reveal systematic corruption.",
   country: "United States",
-  stateProvince: "Federal",
+  stateProvince: "California",
   uploadDate: "2024-01-15",
   pdfUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", // Placeholder PDF
-  tags: ["UFO", "Q4 2023", "Sightings", "Federal", "NUFORC"],
+  tags: ["Corruption", "Municipal", "Contracts", "Bid Rigging", "Kickbacks"],
 };
 
 interface DocumentTag {
