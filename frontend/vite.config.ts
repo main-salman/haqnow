@@ -84,11 +84,13 @@ export default defineConfig({
 		alias: {
 			"@/components/ui": path.resolve(__dirname, "./src/extensions/shadcn/components"),
 			"@/hooks": path.resolve(__dirname, "./src/extensions/shadcn/hooks"),
+			"@/lib/utils": path.resolve(__dirname, "./src/lib/utils.ts"),
 			"@/lib": path.resolve(__dirname, "./src/lib"),
 			"@": path.resolve(__dirname, "./src"),
 			"brain": path.resolve(__dirname, "./src/brain"),
 			"types": path.resolve(__dirname, "./src/brain/data-contracts.ts"),
 			"utils": path.resolve(__dirname, "./src/utils"),
 		},
+		extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
 	},
 });
