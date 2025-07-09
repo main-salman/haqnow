@@ -56,7 +56,7 @@ const CountryDocStatsList: React.FC<Props> = () => {
   }, []);
 
   const handleCountryClick = (countryName: string) => {
-    navigate(`/search-page?country=${encodeURIComponent(countryName)}`);
+    navigate(`/search-page?q=${encodeURIComponent(countryName)}&country=${encodeURIComponent(countryName)}`);
   };
 
   if (isLoading) {

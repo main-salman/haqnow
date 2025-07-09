@@ -126,6 +126,196 @@ def extract_text_from_image(image_content: bytes) -> str:
         logger.error("Error extracting text from image", error=str(e))
         return ""
 
+def extract_text_from_docx(docx_content: bytes) -> str:
+    """Extract text from Word document (.docx)."""
+    try:
+        from docx import Document as DocxDocument
+        document = DocxDocument(io.BytesIO(docx_content))
+        
+        text_parts = []
+        for paragraph in document.paragraphs:
+            text_parts.append(paragraph.text)
+        
+        full_text = '\n'.join(text_parts)
+        return clean_text(full_text)
+        
+    except Exception as e:
+        logger.error("Error extracting text from DOCX", error=str(e))
+        return ""
+
+def extract_text_from_csv(csv_content: bytes) -> str:
+    """Extract text from CSV file."""
+    try:
+        import csv
+        text_content = csv_content.decode('utf-8', errors='ignore')
+        csv_reader = csv.reader(io.StringIO(text_content))
+        
+        text_parts = []
+        for row in csv_reader:
+            text_parts.append(' '.join(row))
+        
+        full_text = '\n'.join(text_parts)
+        return clean_text(full_text)
+        
+    except Exception as e:
+        logger.error("Error extracting text from CSV", error=str(e))
+        return ""
+
+def extract_text_from_excel(excel_content: bytes) -> str:
+    """Extract text from Excel file (.xls/.xlsx)."""
+    try:
+        import pandas as pd
+        
+        # Try to read the Excel file
+        df = pd.read_excel(io.BytesIO(excel_content), sheet_name=None)  # Read all sheets
+        
+        text_parts = []
+        for sheet_name, sheet_df in df.items():
+            text_parts.append(f"Sheet: {sheet_name}")
+            # Convert all values to string and join
+            for column in sheet_df.columns:
+                text_parts.extend(sheet_df[column].astype(str).tolist())
+        
+        full_text = '\n'.join(text_parts)
+        return clean_text(full_text)
+        
+    except Exception as e:
+        logger.error("Error extracting text from Excel", error=str(e))
+        return ""
+
+def extract_text_from_document(file_content: bytes, content_type: str) -> str:
+    """Extract text from various document types."""
+    content_type = content_type.lower() if content_type else ""
+    
+    # PDF files
+    if "pdf" in content_type:
+        return extract_text_from_pdf(file_content)
+    
+    # Image files  
+    elif any(img_type in content_type for img_type in ["image", "jpeg", "jpg", "png", "gif", "bmp", "tiff", "webp"]):
+        return extract_text_from_image(file_content)
+    
+    # Word documents
+    elif "wordprocessingml" in content_type or content_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+        return extract_text_from_docx(file_content)
+    
+    # Excel files
+    elif "spreadsheetml" in content_type or content_type in ["application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"]:
+        return extract_text_from_excel(file_content)
+    
+    # CSV files
+    elif "csv" in content_type or content_type == "text/csv":
+        return extract_text_from_csv(file_content)
+    
+    # Plain text files
+    elif "text" in content_type:
+        try:
+            return clean_text(file_content.decode('utf-8'))
+        except UnicodeDecodeError:
+            return clean_text(file_content.decode('utf-8', errors='ignore'))
+    
+    # RTF files
+    elif "rtf" in content_type:
+        try:
+            # Basic RTF handling - strip RTF codes
+            text_content = file_content.decode('utf-8', errors='ignore')
+            # Remove RTF control codes (basic cleanup)
+            import re
+            text_content = re.sub(r'\\[a-z]+\d*', '', text_content)
+            text_content = re.sub(r'[{}]', '', text_content)
+            return clean_text(text_content)
+        except Exception as e:
+            logger.error("Error extracting text from RTF", error=str(e))
+            return ""
+    
+    # Default: try to decode as text
+    else:
+        try:
+            return clean_text(file_content.decode('utf-8'))
+        except UnicodeDecodeError:
+            try:
+                return clean_text(file_content.decode('latin-1', errors='ignore'))
+            except Exception:
+                logger.warning("Could not extract text from unknown file type", content_type=content_type)
+                return ""
+
+async def process_document_internal(document_id: int, db: Session) -> dict | None:
+    """
+    Internal function to process a document without requiring admin authentication.
+    Used for automatic processing after upload.
+    Returns processing result dict or None if failed.
+    """
+    
+    try:
+        # Get document from database
+        document = db.query(Document).filter(Document.id == document_id).first()
+        
+        if not document:
+            logger.error("Document not found for internal processing", document_id=document_id)
+            return None
+        
+        # Get file content from S3
+        file_path = document.file_path
+        if not file_path:
+            logger.error("Document file path not found", document_id=document_id)
+            return None
+        
+        # Download file from S3
+        file_url = s3_service.get_file_url(file_path)
+        
+        try:
+            response = requests.get(file_url, timeout=30)
+            response.raise_for_status()
+            file_content = response.content
+        except requests.RequestException as e:
+            logger.error("Failed to download file from S3 for internal processing", 
+                        file_path=file_path, error=str(e))
+            return None
+        
+        # Extract text based on file type
+        content_type = document.content_type.lower() if document.content_type else ""
+        
+        extracted_text = extract_text_from_document(file_content, content_type)
+        
+        if not extracted_text:
+            logger.warning("No text extracted from document during internal processing", document_id=document_id)
+            extracted_text = ""
+        
+        # Generate tags from extracted text
+        generated_tags = extract_tags_from_text(extracted_text)
+        
+        # Update document in database
+        document.ocr_text = extracted_text
+        document.generated_tags = generated_tags
+        document.processed_at = func.now()
+        document.status = "processed"
+        
+        try:
+            db.commit()
+            db.refresh(document)
+        except Exception as db_error:
+            db.rollback()
+            logger.error("Database error during internal document processing", error=str(db_error))
+            return None
+        
+        logger.info("Document processed internally", 
+                   document_id=document_id,
+                   tags_count=len(generated_tags),
+                   text_length=len(extracted_text))
+        
+        return {
+            "document_id": document_id,
+            "ocr_text": extracted_text,
+            "generated_tags": generated_tags,
+            "status": "processed"
+        }
+        
+    except Exception as e:
+        logger.error("Unexpected error during internal document processing", 
+                    document_id=document_id,
+                    error=str(e))
+        return None
+
 @router.post("/process-document", response_model=ProcessDocumentResponse)
 async def process_document(
     request: ProcessDocumentRequest, 
@@ -163,16 +353,7 @@ async def process_document(
         # Extract text based on file type
         content_type = document.content_type.lower() if document.content_type else ""
         
-        if "pdf" in content_type:
-            extracted_text = extract_text_from_pdf(file_content)
-        elif any(img_type in content_type for img_type in ["image", "jpeg", "jpg", "png", "gif", "bmp"]):
-            extracted_text = extract_text_from_image(file_content)
-        else:
-            # For other document types, try to extract as text
-            try:
-                extracted_text = clean_text(file_content.decode('utf-8'))
-            except UnicodeDecodeError:
-                extracted_text = clean_text(file_content.decode('utf-8', errors='ignore'))
+        extracted_text = extract_text_from_document(file_content, content_type)
         
         if not extracted_text:
             logger.warning("No text extracted from document", document_id=request.document_id)

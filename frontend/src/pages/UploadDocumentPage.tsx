@@ -85,19 +85,63 @@ export default function UploadDocumentPage() {
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles && acceptedFiles.length > 0) {
       const file = acceptedFiles[0];
-      if (file.type === "application/pdf") {
+      
+      // Accept all document and image types
+      const allowedTypes = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'text/csv',
+        'text/plain',
+        'text/rtf',
+        'application/rtf',
+        'image/jpeg',
+        'image/jpg', 
+        'image/png',
+        'image/gif',
+        'image/bmp',
+        'image/tiff',
+        'image/webp',
+        'application/zip',
+        'application/x-zip-compressed',
+        'application/vnd.oasis.opendocument.text',
+        'application/vnd.oasis.opendocument.spreadsheet'
+      ];
+      
+      if (allowedTypes.includes(file.type) || file.name.toLowerCase().match(/\.(pdf|doc|docx|xls|xlsx|csv|txt|rtf|jpg|jpeg|png|gif|bmp|tiff|webp|zip|odt|ods)$/)) {
         setFormData((prev) => ({ ...prev, file }));
         setErrors((prev) => ({ ...prev, file: undefined }));
       } else {
-        setErrors((prev) => ({ ...prev, file: "Only PDF files are accepted." }));
-        toast.error("Invalid File Type", { description: "Please upload a PDF document." });
+        setErrors((prev) => ({ ...prev, file: "Unsupported file type. Please upload documents, images, or text files." }));
+        toast.error("Invalid File Type", { description: "Please upload a supported document or image file." });
       }
     }
   }, []);
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
-    accept: { 'application/pdf': [".pdf"] },
+    accept: {
+      'application/pdf': ['.pdf'],
+      'application/msword': ['.doc'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'application/vnd.ms-excel': ['.xls'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+      'text/csv': ['.csv'],
+      'text/plain': ['.txt'],
+      'text/rtf': ['.rtf'],
+      'application/rtf': ['.rtf'],
+      'image/jpeg': ['.jpg', '.jpeg'],
+      'image/png': ['.png'],
+      'image/gif': ['.gif'],
+      'image/bmp': ['.bmp'],
+      'image/tiff': ['.tiff'],
+      'image/webp': ['.webp'],
+      'application/zip': ['.zip'],
+      'application/vnd.oasis.opendocument.text': ['.odt'],
+      'application/vnd.oasis.opendocument.spreadsheet': ['.ods']
+    },
     multiple: false,
     noClick: true, // We use a custom button to open the dialog
     noKeyboard: true,
@@ -348,14 +392,19 @@ export default function UploadDocumentPage() {
                   <Button type="button" variant="link" size="sm" className="text-xs mt-1 text-destructive" onClick={(e) => { e.stopPropagation(); setFormData(p => ({...p, file: null})); }}>Remove file</Button>
                 </div>
               ) : isDragActive ? (
-                <p className="text-primary font-semibold">Drop the PDF here ...</p>
+                <p className="text-primary font-semibold">Drop the file here ...</p>
               ) : (
                 <p className="text-muted-foreground">
-                  Drag & drop a PDF file here, or <Button type="button" variant="link" className="p-0 h-auto" onClick={open}>click to select</Button>
+                  Drag & drop any document or image file here, or <Button type="button" variant="link" className="p-0 h-auto" onClick={open}>click to select</Button>
                 </p>
               )}
             </div>
             {errors.file && <p className="text-sm text-destructive mt-1 flex items-center"><AlertCircle className="h-4 w-4 mr-1" />{errors.file}</p>}
+
+            {/* Supported file types info */}
+            <div className="text-xs text-muted-foreground">
+              <p>Supported formats: PDF, Word (DOC/DOCX), Excel (XLS/XLSX), CSV, Text files, Images (JPG, PNG, GIF, BMP, TIFF, WebP), RTF, ODT, ODS, ZIP</p>
+            </div>
 
             {/* Form Fields */}
             <div className="space-y-2">

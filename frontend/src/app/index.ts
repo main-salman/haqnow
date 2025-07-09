@@ -25,7 +25,7 @@ export {
 } from "../constants";
 export * from "./auth";
 
-import brain from "../brain";
-export const backend = brain;
-
+// Legacy brain system removed - frontend now uses direct API calls
+// import brain from "../brain";
+// export const backend = brain;
 // export * as types from "../brain/data-contracts";

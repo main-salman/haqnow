@@ -9,7 +9,8 @@ const constructBaseUrl = (): string => {
     return `${window.location.origin}${API_PATH}`;
   }
 
-  return `https://api.databutton.com${API_PATH}`;
+  // Use the current backend API instead of databutton.com
+  return `${window.location.origin}${API_PATH}`;
 };
 
 type BaseApiParams = Omit<RequestParams, "signal" | "baseUrl" | "cancelToken">;

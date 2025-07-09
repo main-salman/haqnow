@@ -44,7 +44,7 @@ export default function SearchPage() {
   const [searchAttempted, setSearchAttempted] = useState(false);
 
   const performSearch = useCallback(
-    async (tagsToSearch: string) => {
+    async (tagsToSearch: string, countryFilter?: string | null) => {
       if (!tagsToSearch.trim()) {
         setSearchResults([]);
         setError(null);
@@ -57,15 +57,26 @@ export default function SearchPage() {
       setIsLoading(true);
       setError(null);
       setSearchAttempted(true);
-      setSearchParams({ tags: tagsToSearch }); // Update URL
+      
+      // Update URL params
+      const newParams: Record<string, string> = { q: tagsToSearch };
+      if (countryFilter) {
+        newParams.country = countryFilter;
+      }
+      setSearchParams(newParams);
 
       try {
-        console.log(`[SearchPage] Searching for tags: ${tagsToSearch}`);
+        console.log(`[SearchPage] Searching for tags: ${tagsToSearch}, country: ${countryFilter || 'none'}`);
         
         // Use the new backend search API
         const searchUrl = new URL('/api/search/search', window.location.origin);
         searchUrl.searchParams.append('q', tagsToSearch);
         searchUrl.searchParams.append('per_page', '50');
+        
+        // Add country filter if provided
+        if (countryFilter) {
+          searchUrl.searchParams.append('country', countryFilter);
+        }
         
         const response = await fetch(searchUrl.toString(), {
           method: 'GET',
@@ -103,10 +114,16 @@ export default function SearchPage() {
   );
 
   useEffect(() => {
-    const initialTags = searchParams.get("tags");
+    const initialTags = searchParams.get("tags") || searchParams.get("q");
+    const initialCountry = searchParams.get("country");
+    
     if (initialTags) {
       setTagsInput(initialTags);
-      performSearch(initialTags);
+      performSearch(initialTags, initialCountry);
+    } else if (initialCountry) {
+      // If only country is provided, search for that country
+      setTagsInput(initialCountry);
+      performSearch(initialCountry, initialCountry);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run only on initial mount to get tags from URL
