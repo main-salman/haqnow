@@ -1,13 +1,15 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate, Outlet } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LayoutDashboard, FileCheck, FileText, Tag, Users, Settings, LogOut, ShieldBan } from "lucide-react";
+import { LayoutDashboard, FileCheck, FileText, Tag, Users, Settings, LogOut, ShieldBan, Loader2 } from "lucide-react";
 
-// Mock function for logout
+// Logout function
 const handleLogout = (navigate: Function) => {
-  console.log("Admin logged out (mock)");
-  // In a real app, clear auth state
+  console.log("Admin logged out");
+  // Clear JWT token and user data
+  localStorage.removeItem('jwt_token');
+  localStorage.removeItem('user_email');
   navigate("/admin-login-page");
 };
 
@@ -36,6 +38,94 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label, isExternal }) => (
 
 export default function AdminDashboardPage() {
   const navigate = useNavigate();
+  
+  // State for dashboard statistics
+  const [pendingCount, setPendingCount] = useState<number | null>(null);
+  const [bannedTagsCount, setBannedTagsCount] = useState<number | null>(null);
+  const [isLoadingPending, setIsLoadingPending] = useState(true);
+  const [isLoadingBanned, setIsLoadingBanned] = useState(true);
+
+  // Fetch pending documents count
+  const fetchPendingCount = async () => {
+    setIsLoadingPending(true);
+    try {
+      const token = localStorage.getItem('jwt_token');
+      if (!token) {
+        console.error('No authentication token found');
+        navigate("/admin-login-page");
+        return;
+      }
+
+      const response = await fetch('/api/document-processing/documents?status=pending&per_page=1', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          console.error('Authentication failed');
+          navigate("/admin-login-page");
+          return;
+        }
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setPendingCount(data.total_count || 0);
+    } catch (error: any) {
+      console.error('Error fetching pending documents count:', error);
+      setPendingCount(0);
+    } finally {
+      setIsLoadingPending(false);
+    }
+  };
+
+  // Fetch banned tags count
+  const fetchBannedTagsCount = async () => {
+    setIsLoadingBanned(true);
+    try {
+      const token = localStorage.getItem('jwt_token');
+      if (!token) {
+        console.error('No authentication token found');
+        navigate("/admin-login-page");
+        return;
+      }
+
+      const response = await fetch('/api/search/banned-tags', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          console.error('Authentication failed');
+          navigate("/admin-login-page");
+          return;
+        }
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setBannedTagsCount(data.count || 0);
+    } catch (error: any) {
+      console.error('Error fetching banned tags count:', error);
+      setBannedTagsCount(0);
+    } finally {
+      setIsLoadingBanned(false);
+    }
+  };
+
+  // Fetch data on component mount
+  useEffect(() => {
+    fetchPendingCount();
+    fetchBannedTagsCount();
+  }, []);
 
   // This component will act as a layout for other admin sub-pages using <Outlet />
   // For now, it will display a welcome message and links to future admin sections.
@@ -86,7 +176,13 @@ export default function AdminDashboardPage() {
                       <FileCheck className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">15</div> {/* Mock count */}
+                      <div className="text-2xl font-bold flex items-center">
+                        {isLoadingPending ? (
+                          <Loader2 className="h-6 w-6 animate-spin" />
+                        ) : (
+                          pendingCount
+                        )}
+                      </div>
                       <p className="text-xs text-muted-foreground">
                         documents awaiting review
                       </p>
@@ -100,7 +196,13 @@ export default function AdminDashboardPage() {
                       <ShieldBan className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">5</div> {/* Mock count */}
+                      <div className="text-2xl font-bold flex items-center">
+                        {isLoadingBanned ? (
+                          <Loader2 className="h-6 w-6 animate-spin" />
+                        ) : (
+                          bannedTagsCount
+                        )}
+                      </div>
                       <p className="text-xs text-muted-foreground">
                         tags currently banned
                       </p>
