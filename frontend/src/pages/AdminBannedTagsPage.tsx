@@ -78,16 +78,18 @@ export default function AdminBannedTagsPage() {
         throw new Error('No authentication token found. Please log in again.');
       }
 
-      const response = await fetch('/api/search/ban-tag', {
+      // Use URL search params to match backend expectations
+      const banUrl = new URL('/api/search/ban-tag', window.location.origin);
+      banUrl.searchParams.append('tag', newTag.trim());
+      if (newReason.trim()) {
+        banUrl.searchParams.append('reason', newReason.trim());
+      }
+
+      const response = await fetch(banUrl.toString(), {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          tag: newTag.trim(),
-          reason: newReason.trim() || null,
-        }),
       });
 
       if (!response.ok) {

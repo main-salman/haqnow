@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
-import brain from "brain";
-import { SearchDocumentResult } from "brain/data-contracts"; // Adjust path if needed, or from types.ts
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +18,20 @@ import {
   FileText,
 } from "lucide-react";
 import { toast } from "sonner";
+
+// Define the document result interface
+interface SearchDocumentResult {
+  id: number;
+  title?: string;
+  country?: string;
+  state?: string;
+  file_path?: string;
+  file_url?: string;
+  generated_tags?: string[];
+  ocr_text?: string;
+  description?: string;
+  created_at?: string;
+}
 
 export default function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -49,31 +61,35 @@ export default function SearchPage() {
 
       try {
         console.log(`[SearchPage] Searching for tags: ${tagsToSearch}`);
-        const response = await brain.search_documents_by_tags({
-          tags: tagsToSearch,
+        
+        // Use the new backend search API
+        const searchUrl = new URL('/api/search/search', window.location.origin);
+        searchUrl.searchParams.append('q', tagsToSearch);
+        searchUrl.searchParams.append('per_page', '50');
+        
+        const response = await fetch(searchUrl.toString(), {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         });
-        const data = await response.json(); // if brain methods return HttpResponse
 
-        if (data && data.results) {
-          setSearchResults(data.results);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log("[SearchPage] Search results:", data);
+
+        if (data && data.documents) {
+          setSearchResults(data.documents);
         } else {
           setSearchResults([]);
         }
-        console.log("[SearchPage] Search results:", data);
       } catch (err: any) {
         console.error("[SearchPage] Search error:", err);
         let errorMsg = "An error occurred while searching.";
-        if (err?.data?.detail) {
-          errorMsg =
-            typeof err.data.detail === "string"
-              ? err.data.detail
-              : JSON.stringify(err.data.detail);
-        } else if (err?.response?.data?.detail) {
-          errorMsg =
-            typeof err.response.data.detail === "string"
-              ? err.response.data.detail
-              : JSON.stringify(err.response.data.detail);
-        } else if (err.message) {
+        if (err.message) {
           errorMsg = err.message;
         }
         setError(errorMsg);
