@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { supabase } from "../utils/supabaseClient";
+// Remove Supabase import - we don't use it anymore
+// import { supabase } from "../utils/supabaseClient";
 import { Document } from "../types";
-import brain from "brain";
-import { ProcessDocumentRequest } from "brain/data-contracts";
+// Remove brain import - we'll use direct fetch instead
+// import brain from "brain";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Info, Loader2, ArrowLeft, Save, X, CheckCircle2, XCircle } from "lucide-react"; // Added Save, X, CheckCircle2, XCircle
+import { AlertCircle, Info, Loader2, ArrowLeft, Save, X, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -36,24 +37,22 @@ interface AdminDocumentDetails extends Document {
 
 export default function AdminDocumentEditPage() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const documentId = searchParams.get("id");
-  const navigate = useNavigate(); 
 
   const [document, setDocument] = useState<AdminDocumentDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-
-  // States for editable fields
+  
+  // Editable fields state
   const [editedTitle, setEditedTitle] = useState("");
   const [editedDescription, setEditedDescription] = useState("");
   const [editedCountry, setEditedCountry] = useState("");
   const [editedStateProvince, setEditedStateProvince] = useState("");
   const [editedAdminLevel, setEditedAdminLevel] = useState("");
   const [editedTags, setEditedTags] = useState<string[]>([]);
-  const [newTagInput, setNewTagInput] = useState("");
-
-  // States for approve/reject actions
+  
+  const [isSaving, setIsSaving] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
 
@@ -66,53 +65,65 @@ export default function AdminDocumentEditPage() {
     }
     setIsLoading(true);
     try {
-      const { data, error: dbError } = await supabase
-        .from("documents")
-        .select(
-          "id, title, description, country, state_province, admin_level, file_path, file_name, status, ocr_text, generated_tags, uploader_name, uploader_email, created_at, updated_at"
-        )
-        .eq("id", documentId)
-        .single();
+      const response = await fetch(`/api/document-processing/document/${documentId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include cookies for authentication
+      });
 
-      if (dbError) {
-        setError(`Failed to fetch document: ${dbError.message}`);
-        setDocument(null);
-      } else if (data) {
-        setDocument(data as AdminDocumentDetails);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (data) {
+        const documentData: AdminDocumentDetails = {
+          id: data.id.toString(),
+          title: data.title || "",
+          description: data.description,
+          country: data.country || "",
+          stateProvince: data.state,
+          uploadDate: data.created_at,
+          pdfUrl: data.file_url || data.file_path || "", 
+          tags: data.generated_tags || [],
+          state_province: data.state,
+          admin_level: data.admin_level,
+          file_path: data.file_path,
+          ocr_text: data.ocr_text,
+          generated_tags: data.generated_tags,
+          status: data.status
+        };
+        
+        setDocument(documentData);
         setEditedTitle(data.title || "");
         setEditedDescription(data.description || "");
         setEditedCountry(data.country || "");
-        setEditedStateProvince(data.state_province || "");
+        setEditedStateProvince(data.state || "");
         setEditedAdminLevel(data.admin_level || "");
 
         let parsedTags: string[] = [];
-        if (typeof data.generated_tags === 'string') {
+        if (data.generated_tags) {
           try {
-            const tags = JSON.parse(data.generated_tags);
-            if (Array.isArray(tags)) {
-              parsedTags = tags.map(String); // Ensure all elements are strings
-            } else {
-              console.warn("[AdminDocEdit] generated_tags from DB (string) did not parse to an array, defaulting to []. Value:", data.generated_tags);
-            }
-          } catch (e) {
-            console.error("[AdminDocEdit] Error parsing generated_tags string from DB, defaulting to []. Value:", data.generated_tags, "Error:", e);
+            parsedTags = Array.isArray(data.generated_tags) ? data.generated_tags : JSON.parse(data.generated_tags);
+          } catch (parseError) {
+            console.warn("Failed to parse generated_tags:", parseError);
+            parsedTags = [];
           }
-        } else if (Array.isArray(data.generated_tags)) {
-          parsedTags = data.generated_tags.map(String); // Ensure all elements are strings
-        } else if (data.generated_tags === null || data.generated_tags === undefined) {
-          // Default to empty array if null/undefined
-          parsedTags = [];
-        } else {
-          console.warn("[AdminDocEdit] generated_tags from DB is neither string, array, null, nor undefined, defaulting to []. Value:", data.generated_tags);
         }
         setEditedTags(parsedTags);
+        
         setError(null);
       } else {
         setError("Document not found.");
         setDocument(null);
       }
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred.");
+    } catch (err) {
+      console.error("Error fetching document details:", err);
+      setError(`Failed to fetch document: ${err instanceof Error ? err.message : 'Unknown error'}`);
       setDocument(null);
     } finally {
       setIsLoading(false);
@@ -120,14 +131,8 @@ export default function AdminDocumentEditPage() {
   }, [documentId]);
 
   useEffect(() => {
-    if (documentId) {
-      fetchDocumentDetails();
-    } else {
-      setError("No document ID provided.");
-      setDocument(null);
-      setIsLoading(false);
-    }
-  }, [documentId, fetchDocumentDetails]);
+    fetchDocumentDetails();
+  }, [fetchDocumentDetails]);
 
   // Refactored core logic for saving main fields and tags
   const saveCoreChanges = async (suppressToast = false): Promise<boolean> => {
@@ -148,19 +153,25 @@ export default function AdminDocumentEditPage() {
         updated_at: new Date().toISOString(),
       };
       console.log("[AdminDocEdit] Attempting to save core changes with updates:", updates, "for docId:", documentId);
-      const { data, error: saveError } = await supabase
-        .from("documents")
-        .update(updates)
-        .eq("id", documentId)
-        .select();
+      const response = await fetch(`/api/document-processing/update-document/${documentId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+        credentials: 'include', // Include cookies for authentication
+      });
 
-      console.log("[AdminDocEdit] Supabase saveCoreChanges response data:", data);
-      console.log("[AdminDocEdit] Supabase saveCoreChanges response error:", saveError); 
+      console.log("[AdminDocEdit] Backend saveCoreChanges response:", response);
 
-      if (saveError) {
-        if (!suppressToast) toast.error(`Failed to save changes: ${saveError.message}`);
-        return false;
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
       }
+
+      const result = await response.json();
+      console.log("[AdminDocEdit] Save result:", result);
+
       if (!suppressToast) {
         await fetchDocumentDetails(); 
       }
@@ -211,72 +222,36 @@ export default function AdminDocumentEditPage() {
   const handleApprove = async () => {
     console.log("[AdminDocEdit] handleApprove called");
     if (!documentId || !document || isApproving || isRejecting || document.status === 'approved') return;
+    
     setIsApproving(true);
-    console.log("[AdminDocEdit] Calling saveCoreChanges before status update to 'approved'");
-    const changesSaved = await saveCoreChanges(true); 
-    if (!changesSaved) {
-      toast.error("Failed to save pending changes before approving. Please try saving again.");
-      setIsApproving(false);
-      return;
-    }
     try {
-      console.log(`[AdminDocEdit] Attempting to update status to 'approved' for docId: ${documentId}`);
-      const { data, error: approveError } = await supabase
-        .from("documents")
-        .update({ status: "approved", updated_at: new Date().toISOString() })
-        .eq("id", documentId)
-        .select();
+      console.log(`[AdminDocEdit] Attempting to approve docId: ${documentId}`);
+      const response = await fetch(`/api/document-processing/approve-document/${documentId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include cookies for authentication
+      });
 
-      console.log("[AdminDocEdit] Supabase approve response data:", data);
-      console.log("[AdminDocEdit] Supabase approve response error:", approveError); 
+      console.log("[AdminDocEdit] Backend approve response:", response);
 
-      if (approveError) {
-        toast.error(`Failed to approve document: ${approveError.message}`);
-      } else {
-        toast.success("Document approved and published!");
-        // --- BEGIN ADDITION ---
-        if (data && data.length > 0 && data[0].id && data[0].file_path) {
-          const approvedDocId = data[0].id;
-          const approvedDocPdfUrl = data[0].file_path;
-          
-          toast.info("Initiating document processing (OCR, tagging)...", { id: `processing-${approvedDocId}` });
-          try {
-            console.log(`[AdminDocEdit] Calling brain.process_document for docId: ${approvedDocId}, pdf_url: ${approvedDocPdfUrl}`);
-            // Explicitly type the request body
-            const requestBody: ProcessDocumentRequest = {
-              document_id: approvedDocId,
-              pdf_url: approvedDocPdfUrl,
-            };
-            const processResponse = await brain.process_document(requestBody);
-
-            console.log("[AdminDocEdit] brain.process_document successful:", processResponse);
-            // Assuming processResponse.data contains the actual response from the endpoint
-             // We can update the local document state if needed, or just rely on fetchDocumentDetails for now.
-            toast.success("Document processing initiated successfully.", { id: `processing-${approvedDocId}` });
-
-          } catch (processError: any) {
-            console.error("[AdminDocEdit] Error calling brain.process_document:", processError);
-            let PErrorMsg = "Failed to initiate document processing.";
-            // Errors from brain HTTP client often have a 'data' property with the actual API error response
-            if (processError?.data?.detail) { 
-              PErrorMsg = typeof processError.data.detail === 'string' ? processError.data.detail : JSON.stringify(processError.data.detail);
-            } else if (processError?.response?.data?.detail) { // Sometimes it's nested further
-                 PErrorMsg = typeof processError.response.data.detail === 'string' ? processError.response.data.detail : JSON.stringify(processError.response.data.detail);
-            } else if (processError.message) {
-              PErrorMsg = processError.message;
-            }
-            toast.error(`Processing Error: ${PErrorMsg}`, { id: `processing-${approvedDocId}`, duration: 10000 });
-          }
-        } else {
-          console.warn("[AdminDocEdit] Could not initiate processing: document ID or file_path missing after approval response.", data);
-          toast.warning("Could not automatically initiate document processing: missing document details in approval response.");
-        }
-        // --- END ADDITION ---
-        await fetchDocumentDetails(); 
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
       }
-    } catch (err: any) {
-      console.error("[AdminDocEdit] Catch block error during approve status update:", err);
-      toast.error(`An error occurred: ${err.message}`);
+
+      const result = await response.json();
+      console.log("[AdminDocEdit] Approve result:", result);
+      
+      toast.success("Document approved and published!");
+      
+      // Refresh document details
+      fetchDocumentDetails();
+      
+    } catch (approveError: any) {
+      console.error("[AdminDocEdit] Error during approve:", approveError);
+      toast.error(`Failed to approve document: ${approveError.message}`);
     } finally {
       setIsApproving(false);
     }
@@ -285,34 +260,36 @@ export default function AdminDocumentEditPage() {
   const handleReject = async () => {
     console.log("[AdminDocEdit] handleReject called");
     if (!documentId || !document || isApproving || isRejecting || document.status === 'rejected') return;
+    
     setIsRejecting(true);
-    console.log("[AdminDocEdit] Calling saveCoreChanges before status update to 'rejected'");
-    const changesSaved = await saveCoreChanges(true); 
-    if (!changesSaved) {
-      toast.error("Failed to save pending changes before rejecting. Please try saving again.");
-      setIsRejecting(false);
-      return;
-    }
     try {
-      console.log(`[AdminDocEdit] Attempting to update status to 'rejected' for docId: ${documentId}`);
-      const { data, error: rejectError } = await supabase
-        .from("documents")
-        .update({ status: "rejected", updated_at: new Date().toISOString() })
-        .eq("id", documentId)
-        .select();
+      console.log(`[AdminDocEdit] Attempting to reject docId: ${documentId}`);
+      const response = await fetch(`/api/document-processing/reject-document/${documentId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include cookies for authentication
+      });
 
-      console.log("[AdminDocEdit] Supabase reject response data:", data);
-      console.log("[AdminDocEdit] Supabase reject response error:", rejectError);
+      console.log("[AdminDocEdit] Backend reject response:", response);
 
-      if (rejectError) {
-        toast.error(`Failed to reject document: ${rejectError.message}`);
-      } else {
-        toast.success("Document rejected.");
-        await fetchDocumentDetails();
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
       }
-    } catch (err: any) {
-      console.error("[AdminDocEdit] Catch block error during reject status update:", err);
-      toast.error(`An error occurred: ${err.message}`);
+
+      const result = await response.json();
+      console.log("[AdminDocEdit] Reject result:", result);
+      
+      toast.success("Document rejected successfully!");
+      
+      // Refresh document details
+      fetchDocumentDetails();
+      
+    } catch (rejectError: any) {
+      console.error("[AdminDocEdit] Error during reject:", rejectError);
+      toast.error(`Failed to reject document: ${rejectError.message}`);
     } finally {
       setIsRejecting(false);
     }

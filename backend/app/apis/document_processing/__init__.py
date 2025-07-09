@@ -42,6 +42,12 @@ class ProcessDocumentResponse(BaseModel):
     generated_tags: List[str]
     message: str
 
+class DocumentListResponse(BaseModel):
+    documents: List[dict]
+    total_count: int
+    page: int
+    per_page: int
+
 def clean_text(text: str) -> str:
     """Clean and normalize text from OCR."""
     # Remove excessive whitespace
@@ -328,4 +334,141 @@ async def reject_document(
         raise HTTPException(
             status_code=500,
             detail="An unexpected error occurred during document rejection"
+        )
+
+@router.get("/documents", response_model=DocumentListResponse)
+async def get_documents(
+    admin_user: AdminUser,
+    status: Optional[str] = Query(None, description="Filter by status: pending, approved, rejected, processed"),
+    page: int = Query(1, ge=1, description="Page number"),
+    per_page: int = Query(20, ge=1, le=100, description="Results per page"),
+    db: Session = Depends(get_db)
+):
+    """
+    Get documents with optional status filter.
+    Only admin users can access this endpoint.
+    """
+    
+    try:
+        # Build query
+        query_builder = db.query(Document)
+        
+        # Filter by status if provided
+        if status:
+            query_builder = query_builder.filter(Document.status == status)
+        
+        # Get total count before pagination
+        total_count = query_builder.count()
+        
+        # Order by created_at descending
+        query_builder = query_builder.order_by(Document.created_at.desc())
+        
+        # Apply pagination
+        offset = (page - 1) * per_page
+        query_builder = query_builder.offset(offset).limit(per_page)
+        
+        # Execute query
+        documents_data = query_builder.all()
+        
+        # Convert to response format
+        documents = []
+        for doc in documents_data:
+            documents.append({
+                "id": doc.id,
+                "title": doc.title,
+                "country": doc.country,
+                "state": doc.state,
+                "description": doc.description,
+                "file_path": doc.file_path,
+                "file_url": doc.file_url,
+                "original_filename": doc.original_filename,
+                "file_size": doc.file_size,
+                "content_type": doc.content_type,
+                "status": doc.status,
+                "uploader_ip": doc.uploader_ip,
+                "created_at": doc.created_at.isoformat() if doc.created_at else None,
+                "updated_at": doc.updated_at.isoformat() if doc.updated_at else None,
+                "processed_at": doc.processed_at.isoformat() if doc.processed_at else None,
+                "approved_at": doc.approved_at.isoformat() if doc.approved_at else None,
+                "rejected_at": doc.rejected_at.isoformat() if doc.rejected_at else None,
+                "approved_by": doc.approved_by,
+                "rejected_by": doc.rejected_by,
+                "rejection_reason": doc.rejection_reason,
+                "ocr_text": doc.ocr_text,
+                "generated_tags": doc.generated_tags
+            })
+        
+        logger.info("Documents retrieved successfully", 
+                   status=status,
+                   results_count=len(documents),
+                   page=page)
+        
+        return DocumentListResponse(
+            documents=documents,
+            total_count=total_count,
+            page=page,
+            per_page=per_page
+        )
+        
+    except Exception as e:
+        logger.error("Error retrieving documents", status=status, error=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving documents"
+        )
+
+@router.get("/document/{document_id}")
+async def get_document_by_id(
+    document_id: int, 
+    admin_user: AdminUser,
+    db: Session = Depends(get_db)
+):
+    """
+    Get a specific document by ID for admin purposes.
+    Only admin users can access this endpoint.
+    """
+    
+    try:
+        document = db.query(Document).filter(Document.id == document_id).first()
+        
+        if not document:
+            raise HTTPException(status_code=404, detail="Document not found")
+        
+        # Convert to response format
+        document_data = {
+            "id": document.id,
+            "title": document.title,
+            "country": document.country,
+            "state": document.state,
+            "description": document.description,
+            "file_path": document.file_path,
+            "file_url": document.file_url,
+            "original_filename": document.original_filename,
+            "file_size": document.file_size,
+            "content_type": document.content_type,
+            "status": document.status,
+            "uploader_ip": document.uploader_ip,
+            "created_at": document.created_at.isoformat() if document.created_at else None,
+            "updated_at": document.updated_at.isoformat() if document.updated_at else None,
+            "processed_at": document.processed_at.isoformat() if document.processed_at else None,
+            "approved_at": document.approved_at.isoformat() if document.approved_at else None,
+            "rejected_at": document.rejected_at.isoformat() if document.rejected_at else None,
+            "approved_by": document.approved_by,
+            "rejected_by": document.rejected_by,
+            "rejection_reason": document.rejection_reason,
+            "ocr_text": document.ocr_text,
+            "generated_tags": document.generated_tags
+        }
+        
+        logger.info("Document retrieved successfully", document_id=document_id)
+        
+        return document_data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error retrieving document", document_id=document_id, error=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving the document"
         )

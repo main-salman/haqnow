@@ -1,6 +1,8 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { supabase } from "../utils/supabaseClient"; // Supabase client
-import brain from "../brain"; // Import brain SDK
+// Remove Supabase import - we don't use it anymore
+// import { supabase } from "../utils/supabaseClient";
+// Remove brain import - we'll use direct fetch instead
+// import brain from "../brain";
 // import { v4 as uuidv4 } from 'uuid'; // Not available, will use Date.now() + random string
 import { useDropzone } from "react-dropzone";
 import { useNavigate } from "react-router-dom";
@@ -250,20 +252,32 @@ export default function UploadDocumentPage() {
     }
 
     try {
-      // --- New Step 1: Upload file to our backend API ---
+      // Upload using the new backend API
       toast.loading("Uploading file...", { id: "upload-toast" });
-      const fileToUpload = formData.file;
       
-      // The brain client will handle constructing FormData if the endpoint expects `File` or `UploadFile`
-      // We pass the File object directly.
-      const uploadResponse = await brain.upload_pdf_to_supabase({ file: fileToUpload });
+      // Create FormData for the backend upload
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', formData.file);
+      uploadFormData.append('title', formData.title);
+      uploadFormData.append('country', formData.country);
+      uploadFormData.append('state', formData.stateProvince || formData.country); // Use country as fallback
+      if (formData.description) {
+        uploadFormData.append('description', formData.description);
+      }
 
-      if (!uploadResponse || uploadResponse.status !== 200) {
+      // Call the backend upload API
+      const uploadResponse = await fetch('/api/file-uploader/upload', {
+        method: 'POST',
+        body: uploadFormData,
+      });
+
+      if (!uploadResponse.ok) {
         let errorMessage = "Could not upload file to server.";
-        if (uploadResponse && uploadResponse.data && uploadResponse.data.detail) {
-            errorMessage = typeof uploadResponse.data.detail === 'string' ? uploadResponse.data.detail : JSON.stringify(uploadResponse.data.detail);
-        } else if (uploadResponse && uploadResponse.data && uploadResponse.data.message) {
-            errorMessage = uploadResponse.data.message;
+        try {
+          const errorData = await uploadResponse.json();
+          errorMessage = errorData.detail || errorData.message || errorMessage;
+        } catch {
+          errorMessage = `HTTP ${uploadResponse.status}: ${uploadResponse.statusText}`;
         }
         console.error("Backend upload error response:", uploadResponse);
         toast.error("Upload Failed", { 
@@ -275,78 +289,28 @@ export default function UploadDocumentPage() {
         return;
       }
       
-      // Explicitly call .json() to get the response body
       const responseData = await uploadResponse.json();
-
-      // Now destructure from responseData
-      const { file_url: fileUrl, file_path: filePath } = responseData;
-
-      if (!fileUrl || !filePath) {
-        console.error("Backend upload error: No file_url or file_path returned");
-        toast.error("File URL Error", { 
-            id: "upload-toast", 
-            description: "Server uploaded file but did not return a valid URL or path."
-        });
-        setIsSubmitting(false);
-        return;
-      }
-      // Update the toast to success for file upload, and indicate processing
-      toast.success("Document uploaded successfully and is now being processed.", { 
-          id: "upload-toast" // Keep the same ID
-      }); 
-      // The existing toast.loading("Saving document details...", { id: "upload-toast" }); 
-      // will follow if the DB insert logic is separate and takes time. 
-      // If not, the final "Document Submitted!" will appear.
-      toast.loading("Saving document details...", { id: "upload-toast" }); // This line was already there, ensuring it remains.
-
-      // --- Old Step 1 (Supabase direct upload) is now replaced by the above --- 
-      // --- Old Step 2 (Get public URL) is also handled by our backend --- 
-
-      // 3. Insert metadata into Supabase database
-      const { file_url: fileUrlVariable, file_path: filePathVariable } = responseData; // fileUrlVariable is public URL, filePathVariable is storage path
-
-      const documentToInsert = {
-        title: formData.title,
-        description: formData.description,
-        country: formData.country,
-        state_province: formData.stateProvince || null, 
-        admin_level: formData.adminLevel,
-        file_path: fileUrlVariable,           // DB 'file_path' column gets the public URL
-        file_name: fileToUpload.name,       // DB 'file_name' column
-        content_type: fileToUpload.type,    // DB 'content_type' column
-        file_size_bytes: fileToUpload.size, // DB 'file_size_bytes' column
-        status: "pending",
-        uploader_name: formData.uploader_name.trim() || null, // New
-        uploader_email: formData.uploader_email.trim() || null, // New
-      };
-
-      const { error: insertError } = await supabase
-        .from("documents")
-        .insert([documentToInsert]);
-
-      if (insertError) {
-        console.error("Supabase insert error:", insertError);
-        toast.error("Database Error", { 
-            id: "upload-toast", 
-            description: `Could not save document metadata: ${insertError.message}. Please try again.`
-        });
-        // Consider cleanup: if DB insert fails, should we delete the file from storage?
-        // This depends on your desired atomicity.
-        setIsSubmitting(false);
-        return;
-      }
+      console.log("Upload successful:", responseData);
 
       toast.success("Document Submitted!", {
           id: "upload-toast",
           description: "Your document has been successfully submitted for review. Thank you!",
       });
+      
       // Reset form
       setFormData({
-          title: "", description: "", country: "", stateProvince: "", adminLevel: "", file: null,
-          uploader_name: "", // New
-          uploader_email: "" // New
+          title: "", 
+          description: "", 
+          country: "", 
+          stateProvince: "", 
+          adminLevel: "", 
+          file: null,
+          uploader_name: "",
+          uploader_email: ""
       });
-      // navigate("/thank-you-for-submission"); // Optional: navigate to a thank you page
+      
+      // Optional: navigate to a thank you page
+      // navigate("/thank-you-for-submission");
 
     } catch (error) {
       console.error("Submission process error:", error);

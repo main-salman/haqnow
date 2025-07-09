@@ -93,24 +93,6 @@ variable "jwt_secret_key" {
   sensitive   = true
 }
 
-variable "mysql_user" {
-  description = "MySQL database username"
-  type        = string
-  default     = "foi_user"
-}
-
-variable "mysql_password" {
-  description = "MySQL database password"
-  type        = string
-  sensitive   = true
-}
-
-variable "mysql_database" {
-  description = "MySQL database name"
-  type        = string
-  default     = "foi_archive"
-}
-
 variable "sendgrid_api_key" {
   description = "SendGrid API key for email notifications"
   type        = string
@@ -120,7 +102,7 @@ variable "sendgrid_api_key" {
 variable "from_email" {
   description = "From email address for notifications"
   type        = string
-  default     = "noreply@foi-archive.com"
+  default     = "noreply@fadih.org"
 }
 
 variable "custom_domain" {

@@ -16,8 +16,12 @@ provider "exoscale" {
 
 # Security Group for web traffic
 resource "exoscale_security_group" "foi_web" {
-  name        = "${var.project_name}-web-${var.environment}"
-  description = "Security group for FOI Archive web traffic"
+  name        = "${var.project_name}-web-${var.environment}-v2"
+  description = "Security group for Fadih.org web traffic"
+  
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "exoscale_security_group_rule" "foi_web_http" {
@@ -62,26 +66,6 @@ resource "exoscale_ssh_key" "foi_key" {
   public_key = file("~/.ssh/id_rsa.pub") # Adjust path as needed
 }
 
-# MySQL Database using dbaas
-resource "exoscale_dbaas" "foi_mysql" {
-  name = "${var.project_name}-mysql-${var.environment}"
-  type = "mysql"
-  plan = "hobbyist-2"
-  zone = var.zone
-
-  mysql {
-    # MySQL specific configuration can go here
-    # For basic setup, this block can be empty
-  }
-}
-
-# Data source to get database connection info
-data "exoscale_database_uri" "foi_mysql" {
-  name = exoscale_dbaas.foi_mysql.name
-  type = exoscale_dbaas.foi_mysql.type
-  zone = exoscale_dbaas.foi_mysql.zone
-}
-
 # Compute Instance for the application
 resource "exoscale_compute_instance" "foi_app" {
   zone               = var.zone
@@ -103,17 +87,13 @@ resource "exoscale_compute_instance" "foi_app" {
     admin_email      = var.admin_email
     admin_password   = var.admin_password
     jwt_secret       = var.jwt_secret_key
-    mysql_host       = data.exoscale_database_uri.foi_mysql.host
-    mysql_user       = var.mysql_user
-    mysql_password   = var.mysql_password
-    mysql_database   = var.mysql_database
     sendgrid_api_key = var.sendgrid_api_key
   }))
 }
 
 # Outputs
 output "instance_ip" {
-  description = "Public IP of the FOI Archive instance"
+  description = "Public IP of the Fadih.org instance"
   value       = exoscale_compute_instance.foi_app.public_ip_address
 }
 
@@ -122,22 +102,12 @@ output "instance_id" {
   value       = exoscale_compute_instance.foi_app.id
 }
 
-output "mysql_host" {
-  description = "MySQL database host"
-  value       = data.exoscale_database_uri.foi_mysql.host
-}
-
-output "mysql_connection_info" {
-  description = "MySQL connection information"
-  value = {
-    host     = data.exoscale_database_uri.foi_mysql.host
-    port     = data.exoscale_database_uri.foi_mysql.port
-    database = var.mysql_database
-  }
-  sensitive = true
-}
-
 output "ssh_command" {
   description = "SSH command to connect to the instance"
   value       = "ssh ubuntu@${exoscale_compute_instance.foi_app.public_ip_address}"
+}
+
+output "application_url" {
+  description = "URL to access the Fadih.org application"
+  value       = "http://${exoscale_compute_instance.foi_app.public_ip_address}"
 } 

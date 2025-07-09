@@ -6,10 +6,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, CheckCircle, XCircle, Filter, Search as SearchIcon, Loader2, FileText } from "lucide-react"; // Added Loader2 and FileText
 import { Link } from "react-router-dom";
-import { supabase } from "utils/supabaseClient"; // Use supabaseClient
+// Remove Supabase import - we don't use it anymore
+// import { supabase } from "utils/supabaseClient";
 import { toast } from "sonner";
-import brain from "brain"; // Added import
-import { ProcessDocumentRequest } from "brain/data-contracts"; // Added import
+// Remove brain import - we'll use direct fetch instead
+// import brain from "brain";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,18 +23,17 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-// Define the structure of a document fetched from Supabase
+// Define the structure of a document from the backend API
 interface DocumentData {
-  id: string;
+  id: number;
   title: string | null;
   country: string | null;
-  uploader_name: string | null;
-  uploader_email: string | null;
-  file_name: string | null; // Fallback if uploader info is missing
-  file_path: string | null; // Added this for process_document call
-  created_at: string; // Supabase typically returns ISO string for timestamps
+  state: string | null;
+  original_filename: string | null;
+  file_path: string | null;
+  created_at: string;
   status: string;
-  // Add other fields if needed, like state_province, etc.
+  uploader_ip: string | null;
 }
 
 // Mock data for countries filter - can be replaced with dynamic data later
@@ -51,70 +51,33 @@ export default function AdminPendingDocumentsPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCountry, setSelectedCountry] = useState("all");
-  const [updatingDocId, setUpdatingDocId] = useState<string | null>(null); // For loading state on specific row buttons
+  const [updatingDocId, setUpdatingDocId] = useState<number | null>(null); // For loading state on specific row buttons
 
-  useEffect(() => {
-    const fetchPendingDocuments = async () => {
-      setIsLoading(true);
-      setError(null);
-      console.log("[AdminPendingDocs] fetchPendingDocuments called. Querying Supabase..."); // New log
-      try {
-        const { data, error: supaError } = await supabase
-          .from("documents")
-          .select("id, title, country, uploader_name, uploader_email, file_name, file_path, created_at, status") // Added file_path
-          .eq("status", "pending") // Fetch documents with 'pending' status
-          .order("created_at", { ascending: false });
-
-        console.log("[AdminPendingDocs] Supabase response received."); // New log
-        console.log("[AdminPendingDocs] Supabase data:", data); // New log
-        console.log("[AdminPendingDocs] Supabase error:", supaError); // New log
-
-        if (supaError) {
-          console.error("Error fetching pending documents:", supaError);
-          throw new Error(supaError.message);
-        }
-        console.log(`[AdminPendingDocs] ${data?.length || 0} documents fetched from Supabase with status 'pending'.`); // New log
-        setDocuments(data || []);
-      } catch (err) {
-        console.error("[AdminPendingDocs] Caught error in fetchPendingDocuments:", err); // Modified log
-        let message = "Failed to fetch documents. Please try again.";
-        if (err instanceof Error) {
-          message = err.message;
-        }
-        setError(message);
-        setDocuments([]); // Clear documents on error
-      } finally {
-        setIsLoading(false);
-        console.log("[AdminPendingDocs] fetchPendingDocuments finished. isLoading set to false."); // New log
-      }
-    };
-
-    console.log("[AdminPendingDocs] useEffect triggered. Fetching documents..."); // New log
-    fetchPendingDocuments();
-  }, []); // Empty dependency array means this runs once on mount
-
-  // Function to refresh documents - can be called after actions
+  // Function to fetch pending documents from backend API
   const fetchPendingDocuments = async () => {
     setIsLoading(true);
     setError(null);
-    console.log("[AdminPendingDocs] fetchPendingDocuments called. Querying Supabase...");
+    console.log("[AdminPendingDocs] fetchPendingDocuments called. Querying backend API...");
     try {
-      const { data, error: supaError } = await supabase
-        .from("documents")
-        .select("id, title, country, uploader_name, uploader_email, file_name, file_path, created_at, status") // Added file_path
-        .eq("status", "pending")
-        .order("created_at", { ascending: false });
+      const response = await fetch('/api/document-processing/documents?status=pending', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include cookies for authentication
+      });
 
-      console.log("[AdminPendingDocs] Supabase response received.");
-      console.log("[AdminPendingDocs] Supabase data:", data);
-      console.log("[AdminPendingDocs] Supabase error:", supaError);
+      console.log("[AdminPendingDocs] Backend API response received.");
 
-      if (supaError) {
-        console.error("Error fetching pending documents:", supaError);
-        throw new Error(supaError.message);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-      console.log(`[AdminPendingDocs] ${data?.length || 0} documents fetched from Supabase with status 'pending'.`);
-      setDocuments(data || []);
+
+      const data = await response.json();
+      console.log("[AdminPendingDocs] Backend API data:", data);
+
+      setDocuments(data.documents || []);
+      console.log(`[AdminPendingDocs] ${data.documents?.length || 0} documents fetched from backend with status 'pending'.`);
     } catch (err) {
       console.error("[AdminPendingDocs] Caught error in fetchPendingDocuments:", err);
       let message = "Failed to fetch documents. Please try again.";
@@ -134,88 +97,73 @@ export default function AdminPendingDocumentsPage() {
     fetchPendingDocuments();
   }, []);
 
-  const handleApprove = async (docId: string) => {
+  const handleApprove = async (docId: number) => {
     console.log(`[AdminPendingDocs] handleApprove called for docId: ${docId}`);
     setUpdatingDocId(docId);
     try {
-      console.log(`[AdminPendingDocs] Attempting to update status to 'approved' for docId: ${docId}`);
-      const { data, error } = await supabase
-        .from("documents")
-        .update({ status: "approved", updated_at: new Date().toISOString() })
-        .eq("id", docId)
-        .select(); // Add select to get the updated row back
+      console.log(`[AdminPendingDocs] Attempting to approve docId: ${docId}`);
+      const response = await fetch(`/api/document-processing/approve-document/${docId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include cookies for authentication
+      });
 
-      console.log("[AdminPendingDocs] Supabase approve response data:", data);
-      console.log("[AdminPendingDocs] Supabase approve response error:", error);
+      console.log("[AdminPendingDocs] Backend approve response:", response);
 
-      if (error) {
-        toast.error(`Failed to approve document: ${error.message}`);
-      } else {
-        toast.success("Document approved successfully!");
-        // --- BEGIN ADDITION ---
-        if (data && data.length > 0 && data[0].id && data[0].file_path) {
-          const approvedDocId = data[0].id;
-          const approvedDocPdfUrl = data[0].file_path;
-
-          toast.info(`Initiating processing for ${data[0].title || 'document'}...`, { id: `processing-${approvedDocId}` });
-          try {
-            console.log(`[AdminPendingDocs] Calling brain.process_document for docId: ${approvedDocId}, pdf_url: ${approvedDocPdfUrl}`);
-            const requestBody: ProcessDocumentRequest = {
-              document_id: approvedDocId,
-              pdf_url: approvedDocPdfUrl,
-            };
-            await brain.process_document(requestBody);
-            toast.success(`Processing initiated for ${data[0].title || 'document'}.`, { id: `processing-${approvedDocId}` });
-          } catch (processError: any) {
-            console.error("[AdminPendingDocs] Error calling brain.process_document:", processError);
-            let PErrorMsg = "Failed to initiate document processing.";
-             if (processError?.data?.detail) { 
-              PErrorMsg = typeof processError.data.detail === 'string' ? processError.data.detail : JSON.stringify(processError.data.detail);
-            } else if (processError?.response?.data?.detail) { 
-                 PErrorMsg = typeof processError.response.data.detail === 'string' ? processError.response.data.detail : JSON.stringify(processError.response.data.detail);
-            } else if (processError.message) {
-              PErrorMsg = processError.message;
-            }
-            toast.error(`Processing Error: ${PErrorMsg}`, { id: `processing-${approvedDocId}`, duration: 10000 });
-          }
-        } else {
-          console.warn("[AdminPendingDocs] Could not initiate processing: document ID or file_path missing after approval.", data);
-          toast.warning("Could not automatically initiate processing: missing document details.");
-        }
-        // --- END ADDITION ---
-        fetchPendingDocuments(); // Refetch to update the list
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
       }
+
+      const result = await response.json();
+      console.log("[AdminPendingDocs] Approve result:", result);
+      
+      toast.success("Document approved successfully!");
+      
+      // Refresh the document list
+      fetchPendingDocuments();
+      
     } catch (err: any) {
       console.error("[AdminPendingDocs] Catch block error during approve:", err);
-      toast.error(`An error occurred: ${err.message}`);
+      toast.error(`Failed to approve document: ${err.message}`);
     } finally {
       setUpdatingDocId(null);
     }
   };
 
-  const handleReject = async (docId: string) => {
+  const handleReject = async (docId: number) => {
     console.log(`[AdminPendingDocs] handleReject called for docId: ${docId}`);
     setUpdatingDocId(docId);
     try {
-      console.log(`[AdminPendingDocs] Attempting to update status to 'rejected' for docId: ${docId}`);
-      const { data, error } = await supabase
-        .from("documents")
-        .update({ status: "rejected", updated_at: new Date().toISOString() })
-        .eq("id", docId)
-        .select(); // Add select to get the updated row back
+      console.log(`[AdminPendingDocs] Attempting to reject docId: ${docId}`);
+      const response = await fetch(`/api/document-processing/reject-document/${docId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include cookies for authentication
+      });
 
-      console.log("[AdminPendingDocs] Supabase reject response data:", data);
-      console.log("[AdminPendingDocs] Supabase reject response error:", error);
+      console.log("[AdminPendingDocs] Backend reject response:", response);
 
-      if (error) {
-        toast.error(`Failed to reject document: ${error.message}`);
-      } else {
-        toast.success("Document rejected successfully!");
-        fetchPendingDocuments(); // Refetch to update the list
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
       }
+
+      const result = await response.json();
+      console.log("[AdminPendingDocs] Reject result:", result);
+      
+      toast.success("Document rejected successfully!");
+      
+      // Refresh the document list
+      fetchPendingDocuments();
+      
     } catch (err: any) {
       console.error("[AdminPendingDocs] Catch block error during reject:", err);
-      toast.error(`An error occurred: ${err.message}`);
+      toast.error(`Failed to reject document: ${err.message}`);
     } finally {
       setUpdatingDocId(null);
     }
@@ -226,9 +174,8 @@ export default function AdminPendingDocumentsPage() {
     const searchLower = searchTerm.toLowerCase();
     const matchesSearch = 
       (doc.title?.toLowerCase().includes(searchLower)) ||
-      (doc.uploader_name?.toLowerCase().includes(searchLower)) ||
-      (doc.uploader_email?.toLowerCase().includes(searchLower)) ||
-      (doc.file_name?.toLowerCase().includes(searchLower));
+      (doc.original_filename?.toLowerCase().includes(searchLower)) ||
+      (doc.uploader_ip?.toLowerCase().includes(searchLower));
     
     const countryLower = doc.country?.toLowerCase().replace(/\s+/g, "") || "";
     const matchesCountry = selectedCountry === "all" || countryLower === selectedCountry.toLowerCase().replace(/\s+/g, "");
@@ -237,7 +184,7 @@ export default function AdminPendingDocumentsPage() {
   });
 
   const getSubmitterDisplay = (doc: DocumentData) => {
-    return doc.uploader_name || doc.uploader_email || doc.file_name || "N/A";
+    return doc.original_filename || doc.uploader_ip || "N/A";
   };
 
   if (isLoading) {
