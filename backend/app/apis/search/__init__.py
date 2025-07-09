@@ -7,8 +7,9 @@ from sqlalchemy import func, or_, and_
 import os
 import structlog
 
-# Import rate limiting and database
+# Import rate limiting, auth, and database
 from app.middleware.rate_limit import check_download_rate_limit, record_download
+from app.auth.user import AdminUser
 from app.database import get_db, Document, BannedTag
 
 logger = structlog.get_logger()
@@ -318,11 +319,42 @@ async def get_document_tags(document_id: int, db: Session = Depends(get_db)):
             detail="An error occurred while retrieving tags"
         )
 
+@router.get("/banned-tags")
+async def get_banned_tags(
+    admin_user: AdminUser,
+    db: Session = Depends(get_db)
+):
+    """Get all banned tags (admin only)."""
+    
+    try:
+        banned_tags = db.query(BannedTag).order_by(BannedTag.banned_at.desc()).all()
+        
+        tags_list = []
+        for banned_tag in banned_tags:
+            tags_list.append({
+                "id": banned_tag.id,
+                "tag": banned_tag.tag,
+                "reason": banned_tag.reason,
+                "banned_by": banned_tag.banned_by,
+                "banned_at": banned_tag.banned_at.isoformat() if banned_tag.banned_at else None
+            })
+        
+        logger.info("Banned tags retrieved successfully", count=len(tags_list))
+        
+        return {"banned_tags": tags_list, "count": len(tags_list)}
+        
+    except Exception as e:
+        logger.error("Error retrieving banned tags", error=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving banned tags"
+        )
+
 @router.post("/ban-tag")
 async def ban_tag(
     tag: str,
+    admin_user: AdminUser,
     reason: Optional[str] = None,
-    admin_user = Depends(lambda: {"email": "admin"}),  # Simplified for now
     db: Session = Depends(get_db)
 ):
     """Ban a tag (admin only)."""
@@ -337,14 +369,14 @@ async def ban_tag(
         banned_tag = BannedTag(
             tag=tag.lower(),
             reason=reason,
-            banned_by=admin_user["email"]
+            banned_by=admin_user.email
         )
         
         db.add(banned_tag)
         db.commit()
         db.refresh(banned_tag)
         
-        logger.info("Tag banned successfully", tag=tag, banned_by=admin_user["email"])
+        logger.info("Tag banned successfully", tag=tag, banned_by=admin_user.email)
         
         return {"message": "Tag banned successfully", "tag": tag}
         
@@ -355,5 +387,38 @@ async def ban_tag(
         raise HTTPException(
             status_code=500,
             detail="An error occurred while banning the tag"
+        )
+
+@router.delete("/unban-tag/{tag_id}")
+async def unban_tag(
+    tag_id: int,
+    admin_user: AdminUser,
+    db: Session = Depends(get_db)
+):
+    """Unban a tag by ID (admin only)."""
+    
+    try:
+        # Get banned tag by ID
+        banned_tag = db.query(BannedTag).filter(BannedTag.id == tag_id).first()
+        if not banned_tag:
+            raise HTTPException(status_code=404, detail="Banned tag not found")
+        
+        tag_name = banned_tag.tag
+        
+        # Delete banned tag entry
+        db.delete(banned_tag)
+        db.commit()
+        
+        logger.info("Tag unbanned successfully", tag=tag_name, unbanned_by=admin_user.email)
+        
+        return {"message": "Tag unbanned successfully", "tag": tag_name}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error unbanning tag", tag_id=tag_id, error=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while unbanning the tag"
         )
 

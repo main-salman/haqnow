@@ -1,51 +1,162 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { PlusCircle, Trash2, ShieldBan } from "lucide-react";
+import { PlusCircle, Trash2, ShieldBan, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
-// Mock data - replace with API calls later
-const initialBannedTags = [
-  { id: "tag1", name: "spam", dateAdded: "2024-01-01" },
-  { id: "tag2", name: "irrelevant", dateAdded: "2024-01-15" },
-  { id: "tag3", name: "offensive-content", dateAdded: "2024-02-01" },
-  { id: "tag4", name: "misinformation", dateAdded: "2024-02-20" },
-];
+interface BannedTag {
+  id: number;
+  tag: string;
+  reason?: string;
+  banned_by: string;
+  banned_at: string;
+}
 
 export default function AdminBannedTagsPage() {
-  const [bannedTags, setBannedTags] = useState(initialBannedTags);
+  const [bannedTags, setBannedTags] = useState<BannedTag[]>([]);
   const [newTag, setNewTag] = useState("");
+  const [newReason, setNewReason] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAdding, setIsAdding] = useState(false);
+  const [removingTagId, setRemovingTagId] = useState<number | null>(null);
 
-  const handleAddBannedTag = (e: React.FormEvent) => {
+  // Fetch banned tags from API
+  const fetchBannedTags = async () => {
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem('jwt_token');
+      if (!token) {
+        throw new Error('No authentication token found. Please log in again.');
+      }
+
+      const response = await fetch('/api/search/banned-tags', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setBannedTags(data.banned_tags || []);
+    } catch (error: any) {
+      console.error('Error fetching banned tags:', error);
+      toast.error(`Failed to fetch banned tags: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBannedTags();
+  }, []);
+
+  const handleAddBannedTag = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newTag.trim() === "") return;
-    // Check if tag already exists (case-insensitive for robustness)
-    if (bannedTags.some(tag => tag.name.toLowerCase() === newTag.trim().toLowerCase())) {
-      alert(`Tag "${newTag.trim()}" is already banned.`);
+    if (newTag.trim() === "") {
+      toast.error("Tag cannot be empty.");
+      return;
+    }
+
+    // Check if tag already exists (case-insensitive)
+    if (bannedTags.some(tag => tag.tag.toLowerCase() === newTag.trim().toLowerCase())) {
+      toast.error(`Tag "${newTag.trim()}" is already banned.`);
       setNewTag("");
       return;
     }
 
-    const newBannedTag = {
-      id: `tag${Date.now()}`,
-      name: newTag.trim(),
-      dateAdded: new Date().toISOString().split('T')[0],
-    };
-    setBannedTags([...bannedTags, newBannedTag]);
-    setNewTag("");
-    console.log(`Tag "${newBannedTag.name}" banned (mock).`);
-    // In a real app, save to DB
-  };
+    setIsAdding(true);
+    try {
+      const token = localStorage.getItem('jwt_token');
+      if (!token) {
+        throw new Error('No authentication token found. Please log in again.');
+      }
 
-  const handleRemoveBannedTag = (tagId: string) => {
-    const tagToRemove = bannedTags.find(tag => tag.id === tagId);
-    if(tagToRemove && confirm(`Are you sure you want to unban the tag "${tagToRemove.name}"?`)){
-      setBannedTags(bannedTags.filter((tag) => tag.id !== tagId));
-      console.log(`Tag ID "${tagId}" unbanned (mock).`);
-      // In a real app, remove from DB
+      const response = await fetch('/api/search/ban-tag', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          tag: newTag.trim(),
+          reason: newReason.trim() || null,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      toast.success(`Tag "${newTag.trim()}" banned successfully!`);
+      setNewTag("");
+      setNewReason("");
+      
+      // Refresh the list
+      fetchBannedTags();
+    } catch (error: any) {
+      console.error('Error banning tag:', error);
+      toast.error(`Failed to ban tag: ${error.message}`);
+    } finally {
+      setIsAdding(false);
     }
   };
+
+  const handleRemoveBannedTag = async (tagId: number) => {
+    const tagToRemove = bannedTags.find(tag => tag.id === tagId);
+    if (!tagToRemove) return;
+
+    if (!confirm(`Are you sure you want to unban the tag "${tagToRemove.tag}"?`)) {
+      return;
+    }
+
+    setRemovingTagId(tagId);
+    try {
+      const token = localStorage.getItem('jwt_token');
+      if (!token) {
+        throw new Error('No authentication token found. Please log in again.');
+      }
+
+      const response = await fetch(`/api/search/unban-tag/${tagId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      toast.success(`Tag "${tagToRemove.tag}" unbanned successfully!`);
+      
+      // Refresh the list
+      fetchBannedTags();
+    } catch (error: any) {
+      console.error('Error unbanning tag:', error);
+      toast.error(`Failed to unban tag: ${error.message}`);
+    } finally {
+      setRemovingTagId(null);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-2 text-muted-foreground">Loading banned tags...</p>
+      </div>
+    );
+  }
 
   return (
     <Card>
@@ -62,18 +173,31 @@ export default function AdminBannedTagsPage() {
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        <form onSubmit={handleAddBannedTag} className="flex items-center space-x-2 pb-4 border-b">
+        <form onSubmit={handleAddBannedTag} className="space-y-4 pb-4 border-b">
+          <div className="flex items-center space-x-2">
+            <Input
+              type="text"
+              placeholder="Enter a tag to ban..."
+              value={newTag}
+              onChange={(e) => setNewTag(e.target.value)}
+              className="flex-grow"
+              aria-label="New tag to ban"
+              disabled={isAdding}
+            />
+            <Button type="submit" disabled={isAdding}>
+              {isAdding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />}
+              Ban Tag
+            </Button>
+          </div>
           <Input
             type="text"
-            placeholder="Enter a tag to ban..."
-            value={newTag}
-            onChange={(e) => setNewTag(e.target.value)}
-            className="flex-grow"
-            aria-label="New tag to ban"
+            placeholder="Reason for banning (optional)..."
+            value={newReason}
+            onChange={(e) => setNewReason(e.target.value)}
+            className="w-full"
+            aria-label="Reason for banning"
+            disabled={isAdding}
           />
-          <Button type="submit">
-            <PlusCircle className="mr-2 h-4 w-4" /> Ban Tag
-          </Button>
         </form>
 
         {bannedTags.length > 0 ? (
@@ -81,7 +205,8 @@ export default function AdminBannedTagsPage() {
             <Table>
               <TableHeader className="bg-muted/50">
                 <TableRow>
-                  <TableHead className="w-[60%]">Tag Name</TableHead>
+                  <TableHead className="w-[40%]">Tag Name</TableHead>
+                  <TableHead className="w-[30%]">Reason</TableHead>
                   <TableHead>Date Banned</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -89,17 +214,26 @@ export default function AdminBannedTagsPage() {
               <TableBody>
                 {bannedTags.map((tag) => (
                   <TableRow key={tag.id}>
-                    <TableCell className="font-medium">{tag.name}</TableCell>
-                    <TableCell>{new Date(tag.dateAdded).toLocaleDateString()}</TableCell>
+                    <TableCell className="font-medium">{tag.tag}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {tag.reason || "No reason provided"}
+                    </TableCell>
+                    <TableCell>{new Date(tag.banned_at).toLocaleDateString()}</TableCell>
                     <TableCell className="text-right">
                       <Button
                         variant="ghost"
                         size="sm"
                         className="text-destructive hover:text-destructive-foreground hover:bg-destructive/90"
                         onClick={() => handleRemoveBannedTag(tag.id)}
-                        aria-label={`Unban tag ${tag.name}`}
+                        aria-label={`Unban tag ${tag.tag}`}
+                        disabled={removingTagId === tag.id}
                       >
-                        <Trash2 className="h-4 w-4 mr-1" /> Unban
+                        {removingTagId === tag.id ? (
+                          <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4 mr-1" />
+                        )}
+                        Unban
                       </Button>
                     </TableCell>
                   </TableRow>

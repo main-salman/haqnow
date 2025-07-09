@@ -65,12 +65,17 @@ export default function AdminDocumentEditPage() {
     }
     setIsLoading(true);
     try {
+      const token = localStorage.getItem('jwt_token');
+      if (!token) {
+        throw new Error('No authentication token found. Please log in again.');
+      }
+
       const response = await fetch(`/api/document-processing/document/${documentId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        credentials: 'include', // Include cookies for authentication
       });
 
       if (!response.ok) {
@@ -152,14 +157,19 @@ export default function AdminDocumentEditPage() {
         generated_tags: editedTags,
         updated_at: new Date().toISOString(),
       };
+      const token = localStorage.getItem('jwt_token');
+      if (!token) {
+        throw new Error('No authentication token found. Please log in again.');
+      }
+
       console.log("[AdminDocEdit] Attempting to save core changes with updates:", updates, "for docId:", documentId);
       const response = await fetch(`/api/document-processing/update-document/${documentId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(updates),
-        credentials: 'include', // Include cookies for authentication
       });
 
       console.log("[AdminDocEdit] Backend saveCoreChanges response:", response);
@@ -225,13 +235,18 @@ export default function AdminDocumentEditPage() {
     
     setIsApproving(true);
     try {
+      const token = localStorage.getItem('jwt_token');
+      if (!token) {
+        throw new Error('No authentication token found. Please log in again.');
+      }
+
       console.log(`[AdminDocEdit] Attempting to approve docId: ${documentId}`);
       const response = await fetch(`/api/document-processing/approve-document/${documentId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        credentials: 'include', // Include cookies for authentication
       });
 
       console.log("[AdminDocEdit] Backend approve response:", response);
@@ -263,13 +278,18 @@ export default function AdminDocumentEditPage() {
     
     setIsRejecting(true);
     try {
+      const token = localStorage.getItem('jwt_token');
+      if (!token) {
+        throw new Error('No authentication token found. Please log in again.');
+      }
+
       console.log(`[AdminDocEdit] Attempting to reject docId: ${documentId}`);
       const response = await fetch(`/api/document-processing/reject-document/${documentId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        credentials: 'include', // Include cookies for authentication
       });
 
       console.log("[AdminDocEdit] Backend reject response:", response);

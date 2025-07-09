@@ -59,12 +59,17 @@ export default function AdminPendingDocumentsPage() {
     setError(null);
     console.log("[AdminPendingDocs] fetchPendingDocuments called. Querying backend API...");
     try {
+      const token = localStorage.getItem('jwt_token');
+      if (!token) {
+        throw new Error('No authentication token found. Please log in again.');
+      }
+
       const response = await fetch('/api/document-processing/documents?status=pending', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        credentials: 'include', // Include cookies for authentication
       });
 
       console.log("[AdminPendingDocs] Backend API response received.");
@@ -101,13 +106,18 @@ export default function AdminPendingDocumentsPage() {
     console.log(`[AdminPendingDocs] handleApprove called for docId: ${docId}`);
     setUpdatingDocId(docId);
     try {
+      const token = localStorage.getItem('jwt_token');
+      if (!token) {
+        throw new Error('No authentication token found. Please log in again.');
+      }
+
       console.log(`[AdminPendingDocs] Attempting to approve docId: ${docId}`);
       const response = await fetch(`/api/document-processing/approve-document/${docId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        credentials: 'include', // Include cookies for authentication
       });
 
       console.log("[AdminPendingDocs] Backend approve response:", response);
@@ -137,13 +147,18 @@ export default function AdminPendingDocumentsPage() {
     console.log(`[AdminPendingDocs] handleReject called for docId: ${docId}`);
     setUpdatingDocId(docId);
     try {
+      const token = localStorage.getItem('jwt_token');
+      if (!token) {
+        throw new Error('No authentication token found. Please log in again.');
+      }
+
       console.log(`[AdminPendingDocs] Attempting to reject docId: ${docId}`);
       const response = await fetch(`/api/document-processing/reject-document/${docId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        credentials: 'include', // Include cookies for authentication
       });
 
       console.log("[AdminPendingDocs] Backend reject response:", response);

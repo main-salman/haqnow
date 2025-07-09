@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabase } from "utils/supabaseClient"; // Import Supabase client
 import { toast } from "sonner"; // For displaying notifications
 
 export default function AdminLoginPage() {
@@ -20,39 +19,45 @@ export default function AdminLoginPage() {
     setIsLoading(true);
     toast.loading("Attempting to log in...", { id: "login-toast" });
 
-    const { data, error: supaError } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password,
-    });
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password,
+        }),
+      });
 
-    setIsLoading(false);
+      const data = await response.json();
 
-    if (supaError) {
-      console.error("Supabase login error:", supaError);
-      const errorMessage = supaError.message === "Invalid login credentials" 
-        ? "Invalid email or password. Please try again."
-        : "An error occurred during login. Please try again later.";
-      setError(errorMessage);
-      toast.error("Login Failed", { id: "login-toast", description: errorMessage });
-    } else if (data.user) {
-      // Check if the user is an admin (requires user_profiles table and RLS setup)
-      // For now, we will assume any successful login via this page is an admin intent
-      // and rely on RLS on the backend to protect admin-only resources.
-      // A more robust check would query the user_profiles table for an is_admin flag.
-      console.log("Supabase login successful:", data.user);
+      if (!response.ok) {
+        throw new Error(data.detail || 'Login failed');
+      }
+
+      // Store JWT token in localStorage
+      localStorage.setItem('jwt_token', data.access_token);
+      localStorage.setItem('user_email', data.user.email);
+      
+      console.log("JWT login successful:", data.user);
       toast.success("Login Successful!", { 
         id: "login-toast", 
         description: "Redirecting to admin dashboard..."
       });
       
-      // Store session or user data if needed globally (e.g., Zustand store)
-      // Example: useAuthStore.getState().setUser(data.user);
-      
       navigate("/admin-dashboard-page");
-    } else {
-      // Should not happen if supaError is null and data.user is null, but as a fallback
-      setError("An unexpected error occurred. Please try again.");
-      toast.error("Login Error", { id: "login-toast", description: "An unexpected error occurred." });
+      
+    } catch (error: any) {
+      console.error("Login error:", error);
+      const errorMessage = error.message === "Incorrect email or password" 
+        ? "Invalid email or password. Please try again."
+        : "An error occurred during login. Please try again later.";
+      setError(errorMessage);
+      toast.error("Login Failed", { id: "login-toast", description: errorMessage });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -61,7 +66,7 @@ export default function AdminLoginPage() {
       <Card className="w-full max-w-sm shadow-xl">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-serif">Admin Login</CardTitle>
-          <CardDescription>Access the FOIArchive Admin Panel</CardDescription>
+          <CardDescription>Access the Fadih.org Admin Panel</CardDescription>
         </CardHeader>
         <form onSubmit={handleLogin}>
           <CardContent className="space-y-4">
