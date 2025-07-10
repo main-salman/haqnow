@@ -82,6 +82,59 @@ def get_banned_words(db: Session) -> List[str]:
         logger.error("Error retrieving banned words", error=str(e))
         return []
 
+def get_top_words_for_search(text: str, max_words: int = 1000) -> str:
+    """
+    Extract the top most important words from text for search purposes.
+    Uses word frequency and importance scoring.
+    """
+    if not text:
+        return ""
+    
+    try:
+        # Clean and split text into words
+        words = re.findall(r'\b[a-zA-Z]{2,}\b', text.lower())
+        
+        if len(words) <= max_words:
+            return text
+        
+        # Define stop words to exclude from top words
+        stop_words = {
+            'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by',
+            'this', 'that', 'these', 'those', 'a', 'an', 'is', 'was', 'are', 'were', 'be',
+            'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would',
+            'could', 'should', 'may', 'might', 'can', 'must', 'shall', 'it', 'he', 'she',
+            'they', 'we', 'you', 'i', 'me', 'him', 'her', 'them', 'us', 'my', 'your',
+            'his', 'her', 'its', 'our', 'their', 'who', 'what', 'where', 'when', 'why',
+            'how', 'which', 'than', 'so', 'very', 'just', 'now', 'then', 'here', 'there'
+        }
+        
+        # Count word frequencies, excluding stop words
+        word_counts = Counter()
+        for word in words:
+            if word not in stop_words and len(word) >= 3:
+                word_counts[word] += 1
+        
+        # Get top words by frequency
+        top_words = [word for word, count in word_counts.most_common(max_words)]
+        
+        # Reconstruct text using only top words
+        result_words = []
+        word_set = set(top_words)
+        
+        for word in words:
+            if word in word_set:
+                result_words.append(word)
+            if len(result_words) >= max_words:
+                break
+        
+        return ' '.join(result_words)
+        
+    except Exception as e:
+        logger.error("Error extracting top words for search", error=str(e))
+        # Fallback to first 1000 words if processing fails
+        words = text.split()
+        return ' '.join(words[:max_words]) if len(words) > max_words else text
+
 def extract_tags_from_text(text: str, max_tags: int = 50, db: Session = None) -> List[str]:
     """Extract meaningful tags from text using spaCy NLP, filtering out banned words."""
     if not nlp or not text:
@@ -317,16 +370,7 @@ async def process_document_internal(document_id: int, db: Session) -> dict | Non
             logger.warning("No text extracted from document during internal processing", document_id=document_id)
             extracted_text = ""
         
-        # Limit OCR text to 1000 words for search
-        words = extracted_text.split()
-        if len(words) > 1000:
-            extracted_text = ' '.join(words[:1000])
-            logger.info("OCR text limited to 1000 words", 
-                       document_id=document_id,
-                       original_words=len(words),
-                       limited_words=1000)
-        
-        # Filter banned words from OCR text
+        # Filter banned words from full OCR text first
         banned_words = get_banned_words(db)
         if banned_words:
             extracted_text = filter_banned_words(extracted_text, banned_words)
@@ -334,11 +378,21 @@ async def process_document_internal(document_id: int, db: Session) -> dict | Non
                        document_id=document_id,
                        banned_words_count=len(banned_words))
         
+        # Get top 1000 most important words for database storage and search
+        searchable_text = get_top_words_for_search(extracted_text, max_words=1000)
+        original_word_count = len(extracted_text.split()) if extracted_text else 0
+        searchable_word_count = len(searchable_text.split()) if searchable_text else 0
+        
+        logger.info("OCR text processed for search", 
+                   document_id=document_id,
+                   original_words=original_word_count,
+                   searchable_words=searchable_word_count)
+        
         # Generate tags from extracted text
         generated_tags = extract_tags_from_text(extracted_text, db=db)
         
-        # Update document in database
-        document.ocr_text = extracted_text
+        # Update document in database with searchable text (top 1000 words)
+        document.ocr_text = searchable_text
         document.generated_tags = generated_tags
         document.processed_at = func.now()
         document.status = "processed"
@@ -354,11 +408,11 @@ async def process_document_internal(document_id: int, db: Session) -> dict | Non
         logger.info("Document processed internally", 
                    document_id=document_id,
                    tags_count=len(generated_tags),
-                   text_length=len(extracted_text))
+                   text_length=len(searchable_text))
         
         return {
             "document_id": document_id,
-            "ocr_text": extracted_text,
+            "ocr_text": searchable_text,
             "generated_tags": generated_tags,
             "status": "processed"
         }
@@ -412,16 +466,7 @@ async def process_document(
             logger.warning("No text extracted from document", document_id=request.document_id)
             extracted_text = ""
         
-        # Limit OCR text to 1000 words for search
-        words = extracted_text.split()
-        if len(words) > 1000:
-            extracted_text = ' '.join(words[:1000])
-            logger.info("OCR text limited to 1000 words", 
-                       document_id=request.document_id,
-                       original_words=len(words),
-                       limited_words=1000)
-        
-        # Filter banned words from OCR text
+        # Filter banned words from full OCR text first
         banned_words = get_banned_words(db)
         if banned_words:
             extracted_text = filter_banned_words(extracted_text, banned_words)
@@ -429,11 +474,21 @@ async def process_document(
                        document_id=request.document_id,
                        banned_words_count=len(banned_words))
         
+        # Get top 1000 most important words for database storage and search
+        searchable_text = get_top_words_for_search(extracted_text, max_words=1000)
+        original_word_count = len(extracted_text.split()) if extracted_text else 0
+        searchable_word_count = len(searchable_text.split()) if searchable_text else 0
+        
+        logger.info("OCR text processed for search", 
+                   document_id=request.document_id,
+                   original_words=original_word_count,
+                   searchable_words=searchable_word_count)
+        
         # Generate tags from extracted text
         generated_tags = extract_tags_from_text(extracted_text, db=db)
         
-        # Update document in database
-        document.ocr_text = extracted_text
+        # Update document in database with searchable text (top 1000 words)
+        document.ocr_text = searchable_text
         document.generated_tags = generated_tags
         document.processed_at = func.now()
         document.status = "processed"
@@ -449,11 +504,11 @@ async def process_document(
         logger.info("Document processed successfully", 
                    document_id=request.document_id,
                    tags_count=len(generated_tags),
-                   text_length=len(extracted_text))
+                   text_length=len(searchable_text))
         
         return ProcessDocumentResponse(
             document_id=request.document_id,
-            ocr_text=extracted_text,
+            ocr_text=searchable_text,
             generated_tags=generated_tags,
             message="Document processed successfully"
         )
