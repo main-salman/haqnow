@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import CountryDocStatsList from '../components/CountryDocStatsList';
+import Version from '../components/Version';
 
 export default function App() {
   const [searchTerm, setSearchTerm] = useState(""); // Added state for search term
@@ -97,6 +98,7 @@ export default function App() {
       <footer className="py-6 px-4 md:px-8 border-t border-border text-center">
         <p className="text-sm text-muted-foreground">
           &copy; {new Date().getFullYear()} Fadih.org. All rights reserved.
+          <Version />
         </p>
       </footer>
     </div>
