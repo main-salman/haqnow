@@ -137,40 +137,6 @@ async def upload_file(
         # Record upload for rate limiting
         record_upload(request)
         
-        # Automatically process the document for OCR and tagging
-        try:
-            from app.apis.document_processing import process_document_internal
-            
-            logger.info("Starting automatic document processing", document_id=document_id)
-            
-            # Process the document automatically
-            processing_result = await process_document_internal(document_id, db)
-            
-            if processing_result:
-                logger.info("Document processed automatically", 
-                           document_id=document_id,
-                           tags_count=len(processing_result.get('generated_tags', [])),
-                           text_length=len(processing_result.get('ocr_text', '')))
-                
-                # Auto-approve documents for now (can be changed to require manual approval)
-                document = db.query(Document).filter(Document.id == document_id).first()
-                if document:
-                    document.status = "approved"  # Changed from "processed" to "approved" to make documents immediately searchable
-                    document.approved_at = func.now()
-                    document.approved_by = "system_auto_approval"
-                    db.commit()
-                    db.refresh(document)
-                    
-                    logger.info("Document auto-approved and is now searchable", document_id=document_id)
-            else:
-                logger.warning("Document processing failed, but upload was successful", document_id=document_id)
-                
-        except Exception as processing_error:
-            logger.warning("Automatic processing failed, but upload was successful", 
-                          document_id=document_id,
-                          error=str(processing_error))
-            # Don't fail the upload if processing fails
-        
         logger.info("Document uploaded successfully", 
                    document_id=document_id,
                    file_path=file_path,
@@ -180,7 +146,7 @@ async def upload_file(
             file_url=file_url,
             file_path=file_path,
             document_id=document_id,
-            message="File uploaded successfully and is pending admin approval"
+            message="File uploaded successfully. Document is pending admin approval and will be processed after approval."
         )
     
     except HTTPException:

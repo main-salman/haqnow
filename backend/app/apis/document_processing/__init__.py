@@ -17,7 +17,7 @@ import structlog
 from app.auth.user import AdminUser
 from app.services.s3_service import s3_service
 from app.services.email_service import email_service
-from app.database import get_db, Document
+from app.database import get_db, Document, BannedTag
 
 logger = structlog.get_logger()
 
@@ -56,12 +56,43 @@ def clean_text(text: str) -> str:
     text = re.sub(r'[^\w\s\-.,;:!?()[\]{}"]', '', text)
     return text.strip()
 
-def extract_tags_from_text(text: str, max_tags: int = 50) -> List[str]:
-    """Extract meaningful tags from text using spaCy NLP."""
+def filter_banned_words(text: str, banned_words: List[str]) -> str:
+    """Filter banned words from text content."""
+    if not text or not banned_words:
+        return text
+    
+    try:
+        # Create a case-insensitive replacement pattern
+        for banned_word in banned_words:
+            # Use word boundaries to avoid partial matches
+            pattern = r'\b' + re.escape(banned_word.lower()) + r'\b'
+            text = re.sub(pattern, '[REDACTED]', text, flags=re.IGNORECASE)
+        
+        return text
+    except Exception as e:
+        logger.error("Error filtering banned words", error=str(e))
+        return text
+
+def get_banned_words(db: Session) -> List[str]:
+    """Get list of banned words from database."""
+    try:
+        banned_tags = db.query(BannedTag).all()
+        return [tag.tag.lower() for tag in banned_tags]
+    except Exception as e:
+        logger.error("Error retrieving banned words", error=str(e))
+        return []
+
+def extract_tags_from_text(text: str, max_tags: int = 50, db: Session = None) -> List[str]:
+    """Extract meaningful tags from text using spaCy NLP, filtering out banned words."""
     if not nlp or not text:
         return []
     
     try:
+        # Get banned words if database session is available
+        banned_words = []
+        if db:
+            banned_words = get_banned_words(db)
+        
         # Process text with spaCy
         doc = nlp(text)
         
@@ -80,9 +111,14 @@ def extract_tags_from_text(text: str, max_tags: int = 50) -> List[str]:
         # Combine all potential tags
         all_tags = entities + nouns + noun_chunks
         
-        # Filter out common stop words and very short tags
+        # Filter out common stop words, very short tags, and banned words
         stop_words = {'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'this', 'that', 'these', 'those'}
-        filtered_tags = [tag for tag in all_tags if tag not in stop_words and len(tag) > 2]
+        filtered_tags = []
+        for tag in all_tags:
+            if (tag not in stop_words and 
+                len(tag) > 2 and 
+                tag.lower() not in banned_words):
+                filtered_tags.append(tag)
         
         # Count frequency and return most common
         tag_counts = Counter(filtered_tags)
@@ -281,8 +317,25 @@ async def process_document_internal(document_id: int, db: Session) -> dict | Non
             logger.warning("No text extracted from document during internal processing", document_id=document_id)
             extracted_text = ""
         
+        # Limit OCR text to 1000 words for search
+        words = extracted_text.split()
+        if len(words) > 1000:
+            extracted_text = ' '.join(words[:1000])
+            logger.info("OCR text limited to 1000 words", 
+                       document_id=document_id,
+                       original_words=len(words),
+                       limited_words=1000)
+        
+        # Filter banned words from OCR text
+        banned_words = get_banned_words(db)
+        if banned_words:
+            extracted_text = filter_banned_words(extracted_text, banned_words)
+            logger.info("Banned words filtered from OCR text",
+                       document_id=document_id,
+                       banned_words_count=len(banned_words))
+        
         # Generate tags from extracted text
-        generated_tags = extract_tags_from_text(extracted_text)
+        generated_tags = extract_tags_from_text(extracted_text, db=db)
         
         # Update document in database
         document.ocr_text = extracted_text
@@ -359,8 +412,25 @@ async def process_document(
             logger.warning("No text extracted from document", document_id=request.document_id)
             extracted_text = ""
         
+        # Limit OCR text to 1000 words for search
+        words = extracted_text.split()
+        if len(words) > 1000:
+            extracted_text = ' '.join(words[:1000])
+            logger.info("OCR text limited to 1000 words", 
+                       document_id=request.document_id,
+                       original_words=len(words),
+                       limited_words=1000)
+        
+        # Filter banned words from OCR text
+        banned_words = get_banned_words(db)
+        if banned_words:
+            extracted_text = filter_banned_words(extracted_text, banned_words)
+            logger.info("Banned words filtered from OCR text",
+                       document_id=request.document_id,
+                       banned_words_count=len(banned_words))
+        
         # Generate tags from extracted text
-        generated_tags = extract_tags_from_text(extracted_text)
+        generated_tags = extract_tags_from_text(extracted_text, db=db)
         
         # Update document in database
         document.ocr_text = extracted_text
@@ -406,7 +476,7 @@ async def approve_document(
     db: Session = Depends(get_db)
 ):
     """
-    Approve a document for public display.
+    Approve a document for public display and trigger OCR processing.
     Only admin users can approve documents.
     """
     
@@ -417,7 +487,18 @@ async def approve_document(
         if not document:
             raise HTTPException(status_code=404, detail="Document not found")
         
-        # Update document status to approved
+        # Check if document is in pending status
+        if document.status != "pending":
+            raise HTTPException(status_code=400, detail=f"Document is not pending approval (current status: {document.status})")
+        
+        # Process the document first (OCR + tagging)
+        processing_result = await process_document_internal(document_id, db)
+        
+        if not processing_result:
+            raise HTTPException(status_code=500, detail="Failed to process document during approval")
+        
+        # Update document status to approved after successful processing
+        document = db.query(Document).filter(Document.id == document_id).first()  # Refresh from DB
         document.status = "approved"
         document.approved_at = func.now()
         document.approved_by = admin_user.email
@@ -439,11 +520,18 @@ async def approve_document(
         except Exception as e:
             logger.warning("Failed to send approval notification", error=str(e))
         
-        logger.info("Document approved successfully", 
+        logger.info("Document approved and processed successfully", 
                    document_id=document_id,
-                   approved_by=admin_user.email)
+                   approved_by=admin_user.email,
+                   tags_count=len(processing_result.get('generated_tags', [])),
+                   text_length=len(processing_result.get('ocr_text', '')))
         
-        return {"message": "Document approved successfully", "document_id": document_id}
+        return {
+            "message": "Document approved and processed successfully", 
+            "document_id": document_id,
+            "ocr_text_length": len(processing_result.get('ocr_text', '')),
+            "tags_generated": len(processing_result.get('generated_tags', []))
+        }
         
     except HTTPException:
         raise
@@ -515,6 +603,64 @@ async def reject_document(
         raise HTTPException(
             status_code=500,
             detail="An unexpected error occurred during document rejection"
+        )
+
+@router.delete("/delete-document/{document_id}")
+async def delete_document(
+    document_id: int, 
+    admin_user: AdminUser,
+    db: Session = Depends(get_db)
+):
+    """
+    Permanently delete a document and its associated file.
+    Only admin users can delete documents.
+    """
+    
+    try:
+        # Get document from database
+        document = db.query(Document).filter(Document.id == document_id).first()
+        
+        if not document:
+            raise HTTPException(status_code=404, detail="Document not found")
+        
+        # Store document info for logging
+        document_title = document.title
+        file_path = document.file_path
+        
+        # Delete file from S3 if it exists
+        if file_path:
+            try:
+                s3_service.delete_file(file_path)
+                logger.info("File deleted from S3", file_path=file_path)
+            except Exception as e:
+                logger.warning("Failed to delete file from S3", file_path=file_path, error=str(e))
+                # Continue with database deletion even if S3 deletion fails
+        
+        # Delete document from database
+        try:
+            db.delete(document)
+            db.commit()
+        except Exception as db_error:
+            db.rollback()
+            logger.error("Database error during document deletion", error=str(db_error))
+            raise HTTPException(status_code=500, detail="Failed to delete document from database")
+        
+        logger.info("Document deleted successfully", 
+                   document_id=document_id,
+                   title=document_title,
+                   deleted_by=admin_user.email)
+        
+        return {"message": "Document deleted successfully", "document_id": document_id}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Unexpected error during document deletion", 
+                    document_id=document_id,
+                    error=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail="An unexpected error occurred during document deletion"
         )
 
 @router.get("/documents", response_model=DocumentListResponse)
