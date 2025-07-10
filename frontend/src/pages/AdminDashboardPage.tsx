@@ -144,7 +144,7 @@ export default function AdminDashboardPage() {
           <nav className="space-y-2">
             <NavItem to="/admin-dashboard-page" icon={<LayoutDashboard className="mr-3 h-5 w-5" />} label="Dashboard Home" />
             <NavItem to="/admin-pending-documents-page" icon={<FileCheck className="mr-3 h-5 w-5" />} label="Pending Documents" />
-            {/* <NavItem to="/admin/approved-documents" icon={<FileText className="mr-3 h-5 w-5" />} label="Approved Documents" /> */}
+            <NavItem to="/admin-approved-documents-page" icon={<FileText className="mr-3 h-5 w-5" />} label="Approved Documents" />
             <NavItem to="/admin-banned-tags-page" icon={<ShieldBan className="mr-3 h-5 w-5" />} label="Manage Banned Tags" />
             {/* <NavItem to="/admin/users" icon={<Users className="mr-3 h-5 w-5" />} label="User Management" /> */}
             {/* <NavItem to="/admin/settings" icon={<Settings className="mr-3 h-5 w-5" />} label="Settings" /> */}

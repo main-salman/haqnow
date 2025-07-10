@@ -1,4 +1,5 @@
 import json
+import re
 from fastapi import APIRouter, HTTPException, Query, Request, Depends
 from pydantic import BaseModel
 from typing import List, Optional
@@ -15,6 +16,23 @@ from app.database import get_db, Document, BannedTag
 logger = structlog.get_logger()
 
 router = APIRouter()
+
+def filter_banned_words_from_text(text: str, banned_words: List[str]) -> str:
+    """Filter banned words from text content in search results."""
+    if not text or not banned_words:
+        return text
+    
+    try:
+        # Create a case-insensitive replacement pattern
+        for banned_word in banned_words:
+            # Use word boundaries to avoid partial matches
+            pattern = r'\b' + re.escape(banned_word.lower()) + r'\b'
+            text = re.sub(pattern, '[REDACTED]', text, flags=re.IGNORECASE)
+        
+        return text
+    except Exception as e:
+        logger.error("Error filtering banned words from search result", error=str(e))
+        return text
 
 # --- Pydantic Models ---
 class SearchDocumentResult(BaseModel):
@@ -67,7 +85,7 @@ async def search_documents(
         # Filter by status (only approved documents)
         query_builder = query_builder.filter(Document.status == "approved")
         
-        # Search in title, description, OCR text, and tags
+        # Search in title, description, OCR text, tags, and country/state fields
         if q:
             # Create search conditions for different fields
             search_conditions = []
@@ -76,6 +94,10 @@ async def search_documents(
             search_conditions.append(Document.title.ilike(f"%{q}%"))
             search_conditions.append(Document.description.ilike(f"%{q}%"))
             search_conditions.append(Document.ocr_text.ilike(f"%{q}%"))
+            
+            # Search in country and state fields
+            search_conditions.append(Document.country.ilike(f"%{q}%"))
+            search_conditions.append(Document.state.ilike(f"%{q}%"))
             
             # Search in generated_tags (JSON field)
             # For MySQL JSON search, we need to use JSON functions
@@ -105,10 +127,31 @@ async def search_documents(
         # Execute query
         documents_data = query_builder.all()
         
-        # Convert to response format
+        # Get banned words for filtering search results
+        banned_words = []
+        try:
+            banned_tags = db.query(BannedTag).all()
+            banned_words = [tag.tag.lower() for tag in banned_tags]
+        except Exception as e:
+            logger.warning("Failed to retrieve banned words for search filtering", error=str(e))
+        
+        # Convert to response format and filter banned words from results
         documents = []
         for doc in documents_data:
             doc_dict = doc.to_dict()
+            
+            # Filter banned words from OCR text and tags in search results
+            if banned_words:
+                if doc_dict.get('ocr_text'):
+                    doc_dict['ocr_text'] = filter_banned_words_from_text(doc_dict['ocr_text'], banned_words)
+                
+                if doc_dict.get('generated_tags'):
+                    filtered_tags = []
+                    for tag in doc_dict['generated_tags']:
+                        if tag.lower() not in banned_words:
+                            filtered_tags.append(tag)
+                    doc_dict['generated_tags'] = filtered_tags
+            
             documents.append(SearchDocumentResult(**doc_dict))
         
         # Group by country if requested
