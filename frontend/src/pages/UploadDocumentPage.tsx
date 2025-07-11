@@ -323,7 +323,6 @@ export default function UploadDocumentPage() {
         } catch {
           errorMessage = `HTTP ${uploadResponse.status}: ${uploadResponse.statusText}`;
         }
-        console.error("Backend upload error response:", uploadResponse);
         toast.error("Upload Failed", { 
             id: "upload-toast", 
             description: errorMessage
@@ -334,7 +333,6 @@ export default function UploadDocumentPage() {
       }
       
       const responseData = await uploadResponse.json();
-      console.log("Upload successful:", responseData);
 
       toast.success("Document Submitted!", {
           id: "upload-toast",
@@ -357,7 +355,6 @@ export default function UploadDocumentPage() {
       // navigate("/thank-you-for-submission");
 
     } catch (error) {
-      console.error("Submission process error:", error);
       toast.error("Unexpected Error", { 
           id: "upload-toast", 
           description: "An unexpected error occurred. Please try again or contact support."

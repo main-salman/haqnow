@@ -118,8 +118,8 @@ def check_upload_rate_limit(request: Request) -> None:
 
 def check_download_rate_limit(request: Request) -> None:
     """Check if download is rate limited and raise HTTPException if so."""
-    ip = rate_limiter.get_client_ip(request)
-    remaining_time = rate_limiter.check_rate_limit(ip, "download")
+    client_id = rate_limiter.get_client_identifier(request)
+    remaining_time = rate_limiter.check_rate_limit(client_id, "download")
     
     if remaining_time is not None:
         raise HTTPException(
