@@ -4,6 +4,7 @@ import dotenv
 from fastapi import FastAPI, APIRouter, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.responses import RedirectResponse
 import structlog
 
 # Load environment variables
@@ -108,6 +109,29 @@ def create_app() -> FastAPI:
     
     # Setup routers
     setup_routers(app)
+    
+    # Document serving route
+    @app.get("/documents/{filename}")
+    async def serve_document(filename: str):
+        """Serve documents directly by redirecting to S3 URL."""
+        try:
+            from app.services.s3_service import s3_service
+            
+            # Construct the S3 file path
+            file_path = f"documents/{filename}"
+            
+            # Get the public URL from S3
+            file_url = s3_service.get_file_url(file_path)
+            
+            if not file_url:
+                raise HTTPException(status_code=404, detail="Document not found")
+            
+            # Redirect to the S3 URL
+            return RedirectResponse(url=file_url, status_code=302)
+            
+        except Exception as e:
+            logger.error("Error serving document", filename=filename, error=str(e))
+            raise HTTPException(status_code=404, detail="Document not found")
     
     # Health check endpoint
     @app.get("/health")

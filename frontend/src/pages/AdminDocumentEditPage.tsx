@@ -398,9 +398,35 @@ export default function AdminDocumentEditPage() {
               <Label htmlFor="fileName" className="text-sm font-medium text-muted-foreground">File Name</Label>
               <p id="fileName" className="text-base ">{document.file_name || "N/A"}</p>
               {document.file_path && (
-                <a href={document.file_path} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline block mt-1">
+                <button
+                  onClick={async () => {
+                    try {
+                      const response = await fetch(`/api/search/download/${document.id}`, {
+                        method: 'GET',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                      });
+                      
+                      if (response.ok) {
+                        const data = await response.json();
+                        if (data.download_url) {
+                          window.open(data.download_url, '_blank');
+                        } else {
+                          throw new Error('No download URL received');
+                        }
+                      } else {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                      }
+                    } catch (error) {
+                      console.error('Download error:', error);
+                      toast.error('Failed to download document');
+                    }
+                  }}
+                  className="text-sm text-primary hover:underline block mt-1 bg-none border-none p-0"
+                >
                   View/Download PDF
-                </a>
+                </button>
               )}
             </div>
           </div>

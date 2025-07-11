@@ -42,6 +42,45 @@ export default function SearchPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchAttempted, setSearchAttempted] = useState(false);
+  const [downloadingDocId, setDownloadingDocId] = useState<number | null>(null);
+
+  const handleDocumentClick = useCallback(async (documentId: number) => {
+    setDownloadingDocId(documentId);
+    
+    try {
+      console.log(`[SearchPage] Getting download URL for document ${documentId}`);
+      
+      const response = await fetch(`/api/search/download/${documentId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log("[SearchPage] Download URL response:", data);
+
+      if (data && data.download_url) {
+        // Open the document in a new tab
+        window.open(data.download_url, '_blank');
+      } else {
+        throw new Error('No download URL received');
+      }
+    } catch (err: any) {
+      console.error("[SearchPage] Document download error:", err);
+      let errorMsg = "Failed to download document.";
+      if (err.message) {
+        errorMsg = err.message;
+      }
+      toast.error(`Document download failed: ${errorMsg}`);
+    } finally {
+      setDownloadingDocId(null);
+    }
+  }, []);
 
   const performSearch = useCallback(
     async (tagsToSearch: string, countryFilter?: string | null) => {
@@ -223,15 +262,17 @@ export default function SearchPage() {
             >
               <CardHeader>
                 <CardTitle className="text-xl font-serif">
-                  {doc.file_path ? (
-                    <a
-                      href={doc.file_path}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline"
+                  {doc.id ? (
+                    <button
+                      onClick={() => handleDocumentClick(doc.id)}
+                      className="text-primary hover:underline text-left flex items-center gap-2"
+                      disabled={downloadingDocId === doc.id}
                     >
+                      {downloadingDocId === doc.id && (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      )}
                       {doc.title || "Untitled Document"}
-                    </a>
+                    </button>
                   ) : (
                     doc.title || "Untitled Document"
                   )}
