@@ -867,9 +867,10 @@ The search functionality now provides comprehensive document information to help
 - **Email Notifications**: ✅ Shows "Anonymous" instead of IP addresses
 - **Rate Limiting**: ✅ Uses anonymous time-bucket system
 - **Application Logs**: ✅ No IP addresses logged
-- **Deployment**: ✅ Successfully deployed to production (v1.1.6)
+- **Deployment**: ✅ Successfully deployed to production (v1.1.7)
 - **Migration**: ✅ Database migration completed successfully
 - **API Fix**: ✅ Fixed 500 error in admin documents API after migration
+- **Upload Fix**: ✅ Fixed 500 error in file upload API after removing uploader_ip column
 
 **Result:**
 🎉 **PRIVACY COMPLIANCE SUCCESS** - Fadih.org now provides complete anonymity:
