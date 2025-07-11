@@ -48,30 +48,22 @@ export default function SearchPage() {
     setDownloadingDocId(documentId);
     
     try {
-      console.log(`[SearchPage] Getting download URL for document ${documentId}`);
+      // Direct download - the server now streams the file directly
+      const downloadUrl = `/api/search/download/${documentId}`;
       
-      const response = await fetch(`/api/search/download/${documentId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      console.log("[SearchPage] Download URL response:", data);
-
-      if (data && data.download_url) {
-        // Open the document in a new tab
-        window.open(data.download_url, '_blank');
-      } else {
-        throw new Error('No download URL received');
-      }
+      // Create a temporary link element and click it to trigger download
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      
+      // Add the link to the document, click it, and remove it
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.success("Document download started");
     } catch (err: any) {
-      console.error("[SearchPage] Document download error:", err);
       let errorMsg = "Failed to download document.";
       if (err.message) {
         errorMsg = err.message;

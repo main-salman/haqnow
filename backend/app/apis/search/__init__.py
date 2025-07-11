@@ -1,12 +1,15 @@
 import json
 import re
 from fastapi import APIRouter, HTTPException, Query, Request, Depends
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_, and_
 import os
 import structlog
+import requests
+from urllib.parse import urlparse
 
 # Import rate limiting, auth, and database
 from app.middleware.rate_limit import check_download_rate_limit, record_download
@@ -220,7 +223,8 @@ async def download_document(
     db: Session = Depends(get_db)
 ):
     """
-    Get download URL for a document.
+    Download a document file directly through the server.
+    This masks the S3 URL and shows the website URL instead.
     Rate limited to prevent abuse.
     """
     
@@ -244,7 +248,7 @@ async def download_document(
         # Get S3 service
         from app.services.s3_service import s3_service
         
-        # Generate download URL
+        # Generate download URL (used internally to fetch file)
         download_url = s3_service.get_download_url(file_path)
         
         if not download_url:
@@ -253,18 +257,69 @@ async def download_document(
         # Record download for rate limiting
         record_download(request)
         
-        logger.info("Download URL generated successfully", 
-                   document_id=document_id)
-        
-        return {"download_url": download_url, "document_id": document_id}
+        # Fetch file from S3 and stream it to user
+        try:
+            # Get file from S3
+            response = requests.get(download_url, stream=True)
+            response.raise_for_status()
+            
+            # Extract filename from file_path
+            filename = os.path.basename(file_path)
+            
+            # Determine content type based on file extension
+            content_type = "application/octet-stream"  # Default
+            if filename.lower().endswith('.pdf'):
+                content_type = "application/pdf"
+            elif filename.lower().endswith(('.jpg', '.jpeg')):
+                content_type = "image/jpeg"
+            elif filename.lower().endswith('.png'):
+                content_type = "image/png"
+            elif filename.lower().endswith('.gif'):
+                content_type = "image/gif"
+            elif filename.lower().endswith('.doc'):
+                content_type = "application/msword"
+            elif filename.lower().endswith('.docx'):
+                content_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            elif filename.lower().endswith('.xls'):
+                content_type = "application/vnd.ms-excel"
+            elif filename.lower().endswith('.xlsx'):
+                content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            elif filename.lower().endswith('.txt'):
+                content_type = "text/plain"
+            elif filename.lower().endswith('.csv'):
+                content_type = "text/csv"
+            
+            # Create streaming response
+            def generate():
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        yield chunk
+            
+            logger.info("Document download proxied successfully", 
+                       document_id=document_id,
+                       filename=filename)
+            
+            return StreamingResponse(
+                generate(),
+                media_type=content_type,
+                headers={
+                    "Content-Disposition": f"attachment; filename=\"{filename}\"",
+                    "Content-Length": str(response.headers.get("content-length", "")),
+                    "Cache-Control": "private, max-age=0, no-cache, no-store, must-revalidate"
+                }
+            )
+            
+        except requests.RequestException as req_error:
+            logger.error("Error fetching file from S3", document_id=document_id, error=str(req_error))
+            raise HTTPException(status_code=500, detail="Failed to fetch document file")
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error("Error generating download URL", document_id=document_id, error=str(e))
+        logger.error("Error downloading document", document_id=document_id, error=str(e))
         raise HTTPException(
             status_code=500,
-            detail="An error occurred while generating download URL"
+            detail="An error occurred while downloading the document"
         )
 
 @router.post("/add-tag", response_model=AddTagResponse)

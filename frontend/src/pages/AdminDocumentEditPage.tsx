@@ -399,25 +399,23 @@ export default function AdminDocumentEditPage() {
               <p id="fileName" className="text-base ">{document.file_name || "N/A"}</p>
               {document.file_path && (
                 <button
-                  onClick={async () => {
+                  onClick={() => {
                     try {
-                      const response = await fetch(`/api/search/download/${document.id}`, {
-                        method: 'GET',
-                        headers: {
-                          'Content-Type': 'application/json',
-                        },
-                      });
+                      // Direct download - the server now streams the file directly
+                      const downloadUrl = `/api/search/download/${document.id}`;
                       
-                      if (response.ok) {
-                        const data = await response.json();
-                        if (data.download_url) {
-                          window.open(data.download_url, '_blank');
-                        } else {
-                          throw new Error('No download URL received');
-                        }
-                      } else {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                      }
+                      // Create a temporary link element and click it to trigger download
+                      const link = document.createElement('a');
+                      link.href = downloadUrl;
+                      link.target = '_blank';
+                      link.rel = 'noopener noreferrer';
+                      
+                      // Add the link to the document, click it, and remove it
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                      
+                      toast.success("Document download started");
                     } catch (error) {
                       console.error('Download error:', error);
                       toast.error('Failed to download document');
