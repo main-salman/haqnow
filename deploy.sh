@@ -72,11 +72,11 @@ sudo systemctl stop foi-archive || true
 
 # Install/update backend dependencies
 cd backend
-python3 -m pip install -r requirements.txt
+source .venv/bin/activate && pip install -r requirements.txt
 
 # Run privacy migration if needed
 echo "🔒 Running privacy migration (IP address removal)..."
-python3 run_migration.py || echo "Migration already applied or not needed"
+source .venv/bin/activate && python run_migration.py || echo "Migration already applied or not needed"
 
 cd ..
 
