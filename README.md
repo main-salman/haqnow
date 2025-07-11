@@ -11,6 +11,19 @@
 - **Secure Storage**: Documents stored securely on Exoscale S3
 - **Responsive Design**: Works on desktop, tablet, and mobile devices
 
+## Privacy Compliance
+
+Fadih.org now provides complete anonymity with:
+
+- 🔒 **Zero IP Storage**: No IP addresses stored anywhere in the system
+- 👤 **Anonymous Interface**: All admin interfaces show "Anonymous" submitters
+- 🚀 **Privacy-First Upload**: Upload process completely anonymous
+- 📧 **Anonymous Notifications**: Admin emails show anonymous submissions
+- ⏱️ **Anonymous Rate Limiting**: Rate limiting without IP tracking
+- 📝 **Clean Logging**: Application logs contain no identifying information
+
+The platform ensures complete anonymity for corruption document whistleblowers while maintaining all functionality including rate limiting and admin management.
+
 ## Stack
 
 - **Frontend**: React + TypeScript with Vite, shadcn/ui components

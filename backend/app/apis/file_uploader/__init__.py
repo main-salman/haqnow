@@ -67,8 +67,7 @@ async def upload_file(
                 detail="File name is required"
             )
         
-        # Get client IP for logging
-        client_ip = request.client.host if request.client else "unknown"
+        # Anonymous upload - no IP tracking
         
         # Upload file to S3
         import io
@@ -100,7 +99,7 @@ async def upload_file(
             original_filename=file.filename,
             file_size=len(file_content),
             content_type=file.content_type or "application/octet-stream",
-            uploader_ip=client_ip,
+            uploader_ip=None,  # No IP tracking for privacy
             status="pending",  # Pending admin approval
             generated_tags=[]
         )
@@ -129,7 +128,7 @@ async def upload_file(
                 title=title,
                 country=country,
                 state=state,
-                uploader_ip=client_ip
+                uploader_ip=None  # No IP tracking for privacy
             )
         except Exception as e:
             logger.warning("Failed to send email notification", error=str(e))
@@ -139,8 +138,7 @@ async def upload_file(
         
         logger.info("Document uploaded successfully", 
                    document_id=document_id,
-                   file_path=file_path,
-                   client_ip=client_ip)
+                   file_path=file_path)
         
         return FileUploadResponse(
             file_url=file_url,
@@ -160,11 +158,11 @@ async def upload_file(
 
 @router.get("/rate-limit-status")
 async def get_rate_limit_status(request: Request):
-    """Get current rate limit status for the client IP."""
+    """Get current rate limit status for the client."""
     from app.middleware.rate_limit import rate_limiter
     
-    ip = rate_limiter.get_client_ip(request)
-    remaining_time = rate_limiter.check_rate_limit(ip, "upload")
+    client_id = rate_limiter.get_client_identifier(request)
+    remaining_time = rate_limiter.check_rate_limit(client_id, "upload")
     
     return {
         "rate_limited": remaining_time is not None,

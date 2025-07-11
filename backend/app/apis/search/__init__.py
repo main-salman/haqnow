@@ -254,8 +254,7 @@ async def download_document(
         record_download(request)
         
         logger.info("Download URL generated successfully", 
-                   document_id=document_id,
-                   client_ip=request.client.host if request.client else "unknown")
+                   document_id=document_id)
         
         return {"download_url": download_url, "document_id": document_id}
         

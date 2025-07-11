@@ -32,7 +32,6 @@ interface DocumentData {
   file_size: number | null;
   content_type: string | null;
   status: string;
-  uploader_ip: string | null;
   created_at: string;
   updated_at: string;
   processed_at: string | null;
@@ -182,7 +181,7 @@ export default function AdminApprovedDocumentsPage() {
 
   // Helper function to get submitter display
   const getSubmitterDisplay = (doc: DocumentData) => {
-    return doc.uploader_ip ? `IP: ${doc.uploader_ip}` : "Anonymous";
+    return "Anonymous";
   };
 
   // Helper function to format file size

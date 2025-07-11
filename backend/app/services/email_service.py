@@ -49,7 +49,7 @@ class EmailService:
             return False
     
     def notify_admin_new_document(self, document_id: str, title: str, country: str, 
-                                 state: str, uploader_ip: str) -> bool:
+                                 state: str, uploader_ip: str = None) -> bool:
         """Notify admin about a new document upload."""
         if not self.admin_email:
             logger.warning("Admin email not configured, skipping notification")
@@ -68,7 +68,7 @@ class EmailService:
                 <li><strong>Title:</strong> {title}</li>
                 <li><strong>Country:</strong> {country}</li>
                 <li><strong>State/Province:</strong> {state}</li>
-                <li><strong>Uploader IP:</strong> {uploader_ip}</li>
+                <li><strong>Uploader:</strong> Anonymous</li>
             </ul>
             
             <p>Please review and approve or reject this document in the admin dashboard.</p>

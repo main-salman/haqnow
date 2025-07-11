@@ -33,7 +33,6 @@ interface DocumentData {
   file_path: string | null;
   created_at: string;
   status: string;
-  uploader_ip: string | null;
 }
 
 // Mock data for countries filter - can be replaced with dynamic data later
@@ -189,8 +188,7 @@ export default function AdminPendingDocumentsPage() {
     const searchLower = searchTerm.toLowerCase();
     const matchesSearch = 
       (doc.title?.toLowerCase().includes(searchLower)) ||
-      (doc.original_filename?.toLowerCase().includes(searchLower)) ||
-      (doc.uploader_ip?.toLowerCase().includes(searchLower));
+      (doc.original_filename?.toLowerCase().includes(searchLower));
     
     const countryLower = doc.country?.toLowerCase().replace(/\s+/g, "") || "";
     const matchesCountry = selectedCountry === "all" || countryLower === selectedCountry.toLowerCase().replace(/\s+/g, "");
@@ -199,7 +197,7 @@ export default function AdminPendingDocumentsPage() {
   });
 
   const getSubmitterDisplay = (doc: DocumentData) => {
-    return doc.original_filename || doc.uploader_ip || "N/A";
+    return "Anonymous";
   };
 
   if (isLoading) {
@@ -236,7 +234,7 @@ export default function AdminPendingDocumentsPage() {
           <div className="flex-grow flex items-center space-x-2 w-full md:w-auto">
             <SearchIcon className="text-muted-foreground"/>
             <Input 
-              placeholder="Search by title, submitter, filename..." 
+              placeholder="Search by title, filename..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="flex-grow"

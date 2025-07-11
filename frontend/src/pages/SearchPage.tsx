@@ -282,6 +282,13 @@ export default function SearchPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                {doc.description && (
+                  <div className="mb-4">
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {doc.description}
+                    </p>
+                  </div>
+                )}
                 {doc.generated_tags && doc.generated_tags.length > 0 && (
                   <div className="mb-3">
                     <h4 className="text-sm font-medium mb-1 text-muted-foreground">

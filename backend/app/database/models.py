@@ -30,8 +30,7 @@ class Document(Base):
     status = Column(String(50), nullable=False, default="pending", index=True)
     # Status values: pending, processed, approved, rejected
     
-    # Upload information
-    uploader_ip = Column(String(45), nullable=True)  # IPv6 support
+    # Upload information - IP addresses removed for privacy compliance
     
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
@@ -64,7 +63,6 @@ class Document(Base):
             "ocr_text": self.ocr_text,
             "generated_tags": self.generated_tags or [],
             "status": self.status,
-            "uploader_ip": self.uploader_ip,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "processed_at": self.processed_at.isoformat() if self.processed_at else None,

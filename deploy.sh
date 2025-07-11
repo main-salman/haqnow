@@ -67,18 +67,37 @@ cd /opt/foi-archive
 # Pull latest changes
 git pull origin main
 
+# Stop backend service during deployment
+sudo systemctl stop foi-archive || true
+
+# Install/update backend dependencies
+cd backend
+python3 -m pip install -r requirements.txt
+
+# Run privacy migration if needed
+echo "🔒 Running privacy migration (IP address removal)..."
+python3 run_migration.py || echo "Migration already applied or not needed"
+
+cd ..
+
 # Build frontend on server
 cd frontend
 npm run build
 
 # Deploy to nginx
 sudo cp -r dist/* /var/www/html/
+sudo chown -R www-data:www-data /var/www/html
 
-# Restart nginx to clear cache
+cd ..
+
+# Restart services
+sudo systemctl start foi-archive
+sudo systemctl enable foi-archive
 sudo systemctl reload nginx
 
 echo ""
 echo "✅ Fadih.org v$NEW_VERSION deployed successfully!"
+echo "🔒 Privacy-compliant with complete IP address removal"
 echo "🌍 Visit: http://159.100.250.145"
 echo "📊 Admin: http://159.100.250.145/admin-login-page"
 EOF

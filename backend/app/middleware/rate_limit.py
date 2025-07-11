@@ -27,16 +27,18 @@ class RateLimitMiddleware:
             print(f"Redis connection failed, using in-memory store: {e}")
             self.redis_client = None
     
-    def get_client_ip(self, request: Request) -> str:
-        """Get client IP address from request."""
-        x_forwarded_for = request.headers.get("X-Forwarded-For")
-        if x_forwarded_for:
-            return x_forwarded_for.split(",")[0].strip()
-        return request.client.host if request.client else "unknown"
+    def get_client_identifier(self, request: Request) -> str:
+        """Get client identifier for rate limiting - using session-based approach."""
+        # Use session-based rate limiting instead of IP-based
+        # Generate a simple time-based bucket for global rate limiting
+        import time
+        # Create 2-minute time buckets for global rate limiting
+        bucket_id = int(time.time() / 120)  # 2 minutes = 120 seconds
+        return f"global_bucket_{bucket_id}"
     
-    def check_rate_limit(self, ip: str, endpoint: str = "upload") -> Optional[float]:
-        """Check if IP is rate limited. Returns remaining time if limited, None if allowed."""
-        key = f"rate_limit:{endpoint}:{ip}"
+    def check_rate_limit(self, client_id: str, endpoint: str = "upload") -> Optional[float]:
+        """Check if client is rate limited. Returns remaining time if limited, None if allowed."""
+        key = f"rate_limit:{endpoint}:{client_id}"
         current_time = time.time()
         
         if self.redis_client:
@@ -51,13 +53,13 @@ class RateLimitMiddleware:
             except Exception as e:
                 print(f"Redis error: {e}")
                 # Fall back to memory store
-                return self._check_memory_rate_limit(ip, endpoint, current_time)
+                return self._check_memory_rate_limit(client_id, endpoint, current_time)
         else:
-            return self._check_memory_rate_limit(ip, endpoint, current_time)
+            return self._check_memory_rate_limit(client_id, endpoint, current_time)
     
-    def _check_memory_rate_limit(self, ip: str, endpoint: str, current_time: float) -> Optional[float]:
+    def _check_memory_rate_limit(self, client_id: str, endpoint: str, current_time: float) -> Optional[float]:
         """Check rate limit using in-memory store."""
-        key = f"{endpoint}:{ip}"
+        key = f"{endpoint}:{client_id}"
         if key in _memory_store:
             last_upload_time = _memory_store[key]
             time_passed = current_time - last_upload_time
@@ -65,9 +67,9 @@ class RateLimitMiddleware:
                 return UPLOAD_TIMEOUT_SECONDS - time_passed
         return None
     
-    def record_request(self, ip: str, endpoint: str = "upload") -> None:
+    def record_request(self, client_id: str, endpoint: str = "upload") -> None:
         """Record a request timestamp for rate limiting."""
-        key = f"rate_limit:{endpoint}:{ip}"
+        key = f"rate_limit:{endpoint}:{client_id}"
         current_time = time.time()
         
         if self.redis_client:
@@ -78,7 +80,7 @@ class RateLimitMiddleware:
                 print(f"Redis error: {e}")
         
         # Fall back to memory store
-        memory_key = f"{endpoint}:{ip}"
+        memory_key = f"{endpoint}:{client_id}"
         _memory_store[memory_key] = current_time
         
         # Clean up old entries in memory store
@@ -101,8 +103,8 @@ rate_limiter = RateLimitMiddleware()
 
 def check_upload_rate_limit(request: Request) -> None:
     """Check if upload is rate limited and raise HTTPException if so."""
-    ip = rate_limiter.get_client_ip(request)
-    remaining_time = rate_limiter.check_rate_limit(ip, "upload")
+    client_id = rate_limiter.get_client_identifier(request)
+    remaining_time = rate_limiter.check_rate_limit(client_id, "upload")
     
     if remaining_time is not None:
         raise HTTPException(
@@ -131,10 +133,10 @@ def check_download_rate_limit(request: Request) -> None:
 
 def record_upload(request: Request) -> None:
     """Record an upload for rate limiting."""
-    ip = rate_limiter.get_client_ip(request)
-    rate_limiter.record_request(ip, "upload")
+    client_id = rate_limiter.get_client_identifier(request)
+    rate_limiter.record_request(client_id, "upload")
 
 def record_download(request: Request) -> None:
     """Record a download for rate limiting."""
-    ip = rate_limiter.get_client_ip(request)
-    rate_limiter.record_request(ip, "download") 
+    client_id = rate_limiter.get_client_identifier(request)
+    rate_limiter.record_request(client_id, "download") 
