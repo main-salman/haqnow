@@ -99,7 +99,6 @@ async def upload_file(
             original_filename=file.filename,
             file_size=len(file_content),
             content_type=file.content_type or "application/octet-stream",
-            uploader_ip=None,  # No IP tracking for privacy
             status="pending",  # Pending admin approval
             generated_tags=[]
         )
