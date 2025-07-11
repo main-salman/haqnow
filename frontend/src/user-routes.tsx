@@ -13,6 +13,7 @@ const AdminLoginPage = lazy(() => import("./pages/AdminLoginPage.tsx"));
 const AdminPendingDocumentsPage = lazy(() => import("./pages/AdminPendingDocumentsPage.tsx"));
 const App = lazy(() => import("./pages/App.tsx"));
 const DocumentDetailPage = lazy(() => import("./pages/DocumentDetailPage.tsx"));
+const PrivacyGuaranteedPage = lazy(() => import("./pages/PrivacyGuaranteedPage.tsx"));
 const SearchPage = lazy(() => import("./pages/SearchPage.tsx"));
 const UploadDocumentPage = lazy(() => import("./pages/UploadDocumentPage.tsx"));
 
@@ -33,6 +34,8 @@ export const userRoutes: RouteObject[] = [
 	{ path: "/", element: <App />},
 	{ path: "/document-detail-page", element: <DocumentDetailPage />},
 	{ path: "/documentdetailpage", element: <DocumentDetailPage />},
+	{ path: "/privacy-guaranteed-page", element: <PrivacyGuaranteedPage />},
+	{ path: "/privacyguaranteedpage", element: <PrivacyGuaranteedPage />},
 	{ path: "/search-page", element: <SearchPage />},
 	{ path: "/searchpage", element: <SearchPage />},
 	{ path: "/upload-document-page", element: <UploadDocumentPage />},

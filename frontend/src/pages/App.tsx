@@ -36,6 +36,9 @@ export default function App() {
             <Button variant="ghost" onClick={() => navigate('/upload-document-page')}>
               Upload
             </Button>
+            <Button variant="ghost" onClick={() => navigate('/privacy-guaranteed-page')}>
+              Privacy Guaranteed
+            </Button>
             <Button variant="ghost" onClick={() => navigate('/admin-login-page')}>
               Admin
             </Button>
