@@ -103,11 +103,11 @@ async def get_section_translations(
 
 @router.get("/admin/all", response_model=List[TranslationResponse])
 async def get_all_translations(
+    admin_user: AdminUser,
+    db: Session = Depends(get_db),
     language: Optional[str] = Query(None, description="Filter by language"),
     section: Optional[str] = Query(None, description="Filter by section"),
-    search: Optional[str] = Query(None, description="Search in keys or values"),
-    admin_user: AdminUser = Depends(),
-    db: Session = Depends(get_db)
+    search: Optional[str] = Query(None, description="Search in keys or values")
 ):
     """Get all translations with admin authentication. For admin management interface."""
     try:
@@ -144,7 +144,7 @@ async def get_all_translations(
 @router.post("/admin/create", response_model=TranslationResponse)
 async def create_translation(
     translation_data: TranslationCreate,
-    admin_user: AdminUser = Depends(),
+    admin_user: AdminUser,
     db: Session = Depends(get_db)
 ):
     """Create a new translation entry."""
@@ -198,7 +198,7 @@ async def create_translation(
 async def update_translation(
     translation_id: int,
     update_data: TranslationUpdate,
-    admin_user: AdminUser = Depends(),
+    admin_user: AdminUser,
     db: Session = Depends(get_db)
 ):
     """Update an existing translation."""
@@ -237,7 +237,7 @@ async def bulk_update_translations(
     language_code: str,
     section_name: str,
     update_data: TranslationBulkUpdate,
-    admin_user: AdminUser = Depends(),
+    admin_user: AdminUser,
     db: Session = Depends(get_db)
 ):
     """Bulk update translations for a specific language and section."""
@@ -298,7 +298,7 @@ async def bulk_update_translations(
 @router.delete("/admin/delete/{translation_id}")
 async def delete_translation(
     translation_id: int,
-    admin_user: AdminUser = Depends(),
+    admin_user: AdminUser,
     db: Session = Depends(get_db)
 ):
     """Delete a translation."""
