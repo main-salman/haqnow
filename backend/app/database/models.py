@@ -1,6 +1,6 @@
 """SQLAlchemy models for FOI Archive database."""
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, JSON, Float, Boolean
+from sqlalchemy import Column, Integer, String, Text, DateTime, JSON, Float, Boolean, UniqueConstraint
 from sqlalchemy.sql import func
 from .database import Base
 
@@ -95,4 +95,39 @@ class BannedTag(Base):
             "reason": self.reason,
             "banned_by": self.banned_by,
             "banned_at": self.banned_at.isoformat() if self.banned_at else None
+        }
+
+class Translation(Base):
+    """Model for storing multilingual content translations."""
+    
+    __tablename__ = "translations"
+    
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    key = Column(String(200), nullable=False, index=True)
+    language = Column(String(5), nullable=False, index=True)
+    value = Column(Text, nullable=False)
+    section = Column(String(50), nullable=False, index=True)  # navigation, homepage, search, upload, privacy, general
+    updated_by = Column(String(255), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    
+    # Composite unique constraint on key + language
+    __table_args__ = (
+        UniqueConstraint('key', 'language', name='unique_key_language'),
+    )
+    
+    def __repr__(self):
+        return f"<Translation(id={self.id}, key='{self.key}', language='{self.language}')>"
+    
+    def to_dict(self):
+        """Convert model to dictionary."""
+        return {
+            "id": self.id,
+            "key": self.key,
+            "language": self.language,
+            "value": self.value,
+            "section": self.section,
+            "updated_by": self.updated_by,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None
         } 

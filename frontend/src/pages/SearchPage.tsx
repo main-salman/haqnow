@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,6 +37,7 @@ interface SearchDocumentResult {
 export default function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [tagsInput, setTagsInput] = useState(searchParams.get("tags") || "");
   const [searchResults, setSearchResults] = useState<SearchDocumentResult[]>([]);
@@ -179,20 +181,20 @@ export default function SearchPage() {
     <div className="container mx-auto p-4 md:p-8 max-w-4xl">
       <Button variant="outline" onClick={() => navigate("/")} className="mb-6">
         <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to Home
+        {t('search.backToHome')}
       </Button>
 
       <h1 className="text-3xl font-bold mb-2 font-serif text-center">
-        Search Documents by Tags
+        {t('search.title')}
       </h1>
       <p className="text-muted-foreground mb-8 text-center">
-        Enter comma-separated tags to find relevant documents.
+        {t('search.subtitle')}
       </p>
 
       <form onSubmit={handleSubmit} className="flex items-center space-x-2 mb-8">
         <Input
           type="text"
-          placeholder="e.g., report, budget, environment"
+          placeholder={t('search.placeholder')}
           value={tagsInput}
           onChange={handleInputChange}
           className="flex-grow text-base p-3"
@@ -203,14 +205,14 @@ export default function SearchPage() {
           ) : (
             <SearchIcon className="mr-2 h-5 w-5" />
           )}
-          Search
+          {t('search.button')}
         </Button>
       </form>
 
       {isLoading && (
         <div className="flex justify-center items-center py-10">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="ml-3 text-lg">Searching...</p>
+          <p className="ml-3 text-lg">{t('search.searching')}</p>
         </div>
       )}
 
@@ -218,7 +220,7 @@ export default function SearchPage() {
         <Card className="bg-destructive/10 border-destructive">
           <CardHeader>
             <CardTitle className="flex items-center text-destructive">
-              <AlertCircle className="mr-2 h-5 w-5" /> Search Error
+              <AlertCircle className="mr-2 h-5 w-5" /> {t('search.errorTitle')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -233,10 +235,9 @@ export default function SearchPage() {
         searchResults.length === 0 && (
           <div className="text-center text-muted-foreground py-12">
             <FileText className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-            <p className="text-xl font-semibold">No Documents Found</p>
+            <p className="text-xl font-semibold">{t('search.noResults')}</p>
             <p>
-              No documents matched the tags: "{tagsInput}". Try different or
-              broader tags.
+              {t('search.tryDifferent')}
             </p>
           </div>
         )}
@@ -244,8 +245,7 @@ export default function SearchPage() {
       {!isLoading && !error && searchResults.length > 0 && (
         <div className="space-y-6">
           <h2 className="text-2xl font-semibold">
-            Found {searchResults.length} document
-            {searchResults.length === 1 ? "" : "s"}
+            {searchResults.length} {t('search.resultsFound')}
           </h2>
           {searchResults.map((doc) => (
             <Card
@@ -270,7 +270,7 @@ export default function SearchPage() {
                   )}
                 </CardTitle>
                 <CardDescription>
-                  Country: {doc.country || "N/A"}
+                  {t('search.country')}: {doc.country || "N/A"}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -284,7 +284,7 @@ export default function SearchPage() {
                 {doc.generated_tags && doc.generated_tags.length > 0 && (
                   <div className="mb-3">
                     <h4 className="text-sm font-medium mb-1 text-muted-foreground">
-                      Tags:
+                      {t('search.tags')}:
                     </h4>
                     <div className="flex flex-wrap gap-2">
                       {doc.generated_tags.map((tag, index) => (

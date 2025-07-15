@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,41 +21,42 @@ import {
 
 export default function PrivacyGuaranteedPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const privacyFeatures = [
     {
       icon: <Database className="h-6 w-6" />,
-      title: "Zero IP Storage",
-      description: "Completely removed uploader_ip column from database schema. No IP addresses stored anywhere.",
+      title: t('privacy.cardZeroIpStorage'),
+      description: t('privacy.cardZeroIpDescription'),
       githubLink: "https://github.com/main-salman/fadih/blob/main/backend/app/database/models.py"
     },
     {
       icon: <Shield className="h-6 w-6" />,
-      title: "Anonymous Interface",
-      description: "All admin interfaces show 'Anonymous' for document submitters. No identifying information displayed.",
+      title: t('privacy.cardAnonymousInterface'),
+      description: t('privacy.cardAnonymousDescription'),
       githubLink: "https://github.com/main-salman/fadih/blob/main/frontend/src/pages/AdminApprovedDocumentsPage.tsx"
     },
     {
       icon: <FileText className="h-6 w-6" />,
-      title: "Privacy-First Upload",
-      description: "Upload process completely anonymous. No IP capture during document submission.",
+      title: t('privacy.cardPrivacyFirstUpload'),
+      description: t('privacy.cardPrivacyFirstDescription'),
       githubLink: "https://github.com/main-salman/fadih/blob/main/backend/app/apis/file_uploader/__init__.py"
     },
     {
       icon: <Server className="h-6 w-6" />,
-      title: "Clean Server Logs",
-      description: "Custom nginx log format excludes IP addresses. System logs filtered for privacy.",
+      title: t('privacy.cardCleanServerLogs'),
+      description: t('privacy.cardCleanServerDescription'),
       githubLink: "https://github.com/main-salman/fadih/blob/main/backend/app/middleware/rate_limit.py"
     }
   ];
 
   const privacyGuarantees = [
-    "NEVER stores IP addresses in any database",
-    "NEVER logs IP addresses in web server logs",
-    "NEVER forwards IP addresses to backend applications",
-    "NEVER includes identifying information in admin interfaces",
-    "NEVER exposes cloud storage infrastructure to users",
-    "NEVER tracks or identifies document uploaders"
+    t('privacy.guaranteeNeverLog'),
+    t('privacy.guaranteeNeverStore'),
+    t('privacy.guaranteeNeverTrack'),
+    t('privacy.guaranteeNeverShare'),
+    t('privacy.guaranteeNeverRequire'),
+    t('privacy.guaranteeNeverCompromise')
   ];
 
   const technicalLayers = [
@@ -97,16 +99,15 @@ export default function PrivacyGuaranteedPage() {
         <div className="container mx-auto">
           <Button variant="outline" onClick={() => navigate("/")} className="mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Home
+            {t('privacy.backToHome')}
           </Button>
           <div className="text-center">
             <div className="flex items-center justify-center space-x-2 mb-4">
               <Shield className="h-8 w-8 text-primary" />
-              <h1 className="text-4xl font-bold font-serif">Privacy Guaranteed</h1>
+              <h1 className="text-4xl font-bold font-serif">{t('privacy.title')}</h1>
             </div>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Fadih.org provides <strong>COMPLETE ANONYMITY</strong> for corruption document whistleblowers. 
-              Every level of our infrastructure has been designed and verified to ensure zero tracking or identification of users.
+              {t('privacy.subtitle')}
             </p>
           </div>
         </div>

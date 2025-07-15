@@ -6,6 +6,7 @@ import React, { useState, useCallback, useEffect } from "react";
 // import { v4 as uuidv4 } from 'uuid'; // Not available, will use Date.now() + random string
 import { useDropzone } from "react-dropzone";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -67,6 +68,7 @@ interface FormData {
 
 export default function UploadDocumentPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<FormData>({
     title: "",
     description: "",
@@ -368,9 +370,9 @@ export default function UploadDocumentPage() {
       <Card className="w-full max-w-2xl shadow-xl">
         <form onSubmit={handleSubmit} noValidate>
           <CardHeader className="text-center">
-            <CardTitle className="text-3xl font-serif">Upload Corruption Document</CardTitle>
+            <CardTitle className="text-3xl font-serif">{t('upload.title')}</CardTitle>
             <CardDescription>
-              Expose corruption anonymously. All submissions are reviewed before publication.
+              {t('upload.subtitle')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -400,28 +402,28 @@ export default function UploadDocumentPage() {
 
             {/* Supported file types info */}
             <div className="text-xs text-muted-foreground">
-              <p>Supported formats: PDF, Word (DOC/DOCX), Excel (XLS/XLSX), CSV, Text files, Images (JPG, PNG, GIF, BMP, TIFF, WebP), RTF, ODT, ODS, ZIP</p>
+              <p>{t('upload.fileNote')}</p>
             </div>
 
             {/* Form Fields */}
             <div className="space-y-2">
-              <Label htmlFor="title">Document Title <span className="text-destructive">*</span></Label>
-              <Input id="title" name="title" value={formData.title} onChange={handleChange} placeholder="e.g., City Council Meeting Minutes March 2024" className={errors.title ? "border-destructive" : ""} aria-invalid={!!errors.title} aria-describedby={errors.title ? "title-error" : undefined} />
+              <Label htmlFor="title">{t('upload.documentTitle')} <span className="text-destructive">*</span></Label>
+              <Input id="title" name="title" value={formData.title} onChange={handleChange} placeholder={t('upload.titlePlaceholder')} className={errors.title ? "border-destructive" : ""} aria-invalid={!!errors.title} aria-describedby={errors.title ? "title-error" : undefined} />
               {errors.title && <p id="title-error" className="text-sm text-destructive flex items-center"><AlertCircle className="h-4 w-4 mr-1" />{errors.title}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description (min 20 characters) <span className="text-destructive">*</span></Label>
-              <Textarea id="description" name="description" value={formData.description} onChange={handleChange} placeholder="Provide a brief summary of the document's content and significance..." rows={4} className={errors.description ? "border-destructive" : ""} aria-invalid={!!errors.description} aria-describedby={errors.description ? "description-error" : undefined} />
+              <Label htmlFor="description">{t('upload.description')} <span className="text-destructive">*</span></Label>
+              <Textarea id="description" name="description" value={formData.description} onChange={handleChange} placeholder={t('upload.descriptionPlaceholder')} rows={4} className={errors.description ? "border-destructive" : ""} aria-invalid={!!errors.description} aria-describedby={errors.description ? "description-error" : undefined} />
               {errors.description && <p id="description-error" className="text-sm text-destructive flex items-center"><AlertCircle className="h-4 w-4 mr-1" />{errors.description}</p>}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="country">Country <span className="text-destructive">*</span></Label>
+                <Label htmlFor="country">{t('upload.country')} <span className="text-destructive">*</span></Label>
                 <Select name="country" value={formData.country} onValueChange={(value) => handleSelectChange("country", value)} >
                   <SelectTrigger id="country" className={errors.country ? "border-destructive" : ""} aria-invalid={!!errors.country} aria-describedby={errors.country ? "country-error" : undefined}>
-                    <SelectValue placeholder="Select country" />
+                    <SelectValue placeholder={t('upload.countryPlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
                     {countriesData.map(c => <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>)}
@@ -433,7 +435,7 @@ export default function UploadDocumentPage() {
               {/* State/Province Dropdown - Added for MYA-19 */}
               <div className="space-y-2">
                 <Label htmlFor="stateProvince">
-                  State / Province 
+                  {t('upload.state')}
                   {formData.adminLevel === 'state' && <span className="text-destructive">*</span>}
                 </Label>
                 <Select 
@@ -443,7 +445,7 @@ export default function UploadDocumentPage() {
                   disabled={!formData.country || (formData.adminLevel !== 'federal' && currentStates.length <= 1) || formData.adminLevel === 'federal' || (formData.adminLevel === 'state' && currentStates.length > 0 && currentStates[0].name === "Federal / National" && currentStates.length === 1) }
                 >
                   <SelectTrigger id="stateProvince" className={errors.stateProvince ? "border-destructive" : ""} aria-invalid={!!errors.stateProvince} aria-describedby={errors.stateProvince ? "stateProvince-error" : undefined}>
-                    <SelectValue placeholder={formData.adminLevel === 'federal' ? "Federal / National (auto)" : "Select state/province"} />
+                    <SelectValue placeholder={formData.adminLevel === 'federal' ? "Federal / National (auto)" : t('upload.statePlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
                     {currentStates.map(s => <SelectItem key={s.name} value={s.name} disabled={s.name === "Federal / National" && formData.adminLevel === 'state' && currentStates.length > 1}>{s.name}</SelectItem>)}
@@ -495,9 +497,9 @@ export default function UploadDocumentPage() {
             </p>
             <Button type="submit" className="w-full md:w-1/2 py-3 text-base" disabled={isSubmitting}>
               {isSubmitting ? (
-                <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Submitting...</>
+                <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> {t('upload.uploading')}</>
               ) : (
-                <><UploadCloud className="mr-2 h-5 w-5" /> Submit Document for Review</>
+                <><UploadCloud className="mr-2 h-5 w-5" /> {t('upload.submitButton')}</>
               )}
             </Button>
           </CardFooter>

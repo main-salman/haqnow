@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import CountryDocStatsList from '../components/CountryDocStatsList';
 import Version from '../components/Version';
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
 
 export default function App() {
   const [searchTerm, setSearchTerm] = useState(""); // Added state for search term
   const navigate = useNavigate(); // Added navigation hook
+  const { t } = useTranslation(); // Added translation hook
 
   // Added search handler
   const handleSearch = () => {
@@ -26,23 +29,26 @@ export default function App() {
               <span className="text-primary-foreground font-bold text-sm">F</span>
             </div>
             <h1 className="text-xl md:text-2xl font-bold tracking-tight">
-              Fadih.org
+              {t('navigation.brand')}
             </h1>
           </div>
-          <nav className="hidden md:flex space-x-6">
-            <Button variant="ghost" onClick={() => navigate('/search-page')}>
-              Search
-            </Button>
-            <Button variant="ghost" onClick={() => navigate('/upload-document-page')}>
-              Upload
-            </Button>
-            <Button variant="ghost" onClick={() => navigate('/privacy-guaranteed-page')}>
-              Privacy Guaranteed
-            </Button>
-            <Button variant="ghost" onClick={() => navigate('/admin-login-page')}>
-              Admin
-            </Button>
-          </nav>
+          <div className="flex items-center space-x-4">
+            <nav className="hidden md:flex space-x-6">
+              <Button variant="ghost" onClick={() => navigate('/search-page')}>
+                {t('navigation.search')}
+              </Button>
+              <Button variant="ghost" onClick={() => navigate('/upload-document-page')}>
+                {t('navigation.upload')}
+              </Button>
+              <Button variant="ghost" onClick={() => navigate('/privacy-guaranteed-page')}>
+                {t('navigation.privacy')}
+              </Button>
+              <Button variant="ghost" onClick={() => navigate('/admin-login-page')}>
+                {t('navigation.admin')}
+              </Button>
+            </nav>
+            <LanguageSwitcher />
+          </div>
         </div>
       </header>
 
@@ -50,13 +56,10 @@ export default function App() {
         <div className="space-y-10 md:space-y-16">
           <section className="text-center space-y-4">
             <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
-              Expose Corruption Documents Worldwide
+              {t('homepage.title')}
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Fadih.org is a platform dedicated to collecting, organizing, and
-              providing access to documents that expose corruption from around the
-              globe. Upload anonymously, search freely, and contribute to a
-              growing repository of truth and transparency.
+              {t('homepage.subtitle')}
             </p>
           </section>
 
@@ -64,7 +67,7 @@ export default function App() {
             <div className="flex w-full items-center space-x-2">
               <Input
                 type="search"
-                placeholder="Search corruption documents by keyword, country, organization..."
+                placeholder={t('homepage.searchPlaceholder')}
                 className="flex-grow"
                 aria-label="Search documents"
                 value={searchTerm} // Added value
@@ -73,21 +76,21 @@ export default function App() {
               />
               <Button type="button" aria-label="Submit search" onClick={handleSearch}> {/* Changed to type="button" and added onClick */}
                 <Search className="h-4 w-4 mr-2" />
-                Search
+                {t('homepage.searchButton')}
               </Button>
             </div>
           </section>
 
           <section className="text-center space-y-4">
             <h3 className="text-xl md:text-2xl font-semibold tracking-tight">
-              Global Corruption Document Distribution
+              {t('homepage.mapTitle')}
             </h3>
             <div
               className="bg-muted/40 border border-dashed border-border rounded-lg min-h-[300px] md:min-h-[400px] flex items-center justify-center"
               aria-label="World map placeholder"
             >
               <p className="text-muted-foreground">
-                Interactive World Map Coming Soon
+                {t('homepage.mapPlaceholder')}
               </p>
             </div>
             {/* MYA-21: Added CountryDocStatsList below map placeholder */}
@@ -100,7 +103,7 @@ export default function App() {
 
       <footer className="py-6 px-4 md:px-8 border-t border-border text-center">
         <p className="text-sm text-muted-foreground">
-          &copy; {new Date().getFullYear()} Fadih.org. All rights reserved.
+          &copy; {new Date().getFullYear()} {t('navigation.brand')}. {t('homepage.copyright')}
           <Version />
         </p>
       </footer>
