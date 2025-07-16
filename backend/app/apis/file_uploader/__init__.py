@@ -12,6 +12,7 @@ from sqlalchemy import func
 # Import new services and database
 from app.services.s3_service import s3_service
 from app.services.email_service import email_service
+from app.services.metadata_service import metadata_service
 from app.middleware.rate_limit import check_upload_rate_limit, record_upload
 from app.database import get_db, Document
 
@@ -69,26 +70,51 @@ async def upload_file(
         
         # Anonymous upload - no IP tracking
         
-        # Upload file to S3
+        # PRIVACY PROTECTION: Strip metadata and convert to clean PDF
+        logger.info("Starting metadata stripping process",
+                   original_filename=file.filename,
+                   original_size=len(file_content))
+        
+        try:
+            clean_pdf_bytes, clean_filename = metadata_service.process_uploaded_file(
+                file_content, 
+                file.filename, 
+                file.content_type or "application/octet-stream"
+            )
+            
+            logger.info("Metadata stripping completed",
+                       original_filename=file.filename,
+                       clean_filename=clean_filename,
+                       original_size=len(file_content),
+                       clean_size=len(clean_pdf_bytes))
+        
+        except Exception as e:
+            logger.error("Metadata stripping failed", error=str(e))
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to process file for privacy protection"
+            )
+        
+        # Upload ONLY the clean PDF to S3 (original file is never stored)
         import io
-        file_stream = io.BytesIO(file_content)
+        clean_file_stream = io.BytesIO(clean_pdf_bytes)
         
         file_path = s3_service.upload_file(
-            file_stream,
-            file.filename,
-            file.content_type
+            clean_file_stream,
+            clean_filename,
+            "application/pdf"  # All files are now PDFs
         )
         
         if not file_path:
             raise HTTPException(
                 status_code=500,
-                detail="Failed to upload file to storage"
+                detail="Failed to upload cleaned file to storage"
             )
         
         # Get file URL
         file_url = s3_service.get_file_url(file_path)
         
-        # Create database entry
+        # Create database entry (storing clean PDF information only)
         document = Document(
             title=title,
             country=country,
@@ -96,9 +122,9 @@ async def upload_file(
             description=description,
             file_path=file_path,
             file_url=file_url,
-            original_filename=file.filename,
-            file_size=len(file_content),
-            content_type=file.content_type or "application/octet-stream",
+            original_filename=clean_filename,  # Store clean filename
+            file_size=len(clean_pdf_bytes),    # Store clean file size
+            content_type="application/pdf",    # All files are now PDFs
             status="pending",  # Pending admin approval
             generated_tags=[]
         )
@@ -143,7 +169,7 @@ async def upload_file(
             file_url=file_url,
             file_path=file_path,
             document_id=document_id,
-            message="File uploaded successfully. Document is pending admin approval and will be processed after approval."
+            message="File uploaded successfully with complete metadata removal for privacy protection. Document converted to clean PDF format and is pending admin approval."
         )
     
     except HTTPException:

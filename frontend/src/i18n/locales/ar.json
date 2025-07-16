@@ -100,7 +100,8 @@
     "guaranteeNeverTrack": "لن نتتبع سلوك المستخدم أبداً",
     "guaranteeNeverShare": "لن نشارك البيانات مع أطراف ثالثة أبداً",
     "guaranteeNeverRequire": "لن نطلب تسجيل المستخدم أبداً",
-    "guaranteeNeverCompromise": "لن نساوم على إخفاء الهوية أبداً"
+    "guaranteeNeverCompromise": "لن نساوم على إخفاء الهوية أبداً",
+    "guaranteeNeverKeepMetadata": "لن نحتفظ ببيانات تعريف الوثائق أبداً"
   },
   "general": {
     "loading": "جاري التحميل...",

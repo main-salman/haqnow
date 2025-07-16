@@ -69,7 +69,8 @@
     "guaranteeNeverTrack": "Kullanıcı etkinliklerini ASLA takip etmeyiz",
     "guaranteeNeverShare": "Kullanıcı verilerini ASLA paylaşmayız",
     "guaranteeNeverRequire": "Kullanıcı kaydını ASLA zorunlu kılmayız",
-    "guaranteeNeverCompromise": "Anonimlikten ASLA taviz vermeyiz"
+    "guaranteeNeverCompromise": "Anonimlikten ASLA taviz vermeyiz",
+    "guaranteeNeverKeepMetadata": "Belge meta verilerini ASLA saklamayız"
   },
   "general": {
     "loading": "Yükleniyor...",

@@ -69,7 +69,8 @@
     "guaranteeNeverTrack": "NIGDY nie śledzimy działań użytkowników",
     "guaranteeNeverShare": "NIGDY nie udostępniamy danych użytkowników",
     "guaranteeNeverRequire": "NIGDY nie wymagamy rejestracji użytkowników",
-    "guaranteeNeverCompromise": "NIGDY nie idziemy na kompromis w kwestii anonimowości"
+    "guaranteeNeverCompromise": "NIGDY nie idziemy na kompromis w kwestii anonimowości",
+    "guaranteeNeverKeepMetadata": "NIGDY nie zachowujemy metadanych dokumentów"
   },
   "general": {
     "loading": "Ładowanie...",

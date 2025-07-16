@@ -100,7 +100,8 @@
     "guaranteeNeverTrack": "NIEMALS Benutzerverhalten verfolgen",
     "guaranteeNeverShare": "NIEMALS Daten mit Dritten teilen",
     "guaranteeNeverRequire": "NIEMALS Benutzerregistrierung verlangen",
-    "guaranteeNeverCompromise": "NIEMALS Anonymität kompromittieren"
+    "guaranteeNeverCompromise": "NIEMALS Anonymität kompromittieren",
+    "guaranteeNeverKeepMetadata": "NIEMALS Dokument-Metadaten bewahren"
   },
   "general": {
     "loading": "Laden...",

@@ -1359,4 +1359,47 @@ The platform now ensures that users see only the website URL when downloading do
 - ✅ **Russian Navigation**: Поиск, Загрузить, Конфиденциальность Гарантирована
 - ✅ **Complete Coverage**: All 107 translation keys available in all 5 languages
 
-The admin interface no longer shows "No translations found" and administrators can now manage translations for all supported languages through the web interface. 
+The admin interface no longer shows "No translations found" and administrators can now manage translations for all supported languages through the web interface.
+
+## Database Connectivity Resolution (v1.1.16) - July 16, 2025
+
+### Issue Identified:
+- **External Database Failure**: External Aiven/Exoscale cloud database hostname `***REMOVED***` failing DNS resolution (NXDOMAIN)
+- **Service Impact**: Statistics API returning 500 errors, database-dependent features non-functional
+- **Root Cause**: External cloud database service likely terminated or hostname changed
+
+### Solution Implemented:
+- **Local Database Discovery**: Confirmed MySQL server running locally on production server (159.100.250.145)
+- **Database Migration**: Switched from external cloud database to local MySQL instance
+- **Configuration Update**: Modified DATABASE_URL from external host to `localhost:3306`
+- **User Authentication**: Reset foi_user password to match application configuration
+- **Service Restart**: Restarted foi-archive service to pickup new database configuration
+
+### Technical Changes:
+```bash
+# Database URL Update
+OLD: DATABASE_URL=mysql://foi_user:***REMOVED***@***REMOVED***:21699/foi_archive
+NEW: DATABASE_URL=mysql://foi_user:***REMOVED***@localhost:3306/foi_archive
+
+# User Password Reset
+ALTER USER 'foi_user'@'localhost' IDENTIFIED BY '***REMOVED***';
+FLUSH PRIVILEGES;
+```
+
+### Verification Results:
+- ✅ **Database Connection**: Local MySQL connection successful
+- ✅ **Statistics API**: http://fadih.salmannaqvi.com:8000/statistics/country-stats returning proper data
+- ✅ **Health Endpoint**: http://fadih.salmannaqvi.com:8000/health responding correctly
+- ✅ **Translations API**: http://fadih.salmannaqvi.com:8000/translations/languages/en returning all 831 translations
+- ✅ **Data Integrity**: All existing translations and documents preserved
+- ✅ **Service Stability**: foi-archive service running without database connectivity errors
+
+### Final Status:
+🎉 **DATABASE CONNECTIVITY FULLY RESTORED** - All database-dependent functionality now operational:
+- ✅ **Statistics**: Country statistics and document counts loading correctly
+- ✅ **Search**: Document search functionality operational
+- ✅ **Translations**: All 7 languages (EN/AR/FR/DE/RU/PL/TR) accessible via API
+- ✅ **Admin Functions**: Document management and translation administration working
+- ✅ **Data Persistence**: All uploads and translations preserved during migration
+
+**Impact**: Eliminated external dependency, improved reliability, reduced potential points of failure. Fadih.org now fully functional with local database infrastructure. 

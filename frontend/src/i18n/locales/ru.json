@@ -100,7 +100,8 @@
     "guaranteeNeverTrack": "НИКОГДА не отслеживать поведение пользователей",
     "guaranteeNeverShare": "НИКОГДА не делиться данными с третьими сторонами",
     "guaranteeNeverRequire": "НИКОГДА не требовать регистрации пользователей",
-    "guaranteeNeverCompromise": "НИКОГДА не компрометировать анонимность"
+    "guaranteeNeverCompromise": "НИКОГДА не компрометировать анонимность",
+    "guaranteeNeverKeepMetadata": "НИКОГДА не сохранять метаданные документов"
   },
   "general": {
     "loading": "Загрузка...",

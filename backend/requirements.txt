@@ -27,6 +27,11 @@ pandas==2.2.2
 openpyxl==3.1.5
 xlrd==2.0.1
 
+# Metadata stripping and PDF conversion
+PyPDF2==3.0.1
+reportlab==4.2.0
+ExifRead==3.0.0
+
 # NLP and text processing
 spacy==3.7.6
 

@@ -100,7 +100,8 @@
     "guaranteeNeverTrack": "NEVER track user behavior",
     "guaranteeNeverShare": "NEVER share data with third parties",
     "guaranteeNeverRequire": "NEVER require user registration",
-    "guaranteeNeverCompromise": "NEVER compromise anonymity"
+    "guaranteeNeverCompromise": "NEVER compromise anonymity",
+    "guaranteeNeverKeepMetadata": "NEVER preserve document metadata"
   },
   "general": {
     "loading": "Loading...",

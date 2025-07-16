@@ -16,7 +16,12 @@ import {
   Github, 
   ExternalLink,
   CheckCircle,
-  Users
+  Users,
+
+  Download,
+  Upload,
+  Trash2,
+  ArrowRight
 } from "lucide-react";
 
 export default function PrivacyGuaranteedPage() {
@@ -47,6 +52,12 @@ export default function PrivacyGuaranteedPage() {
       title: t('privacy.cardCleanServerLogs'),
       description: t('privacy.cardCleanServerDescription'),
       githubLink: "https://github.com/main-salman/fadih/blob/main/backend/app/middleware/rate_limit.py"
+    },
+    {
+      icon: <Shield className="h-6 w-6" />,
+      title: "Complete Metadata Removal",
+      description: "All uploaded documents are automatically stripped of metadata and converted to clean PDFs. Original files are never stored, ensuring no identifying information can trace back to uploaders.",
+      githubLink: "https://github.com/main-salman/fadih/blob/main/backend/app/services/metadata_service.py"
     }
   ];
 
@@ -56,10 +67,16 @@ export default function PrivacyGuaranteedPage() {
     t('privacy.guaranteeNeverTrack'),
     t('privacy.guaranteeNeverShare'),
     t('privacy.guaranteeNeverRequire'),
-    t('privacy.guaranteeNeverCompromise')
+    t('privacy.guaranteeNeverCompromise'),
+    t('privacy.guaranteeNeverKeepMetadata')
   ];
 
   const technicalLayers = [
+    {
+      layer: "Document Processing Layer",
+      description: "Automatic metadata stripping and PDF conversion for all uploads",
+      status: "✅ COMPLETED"
+    },
     {
       layer: "Database Layer",
       description: "Complete IP storage removal and migration",
@@ -171,6 +188,137 @@ export default function PrivacyGuaranteedPage() {
               </Card>
             ))}
           </div>
+        </section>
+
+        {/* Metadata Stripping Process */}
+        <section className="mb-12">
+          <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl font-serif flex items-center justify-center space-x-2">
+                <Shield className="h-6 w-6 text-blue-600" />
+                <span>Document Privacy Protection Process</span>
+              </CardTitle>
+              <CardDescription className="text-lg">
+                How we ensure complete metadata removal from all uploaded documents
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Process Diagram */}
+              <div className="bg-white dark:bg-gray-900 rounded-lg p-6 mb-6 border border-gray-200 dark:border-gray-700">
+                <div className="flex flex-col space-y-4">
+                  {/* Step 1: Upload */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3 flex-1">
+                      <div className="flex items-center justify-center w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full">
+                        <Upload className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold">1. File Upload</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">User uploads document (PDF, Word, Excel, Image, etc.)</p>
+                      </div>
+                    </div>
+                    <ArrowRight className="h-5 w-5 text-gray-400" />
+                  </div>
+
+                  {/* Step 2: Processing */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3 flex-1">
+                      <div className="flex items-center justify-center w-10 h-10 bg-orange-100 dark:bg-orange-900 rounded-full">
+                        <Shield className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold">2. Metadata Stripping</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Automatic removal of EXIF data, author info, creation dates, GPS coordinates</p>
+                      </div>
+                    </div>
+                    <ArrowRight className="h-5 w-5 text-gray-400" />
+                  </div>
+
+                  {/* Step 3: Conversion */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3 flex-1">
+                      <div className="flex items-center justify-center w-10 h-10 bg-green-100 dark:bg-green-900 rounded-full">
+                        <FileText className="h-5 w-5 text-green-600 dark:text-green-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold">3. PDF Conversion</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Convert to clean, standardized PDF format with zero metadata</p>
+                      </div>
+                    </div>
+                    <ArrowRight className="h-5 w-5 text-gray-400" />
+                  </div>
+
+                  {/* Step 4: Storage */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3 flex-1">
+                      <div className="flex items-center justify-center w-10 h-10 bg-purple-100 dark:bg-purple-900 rounded-full">
+                        <Database className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold">4. Secure Storage</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Only clean PDF stored in database - original file never saved</p>
+                      </div>
+                    </div>
+                    <ArrowRight className="h-5 w-5 text-gray-400" />
+                  </div>
+
+                  {/* Step 5: Deletion */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3 flex-1">
+                      <div className="flex items-center justify-center w-10 h-10 bg-red-100 dark:bg-red-900 rounded-full">
+                        <Trash2 className="h-5 w-5 text-red-600 dark:text-red-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold">5. Original Deletion</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Original file permanently deleted from memory - no traces remain</p>
+                      </div>
+                    </div>
+                    <ArrowRight className="h-5 w-5 text-gray-400" />
+                  </div>
+
+                  {/* Step 6: Download */}
+                  <div className="flex items-center">
+                    <div className="flex items-center space-x-3 flex-1">
+                      <div className="flex items-center justify-center w-10 h-10 bg-teal-100 dark:bg-teal-900 rounded-full">
+                        <Download className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold">6. Clean Download</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Users download metadata-free PDF with complete privacy protection</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Key Points */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
+                  <h4 className="font-semibold text-green-800 dark:text-green-200 mb-2">✅ What Gets Removed</h4>
+                  <ul className="text-sm text-green-700 dark:text-green-300 space-y-1">
+                    <li>• Author names and organizations</li>
+                    <li>• GPS coordinates from photos</li>
+                    <li>• Creation and modification dates</li>
+                    <li>• Software version information</li>
+                    <li>• Device and computer names</li>
+                    <li>• Document revision history</li>
+                  </ul>
+                </div>
+                <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">🔒 When Original Is Deleted</h4>
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    The original file is <strong>NEVER stored</strong> on our servers. It exists only in temporary memory during the conversion process (seconds) and is immediately discarded after the clean PDF is created.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-6 p-4 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                <p className="text-center font-semibold text-amber-800 dark:text-amber-200">
+                  ⚡ <strong>Real-time Processing:</strong> Metadata stripping happens instantly during upload. Original files are processed and discarded within seconds, leaving zero traces.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </section>
 
         {/* Technical Implementation */}

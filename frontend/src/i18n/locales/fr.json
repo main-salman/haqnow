@@ -100,7 +100,8 @@
     "guaranteeNeverTrack": "JAMAIS suivre le comportement des utilisateurs",
     "guaranteeNeverShare": "JAMAIS partager des données avec des tiers",
     "guaranteeNeverRequire": "JAMAIS exiger l'inscription des utilisateurs",
-    "guaranteeNeverCompromise": "JAMAIS compromettre l'anonymat"
+    "guaranteeNeverCompromise": "JAMAIS compromettre l'anonymat",
+    "guaranteeNeverKeepMetadata": "JAMAIS conserver les métadonnées de documents"
   },
   "general": {
     "loading": "Chargement...",
