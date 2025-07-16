@@ -321,7 +321,28 @@ export default function UploadDocumentPage() {
         let errorMessage = "Could not upload file to server.";
         try {
           const errorData = await uploadResponse.json();
-          errorMessage = errorData.detail || errorData.message || errorMessage;
+          
+          // Handle rate limit errors which return an object
+          if (errorData.detail && typeof errorData.detail === 'object') {
+            const detail = errorData.detail;
+            if (detail.message && detail.remaining_time !== undefined) {
+              // This is a rate limit error
+              const minutes = Math.ceil(detail.remaining_time / 60);
+              const seconds = Math.ceil(detail.remaining_time % 60);
+              
+              if (minutes > 0) {
+                errorMessage = `${detail.message} Please wait ${minutes} minute${minutes > 1 ? 's' : ''} and ${seconds} second${seconds !== 1 ? 's' : ''} before trying again.`;
+              } else {
+                errorMessage = `${detail.message} Please wait ${seconds} second${seconds !== 1 ? 's' : ''} before trying again.`;
+              }
+            } else {
+              // Other structured error
+              errorMessage = detail.message || JSON.stringify(detail);
+            }
+          } else {
+            // Simple string error message
+            errorMessage = errorData.detail || errorData.message || errorMessage;
+          }
         } catch {
           errorMessage = `HTTP ${uploadResponse.status}: ${uploadResponse.statusText}`;
         }

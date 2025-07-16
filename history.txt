@@ -1551,4 +1551,57 @@ Implement comprehensive metadata removal to prevent any identifying information 
 - Responsive design tested across device sizes
 - Version 1.1.19 live at fadih.org
 
-**Result**: Fadih.org's homepage now features an engaging, interactive world map that transforms document discovery from text-based search to visual geographic exploration, significantly enhancing user experience while maintaining the corruption exposure theme. 
+**Result**: Fadih.org's homepage now features an engaging, interactive world map that transforms document discovery from text-based search to visual geographic exploration, significantly enhancing user experience while maintaining the corruption exposure theme.
+
+### Version 1.1.20 (January 16, 2025) - Traditional World Map with Website Color Scheme
+**SUCCESSFULLY DEPLOYED** 
+
+**Major Update:**
+- **Traditional Map Design**: Replaced tech-style map with more realistic country boundaries
+- **Website Color Integration**: Updated to use site's green color palette instead of dark corruption theme
+- **Professional Appearance**: Clean, light background matching overall site design
+- **Enhanced Country Coverage**: Added many more countries with proper geographic shapes
+
+**Design Changes:**
+- **Color Scheme**: Switched from dark slate/yellow tech theme to clean green gradient system:
+  - Light green (`hsl(145, 30%, 75%)`) for low activity
+  - Medium green (`hsl(145, 60%, 45%)`) for medium activity  
+  - Dark green (`hsl(145, 75%, 25%)`) for high activity
+  - Light gray-green (`hsl(145, 10%, 85%)`) for no data
+- **Background**: Clean white/light blue gradient instead of dark tech grid
+- **Typography**: Standard website fonts instead of monospace tech style
+- **Cards**: Light borders and professional styling matching site theme
+
+**Country Coverage Improvements:**
+- **Realistic Shapes**: More traditional country boundaries instead of geometric rectangles
+- **Expanded Coverage**: Added 50+ countries including:
+  - European nations: Netherlands, Belgium, Switzerland, Austria, Czech Republic, Hungary, etc.
+  - Additional African countries: Morocco, Libya, Ethiopia, Kenya
+  - More Asian countries: Afghanistan, Pakistan, Iraq, Malaysia, Philippines
+  - Complete North/South America coverage
+- **Better Mapping**: Improved country name detection and variations
+
+**User Experience Enhancements:**
+- **Subtle Interactions**: Replaced glow effects with clean shadows and hover states
+- **Professional Tooltips**: Clean white tooltips with proper website styling
+- **Loading States**: Updated with website's primary green colors
+- **Error Handling**: Consistent with site's professional error patterns
+
+**Integration Improvements:**
+- **Consistent Styling**: All components now match website's card design and spacing
+- **Color Harmony**: Green theme creates cohesive experience with rest of site
+- **Responsive Design**: Maintained mobile-friendly design with cleaner aesthetics
+- **Accessibility**: Better contrast and readability with light theme
+
+**Navigation & Functionality:**
+- **Maintained Features**: All interactive functionality preserved (click-to-search, statistics, etc.)
+- **Improved Performance**: Cleaner SVG rendering with better country detection
+- **Professional Rankings**: Country lists styled with site's badge and card components
+
+**Deployment Success:**
+- Version 1.1.20 deployed successfully with traditional map design
+- All functionality working correctly with improved visual appearance
+- Professional, clean aesthetic that matches website's overall design philosophy
+- Better user engagement through familiar, traditional map interface
+
+**Result**: The world map now provides a professional, traditional cartographic experience that seamlessly integrates with Fadih.org's clean design aesthetic while maintaining all interactive functionality for document discovery. 
