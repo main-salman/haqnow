@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import CountryDocStatsList from '../components/CountryDocStatsList';
+import InteractiveWorldMap from '../components/InteractiveWorldMap';
 import Version from '../components/Version';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import ProminentLanguageBar from '../components/ProminentLanguageBar';
@@ -89,19 +90,17 @@ export default function App() {
             </div>
           </section>
 
-          <section className="text-center space-y-4">
-            <h3 className="text-xl md:text-2xl font-semibold tracking-tight">
-              {t('homepage.mapTitle')}
-            </h3>
-            <div
-              className="bg-muted/40 border border-dashed border-border rounded-lg min-h-[300px] md:min-h-[400px] flex items-center justify-center"
-              aria-label="World map placeholder"
-            >
-              <p className="text-muted-foreground">
-                {t('homepage.mapPlaceholder')}
-              </p>
+          <section className="space-y-6">
+            <div className="text-center">
+              <h3 className="text-xl md:text-2xl font-semibold tracking-tight">
+                {t('homepage.mapTitle')}
+              </h3>
             </div>
-            {/* MYA-21: Added CountryDocStatsList below map placeholder */}
+            
+            {/* Interactive World Map */}
+            <InteractiveWorldMap />
+            
+            {/* Original CountryDocStatsList kept for additional functionality */}
             <div className="mt-8 md:mt-12">
               <CountryDocStatsList />
             </div>
