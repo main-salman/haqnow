@@ -33,7 +33,9 @@ TRANSLATION_FILES = {
     "ar": "../frontend/src/i18n/locales/ar.json", 
     "fr": "../frontend/src/i18n/locales/fr.json",
     "de": "../frontend/src/i18n/locales/de.json",
-    "ru": "../frontend/src/i18n/locales/ru.json"
+    "ru": "../frontend/src/i18n/locales/ru.json",
+    "pl": "../frontend/src/i18n/locales/pl.json",
+    "tr": "../frontend/src/i18n/locales/tr.json"
 }
 
 def load_json_file(file_path):

@@ -12,8 +12,10 @@ const AdminDocumentEditPage = lazy(() => import("./pages/AdminDocumentEditPage.t
 const AdminLoginPage = lazy(() => import("./pages/AdminLoginPage.tsx"));
 const AdminPendingDocumentsPage = lazy(() => import("./pages/AdminPendingDocumentsPage.tsx"));
 const AdminTranslationsPage = lazy(() => import("./pages/AdminTranslationsPage.tsx"));
+const AboutPage = lazy(() => import("./pages/AboutPage.tsx"));
 const App = lazy(() => import("./pages/App.tsx"));
 const DocumentDetailPage = lazy(() => import("./pages/DocumentDetailPage.tsx"));
+const FOIPage = lazy(() => import("./pages/FOIPage.tsx"));
 const PrivacyGuaranteedPage = lazy(() => import("./pages/PrivacyGuaranteedPage.tsx"));
 const SearchPage = lazy(() => import("./pages/SearchPage.tsx"));
 const UploadDocumentPage = lazy(() => import("./pages/UploadDocumentPage.tsx"));
@@ -34,9 +36,13 @@ export const userRoutes: RouteObject[] = [
 	{ path: "/adminpendingdocumentspage", element: <AdminPendingDocumentsPage />},
 	{ path: "/admin-translations-page", element: <AdminTranslationsPage />},
 	{ path: "/admintranslationspage", element: <AdminTranslationsPage />},
+	{ path: "/about", element: <AboutPage />},
+	{ path: "/aboutpage", element: <AboutPage />},
 	{ path: "/", element: <App />},
 	{ path: "/document-detail-page", element: <DocumentDetailPage />},
 	{ path: "/documentdetailpage", element: <DocumentDetailPage />},
+	{ path: "/foi", element: <FOIPage />},
+	{ path: "/foipage", element: <FOIPage />},
 	{ path: "/privacy-guaranteed-page", element: <PrivacyGuaranteedPage />},
 	{ path: "/privacyguaranteedpage", element: <PrivacyGuaranteedPage />},
 	{ path: "/search-page", element: <SearchPage />},

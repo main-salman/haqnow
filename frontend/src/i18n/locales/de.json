@@ -4,7 +4,9 @@
     "search": "Suchen",
     "upload": "Hochladen",
     "privacy": "Datenschutz Garantiert",
-    "admin": "Admin"
+    "admin": "Admin",
+    "about": "Über Uns",
+    "foi": "IFG Info"
   },
   "homepage": {
     "title": "Korruptionsdokumente Weltweit Aufdecken",
@@ -117,5 +119,25 @@
     "submit": "Absenden",
     "retry": "Wiederholen",
     "refresh": "Aktualisieren"
+  },
+  "about": {
+    "title": "Über Fadih.org",
+    "founder": "Gegründet von Salman Naqvi",
+    "quote": "Ich bin leidenschaftlich daran interessiert, Kriege zu beenden und die Menschenrechte aller Menschen auf der Welt zu fördern.",
+    "mission": "Unsere Anti-Korruptions-Mission",
+    "features": "Plattform-Funktionen",
+    "globalTransparency": "Globale Transparenz",
+    "humanRights": "Menschenrechte",
+    "antiCorruption": "Anti-Korruption",
+    "connectedProjects": "Verbundene Projekte"
+  },
+  "foi": {
+    "title": "IFG Info - Informationsfreiheitsgesetze",
+    "subtitle": "Ihr Leitfaden für den Zugang zu Regierungsinformationen und die Förderung der Transparenz weltweit",
+    "whatIs": "Was ist Informationsfreiheit?",
+    "howTo": "Wie man IFG-Anträge stellt",
+    "countries": "Informationsfreiheitsgesetze und Portale nach Ländern",
+    "bestPractices": "IFG-Best-Practices",
+    "connection": "IFG + Fadih.org: Mächtige Transparenz-Werkzeuge"
   }
 } 

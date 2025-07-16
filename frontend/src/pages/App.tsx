@@ -7,6 +7,7 @@ import { Search } from "lucide-react";
 import CountryDocStatsList from '../components/CountryDocStatsList';
 import Version from '../components/Version';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
+import ProminentLanguageBar from '../components/ProminentLanguageBar';
 
 export default function App() {
   const [searchTerm, setSearchTerm] = useState(""); // Added state for search term
@@ -22,6 +23,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-background">
+      <ProminentLanguageBar />
       <header className="py-6 px-4 md:px-8 border-b border-border">
         <div className="container mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-4">
@@ -39,6 +41,12 @@ export default function App() {
               </Button>
               <Button variant="ghost" onClick={() => navigate('/upload-document-page')}>
                 {t('navigation.upload')}
+              </Button>
+              <Button variant="ghost" onClick={() => navigate('/about')}>
+                {t('navigation.about')}
+              </Button>
+              <Button variant="ghost" onClick={() => navigate('/foi')}>
+                {t('navigation.foi')}
               </Button>
               <Button variant="ghost" onClick={() => navigate('/privacy-guaranteed-page')}>
                 {t('navigation.privacy')}

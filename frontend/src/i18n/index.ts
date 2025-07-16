@@ -8,6 +8,8 @@ import arTranslations from './locales/ar.json';
 import frTranslations from './locales/fr.json';
 import deTranslations from './locales/de.json';
 import ruTranslations from './locales/ru.json';
+import plTranslations from './locales/pl.json';
+import trTranslations from './locales/tr.json';
 
 // Supported languages
 export const supportedLanguages = {
@@ -15,7 +17,9 @@ export const supportedLanguages = {
   ar: 'العربية',
   fr: 'Français', 
   de: 'Deutsch',
-  ru: 'Русский'
+  ru: 'Русский',
+  pl: 'Polski',
+  tr: 'Türkçe'
 };
 
 export const supportedLanguageCodes = Object.keys(supportedLanguages);
@@ -31,7 +35,9 @@ i18n
       ar: { translation: arTranslations },
       fr: { translation: frTranslations },
       de: { translation: deTranslations },
-      ru: { translation: ruTranslations }
+      ru: { translation: ruTranslations },
+      pl: { translation: plTranslations },
+      tr: { translation: trTranslations }
     },
     
     // Default language

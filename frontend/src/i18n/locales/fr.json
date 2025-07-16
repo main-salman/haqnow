@@ -4,7 +4,9 @@
     "search": "Rechercher",
     "upload": "Télécharger",
     "privacy": "Confidentialité Garantie",
-    "admin": "Admin"
+    "admin": "Admin",
+    "about": "À Propos",
+    "foi": "Info CADA"
   },
   "homepage": {
     "title": "Exposer les Documents de Corruption Mondiaux",
@@ -117,5 +119,25 @@
     "submit": "Soumettre",
     "retry": "Réessayer",
     "refresh": "Actualiser"
+  },
+  "about": {
+    "title": "À Propos de Fadih.org",
+    "founder": "Fondé par Salman Naqvi",
+    "quote": "Je suis passionné par la fin des guerres et les droits humains de tous les êtres humains dans le monde.",
+    "mission": "Notre Mission Anti-Corruption",
+    "features": "Fonctionnalités de la Plateforme",
+    "globalTransparency": "Transparence Mondiale",
+    "humanRights": "Droits Humains",
+    "antiCorruption": "Anti-Corruption",
+    "connectedProjects": "Projets Connexes"
+  },
+  "foi": {
+    "title": "Info CADA - Lois sur la Liberté d'Information",
+    "subtitle": "Votre guide pour accéder aux informations gouvernementales et promouvoir la transparence dans le monde entier",
+    "whatIs": "Qu'est-ce que la Liberté d'Information ?",
+    "howTo": "Comment Soumettre des Demandes CADA",
+    "countries": "Lois et Portails de Liberté d'Information par Pays",
+    "bestPractices": "Meilleures Pratiques CADA",
+    "connection": "CADA + Fadih.org : Outils de Transparence Puissants"
   }
 } 

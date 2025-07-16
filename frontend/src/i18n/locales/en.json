@@ -4,7 +4,9 @@
     "search": "Search",
     "upload": "Upload",
     "privacy": "Privacy Guaranteed",
-    "admin": "Admin"
+    "admin": "Admin",
+    "about": "About",
+    "foi": "FOI Info"
   },
   "homepage": {
     "title": "Expose Corruption Documents Worldwide",
@@ -117,5 +119,25 @@
     "submit": "Submit",
     "retry": "Retry",
     "refresh": "Refresh"
+  },
+  "about": {
+    "title": "About Fadih.org",
+    "founder": "Founded by Salman Naqvi",
+    "quote": "I'm passionate about ending wars and human rights of all human beings around the world.",
+    "mission": "Our Anti-Corruption Mission",
+    "features": "Platform Features",
+    "globalTransparency": "Global Transparency",
+    "humanRights": "Human Rights",
+    "antiCorruption": "Anti-Corruption",
+    "connectedProjects": "Connected Projects"
+  },
+  "foi": {
+    "title": "FOI Info - Freedom of Information Laws",
+    "subtitle": "Your guide to accessing government information and promoting transparency worldwide",
+    "whatIs": "What is Freedom of Information?",
+    "howTo": "How to Submit FOI Requests",
+    "countries": "FOI Laws and Portals by Country",
+    "bestPractices": "FOI Best Practices",
+    "connection": "FOI + Fadih.org: Powerful Transparency Tools"
   }
 } 
