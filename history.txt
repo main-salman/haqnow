@@ -1605,3 +1605,45 @@ Implement comprehensive metadata removal to prevent any identifying information 
 - Better user engagement through familiar, traditional map interface
 
 **Result**: The world map now provides a professional, traditional cartographic experience that seamlessly integrates with Fadih.org's clean design aesthetic while maintaining all interactive functionality for document discovery. 
+
+### Rate Limit Error Handling Fix (COMPLETED ✅):
+**Date:** Current session - Version 1.1.21
+**Problem:** Users were getting a React error (#31) when trying to upload a second document within 2 minutes instead of a clear timeout message. The error showed "Minified React error #31" because React was trying to render an object as a component instead of a proper error message.
+
+**Root Cause Identified:**
+- Backend correctly returns rate limit errors as structured objects: `{message, remaining_time, timeout_seconds}`
+- Frontend error handling assumed `errorData.detail` would always be a string
+- When `errorData.detail` was an object (rate limit case), React tried to render the object directly, causing error #31
+
+**Solution Applied:**
+- **Enhanced Frontend Error Handling (COMPLETED ✅)**:
+  - Added proper object detection for `errorData.detail`
+  - Parse rate limit error objects and format user-friendly messages
+  - Convert remaining time to minutes and seconds for better UX
+  - Fallback to JSON.stringify for other structured errors
+  - Maintain backwards compatibility with string error messages
+
+**Technical Implementation:**
+- **File Modified**: `frontend/src/pages/UploadDocumentPage.tsx`
+- **Enhancement**: Improved error handling in upload response processing
+- **User Experience**: Clear rate limit messages like "Upload rate limit exceeded. Please wait 1 minute and 45 seconds before trying again."
+- **Deployment**: Successfully deployed as version 1.1.21 to production
+
+**Additional Backend Fix:**
+- **Backend Service Issue (COMPLETED ✅)**: Resolved AssertionError in translations module by restarting the service
+- **Service Status**: Backend now running without dependency conflicts
+
+**Current Status:**
+- **Rate Limiting**: ✅ Backend correctly enforces 2-minute upload limits
+- **Error Messages**: ✅ Frontend displays clear, user-friendly timeout messages
+- **React Stability**: ✅ No more object rendering errors
+- **User Experience**: ✅ Proper guidance on when users can upload again
+
+**Result:**
+🎉 **RATE LIMIT UX SUCCESS** - Users now receive clear guidance instead of cryptic React errors:
+- ✅ **Clear Messages**: "Upload rate limit exceeded. Please wait X minutes and Y seconds before trying again."
+- ✅ **No React Crashes**: Proper object handling prevents error #31
+- ✅ **Better UX**: Users understand exactly when they can upload again
+- ✅ **Backend Stability**: Service running without dependency issues
+
+The platform now provides a professional rate limiting experience that guides users instead of confusing them with technical error messages.
