@@ -296,7 +296,7 @@ async def download_document(
                         yield chunk
             
             logger.info("Document download proxied successfully", 
-                       document_id=document_id,
+                   document_id=document_id,
                        filename=filename)
             
             return StreamingResponse(
