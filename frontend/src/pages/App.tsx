@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from "@/components/ui/button";
@@ -10,15 +10,189 @@ import Version from '../components/Version';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import ProminentLanguageBar from '../components/ProminentLanguageBar';
 
+interface CountryStats {
+  countryCode: string;
+  totalDocuments: number;
+}
+
+interface StatsResponse {
+  countries: Array<{
+    country: string;
+    doc_count: number;
+  }>;
+  total_countries: number;
+  total_documents: number;
+}
+
 export default function App() {
   const [searchTerm, setSearchTerm] = useState(""); // Added state for search term
+  const [mapData, setMapData] = useState<CountryStats[]>([]);
+  const [loadingMapData, setLoadingMapData] = useState(true);
   const navigate = useNavigate(); // Added navigation hook
   const { t } = useTranslation(); // Added translation hook
+
+  // Country code mapping for converting country names to ISO codes
+  const countryCodeMapping: Record<string, string> = {
+    'United States': 'US',
+    'Canada': 'CA',
+    'United Kingdom': 'GB',
+    'Germany': 'DE',
+    'France': 'FR',
+    'Spain': 'ES',
+    'Italy': 'IT',
+    'Netherlands': 'NL',
+    'Belgium': 'BE',
+    'Switzerland': 'CH',
+    'Austria': 'AT',
+    'Sweden': 'SE',
+    'Norway': 'NO',
+    'Denmark': 'DK',
+    'Finland': 'FI',
+    'Poland': 'PL',
+    'Czech Republic': 'CZ',
+    'Hungary': 'HU',
+    'Romania': 'RO',
+    'Bulgaria': 'BG',
+    'Greece': 'GR',
+    'Portugal': 'PT',
+    'Ireland': 'IE',
+    'Croatia': 'HR',
+    'Slovenia': 'SI',
+    'Slovakia': 'SK',
+    'Lithuania': 'LT',
+    'Latvia': 'LV',
+    'Estonia': 'EE',
+    'Ukraine': 'UA',
+    'Russia': 'RU',
+    'Turkey': 'TR',
+    'China': 'CN',
+    'Japan': 'JP',
+    'South Korea': 'KR',
+    'India': 'IN',
+    'Thailand': 'TH',
+    'Vietnam': 'VN',
+    'Malaysia': 'MY',
+    'Indonesia': 'ID',
+    'Philippines': 'PH',
+    'Singapore': 'SG',
+    'Australia': 'AU',
+    'New Zealand': 'NZ',
+    'Brazil': 'BR',
+    'Argentina': 'AR',
+    'Mexico': 'MX',
+    'Colombia': 'CO',
+    'Peru': 'PE',
+    'Chile': 'CL',
+    'Venezuela': 'VE',
+    'Ecuador': 'EC',
+    'Uruguay': 'UY',
+    'Paraguay': 'PY',
+    'Bolivia': 'BO',
+    'South Africa': 'ZA',
+    'Nigeria': 'NG',
+    'Egypt': 'EG',
+    'Morocco': 'MA',
+    'Algeria': 'DZ',
+    'Tunisia': 'TN',
+    'Libya': 'LY',
+    'Sudan': 'SD',
+    'Ethiopia': 'ET',
+    'Kenya': 'KE',
+    'Tanzania': 'TZ',
+    'Uganda': 'UG',
+    'Ghana': 'GH',
+    'Ivory Coast': 'CI',
+    'Senegal': 'SN',
+    'Mali': 'ML',
+    'Burkina Faso': 'BF',
+    'Niger': 'NE',
+    'Chad': 'TD',
+    'Cameroon': 'CM',
+    'Central African Republic': 'CF',
+    'Democratic Republic of the Congo': 'CD',
+    'Angola': 'AO',
+    'Zambia': 'ZM',
+    'Zimbabwe': 'ZW',
+    'Botswana': 'BW',
+    'Namibia': 'NA',
+    'Mozambique': 'MZ',
+    'Malawi': 'MW',
+    'Saudi Arabia': 'SA',
+    'Iran': 'IR',
+    'Iraq': 'IQ',
+    'Syria': 'SY',
+    'Jordan': 'JO',
+    'Israel': 'IL',
+    'Lebanon': 'LB',
+    'Palestine': 'PS',
+    'Kuwait': 'KW',
+    'Qatar': 'QA',
+    'Bahrain': 'BH',
+    'United Arab Emirates': 'AE',
+    'Oman': 'OM',
+    'Yemen': 'YE',
+    'Pakistan': 'PK',
+    'Afghanistan': 'AF',
+    'Bangladesh': 'BD',
+    'Myanmar': 'MM',
+    'Mongolia': 'MN',
+    'Kazakhstan': 'KZ',
+    'Uzbekistan': 'UZ'
+  };
+
+  // Fetch country statistics for the map
+  useEffect(() => {
+    const fetchMapData = async () => {
+      try {
+        setLoadingMapData(true);
+        const response = await fetch(`${window.location.protocol}//${window.location.hostname}:8000/statistics/country-stats`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data: StatsResponse = await response.json();
+        
+        // Convert country names to country codes for the map
+        const mappedData: CountryStats[] = data.countries
+          .map(country => {
+            const countryCode = countryCodeMapping[country.country];
+            if (countryCode) {
+              return {
+                countryCode,
+                totalDocuments: country.doc_count
+              };
+            }
+            return null;
+          })
+          .filter((item): item is CountryStats => item !== null);
+        
+        setMapData(mappedData);
+      } catch (err) {
+        console.error('Error fetching map data:', err);
+        // Set empty data on error - map will still work but show no data
+        setMapData([]);
+      } finally {
+        setLoadingMapData(false);
+      }
+    };
+
+    fetchMapData();
+  }, []);
 
   // Added search handler
   const handleSearch = () => {
     if (searchTerm.trim()) {
       navigate(`/search-page?q=${encodeURIComponent(searchTerm.trim())}`);
+    }
+  };
+
+  // Handle country click from map - search by country code/name
+  const handleCountryClick = (countryCode: string) => {
+    // Find the country name for the clicked code
+    const countryName = Object.entries(countryCodeMapping).find(([name, code]) => code === countryCode)?.[0];
+    if (countryName) {
+      navigate(`/search-page?country=${encodeURIComponent(countryName)}`);
     }
   };
 
@@ -97,8 +271,11 @@ export default function App() {
               </h3>
             </div>
             
-            {/* Interactive World Map */}
-            <InteractiveWorldMap />
+            {/* Interactive World Map with real geographic data */}
+            <InteractiveWorldMap 
+              data={mapData}
+              onCountryClick={handleCountryClick}
+            />
             
             {/* Original CountryDocStatsList kept for additional functionality */}
             <div className="mt-8 md:mt-12">
@@ -108,11 +285,13 @@ export default function App() {
         </div>
       </main>
 
-      <footer className="py-6 px-4 md:px-8 border-t border-border text-center">
-        <p className="text-sm text-muted-foreground">
-          &copy; {new Date().getFullYear()} {t('navigation.brand')}. {t('homepage.copyright')}
+      <footer className="border-t border-border bg-muted/10 py-6">
+        <div className="container mx-auto px-4 flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            © 2024 {t('navigation.brand')}. {t('footer.rights')}
+          </p>
           <Version />
-        </p>
+        </div>
       </footer>
     </div>
   );
