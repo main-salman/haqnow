@@ -211,7 +211,19 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
 
   // Handle country interactions
   const onEachCountry = (feature: any, layer: any) => {
-    // Try different possible property names for country code and name - expanded list
+    // Get country name first for better matching
+    const countryName = feature.properties.NAME || 
+                       feature.properties.NAME_EN ||
+                       feature.properties.name ||
+                       feature.properties.admin ||
+                       feature.properties.ADMIN ||
+                       feature.properties.NAME_LONG ||
+                       feature.properties.SOVEREIGN ||
+                       feature.properties.sovereignt ||
+                       feature.properties.NAME_SORT ||
+                       feature.properties.name_en;
+
+    // Try different possible property names for country code - expanded list
     let countryCode = feature.properties.ISO_A2 || 
                      feature.properties.ADM0_A3 || 
                      feature.properties.iso_a2 ||
@@ -225,17 +237,40 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
                      feature.properties.alpha_2 ||
                      feature.properties.ALPHA_2 ||
                      feature.properties.A2 ||
-                     feature.properties.iso2;
+                     feature.properties.iso2 ||
+                     feature.properties.ADM0_A2 ||
+                     feature.properties.ISO_A3 ||
+                     feature.properties.ADM0_ISO ||
+                     feature.properties.SU_A3;
 
-    // Normalize country code to uppercase and handle 3-letter codes
-    if (countryCode) {
+    // Always check name-based matching first for our key countries
+    if (countryName) {
+      const lowerName = countryName.toLowerCase();
+      if (lowerName.includes('afghanistan') || lowerName.includes('afghan')) {
+        countryCode = 'AF';
+      } else if (lowerName.includes('bangladesh') || lowerName.includes('bangla')) {
+        countryCode = 'BD';
+      } else if (lowerName.includes('cayman')) {
+        countryCode = 'KY';
+      } else if (lowerName.includes('united states') || lowerName === 'usa' || lowerName === 'us' || 
+                 lowerName.includes('america') || lowerName === 'united states of america') {
+        countryCode = 'US';
+      } else if (lowerName.includes('canada') || lowerName === 'can') {
+        countryCode = 'CA';
+      }
+    }
+
+    // Normalize existing country code to uppercase and handle 3-letter codes
+    if (countryCode && !['AF', 'BD', 'KY', 'US', 'CA'].includes(countryCode)) {
       countryCode = countryCode.toString().toUpperCase();
       
       // Convert 3-letter codes to 2-letter codes for common countries
       const iso3ToIso2 = {
         'AFG': 'AF', // Afghanistan
         'BGD': 'BD', // Bangladesh  
-        'CYM': 'KY'  // Cayman Islands
+        'CYM': 'KY', // Cayman Islands
+        'USA': 'US', // United States
+        'CAN': 'CA'  // Canada
       };
       
       if (iso3ToIso2[countryCode]) {
@@ -243,23 +278,18 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
       }
     }
 
-    // Alternative: try to match by country name if no code found
+    // Alternative: try to match by exact country name if no code found or code doesn't match our data
     if (!countryCode || !dataMap[countryCode]) {
-      const countryName = feature.properties.NAME || 
-                         feature.properties.NAME_EN ||
-                         feature.properties.name ||
-                         feature.properties.admin ||
-                         feature.properties.ADMIN ||
-                         feature.properties.NAME_LONG ||
-                         feature.properties.SOVEREIGN ||
-                         feature.properties.sovereignt;
-
       if (countryName) {
         const nameToCode = {
           'Afghanistan': 'AF',
           'Bangladesh': 'BD', 
           'Cayman Islands': 'KY',
           'Cayman Is.': 'KY',
+          'United States': 'US',
+          'United States of America': 'US',
+          'USA': 'US',
+          'Canada': 'CA',
           // Add more variations
           'Islamic Republic of Afghanistan': 'AF',
           'Afghanistan, Islamic Republic of': 'AF',
@@ -268,43 +298,24 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
           'Cayman': 'KY'
         };
         
-        const matchedCode = nameToCode[countryName] || 
-                           Object.entries(nameToCode).find(([name]) => 
-                             countryName.toLowerCase().includes(name.toLowerCase()) ||
-                             name.toLowerCase().includes(countryName.toLowerCase())
-                           )?.[1];
-         
-         // FIXED: Always check pattern-based matching for key countries first
-         if (countryName) {
-           const lowerName = countryName.toLowerCase();
-           if (lowerName.includes('afghan')) {
-             countryCode = 'AF';
-           } else if (lowerName.includes('bangla')) {
-             countryCode = 'BD';
-           } else if (lowerName.includes('cayman')) {
-             countryCode = 'KY';
-           } else if (matchedCode && dataMap[matchedCode]) {
-             countryCode = matchedCode;
-           }
-         }
+        const matchedCode = nameToCode[countryName];
+        if (matchedCode) {
+          countryCode = matchedCode;
+        }
       }
     }
                        
-    const countryName = feature.properties.NAME || 
-                       feature.properties.NAME_EN ||
-                       feature.properties.name ||
-                       feature.properties.admin ||
-                       feature.properties.ADMIN ||
-                       countryCode;
-                       
     const documentCount = dataMap[countryCode] || 0;
 
-    // Enhanced debugging for specific countries that should have data
-    const expectedCountries = ['AF', 'BD', 'KY']; // Countries we know should have data
+    // Enhanced debugging for ALL countries that should have data
+    const expectedCountries = ['AF', 'BD', 'KY', 'US', 'CA']; // All countries we know should have data
     const isExpectedCountry = expectedCountries.includes(countryCode) || 
                              countryName?.toLowerCase().includes('afghanistan') ||
                              countryName?.toLowerCase().includes('bangladesh') ||
-                             countryName?.toLowerCase().includes('cayman');
+                             countryName?.toLowerCase().includes('cayman') ||
+                             countryName?.toLowerCase().includes('united states') ||
+                             countryName?.toLowerCase().includes('america') ||
+                             countryName?.toLowerCase().includes('canada');
 
     // Also check if this country matches any of our expected data
     const hasExpectedData = Object.keys(dataMap).some(code => dataMap[code] > 0);
@@ -312,7 +323,10 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
     if (isExpectedCountry || documentCount > 0 || 
         (hasExpectedData && (countryName?.toLowerCase().includes('afghan') ||
                             countryName?.toLowerCase().includes('bangla') ||
-                            countryName?.toLowerCase().includes('cayman')))) {
+                            countryName?.toLowerCase().includes('cayman') ||
+                            countryName?.toLowerCase().includes('united states') ||
+                            countryName?.toLowerCase().includes('america') ||
+                            countryName?.toLowerCase().includes('canada')))) {
       console.log('🔍 DETAILED COUNTRY ANALYSIS:', {
         countryName,
         extractedCountryCode: countryCode,
@@ -321,21 +335,28 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
         allAvailableProperties: feature.properties,
         matchedFromDataMap: Object.keys(dataMap).includes(countryCode),
         dataMapKeys: Object.keys(dataMap),
+        dataMapEntries: Object.entries(dataMap),
         // Show all property values, not just keys
         propertyValues: Object.entries(feature.properties).map(([key, value]) => `${key}: ${value}`).join(', ')
       });
     }
 
-    // Log ALL countries to find our target countries
+    // Log ALL target countries to find our data
     if (countryName && (countryName.toLowerCase().includes('afghan') || 
                        countryName.toLowerCase().includes('bangla') || 
-                       countryName.toLowerCase().includes('cayman'))) {
+                       countryName.toLowerCase().includes('cayman') ||
+                       countryName.toLowerCase().includes('united states') ||
+                       countryName.toLowerCase().includes('america') ||
+                       countryName.toLowerCase().includes('canada'))) {
       console.log('🎯 FOUND TARGET COUNTRY:', {
         originalName: countryName,
         extractedCode: countryCode,
         allProperties: feature.properties,
         documentCount,
-        shouldHaveData: 'YES - This should show 1 document!'
+        shouldHaveData: 'YES - This should show 1 document!',
+        isInDataMap: Object.keys(dataMap).includes(countryCode),
+        dataMapHasThisCode: dataMap[countryCode] !== undefined,
+        dataMapValue: dataMap[countryCode]
       });
     }
 

@@ -2138,3 +2138,43 @@ The interactive world map now provides:
 **Result**: Fadih.org now features a fully functional interactive world map for exploring global corruption document distribution.
 
 ---
+
+### Version 1.1.32 (January 16, 2025) - 🔧 Fixed Admin Document Edit Page Error
+
+**Problem**: Admins were encountering a JavaScript error when trying to preview uploaded documents before approving them:
+```
+ReferenceError: newTagInput is not defined
+```
+
+**Root Cause**: The `newTagInput` state variable was missing from the AdminDocumentEditPage component, but the code was trying to use it in multiple places:
+- Setting the value: `value={newTagInput}`
+- Updating the value: `onChange={(e) => setNewTagInput(e.target.value)}`
+- Resetting the value: `setNewTagInput("")`
+- Key down handler: `onKeyDown={handleNewTagInputKeyDown}`
+
+**Solution Deployed**:
+1. **🔧 ADDED MISSING STATE VARIABLE (COMPLETED ✅)**:
+   ```javascript
+   const [newTagInput, setNewTagInput] = useState("");
+   ```
+
+2. **📊 FIXED FUNCTIONALITY**:
+   - **File Modified**: `frontend/src/pages/AdminDocumentEditPage.tsx`
+   - **Added**: Missing state declaration for tag input field
+   - **Impact**: Admin can now properly add new tags to documents during review
+   - **Error Resolution**: ReferenceError completely eliminated
+
+**Result**: ✅ **ADMIN DOCUMENT EDIT PAGE NOW WORKING**
+- **Tag Input Field**: Functions properly ✅
+- **Document Preview**: No JavaScript errors ✅  
+- **Document Approval Flow**: Fully functional ✅
+- **Admin Workflow**: Restored to normal operation ✅
+
+**Technical Impact**: This fix ensures administrators can properly review, edit, and approve pending documents without encountering JavaScript errors that broke the page functionality.
+
+**Deployment Status**: ✅ **Successfully deployed to production** (Version 1.1.32)
+- **Live Admin Panel**: http://159.100.250.145/admin-login-page
+- **Fix Status**: ReferenceError resolved
+- **Functionality**: Document editing and approval process fully restored
+
+---
