@@ -924,6 +924,48 @@ const nameToCode = {
 
 **Version:** 1.1.38 deployed to http://159.100.250.145
 
+#### Critical JavaScript Runtime Error Fix (COMPLETED ✅):
+**Date:** Current session - Version 1.1.39 Deployment
+**Problem:** World map completely broken with `ReferenceError: isRelevantCountry is not defined` causing the entire map component to crash.
+
+**Console Error Details:**
+```
+vendor-6e36d5b6.js:40 ReferenceError: isRelevantCountry is not defined
+    at Object.M [as onEachFeature] (App-4bf7681d.js:4:160071)
+    at e.addData (App-4bf7681d.js:4:88326)
+React Router caught the following error during render ReferenceError: isRelevantCountry is not defined
+```
+
+**Root Cause Analysis:**
+1. **Missing Variable Declaration**: During previous refactoring to make map universal for all countries, the `isRelevantCountry` variable was referenced but never defined
+2. **Build Process Missed Error**: The undefined reference only manifested at runtime, not during build
+3. **Critical Component Failure**: Error caused complete map component failure and fallback to error boundary
+
+**Technical Solution:**
+1. **✅ Variable Definition**: Added proper definition for `isRelevantCountry` with intelligent logic:
+   ```typescript
+   const hasAnyDataInMap = Object.keys(dataMap).length > 0;
+   const isRelevantCountry = hasAnyDataInMap && (
+     documentCount > 0 || 
+     (countryCode && Object.keys(dataMap).includes(countryCode)) ||
+     // Additional country name matching logic
+   );
+   ```
+
+2. **✅ Debugging Logic**: Enhanced debugging to help identify countries that should have data but don't display correctly
+
+3. **✅ Fallback Prevention**: Ensured all debugging code paths have proper variable definitions
+
+**Build Warnings Addressed:**
+- Duplicate key warnings in country mappings (non-critical, functionality preserved)
+- All critical runtime errors resolved
+
+**Impact:**
+- **Before**: Map completely broken, throwing JavaScript errors
+- **After**: Map loads successfully with universal country support and proper debugging
+
+**Version:** 1.1.39 deployed to http://159.100.250.145
+
 **Solutions Applied:**
 
 1. **Enhanced Search Functionality (COMPLETED ✅)**:

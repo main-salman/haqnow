@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, GeoJSON, Tooltip } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -21,12 +21,111 @@ interface InteractiveWorldMapProps {
   onCountryClick?: (countryCode: string) => void;
 }
 
+// Country center coordinates for placing circles
+const countryCoordinates: Record<string, [number, number]> = {
+  'AF': [33.9391, 67.7100], // Afghanistan
+  'BD': [23.6850, 90.3563], // Bangladesh
+  'KY': [19.3133, -81.2546], // Cayman Islands
+  'CA': [56.1304, -106.3468], // Canada
+  'US': [37.0902, -95.7129], // United States
+  'FR': [46.6034, 1.8883], // France
+  'GB': [55.3781, -3.4360], // United Kingdom
+  'DE': [51.1657, 10.4515], // Germany
+  'IT': [41.8719, 12.5674], // Italy
+  'ES': [40.4637, -3.7492], // Spain
+  'NL': [52.1326, 5.2913], // Netherlands
+  'BE': [50.5039, 4.4699], // Belgium
+  'CH': [46.8182, 8.2275], // Switzerland
+  'AT': [47.5162, 14.5501], // Austria
+  'SE': [60.1282, 18.6435], // Sweden
+  'NO': [60.4720, 8.4689], // Norway
+  'DK': [56.2639, 9.5018], // Denmark
+  'FI': [61.9241, 25.7482], // Finland
+  'PL': [51.9194, 19.1451], // Poland
+  'CZ': [49.8175, 15.4730], // Czech Republic
+  'SK': [48.6690, 19.6990], // Slovakia
+  'HU': [47.1625, 19.5033], // Hungary
+  'RO': [45.9432, 24.9668], // Romania
+  'BG': [42.7339, 25.4858], // Bulgaria
+  'GR': [39.0742, 21.8243], // Greece
+  'PT': [39.3999, -8.2245], // Portugal
+  'IE': [53.1424, -7.6921], // Ireland
+  'RU': [61.5240, 105.3188], // Russia
+  'CN': [35.8617, 104.1954], // China
+  'JP': [36.2048, 138.2529], // Japan
+  'KR': [35.9078, 127.7669], // South Korea
+  'IN': [20.5937, 78.9629], // India
+  'PK': [30.3753, 69.3451], // Pakistan
+  'ID': [-0.7893, 113.9213], // Indonesia
+  'MY': [4.2105, 101.9758], // Malaysia
+  'TH': [15.8700, 100.9925], // Thailand
+  'VN': [14.0583, 108.2772], // Vietnam
+  'PH': [12.8797, 121.7740], // Philippines
+  'SG': [1.3521, 103.8198], // Singapore
+  'AU': [-25.2744, 133.7751], // Australia
+  'NZ': [-40.9006, 174.8860], // New Zealand
+  'ZA': [-30.5595, 22.9375], // South Africa
+  'EG': [26.0975, 30.0444], // Egypt
+  'NG': [9.0820, 8.6753], // Nigeria
+  'KE': [-0.0236, 37.9062], // Kenya
+  'MA': [31.7917, -7.0926], // Morocco
+  'DZ': [28.0339, 1.6596], // Algeria
+  'TN': [33.8869, 9.5375], // Tunisia
+  'LY': [26.3351, 17.2283], // Libya
+  'BR': [-14.2350, -51.9253], // Brazil
+  'MX': [23.6345, -102.5528], // Mexico
+  'AR': [-38.4161, -63.6167], // Argentina
+  'CL': [-35.6751, -71.5430], // Chile
+  'PE': [-9.1900, -75.0152], // Peru
+  'CO': [4.5709, -74.2973], // Colombia
+  'VE': [6.4238, -66.5897], // Venezuela
+  'UY': [-32.5228, -55.7658], // Uruguay
+  'PY': [-23.4425, -58.4438], // Paraguay
+  'BO': [-16.2902, -63.5887], // Bolivia
+  'EC': [-1.8312, -78.1834], // Ecuador
+  'GY': [4.8604, -58.9302], // Guyana
+  'SR': [3.9193, -56.0278], // Suriname
+  'GF': [3.9339, -53.1258], // French Guiana
+  'TR': [38.9637, 35.2433], // Turkey
+  'IR': [32.4279, 53.6880], // Iran
+  'IQ': [33.2232, 43.6793], // Iraq
+  'SY': [34.8021, 38.9968], // Syria
+  'LB': [33.8547, 35.8623], // Lebanon
+  'JO': [30.5852, 36.2384], // Jordan
+  'IL': [31.0461, 34.8516], // Israel
+  'PS': [31.9522, 35.2332], // Palestine
+  'SA': [23.8859, 45.0792], // Saudi Arabia
+  'AE': [23.4241, 53.8478], // UAE
+  'QA': [25.3548, 51.1839], // Qatar
+  'KW': [29.3117, 47.4818], // Kuwait
+  'BH': [25.9304, 50.6378], // Bahrain
+  'OM': [21.5129, 55.9233], // Oman
+  'YE': [15.5527, 48.5164], // Yemen
+};
+
+// Calculate circle radius based on document count
+const getCircleRadius = (count: number): number => {
+  if (count === 0) return 0;
+  // Logarithmic scaling for better visual distribution
+  // Base radius of 8, with logarithmic scaling
+  return Math.max(8, Math.log(count + 1) * 10);
+};
+
+// Get circle color based on document count
+const getCircleColor = (count: number): string => {
+  if (count === 0) return '#e2e8f0'; // slate-300
+  if (count >= 50) return '#059669'; // emerald-600
+  if (count >= 20) return '#10b981'; // emerald-500
+  if (count >= 10) return '#34d399'; // emerald-400
+  if (count >= 5) return '#6ee7b7'; // emerald-300
+  return '#a7f3d0'; // emerald-200
+};
+
 const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
   data = [],
   onCountryClick
 }) => {
-  const [countryData, setCountryData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // No loading needed for circles
 
   // Create a map of country codes to document counts for quick lookup
   const dataMap = data.reduce((acc, item) => {
@@ -37,624 +136,155 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
   console.log('InteractiveWorldMap received data:', data);
   console.log('Generated dataMap:', dataMap);
 
-  // Load country boundaries data
-  useEffect(() => {
-    const loadCountryData = async () => {
-      try {
-        // Try multiple public GeoJSON sources for world countries
-        const sources = [
-          'https://raw.githubusercontent.com/hjalmar/world.geo.json/master/countries.geo.json',
-          'https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson',
-          'https://raw.githubusercontent.com/AshKyd/geojson-regions/master/countries/50m/all.geojson'
-        ];
-        
-        let geoData = null;
-        for (const source of sources) {
-          try {
-            const response = await fetch(source);
-            if (response.ok) {
-              geoData = await response.json();
-              console.log('Successfully loaded country data from:', source);
-              break;
+  // Create circle markers for countries with data
+  const renderCircleMarkers = () => {
+    return Object.keys(dataMap).map(countryCode => {
+      const documentCount = dataMap[countryCode];
+      const coordinates = countryCoordinates[countryCode];
+      
+      if (!coordinates || documentCount === 0) {
+        return null;
+      }
+
+      const radius = getCircleRadius(documentCount);
+      const color = getCircleColor(documentCount);
+      
+      return (
+        <CircleMarker
+          key={countryCode}
+          center={coordinates}
+          radius={radius}
+          color="#ffffff"
+          weight={2}
+          fillColor={color}
+          fillOpacity={0.7}
+          eventHandlers={{
+            click: () => {
+              console.log(`Clicked on ${countryCode} with ${documentCount} documents`);
+              if (onCountryClick) {
+                onCountryClick(countryCode);
+              }
+            },
+            mouseover: (e) => {
+              const layer = e.target;
+              layer.setStyle({
+                fillOpacity: 0.9,
+                weight: 3
+              });
+            },
+            mouseout: (e) => {
+              const layer = e.target;
+              layer.setStyle({
+                fillOpacity: 0.7,
+                weight: 2
+              });
             }
-          } catch (error) {
-            console.warn('Failed to load from source:', source, error);
-            continue;
-          }
-        }
-        
-        if (geoData) {
-          setCountryData(geoData);
-        } else {
-          console.warn('All external sources failed, using fallback data');
-          setCountryData(createFallbackCountryData());
-        }
-      } catch (error) {
-        console.error('Failed to load country data:', error);
-        setCountryData(createFallbackCountryData());
-      } finally {
-        setLoading(false);
-      }
+          }}
+        >
+          <Tooltip>
+            <div className="text-center">
+              <div className="font-semibold text-slate-800">
+                {getCountryName(countryCode)}
+              </div>
+              <div className="text-sm text-slate-600">
+                {documentCount} {documentCount === 1 ? 'document' : 'documents'}
+              </div>
+              <div className="text-xs text-slate-500 mt-1">
+                Click to explore
+              </div>
+            </div>
+          </Tooltip>
+        </CircleMarker>
+      );
+    }).filter(Boolean);
+  };
+
+  // Helper function to get country name from code
+  const getCountryName = (code: string): string => {
+    const countryNames: Record<string, string> = {
+      'AF': 'Afghanistan',
+      'BD': 'Bangladesh', 
+      'KY': 'Cayman Islands',
+      'CA': 'Canada',
+      'US': 'United States',
+      'FR': 'France',
+      'GB': 'United Kingdom',
+      'DE': 'Germany',
+      'IT': 'Italy',
+      'ES': 'Spain',
+      'NL': 'Netherlands',
+      'BE': 'Belgium',
+      'CH': 'Switzerland',
+      'AT': 'Austria',
+      'SE': 'Sweden',
+      'NO': 'Norway',
+      'DK': 'Denmark',
+      'FI': 'Finland',
+      'PL': 'Poland',
+      'CZ': 'Czech Republic',
+      'SK': 'Slovakia',
+      'HU': 'Hungary',
+      'RO': 'Romania',
+      'BG': 'Bulgaria',
+      'GR': 'Greece',
+      'PT': 'Portugal',
+      'IE': 'Ireland',
+      'RU': 'Russia',
+      'CN': 'China',
+      'JP': 'Japan',
+      'KR': 'South Korea',
+      'IN': 'India',
+      'PK': 'Pakistan',
+      'ID': 'Indonesia',
+      'MY': 'Malaysia',
+      'TH': 'Thailand',
+      'VN': 'Vietnam',
+      'PH': 'Philippines',
+      'SG': 'Singapore',
+      'AU': 'Australia',
+      'NZ': 'New Zealand',
+      'ZA': 'South Africa',
+      'EG': 'Egypt',
+      'NG': 'Nigeria',
+      'KE': 'Kenya',
+      'MA': 'Morocco',
+      'DZ': 'Algeria',
+      'TN': 'Tunisia',
+      'LY': 'Libya',
+      'BR': 'Brazil',
+      'MX': 'Mexico',
+      'AR': 'Argentina',
+      'CL': 'Chile',
+      'PE': 'Peru',
+      'CO': 'Colombia',
+      'VE': 'Venezuela',
+      'UY': 'Uruguay',
+      'PY': 'Paraguay',
+      'BO': 'Bolivia',
+      'EC': 'Ecuador',
+      'GY': 'Guyana',
+      'SR': 'Suriname',
+      'GF': 'French Guiana',
+      'TR': 'Turkey',
+      'IR': 'Iran',
+      'IQ': 'Iraq',
+      'SY': 'Syria',
+      'LB': 'Lebanon',
+      'JO': 'Jordan',
+      'IL': 'Israel',
+      'PS': 'Palestine',
+      'SA': 'Saudi Arabia',
+      'AE': 'UAE',
+      'QA': 'Qatar',
+      'KW': 'Kuwait',
+      'BH': 'Bahrain',
+      'OM': 'Oman',
+      'YE': 'Yemen'
     };
-
-    loadCountryData();
-  }, []);
-
-  // Create fallback country data if external source fails
-  const createFallbackCountryData = () => ({
-    type: "FeatureCollection",
-    features: [
-      {
-        type: "Feature",
-        properties: { ISO_A2: "US", NAME: "United States" },
-        geometry: {
-          type: "Polygon",
-          coordinates: [[[-125, 50], [-125, 25], [-65, 25], [-65, 50], [-125, 50]]]
-        }
-      },
-      {
-        type: "Feature", 
-        properties: { ISO_A2: "CA", NAME: "Canada" },
-        geometry: {
-          type: "Polygon",
-          coordinates: [[[-140, 70], [-140, 50], [-60, 50], [-60, 70], [-140, 70]]]
-        }
-      },
-      {
-        type: "Feature",
-        properties: { ISO_A2: "GB", NAME: "United Kingdom" },
-        geometry: {
-          type: "Polygon",
-          coordinates: [[[-8, 60], [-8, 50], [2, 50], [2, 60], [-8, 60]]]
-        }
-      },
-      {
-        type: "Feature",
-        properties: { ISO_A2: "DE", NAME: "Germany" },
-        geometry: {
-          type: "Polygon",
-          coordinates: [[[5, 55], [5, 47], [15, 47], [15, 55], [5, 55]]]
-        }
-      },
-      {
-        type: "Feature",
-        properties: { ISO_A2: "FR", NAME: "France" },
-        geometry: {
-          type: "Polygon",
-          coordinates: [[[-5, 51], [-5, 42], [8, 42], [8, 51], [-5, 51]]]
-        }
-      },
-      {
-        type: "Feature",
-        properties: { ISO_A2: "CN", NAME: "China" },
-        geometry: {
-          type: "Polygon",
-          coordinates: [[[73, 53], [73, 18], [135, 18], [135, 53], [73, 53]]]
-        }
-      },
-      {
-        type: "Feature",
-        properties: { ISO_A2: "RU", NAME: "Russia" },
-        geometry: {
-          type: "Polygon",
-          coordinates: [[[19, 77], [19, 41], [180, 41], [180, 77], [19, 77]]]
-        }
-      },
-      {
-        type: "Feature",
-        properties: { ISO_A2: "BR", NAME: "Brazil" },
-        geometry: {
-          type: "Polygon",
-          coordinates: [[[-74, 5], [-74, -34], [-34, -34], [-34, 5], [-74, 5]]]
-        }
-      },
-      {
-        type: "Feature",
-        properties: { ISO_A2: "AF", NAME: "Afghanistan" },
-        geometry: {
-          type: "Polygon",
-          coordinates: [[[60, 30], [60, 20], [75, 20], [75, 30], [60, 30]]]
-        }
-      },
-      {
-        type: "Feature",
-        properties: { ISO_A2: "BD", NAME: "Bangladesh" },
-        geometry: {
-          type: "Polygon",
-          coordinates: [[[88, 22], [88, 20], [92, 20], [92, 22], [88, 22]]]
-        }
-      },
-      {
-        type: "Feature",
-        properties: { ISO_A2: "KY", NAME: "Cayman Islands" },
-        geometry: {
-          type: "Polygon",
-          coordinates: [[[-80, 19], [-80, 18], [-79, 18], [-79, 19], [-80, 19]]]
-        }
-      }
-    ]
-  });
-
-  // Get color for country based on document count
-  const getCountryColor = (countryCode: string) => {
-    const count = dataMap[countryCode] || 0;
-    if (count === 0) return '#e2e8f0'; // Light gray for no data
-    
-    // Green color scale matching website theme
-    if (count >= 50) return 'hsl(145, 60%, 35%)'; // Dark green
-    if (count >= 20) return 'hsl(145, 60%, 45%)'; // Medium green  
-    if (count >= 10) return 'hsl(145, 60%, 55%)'; // Light green
-    if (count >= 5) return 'hsl(145, 60%, 65%)';  // Very light green
-    return 'hsl(145, 40%, 75%)'; // Minimal green for 1-4 docs
+    return countryNames[code] || code;
   };
 
-  // Style function for GeoJSON countries
-  const countryStyle = (feature: any) => {
-    // Try different possible property names for country code
-    const countryCode = feature.properties.ISO_A2 || 
-                       feature.properties.ADM0_A3 || 
-                       feature.properties.iso_a2 ||
-                       feature.properties.ISO2 ||
-                       feature.properties.code ||
-                       feature.properties.id;
-    
-    const fillColor = getCountryColor(countryCode);
-    
-    return {
-      fillColor,
-      weight: 1,
-      opacity: 0.8,
-      color: '#6b7280',
-      fillOpacity: 0.7,
-    };
-  };
-
-  // Handle country interactions
-  const onEachCountry = (feature: any, layer: any) => {
-    // Get country name first for better matching
-    const countryName = feature.properties.NAME || 
-                       feature.properties.NAME_EN ||
-                       feature.properties.name ||
-                       feature.properties.admin ||
-                       feature.properties.ADMIN ||
-                       feature.properties.NAME_LONG ||
-                       feature.properties.SOVEREIGN ||
-                       feature.properties.sovereignt ||
-                       feature.properties.NAME_SORT ||
-                       feature.properties.name_en;
-
-    // Try different possible property names for country code - expanded list
-    let countryCode = feature.properties.ISO_A2 || 
-                     feature.properties.ADM0_A3 || 
-                     feature.properties.iso_a2 ||
-                     feature.properties.ISO2 ||
-                     feature.properties.code ||
-                     feature.properties.id ||
-                     feature.properties.iso ||
-                     feature.properties.ISO ||
-                     feature.properties.country_code ||
-                     feature.properties.COUNTRY_CODE ||
-                     feature.properties.alpha_2 ||
-                     feature.properties.ALPHA_2 ||
-                     feature.properties.A2 ||
-                     feature.properties.iso2 ||
-                     feature.properties.ADM0_A2 ||
-                     feature.properties.ISO_A3 ||
-                     feature.properties.ADM0_ISO ||
-                     feature.properties.SU_A3;
-
-    // Normalize existing country code to uppercase and handle 3-letter codes
-    if (countryCode) {
-      countryCode = countryCode.toString().toUpperCase();
-      
-      // Convert 3-letter codes to 2-letter codes for ALL countries
-      const iso3ToIso2 = {
-        'AFG': 'AF', // Afghanistan
-        'BGD': 'BD', // Bangladesh  
-        'CYM': 'KY', // Cayman Islands
-        'USA': 'US', // United States
-        'CAN': 'CA', // Canada
-        'FRA': 'FR', // France
-        'DEU': 'DE', // Germany
-        'GBR': 'GB', // United Kingdom
-        'ITA': 'IT', // Italy
-        'ESP': 'ES', // Spain
-        'RUS': 'RU', // Russia
-        'CHN': 'CN', // China
-        'JPN': 'JP', // Japan
-        'IND': 'IN', // India
-        'BRA': 'BR', // Brazil
-        'MEX': 'MX', // Mexico
-        'AUS': 'AU', // Australia
-        'ZAF': 'ZA', // South Africa
-        'EGY': 'EG', // Egypt
-        'NGA': 'NG', // Nigeria
-        'KEN': 'KE', // Kenya
-        'MAR': 'MA', // Morocco
-        'TUN': 'TN', // Tunisia
-        'DZA': 'DZ', // Algeria
-        'LBY': 'LY', // Libya
-        'SDN': 'SD', // Sudan
-        'ETH': 'ET', // Ethiopia
-        'UGA': 'UG', // Uganda
-        'TZA': 'TZ', // Tanzania
-        'ZWE': 'ZW', // Zimbabwe
-        'ZMB': 'ZM', // Zambia
-        'BWA': 'BW', // Botswana
-        'NAM': 'NA', // Namibia
-        'AGO': 'AO', // Angola
-        'MOZ': 'MZ', // Mozambique
-        'MDG': 'MG', // Madagascar
-        'MWI': 'MW', // Malawi
-        'CMR': 'CM', // Cameroon
-        'GHA': 'GH', // Ghana
-        'SEN': 'SN', // Senegal
-        'MLI': 'ML', // Mali
-        'BFA': 'BF', // Burkina Faso
-        'NER': 'NE', // Niger
-        'TCD': 'TD', // Chad
-        'CAF': 'CF', // Central African Republic
-        'COD': 'CD', // Democratic Republic of the Congo
-        'COG': 'CG', // Republic of the Congo
-        'GAB': 'GA', // Gabon
-        'GNQ': 'GQ', // Equatorial Guinea
-        'STP': 'ST', // São Tomé and Príncipe
-        'PAK': 'PK', // Pakistan
-        'IRN': 'IR', // Iran
-        'IRQ': 'IQ', // Iraq
-        'TUR': 'TR', // Turkey
-        'SYR': 'SY', // Syria
-        'JOR': 'JO', // Jordan
-        'LBN': 'LB', // Lebanon
-        'ISR': 'IL', // Israel
-        'PSE': 'PS', // Palestine
-        'SAU': 'SA', // Saudi Arabia
-        'ARE': 'AE', // United Arab Emirates
-        'QAT': 'QA', // Qatar
-        'KWT': 'KW', // Kuwait
-        'BHR': 'BH', // Bahrain
-        'OMN': 'OM', // Oman
-        'YEM': 'YE', // Yemen
-        'KAZ': 'KZ', // Kazakhstan
-        'UZB': 'UZ', // Uzbekistan
-        'TKM': 'TM', // Turkmenistan
-        'KGZ': 'KG', // Kyrgyzstan
-        'TJK': 'TJ', // Tajikistan
-        'MNG': 'MN', // Mongolia
-        'PRK': 'KP', // North Korea
-        'KOR': 'KR', // South Korea
-        'TWN': 'TW', // Taiwan
-        'HKG': 'HK', // Hong Kong
-        'MAC': 'MO', // Macau
-        'THA': 'TH', // Thailand
-        'VNM': 'VN', // Vietnam
-        'LAO': 'LA', // Laos
-        'KHM': 'KH', // Cambodia
-        'MMR': 'MM', // Myanmar
-        'MYS': 'MY', // Malaysia
-        'SGP': 'SG', // Singapore
-        'IDN': 'ID', // Indonesia
-        'BRN': 'BN', // Brunei
-        'PHL': 'PH', // Philippines
-        'PNG': 'PG', // Papua New Guinea
-        'FJI': 'FJ', // Fiji
-        'NCL': 'NC', // New Caledonia
-        'VUT': 'VU', // Vanuatu
-        'SLB': 'SB', // Solomon Islands
-        'TON': 'TO', // Tonga
-        'WSM': 'WS', // Samoa
-        'PLW': 'PW', // Palau
-        'MHL': 'MH', // Marshall Islands
-        'FSM': 'FM', // Micronesia
-        'KIR': 'KI', // Kiribati
-        'TUV': 'TV', // Tuvalu
-        'NRU': 'NR', // Nauru
-        'CKI': 'CK', // Cook Islands
-        'NIU': 'NU', // Niue
-        'TKL': 'TK', // Tokelau
-        // Add European countries
-        'NLD': 'NL', // Netherlands
-        'BEL': 'BE', // Belgium
-        'LUX': 'LU', // Luxembourg
-        'CHE': 'CH', // Switzerland
-        'AUT': 'AT', // Austria
-        'CZE': 'CZ', // Czech Republic
-        'SVK': 'SK', // Slovakia
-        'POL': 'PL', // Poland
-        'HUN': 'HU', // Hungary
-        'ROU': 'RO', // Romania
-        'BGR': 'BG', // Bulgaria
-        'HRV': 'HR', // Croatia
-        'SVN': 'SI', // Slovenia
-        'BIH': 'BA', // Bosnia and Herzegovina
-        'SRB': 'RS', // Serbia
-        'MNE': 'ME', // Montenegro
-        'MKD': 'MK', // North Macedonia
-        'ALB': 'AL', // Albania
-        'GRC': 'GR', // Greece
-        'CYP': 'CY', // Cyprus
-        'MLT': 'MT', // Malta
-        'PRT': 'PT', // Portugal
-        'AND': 'AD', // Andorra
-        'MCO': 'MC', // Monaco
-        'SMR': 'SM', // San Marino
-        'VAT': 'VA', // Vatican City
-        'LIE': 'LI', // Liechtenstein
-        'NOR': 'NO', // Norway
-        'SWE': 'SE', // Sweden
-        'FIN': 'FI', // Finland
-        'DNK': 'DK', // Denmark
-        'ISL': 'IS', // Iceland
-        'IRL': 'IE', // Ireland
-        'EST': 'EE', // Estonia
-        'LVA': 'LV', // Latvia
-        'LTU': 'LT', // Lithuania
-        'BLR': 'BY', // Belarus
-        'UKR': 'UA', // Ukraine
-        'MDA': 'MD', // Moldova
-        'GEO': 'GE', // Georgia
-        'ARM': 'AM', // Armenia
-        'AZE': 'AZ', // Azerbaijan
-        // Add Latin American countries
-        'ARG': 'AR', // Argentina
-        'CHL': 'CL', // Chile
-        'URY': 'UY', // Uruguay
-        'PRY': 'PY', // Paraguay
-        'BOL': 'BO', // Bolivia
-        'PER': 'PE', // Peru
-        'ECU': 'EC', // Ecuador
-        'COL': 'CO', // Colombia
-        'VEN': 'VE', // Venezuela
-        'GUY': 'GY', // Guyana
-        'SUR': 'SR', // Suriname
-        'GUF': 'GF', // French Guiana
-        'GTM': 'GT', // Guatemala
-        'BLZ': 'BZ', // Belize
-        'SLV': 'SV', // El Salvador
-        'HND': 'HN', // Honduras
-        'NIC': 'NI', // Nicaragua
-        'CRI': 'CR', // Costa Rica
-        'PAN': 'PA', // Panama
-        'CUB': 'CU', // Cuba
-        'JAM': 'JM', // Jamaica
-        'HTI': 'HT', // Haiti
-        'DOM': 'DO', // Dominican Republic
-        'PRI': 'PR', // Puerto Rico
-        'TTO': 'TT', // Trinidad and Tobago
-        'BRB': 'BB', // Barbados
-        'GRD': 'GD', // Grenada
-        'VCT': 'VC', // Saint Vincent and the Grenadines
-        'LCA': 'LC', // Saint Lucia
-        'DMA': 'DM', // Dominica
-        'ATG': 'AG', // Antigua and Barbuda
-        'KNA': 'KN', // Saint Kitts and Nevis
-        'MSR': 'MS', // Montserrat
-        'VGB': 'VG', // British Virgin Islands
-        'VIR': 'VI', // U.S. Virgin Islands
-        'AIA': 'AI', // Anguilla
-        'ABW': 'AW', // Aruba
-        'CUW': 'CW', // Curaçao
-        'SXM': 'SX', // Sint Maarten
-        'BES': 'BQ', // Caribbean Netherlands
-        'TCA': 'TC', // Turks and Caicos Islands
-        'CYM': 'KY', // Cayman Islands
-        'BMU': 'BM'  // Bermuda
-      };
-      
-      if (iso3ToIso2[countryCode]) {
-        countryCode = iso3ToIso2[countryCode];
-      }
-    }
-
-    // Alternative: try to match by exact country name if no code found or code doesn't match our data
-    if (!countryCode || !dataMap[countryCode]) {
-      if (countryName) {
-        // Create a comprehensive name-to-code mapping
-        const nameToCode = {
-          // Common English names
-          'Afghanistan': 'AF',
-          'Bangladesh': 'BD', 
-          'Cayman Islands': 'KY',
-          'United States': 'US',
-          'United States of America': 'US',
-          'USA': 'US',
-          'Canada': 'CA',
-          'France': 'FR',
-          'Germany': 'DE',
-          'United Kingdom': 'GB',
-          'Great Britain': 'GB',
-          'Italy': 'IT',
-          'Spain': 'ES',
-          'Russia': 'RU',
-          'Russian Federation': 'RU',
-          'China': 'CN',
-          'Japan': 'JP',
-          'India': 'IN',
-          'Brazil': 'BR',
-          'Mexico': 'MX',
-          'Australia': 'AU',
-          'South Africa': 'ZA',
-          'Egypt': 'EG',
-          'Nigeria': 'NG',
-          'Kenya': 'KE',
-          'Morocco': 'MA',
-          'Turkey': 'TR',
-          'Iran': 'IR',
-          'Iraq': 'IQ',
-          'Pakistan': 'PK',
-          'Saudi Arabia': 'SA',
-          'United Arab Emirates': 'AE',
-          'Netherlands': 'NL',
-          'Belgium': 'BE',
-          'Switzerland': 'CH',
-          'Austria': 'AT',
-          'Poland': 'PL',
-          'Czech Republic': 'CZ',
-          'Norway': 'NO',
-          'Sweden': 'SE',
-          'Finland': 'FI',
-          'Denmark': 'DK',
-          'Ireland': 'IE',
-          'Portugal': 'PT',
-          'Greece': 'GR',
-          'Argentina': 'AR',
-          'Chile': 'CL',
-          'Colombia': 'CO',
-          'Venezuela': 'VE',
-          'Peru': 'PE',
-          'Ecuador': 'EC',
-          'Bolivia': 'BO',
-          'Uruguay': 'UY',
-          'Paraguay': 'PY',
-          // Alternative/official names
-          'Islamic Republic of Afghanistan': 'AF',
-          'People\'s Republic of Bangladesh': 'BD',
-          'French Republic': 'FR',
-          'Federal Republic of Germany': 'DE',
-          'People\'s Republic of China': 'CN',
-          'Russian Federation': 'RU',
-          'United Mexican States': 'MX',
-          'Commonwealth of Australia': 'AU',
-          'Republic of South Africa': 'ZA',
-          'Arab Republic of Egypt': 'EG',
-          'Federal Republic of Nigeria': 'NG',
-          'Republic of Kenya': 'KE',
-          'Kingdom of Morocco': 'MA',
-          'Republic of Turkey': 'TR',
-          'Islamic Republic of Iran': 'IR',
-          'Republic of Iraq': 'IQ',
-          'Islamic Republic of Pakistan': 'PK',
-          'Kingdom of Saudi Arabia': 'SA',
-          // Short forms and variations
-          'UK': 'GB',
-          'Britain': 'GB',
-          'England': 'GB',
-          'UAE': 'AE',
-          'USA': 'US',
-          'US': 'US',
-          'America': 'US'
-        };
-        
-        const matchedCode = nameToCode[countryName];
-        if (matchedCode) {
-          countryCode = matchedCode;
-        }
-      }
-    }
-                       
-    const documentCount = dataMap[countryCode] || 0;
-
-    // Enhanced debugging for countries with data
-    const countriesWithData = Object.keys(dataMap).filter(code => dataMap[code] > 0);
-    const isCountryWithData = countriesWithData.includes(countryCode);
-    
-    // Debug countries that should have data or do have data
-    if (isCountryWithData || documentCount > 0) {
-      console.log('🔍 DETAILED COUNTRY ANALYSIS:', {
-        countryName,
-        extractedCountryCode: countryCode,
-        documentCount,
-        expectedInDataMap: dataMap[countryCode],
-        allAvailableProperties: feature.properties,
-        matchedFromDataMap: Object.keys(dataMap).includes(countryCode),
-        dataMapKeys: Object.keys(dataMap),
-        dataMapEntries: Object.entries(dataMap),
-        // Show all property values, not just keys
-        propertyValues: Object.entries(feature.properties).map(([key, value]) => `${key}: ${value}`).join(', ')
-      });
-    }
-
-    // Log countries that have data in our API but aren't being matched
-    const allDataMapCodes = Object.keys(dataMap);
-    if (allDataMapCodes.length > 0 && countryName) {
-      // Check if this country might be one we have data for
-      const possibleMatches = allDataMapCodes.filter(code => {
-        const codeMatch = countryCode === code;
-        const nameMatch = countryName.toLowerCase().includes(code.toLowerCase());
-        return codeMatch || nameMatch;
-      });
-      
-      if (possibleMatches.length > 0) {
-        console.log('🎯 POTENTIAL MATCH FOUND:', {
-          originalName: countryName,
-          extractedCode: countryCode,
-          possibleDataMapCodes: possibleMatches,
-          allProperties: feature.properties,
-          documentCount,
-          expectedDataMapValue: possibleMatches.map(code => `${code}: ${dataMap[code]}`).join(', ')
-        });
-      }
-    }
-    
-    // Check if this is a country we have data for (to help with debugging)
-    const hasAnyDataInMap = Object.keys(dataMap).length > 0;
-    const isRelevantCountry = hasAnyDataInMap && (
-      documentCount > 0 || 
-      (countryCode && Object.keys(dataMap).includes(countryCode)) ||
-      (countryName && Object.keys(dataMap).some(code => {
-        // Try to match by looking up the country name for this code
-        return countryName.toLowerCase().includes('afghanistan') && code === 'AF' ||
-               countryName.toLowerCase().includes('bangladesh') && code === 'BD' ||
-               countryName.toLowerCase().includes('cayman') && code === 'KY' ||
-               countryName.toLowerCase().includes('canada') && code === 'CA' ||
-               countryName.toLowerCase().includes('united states') && code === 'US' ||
-               countryName.toLowerCase().includes('france') && code === 'FR'
-      }))
-    );
-
-    if (documentCount > 0) {
-      console.log('✅ Country with data found:', {
-        countryCode,
-        countryName,
-        documentCount
-      });
-    } else if (countryCode && isRelevantCountry) {
-      console.log('ℹ️ Relevant country with no documents:', {
-        countryCode,
-        countryName,
-        documentCount: 0
-      });
-    } else if (!countryCode && isRelevantCountry) {
-      console.warn('⚠️ Relevant country with no valid code:', {
-        countryName,
-        availableProperties: Object.keys(feature.properties)
-      });
-    }
-
-    // Add hover effects
-    layer.on({
-      mouseover: (e: any) => {
-        const layer = e.target;
-        layer.setStyle({
-          weight: 2,
-          color: 'hsl(145, 60%, 30%)',
-          fillOpacity: 0.9,
-        });
-      },
-      mouseout: (e: any) => {
-        const layer = e.target;
-        layer.setStyle(countryStyle(feature));
-      },
-      click: () => {
-        if (onCountryClick && countryCode) {
-          onCountryClick(countryCode);
-        }
-      }
-    });
-
-    // Bind tooltip with country info
-    layer.bindTooltip(
-      `<div style="text-align: center;">
-        <strong>${countryName}</strong><br/>
-        ${documentCount} document${documentCount !== 1 ? 's' : ''}
-      </div>`,
-      {
-        permanent: false,
-        sticky: true,
-        className: 'country-tooltip'
-      }
-    );
-  };
+  // No external data loading needed - using circle markers with built-in coordinates
 
   if (loading) {
     return (
@@ -668,7 +298,7 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
   }
 
   return (
-    <div className="w-full h-[500px] rounded-lg overflow-hidden shadow-lg">
+    <div className="w-full h-[500px] rounded-lg overflow-hidden shadow-lg relative">
       <MapContainer
         center={[20, 0]}
         zoom={2}
@@ -684,61 +314,50 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
           noWrap={true}
         />
         
-        {/* Country boundaries with data */}
-        {countryData && (
-          <GeoJSON
-            data={countryData}
-            style={countryStyle}
-            onEachFeature={onEachCountry}
-          />
-        )}
+        {/* Circle markers for countries with documents */}
+        {renderCircleMarkers()}
       </MapContainer>
       
-      {/* Legend */}
+      {/* Legend for circle sizes */}
       <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-lg z-[1000]">
-        <h4 className="font-semibold text-sm mb-2 text-slate-700">Documents</h4>
-        <div className="space-y-1 text-xs">
+        <h4 className="font-semibold text-sm mb-2 text-slate-700">Documents by Country</h4>
+        <div className="space-y-2 text-xs">
           <div className="flex items-center">
-            <div className="w-4 h-3 mr-2 rounded" style={{ backgroundColor: 'hsl(145, 60%, 35%)' }}></div>
+            <div className="w-6 h-6 mr-2 rounded-full border-2 border-white" style={{ 
+              backgroundColor: getCircleColor(50),
+              transform: 'scale(1.2)'
+            }}></div>
             <span>50+ docs</span>
           </div>
           <div className="flex items-center">
-            <div className="w-4 h-3 mr-2 rounded" style={{ backgroundColor: 'hsl(145, 60%, 45%)' }}></div>
+            <div className="w-5 h-5 mr-2 rounded-full border-2 border-white" style={{ 
+              backgroundColor: getCircleColor(20)
+            }}></div>
             <span>20-49 docs</span>
           </div>
           <div className="flex items-center">
-            <div className="w-4 h-3 mr-2 rounded" style={{ backgroundColor: 'hsl(145, 60%, 55%)' }}></div>
+            <div className="w-4 h-4 mr-2 rounded-full border-2 border-white" style={{ 
+              backgroundColor: getCircleColor(10)
+            }}></div>
             <span>10-19 docs</span>
           </div>
           <div className="flex items-center">
-            <div className="w-4 h-3 mr-2 rounded" style={{ backgroundColor: 'hsl(145, 60%, 65%)' }}></div>
+            <div className="w-3 h-3 mr-2 rounded-full border-2 border-white" style={{ 
+              backgroundColor: getCircleColor(5)
+            }}></div>
             <span>5-9 docs</span>
           </div>
           <div className="flex items-center">
-            <div className="w-4 h-3 mr-2 rounded" style={{ backgroundColor: 'hsl(145, 40%, 75%)' }}></div>
+            <div className="w-3 h-3 mr-2 rounded-full border-2 border-white" style={{ 
+              backgroundColor: getCircleColor(1)
+            }}></div>
             <span>1-4 docs</span>
           </div>
-          <div className="flex items-center">
-            <div className="w-4 h-3 mr-2 rounded bg-slate-300"></div>
-            <span>No data</span>
+          <div className="text-xs text-slate-500 mt-2">
+            Circle size = document count
           </div>
         </div>
       </div>
-      
-      {/* Custom styles for tooltips */}
-      <style jsx global>{`
-        .country-tooltip {
-          background: rgba(255, 255, 255, 0.95) !important;
-          border: 1px solid hsl(145, 60%, 50%) !important;
-          border-radius: 6px !important;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
-          font-size: 12px !important;
-          padding: 6px 8px !important;
-        }
-        .country-tooltip::before {
-          border-top-color: hsl(145, 60%, 50%) !important;
-        }
-      `}</style>
     </div>
   );
 };
