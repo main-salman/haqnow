@@ -243,34 +243,202 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
                      feature.properties.ADM0_ISO ||
                      feature.properties.SU_A3;
 
-    // Always check name-based matching first for our key countries
-    if (countryName) {
-      const lowerName = countryName.toLowerCase();
-      if (lowerName.includes('afghanistan') || lowerName.includes('afghan')) {
-        countryCode = 'AF';
-      } else if (lowerName.includes('bangladesh') || lowerName.includes('bangla')) {
-        countryCode = 'BD';
-      } else if (lowerName.includes('cayman')) {
-        countryCode = 'KY';
-      } else if (lowerName.includes('united states') || lowerName === 'usa' || lowerName === 'us' || 
-                 lowerName.includes('america') || lowerName === 'united states of america') {
-        countryCode = 'US';
-      } else if (lowerName.includes('canada') || lowerName === 'can') {
-        countryCode = 'CA';
-      }
-    }
-
     // Normalize existing country code to uppercase and handle 3-letter codes
-    if (countryCode && !['AF', 'BD', 'KY', 'US', 'CA'].includes(countryCode)) {
+    if (countryCode) {
       countryCode = countryCode.toString().toUpperCase();
       
-      // Convert 3-letter codes to 2-letter codes for common countries
+      // Convert 3-letter codes to 2-letter codes for ALL countries
       const iso3ToIso2 = {
         'AFG': 'AF', // Afghanistan
         'BGD': 'BD', // Bangladesh  
         'CYM': 'KY', // Cayman Islands
         'USA': 'US', // United States
-        'CAN': 'CA'  // Canada
+        'CAN': 'CA', // Canada
+        'FRA': 'FR', // France
+        'DEU': 'DE', // Germany
+        'GBR': 'GB', // United Kingdom
+        'ITA': 'IT', // Italy
+        'ESP': 'ES', // Spain
+        'RUS': 'RU', // Russia
+        'CHN': 'CN', // China
+        'JPN': 'JP', // Japan
+        'IND': 'IN', // India
+        'BRA': 'BR', // Brazil
+        'MEX': 'MX', // Mexico
+        'AUS': 'AU', // Australia
+        'ZAF': 'ZA', // South Africa
+        'EGY': 'EG', // Egypt
+        'NGA': 'NG', // Nigeria
+        'KEN': 'KE', // Kenya
+        'MAR': 'MA', // Morocco
+        'TUN': 'TN', // Tunisia
+        'DZA': 'DZ', // Algeria
+        'LBY': 'LY', // Libya
+        'SDN': 'SD', // Sudan
+        'ETH': 'ET', // Ethiopia
+        'UGA': 'UG', // Uganda
+        'TZA': 'TZ', // Tanzania
+        'ZWE': 'ZW', // Zimbabwe
+        'ZMB': 'ZM', // Zambia
+        'BWA': 'BW', // Botswana
+        'NAM': 'NA', // Namibia
+        'AGO': 'AO', // Angola
+        'MOZ': 'MZ', // Mozambique
+        'MDG': 'MG', // Madagascar
+        'MWI': 'MW', // Malawi
+        'CMR': 'CM', // Cameroon
+        'GHA': 'GH', // Ghana
+        'SEN': 'SN', // Senegal
+        'MLI': 'ML', // Mali
+        'BFA': 'BF', // Burkina Faso
+        'NER': 'NE', // Niger
+        'TCD': 'TD', // Chad
+        'CAF': 'CF', // Central African Republic
+        'COD': 'CD', // Democratic Republic of the Congo
+        'COG': 'CG', // Republic of the Congo
+        'GAB': 'GA', // Gabon
+        'GNQ': 'GQ', // Equatorial Guinea
+        'STP': 'ST', // São Tomé and Príncipe
+        'PAK': 'PK', // Pakistan
+        'IRN': 'IR', // Iran
+        'IRQ': 'IQ', // Iraq
+        'TUR': 'TR', // Turkey
+        'SYR': 'SY', // Syria
+        'JOR': 'JO', // Jordan
+        'LBN': 'LB', // Lebanon
+        'ISR': 'IL', // Israel
+        'PSE': 'PS', // Palestine
+        'SAU': 'SA', // Saudi Arabia
+        'ARE': 'AE', // United Arab Emirates
+        'QAT': 'QA', // Qatar
+        'KWT': 'KW', // Kuwait
+        'BHR': 'BH', // Bahrain
+        'OMN': 'OM', // Oman
+        'YEM': 'YE', // Yemen
+        'KAZ': 'KZ', // Kazakhstan
+        'UZB': 'UZ', // Uzbekistan
+        'TKM': 'TM', // Turkmenistan
+        'KGZ': 'KG', // Kyrgyzstan
+        'TJK': 'TJ', // Tajikistan
+        'MNG': 'MN', // Mongolia
+        'PRK': 'KP', // North Korea
+        'KOR': 'KR', // South Korea
+        'TWN': 'TW', // Taiwan
+        'HKG': 'HK', // Hong Kong
+        'MAC': 'MO', // Macau
+        'THA': 'TH', // Thailand
+        'VNM': 'VN', // Vietnam
+        'LAO': 'LA', // Laos
+        'KHM': 'KH', // Cambodia
+        'MMR': 'MM', // Myanmar
+        'MYS': 'MY', // Malaysia
+        'SGP': 'SG', // Singapore
+        'IDN': 'ID', // Indonesia
+        'BRN': 'BN', // Brunei
+        'PHL': 'PH', // Philippines
+        'PNG': 'PG', // Papua New Guinea
+        'FJI': 'FJ', // Fiji
+        'NCL': 'NC', // New Caledonia
+        'VUT': 'VU', // Vanuatu
+        'SLB': 'SB', // Solomon Islands
+        'TON': 'TO', // Tonga
+        'WSM': 'WS', // Samoa
+        'PLW': 'PW', // Palau
+        'MHL': 'MH', // Marshall Islands
+        'FSM': 'FM', // Micronesia
+        'KIR': 'KI', // Kiribati
+        'TUV': 'TV', // Tuvalu
+        'NRU': 'NR', // Nauru
+        'CKI': 'CK', // Cook Islands
+        'NIU': 'NU', // Niue
+        'TKL': 'TK', // Tokelau
+        // Add European countries
+        'NLD': 'NL', // Netherlands
+        'BEL': 'BE', // Belgium
+        'LUX': 'LU', // Luxembourg
+        'CHE': 'CH', // Switzerland
+        'AUT': 'AT', // Austria
+        'CZE': 'CZ', // Czech Republic
+        'SVK': 'SK', // Slovakia
+        'POL': 'PL', // Poland
+        'HUN': 'HU', // Hungary
+        'ROU': 'RO', // Romania
+        'BGR': 'BG', // Bulgaria
+        'HRV': 'HR', // Croatia
+        'SVN': 'SI', // Slovenia
+        'BIH': 'BA', // Bosnia and Herzegovina
+        'SRB': 'RS', // Serbia
+        'MNE': 'ME', // Montenegro
+        'MKD': 'MK', // North Macedonia
+        'ALB': 'AL', // Albania
+        'GRC': 'GR', // Greece
+        'CYP': 'CY', // Cyprus
+        'MLT': 'MT', // Malta
+        'PRT': 'PT', // Portugal
+        'AND': 'AD', // Andorra
+        'MCO': 'MC', // Monaco
+        'SMR': 'SM', // San Marino
+        'VAT': 'VA', // Vatican City
+        'LIE': 'LI', // Liechtenstein
+        'NOR': 'NO', // Norway
+        'SWE': 'SE', // Sweden
+        'FIN': 'FI', // Finland
+        'DNK': 'DK', // Denmark
+        'ISL': 'IS', // Iceland
+        'IRL': 'IE', // Ireland
+        'EST': 'EE', // Estonia
+        'LVA': 'LV', // Latvia
+        'LTU': 'LT', // Lithuania
+        'BLR': 'BY', // Belarus
+        'UKR': 'UA', // Ukraine
+        'MDA': 'MD', // Moldova
+        'GEO': 'GE', // Georgia
+        'ARM': 'AM', // Armenia
+        'AZE': 'AZ', // Azerbaijan
+        // Add Latin American countries
+        'ARG': 'AR', // Argentina
+        'CHL': 'CL', // Chile
+        'URY': 'UY', // Uruguay
+        'PRY': 'PY', // Paraguay
+        'BOL': 'BO', // Bolivia
+        'PER': 'PE', // Peru
+        'ECU': 'EC', // Ecuador
+        'COL': 'CO', // Colombia
+        'VEN': 'VE', // Venezuela
+        'GUY': 'GY', // Guyana
+        'SUR': 'SR', // Suriname
+        'GUF': 'GF', // French Guiana
+        'GTM': 'GT', // Guatemala
+        'BLZ': 'BZ', // Belize
+        'SLV': 'SV', // El Salvador
+        'HND': 'HN', // Honduras
+        'NIC': 'NI', // Nicaragua
+        'CRI': 'CR', // Costa Rica
+        'PAN': 'PA', // Panama
+        'CUB': 'CU', // Cuba
+        'JAM': 'JM', // Jamaica
+        'HTI': 'HT', // Haiti
+        'DOM': 'DO', // Dominican Republic
+        'PRI': 'PR', // Puerto Rico
+        'TTO': 'TT', // Trinidad and Tobago
+        'BRB': 'BB', // Barbados
+        'GRD': 'GD', // Grenada
+        'VCT': 'VC', // Saint Vincent and the Grenadines
+        'LCA': 'LC', // Saint Lucia
+        'DMA': 'DM', // Dominica
+        'ATG': 'AG', // Antigua and Barbuda
+        'KNA': 'KN', // Saint Kitts and Nevis
+        'MSR': 'MS', // Montserrat
+        'VGB': 'VG', // British Virgin Islands
+        'VIR': 'VI', // U.S. Virgin Islands
+        'AIA': 'AI', // Anguilla
+        'ABW': 'AW', // Aruba
+        'CUW': 'CW', // Curaçao
+        'SXM': 'SX', // Sint Maarten
+        'BES': 'BQ', // Caribbean Netherlands
+        'TCA': 'TC', // Turks and Caicos Islands
+        'CYM': 'KY', // Cayman Islands
+        'BMU': 'BM'  // Bermuda
       };
       
       if (iso3ToIso2[countryCode]) {
@@ -281,21 +449,90 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
     // Alternative: try to match by exact country name if no code found or code doesn't match our data
     if (!countryCode || !dataMap[countryCode]) {
       if (countryName) {
+        // Create a comprehensive name-to-code mapping
         const nameToCode = {
+          // Common English names
           'Afghanistan': 'AF',
           'Bangladesh': 'BD', 
           'Cayman Islands': 'KY',
-          'Cayman Is.': 'KY',
           'United States': 'US',
           'United States of America': 'US',
           'USA': 'US',
           'Canada': 'CA',
-          // Add more variations
+          'France': 'FR',
+          'Germany': 'DE',
+          'United Kingdom': 'GB',
+          'Great Britain': 'GB',
+          'Italy': 'IT',
+          'Spain': 'ES',
+          'Russia': 'RU',
+          'Russian Federation': 'RU',
+          'China': 'CN',
+          'Japan': 'JP',
+          'India': 'IN',
+          'Brazil': 'BR',
+          'Mexico': 'MX',
+          'Australia': 'AU',
+          'South Africa': 'ZA',
+          'Egypt': 'EG',
+          'Nigeria': 'NG',
+          'Kenya': 'KE',
+          'Morocco': 'MA',
+          'Turkey': 'TR',
+          'Iran': 'IR',
+          'Iraq': 'IQ',
+          'Pakistan': 'PK',
+          'Saudi Arabia': 'SA',
+          'United Arab Emirates': 'AE',
+          'Netherlands': 'NL',
+          'Belgium': 'BE',
+          'Switzerland': 'CH',
+          'Austria': 'AT',
+          'Poland': 'PL',
+          'Czech Republic': 'CZ',
+          'Norway': 'NO',
+          'Sweden': 'SE',
+          'Finland': 'FI',
+          'Denmark': 'DK',
+          'Ireland': 'IE',
+          'Portugal': 'PT',
+          'Greece': 'GR',
+          'Argentina': 'AR',
+          'Chile': 'CL',
+          'Colombia': 'CO',
+          'Venezuela': 'VE',
+          'Peru': 'PE',
+          'Ecuador': 'EC',
+          'Bolivia': 'BO',
+          'Uruguay': 'UY',
+          'Paraguay': 'PY',
+          // Alternative/official names
           'Islamic Republic of Afghanistan': 'AF',
-          'Afghanistan, Islamic Republic of': 'AF',
           'People\'s Republic of Bangladesh': 'BD',
-          'Bangladesh, People\'s Republic of': 'BD',
-          'Cayman': 'KY'
+          'French Republic': 'FR',
+          'Federal Republic of Germany': 'DE',
+          'People\'s Republic of China': 'CN',
+          'Russian Federation': 'RU',
+          'United Mexican States': 'MX',
+          'Commonwealth of Australia': 'AU',
+          'Republic of South Africa': 'ZA',
+          'Arab Republic of Egypt': 'EG',
+          'Federal Republic of Nigeria': 'NG',
+          'Republic of Kenya': 'KE',
+          'Kingdom of Morocco': 'MA',
+          'Republic of Turkey': 'TR',
+          'Islamic Republic of Iran': 'IR',
+          'Republic of Iraq': 'IQ',
+          'Islamic Republic of Pakistan': 'PK',
+          'Kingdom of Saudi Arabia': 'SA',
+          // Short forms and variations
+          'UK': 'GB',
+          'Britain': 'GB',
+          'England': 'GB',
+          'UAE': 'AE',
+          'USA': 'US',
+          'US': 'US',
+          'America': 'US'
         };
         
         const matchedCode = nameToCode[countryName];
@@ -307,26 +544,12 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
                        
     const documentCount = dataMap[countryCode] || 0;
 
-    // Enhanced debugging for ALL countries that should have data
-    const expectedCountries = ['AF', 'BD', 'KY', 'US', 'CA']; // All countries we know should have data
-    const isExpectedCountry = expectedCountries.includes(countryCode) || 
-                             countryName?.toLowerCase().includes('afghanistan') ||
-                             countryName?.toLowerCase().includes('bangladesh') ||
-                             countryName?.toLowerCase().includes('cayman') ||
-                             countryName?.toLowerCase().includes('united states') ||
-                             countryName?.toLowerCase().includes('america') ||
-                             countryName?.toLowerCase().includes('canada');
-
-    // Also check if this country matches any of our expected data
-    const hasExpectedData = Object.keys(dataMap).some(code => dataMap[code] > 0);
+    // Enhanced debugging for countries with data
+    const countriesWithData = Object.keys(dataMap).filter(code => dataMap[code] > 0);
+    const isCountryWithData = countriesWithData.includes(countryCode);
     
-    if (isExpectedCountry || documentCount > 0 || 
-        (hasExpectedData && (countryName?.toLowerCase().includes('afghan') ||
-                            countryName?.toLowerCase().includes('bangla') ||
-                            countryName?.toLowerCase().includes('cayman') ||
-                            countryName?.toLowerCase().includes('united states') ||
-                            countryName?.toLowerCase().includes('america') ||
-                            countryName?.toLowerCase().includes('canada')))) {
+    // Debug countries that should have data or do have data
+    if (isCountryWithData || documentCount > 0) {
       console.log('🔍 DETAILED COUNTRY ANALYSIS:', {
         countryName,
         extractedCountryCode: countryCode,
@@ -341,40 +564,26 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
       });
     }
 
-    // Log ALL target countries to find our data
-    if (countryName && (countryName.toLowerCase().includes('afghan') || 
-                       countryName.toLowerCase().includes('bangla') || 
-                       countryName.toLowerCase().includes('cayman') ||
-                       countryName.toLowerCase().includes('united states') ||
-                       countryName.toLowerCase().includes('america') ||
-                       countryName.toLowerCase().includes('canada'))) {
-      console.log('🎯 FOUND TARGET COUNTRY:', {
-        originalName: countryName,
-        extractedCode: countryCode,
-        allProperties: feature.properties,
-        documentCount,
-        shouldHaveData: 'YES - This should show 1 document!',
-        isInDataMap: Object.keys(dataMap).includes(countryCode),
-        dataMapHasThisCode: dataMap[countryCode] !== undefined,
-        dataMapValue: dataMap[countryCode]
+    // Log countries that have data in our API but aren't being matched
+    const allDataMapCodes = Object.keys(dataMap);
+    if (allDataMapCodes.length > 0 && countryName) {
+      // Check if this country might be one we have data for
+      const possibleMatches = allDataMapCodes.filter(code => {
+        const codeMatch = countryCode === code;
+        const nameMatch = countryName.toLowerCase().includes(code.toLowerCase());
+        return codeMatch || nameMatch;
       });
-    }
-
-    // Enhanced debugging for data integration - only log relevant countries
-    const isRelevantCountry = documentCount > 0 || 
-                             countryName?.toLowerCase().includes('afghan') ||
-                             countryName?.toLowerCase().includes('bangla') ||
-                             countryName?.toLowerCase().includes('cayman') ||
-                             expectedCountries.includes(countryCode);
-
-    if (isRelevantCountry) {
-      console.log('Processing country:', {
-        countryCode,
-        countryName,
-        documentCount,
-        availableProperties: Object.keys(feature.properties),
-        allProperties: feature.properties
-      });
+      
+      if (possibleMatches.length > 0) {
+        console.log('🎯 POTENTIAL MATCH FOUND:', {
+          originalName: countryName,
+          extractedCode: countryCode,
+          possibleDataMapCodes: possibleMatches,
+          allProperties: feature.properties,
+          documentCount,
+          expectedDataMapValue: possibleMatches.map(code => `${code}: ${dataMap[code]}`).join(', ')
+        });
+      }
     }
     
     if (documentCount > 0) {

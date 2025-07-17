@@ -770,6 +770,80 @@ Download error: TypeError: r.createElement is not a function
 
 **Version:** 1.1.36 deployed to http://159.100.250.145
 
+#### Admin Pending Document Download Fix (COMPLETED ✅):
+**Date:** Current session - Version 1.1.37 Deployment
+**Problem:** "View/Download PDF" button in admin pending documents page showing "Document not found" error when trying to preview pending documents for review.
+
+**Console Error Details:**
+```
+20:1  Failed to load resource: the server responded with a status of 404 (Not Found)
+{"detail":"Document not found"}
+```
+
+**Root Cause Analysis:**
+1. **Wrong API Endpoint**: Frontend was using public search download endpoint `/api/search/download/{document_id}` 
+2. **Status Filtering**: Public endpoint only allows downloading **approved** documents, filtering out pending ones
+3. **Admin Authorization**: Admin users need access to all documents regardless of status for review purposes
+4. **Missing Admin Endpoint**: No dedicated admin download endpoint existed for document review workflow
+
+**Architecture Problem:**
+- **Public API**: `/api/search/download/{document_id}` → Only approved documents (status="approved")
+- **Admin Need**: Access to pending/processed/rejected documents for review workflow
+- **Security Gap**: Admin users couldn't preview documents before approving them
+
+**Solutions Implemented:**
+
+**Backend Changes:**
+1. **New Admin Download Endpoint**: Added `/api/document-processing/download/{document_id}` 
+2. **No Status Filter**: Admin endpoint allows downloading documents regardless of status
+3. **Authentication Required**: Endpoint requires valid admin JWT token
+4. **Full Streaming Support**: Same file streaming capabilities as public endpoint
+5. **Comprehensive Logging**: Added admin-specific logging for audit trail
+
+**Frontend Changes:**
+1. **Endpoint Migration**: Changed from `/api/search/download/` to `/api/document-processing/download/`
+2. **Authentication Headers**: Added JWT token to requests for admin access
+3. **Blob-based Download**: Proper authenticated file download with blob handling
+4. **Enhanced Error Handling**: Better error messages for failed downloads
+5. **Filename Extraction**: Automatic filename detection from Content-Disposition headers
+
+**Technical Implementation:**
+```python
+# Backend: Admin download endpoint (no status filter)
+@router.get("/download/{document_id}")
+async def admin_download_document(
+    document_id: int, 
+    admin_user: AdminUser,  # Requires admin authentication
+    db: Session = Depends(get_db)
+):
+    # Get document without status filter
+    document = db.query(Document).filter(Document.id == document_id).first()
+```
+
+```typescript
+// Frontend: Authenticated download with blob handling
+const response = await fetch(downloadUrl, {
+    method: 'GET',
+    headers: { 'Authorization': `Bearer ${token}` },
+});
+const blob = await response.blob();
+const url = window.URL.createObjectURL(blob);
+```
+
+**Security Considerations:**
+- Admin-only access with JWT token validation
+- No rate limiting (admins can review multiple documents quickly)
+- Full audit logging of admin downloads
+- Proper cleanup of blob URLs to prevent memory leaks
+
+**Expected Outcome:**
+- Admin users can now preview/download pending documents for review
+- Document approval workflow fully functional
+- No more "Document not found" errors in admin panel
+- Secure separation between public and admin download endpoints
+
+**Version:** 1.1.37 deployed to http://159.100.250.145
+
 **Solutions Applied:**
 
 1. **Enhanced Search Functionality (COMPLETED ✅)**:
