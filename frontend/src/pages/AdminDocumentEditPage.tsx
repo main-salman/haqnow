@@ -57,6 +57,34 @@ export default function AdminDocumentEditPage() {
   const [isApproving, setIsApproving] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
 
+  const handleDownloadDocument = useCallback(() => {
+    try {
+      if (!document?.id) {
+        toast.error('Document ID is missing');
+        return;
+      }
+      
+      // Direct download - the server now streams the file directly
+      const downloadUrl = `/api/search/download/${document.id}`;
+      
+      // Create a temporary link element and click it to trigger download
+      const linkElement = window.document.createElement('a');
+      linkElement.href = downloadUrl;
+      linkElement.target = '_blank';
+      linkElement.rel = 'noopener noreferrer';
+      
+      // Add the link to the document, click it, and remove it
+      window.document.body.appendChild(linkElement);
+      linkElement.click();
+      window.document.body.removeChild(linkElement);
+      
+      toast.success("Document download started");
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Failed to download document');
+    }
+  }, [document?.id]);
+
   const fetchDocumentDetails = useCallback(async () => {
     if (!documentId) {
       setError("No document ID provided in the URL.");
@@ -398,34 +426,15 @@ export default function AdminDocumentEditPage() {
             <div className="space-y-1">
               <Label htmlFor="fileName" className="text-sm font-medium text-muted-foreground">File Name</Label>
               <p id="fileName" className="text-base ">{document.file_name || "N/A"}</p>
-              {document.file_path && (
-                <button
-                  onClick={() => {
-                    try {
-                      // Direct download - the server now streams the file directly
-                      const downloadUrl = `/api/search/download/${document.id}`;
-                      
-                      // Create a temporary link element and click it to trigger download
-                      const link = document.createElement('a');
-                      link.href = downloadUrl;
-                      link.target = '_blank';
-                      link.rel = 'noopener noreferrer';
-                      
-                      // Add the link to the document, click it, and remove it
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
-                      
-                      toast.success("Document download started");
-                    } catch (error) {
-                      console.error('Download error:', error);
-                      toast.error('Failed to download document');
-                    }
-                  }}
-                  className="text-sm text-primary hover:underline block mt-1 bg-none border-none p-0"
+              {document.id && (
+                <Button
+                  variant="link"
+                  size="sm"
+                  onClick={handleDownloadDocument}
+                  className="text-sm text-primary hover:underline h-auto p-0 mt-1"
                 >
                   View/Download PDF
-                </button>
+                </Button>
               )}
             </div>
           </div>

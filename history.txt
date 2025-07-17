@@ -698,6 +698,41 @@ The application now has professional version management and deployment workflow,
 3. **Banned Word Filtering**: Only filtered during processing, not in search results display
 4. **Document Processing Workflow**: Documents may not be getting approved properly
 
+#### Enhanced World Map Country Matching and Debugging (COMPLETED ✅):
+**Date:** Current session - Version 1.1.35 Deployment
+**Problem:** Inconsistent results with the world map - US and Canada not showing document counts despite API returning correct data, while Afghanistan and Bangladesh work correctly.
+
+**Console Log Evidence:** 
+- API correctly maps all countries: `✅ Mapping country: Canada -> CA with 1 documents` and `✅ Mapping country: United States -> US with 1 documents`
+- But US and Canada not displaying correctly on map or responding to clicks
+- Image loading errors for PNG files suggesting map rendering issues
+
+**Root Cause Analysis:**
+1. **Country Code Mapping Logic**: GeoJSON properties from external source use different property names than expected
+2. **Priority Mismatch**: Name-based matching not running first for all countries
+3. **Property Name Variations**: External GeoJSON uses different property structures for different countries
+
+**Solutions Implemented:**
+1. **Enhanced Country Name Matching**: Moved name-based matching to run first, before property-based code extraction
+2. **Expanded Property Search**: Added more possible GeoJSON property names (ADM0_A2, ISO_A3, ADM0_ISO, SU_A3, etc.)
+3. **Priority-Based Assignment**: US and Canada now matched by name first: "united states", "america", "canada" patterns
+4. **Comprehensive 3-Letter Code Mapping**: Added USA→US and CAN→CA conversions
+5. **Enhanced Debugging**: Added detailed logging for all target countries including US and CA to identify property mismatches
+
+**Technical Changes:**
+- Reorganized `onEachCountry` function to prioritize name matching
+- Added specific US/Canada name pattern matching: `lowerName.includes('united states')`, `lowerName.includes('america')`, `lowerName.includes('canada')`
+- Expanded ISO3 to ISO2 conversion mapping
+- Enhanced debugging to track US/CA property structures in GeoJSON data
+- Fixed duplicate variable declaration causing build errors
+
+**Expected Outcome:**
+- All 5 countries (Afghanistan, Bangladesh, Cayman Islands, US, Canada) should now display correct document counts
+- Clicking on US and Canada should properly trigger country selection
+- Enhanced debugging will reveal exact GeoJSON property structures for future fixes
+
+**Version:** 1.1.35 deployed to http://159.100.250.145
+
 **Solutions Applied:**
 
 1. **Enhanced Search Functionality (COMPLETED ✅)**:
