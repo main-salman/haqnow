@@ -211,13 +211,67 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
 
   // Handle country interactions
   const onEachCountry = (feature: any, layer: any) => {
-    // Try different possible property names for country code and name
-    const countryCode = feature.properties.ISO_A2 || 
-                       feature.properties.ADM0_A3 || 
-                       feature.properties.iso_a2 ||
-                       feature.properties.ISO2 ||
-                       feature.properties.code ||
-                       feature.properties.id;
+    // Try different possible property names for country code and name - expanded list
+    let countryCode = feature.properties.ISO_A2 || 
+                     feature.properties.ADM0_A3 || 
+                     feature.properties.iso_a2 ||
+                     feature.properties.ISO2 ||
+                     feature.properties.code ||
+                     feature.properties.id ||
+                     feature.properties.iso ||
+                     feature.properties.ISO ||
+                     feature.properties.country_code ||
+                     feature.properties.COUNTRY_CODE ||
+                     feature.properties.alpha_2 ||
+                     feature.properties.ALPHA_2 ||
+                     feature.properties.A2 ||
+                     feature.properties.iso2;
+
+    // Normalize country code to uppercase and handle 3-letter codes
+    if (countryCode) {
+      countryCode = countryCode.toString().toUpperCase();
+      
+      // Convert 3-letter codes to 2-letter codes for common countries
+      const iso3ToIso2 = {
+        'AFG': 'AF', // Afghanistan
+        'BGD': 'BD', // Bangladesh  
+        'CYM': 'KY'  // Cayman Islands
+      };
+      
+      if (iso3ToIso2[countryCode]) {
+        countryCode = iso3ToIso2[countryCode];
+      }
+    }
+
+    // Alternative: try to match by country name if no code found
+    if (!countryCode || !dataMap[countryCode]) {
+      const countryName = feature.properties.NAME || 
+                         feature.properties.NAME_EN ||
+                         feature.properties.name ||
+                         feature.properties.admin ||
+                         feature.properties.ADMIN ||
+                         feature.properties.NAME_LONG ||
+                         feature.properties.SOVEREIGN ||
+                         feature.properties.sovereignt;
+
+      if (countryName) {
+        const nameToCode = {
+          'Afghanistan': 'AF',
+          'Bangladesh': 'BD', 
+          'Cayman Islands': 'KY',
+          'Cayman Is.': 'KY'
+        };
+        
+        const matchedCode = nameToCode[countryName] || 
+                           Object.entries(nameToCode).find(([name]) => 
+                             countryName.toLowerCase().includes(name.toLowerCase())
+                           )?.[1];
+        
+        if (matchedCode && dataMap[matchedCode]) {
+          countryCode = matchedCode;
+        }
+      }
+    }
                        
     const countryName = feature.properties.NAME || 
                        feature.properties.NAME_EN ||
@@ -227,6 +281,25 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
                        countryCode;
                        
     const documentCount = dataMap[countryCode] || 0;
+
+    // Enhanced debugging for specific countries that should have data
+    const expectedCountries = ['AF', 'BD', 'KY']; // Countries we know should have data
+    const isExpectedCountry = expectedCountries.includes(countryCode) || 
+                             countryName?.toLowerCase().includes('afghanistan') ||
+                             countryName?.toLowerCase().includes('bangladesh') ||
+                             countryName?.toLowerCase().includes('cayman');
+
+    if (isExpectedCountry || documentCount > 0) {
+      console.log('🔍 DETAILED COUNTRY ANALYSIS:', {
+        countryName,
+        extractedCountryCode: countryCode,
+        documentCount,
+        expectedInDataMap: dataMap[countryCode],
+        allAvailableProperties: feature.properties,
+        matchedFromDataMap: Object.keys(dataMap).includes(countryCode),
+        dataMapKeys: Object.keys(dataMap)
+      });
+    }
 
     // Enhanced debugging for data integration
     console.log('Processing country:', {
