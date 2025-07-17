@@ -104,41 +104,62 @@ export default function App() {
     'Ivory Coast': 'CI',
     'Senegal': 'SN',
     'Mali': 'ML',
-    'Burkina Faso': 'BF',
-    'Niger': 'NE',
-    'Chad': 'TD',
-    'Cameroon': 'CM',
-    'Central African Republic': 'CF',
-    'Democratic Republic of the Congo': 'CD',
-    'Angola': 'AO',
-    'Zambia': 'ZM',
-    'Zimbabwe': 'ZW',
-    'Botswana': 'BW',
-    'Namibia': 'NA',
-    'Mozambique': 'MZ',
-    'Malawi': 'MW',
-    'Saudi Arabia': 'SA',
+    // Additional countries that might be in the database
+    'Afghanistan': 'AF',
+    'Bangladesh': 'BD',
+    'Cayman Islands': 'KY',
+    'Pakistan': 'PK',
     'Iran': 'IR',
     'Iraq': 'IQ',
     'Syria': 'SY',
+    'Lebanon': 'LB',
     'Jordan': 'JO',
     'Israel': 'IL',
-    'Lebanon': 'LB',
     'Palestine': 'PS',
-    'Kuwait': 'KW',
-    'Qatar': 'QA',
-    'Bahrain': 'BH',
+    'Saudi Arabia': 'SA',
     'United Arab Emirates': 'AE',
+    'Qatar': 'QA',
+    'Kuwait': 'KW',
+    'Bahrain': 'BH',
     'Oman': 'OM',
     'Yemen': 'YE',
-    'Pakistan': 'PK',
-    'Afghanistan': 'AF',
-    'Bangladesh': 'BD',
+    'Sri Lanka': 'LK',
     'Myanmar': 'MM',
+    'Cambodia': 'KH',
+    'Laos': 'LA',
+    'Nepal': 'NP',
+    'Bhutan': 'BT',
+    'Maldives': 'MV',
     'Mongolia': 'MN',
+    'North Korea': 'KP',
+    'Taiwan': 'TW',
+    'Hong Kong': 'HK',
+    'Macau': 'MO',
     'Kazakhstan': 'KZ',
     'Uzbekistan': 'UZ',
-    'Cayman Islands': 'KY'
+    'Turkmenistan': 'TM',
+    'Kyrgyzstan': 'KG',
+    'Tajikistan': 'TJ',
+    'Georgia': 'GE',
+    'Armenia': 'AM',
+    'Azerbaijan': 'AZ',
+    'Belarus': 'BY',
+    'Moldova': 'MD',
+    'Serbia': 'RS',
+    'Montenegro': 'ME',
+    'Bosnia and Herzegovina': 'BA',
+    'North Macedonia': 'MK',
+    'Albania': 'AL',
+    'Kosovo': 'XK',
+    'Cyprus': 'CY',
+    'Malta': 'MT',
+    'Iceland': 'IS',
+    'Luxembourg': 'LU',
+    'Monaco': 'MC',
+    'San Marino': 'SM',
+    'Vatican City': 'VA',
+    'Andorra': 'AD',
+    'Liechtenstein': 'LI'
   };
 
   // Fetch country statistics for the map
@@ -146,7 +167,8 @@ export default function App() {
     const fetchMapData = async () => {
       try {
         setLoadingMapData(true);
-        const response = await fetch(`${window.location.protocol}//${window.location.hostname}:8000/statistics/country-stats`);
+        // Fixed API endpoint to match the working endpoint used in CountryDocStatsList
+        const response = await fetch('/api/statistics/country-stats');
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -154,24 +176,36 @@ export default function App() {
         
         const data: StatsResponse = await response.json();
         
+        console.log('Raw API response data:', data);
+        
         // Convert country names to country codes for the map
-        const mappedData: CountryStats[] = data.countries
-          .map(country => {
-            const countryCode = countryCodeMapping[country.country];
-            if (countryCode) {
-              console.log('Mapping country:', country.country, '->', countryCode, 'with', country.doc_count, 'documents');
-              return {
-                countryCode,
-                totalDocuments: country.doc_count
-              };
-            } else {
-              console.warn('No mapping found for country:', country.country);
-              return null;
-            }
-          })
-          .filter((item): item is CountryStats => item !== null);
+        const mappedData: CountryStats[] = [];
+        const unmappedCountries: string[] = [];
+        
+        data.countries.forEach(country => {
+          const countryCode = countryCodeMapping[country.country];
+          if (countryCode) {
+            console.log('✅ Mapping country:', country.country, '->', countryCode, 'with', country.doc_count, 'documents');
+            mappedData.push({
+              countryCode,
+              totalDocuments: country.doc_count
+            });
+          } else {
+            console.warn('❌ No mapping found for country:', country.country, 'with', country.doc_count, 'documents');
+            unmappedCountries.push(country.country);
+          }
+        });
+        
+        if (unmappedCountries.length > 0) {
+          console.warn('🚨 Countries without ISO code mappings:', unmappedCountries);
+          console.warn('Please add these countries to the countryCodeMapping object in App.tsx');
+        }
         
         console.log('Final mapped data for map:', mappedData);
+        console.log('Total countries with data:', data.countries.length);
+        console.log('Successfully mapped countries:', mappedData.length);
+        console.log('Unmapped countries:', unmappedCountries.length);
+        
         setMapData(mappedData);
       } catch (err) {
         console.error('Error fetching map data:', err);

@@ -34,6 +34,9 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
     return acc;
   }, {} as Record<string, number>);
 
+  console.log('InteractiveWorldMap received data:', data);
+  console.log('Generated dataMap:', dataMap);
+
   // Load country boundaries data
   useEffect(() => {
     const loadCountryData = async () => {
@@ -225,13 +228,31 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
                        
     const documentCount = dataMap[countryCode] || 0;
 
-    // Debug logging for data integration
+    // Enhanced debugging for data integration
+    console.log('Processing country:', {
+      countryCode,
+      countryName,
+      documentCount,
+      availableProperties: Object.keys(feature.properties),
+      allProperties: feature.properties
+    });
+    
     if (documentCount > 0) {
-      console.log('Country with data found:', {
+      console.log('✅ Country with data found:', {
         countryCode,
         countryName,
-        documentCount,
-        allProperties: feature.properties
+        documentCount
+      });
+    } else if (countryCode) {
+      console.log('ℹ️ Country with no documents:', {
+        countryCode,
+        countryName,
+        documentCount: 0
+      });
+    } else {
+      console.warn('⚠️ Country with no valid code:', {
+        countryName,
+        availableProperties: Object.keys(feature.properties)
       });
     }
 

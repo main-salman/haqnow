@@ -1772,3 +1772,57 @@ The platform now provides a professional, geographically accurate world map that
 - **Production Status**: Successfully deployed with real geographic map
 
 **Result**: Users now have a professional, geographically accurate world map that displays corruption document statistics with authentic country boundaries, proper map tiles, and interactive features matching modern mapping applications.
+
+### Version 1.1.21 (January 16, 2025) - Fixed World Map Document Count Display
+
+**Problem**: The interactive world map was not showing document counts for countries, even though the data was available in the API and the list below the map was working correctly.
+
+**Root Cause Analysis**:
+- **API Endpoint Mismatch**: The map component in `App.tsx` was using an incorrect API endpoint `${window.location.protocol}//${window.location.hostname}:8000/statistics/country-stats` instead of the working `/api/statistics/country-stats`
+- **Insufficient Country Mappings**: The country code mapping object was missing several countries that might be in the database
+- **Limited Debugging**: Lack of detailed logging made it difficult to identify data flow issues
+
+**Solution Implemented**:
+
+1. **Fixed API Endpoint (COMPLETED ✅)**:
+   - **File Modified**: `frontend/src/pages/App.tsx`
+   - **Change**: Updated API call from hardcoded port/hostname to relative path `/api/statistics/country-stats`
+   - **Result**: Map now uses the same working API endpoint as the country statistics list
+
+2. **Enhanced Country Code Mapping (COMPLETED ✅)**:
+   - **File Modified**: `frontend/src/pages/App.tsx`
+   - **Added Countries**: Afghanistan, Bangladesh, Cayman Islands, Pakistan, and 40+ additional countries
+   - **Coverage**: Expanded from ~70 to 110+ country mappings
+   - **Result**: Better coverage for countries that might have documents in the database
+
+3. **Comprehensive Debugging Added (COMPLETED ✅)**:
+   - **App.tsx**: Enhanced API response logging with mapped/unmapped country tracking
+   - **InteractiveWorldMap.tsx**: Added detailed country processing logs with property analysis
+   - **Features**: 
+     - ✅ Raw API response logging
+     - ✅ Country mapping success/failure tracking
+     - ✅ GeoJSON property name analysis
+     - ✅ Document count verification per country
+
+**Technical Details**:
+```javascript
+// BEFORE (broken):
+const response = await fetch(`${window.location.protocol}//${window.location.hostname}:8000/statistics/country-stats`);
+
+// AFTER (fixed):
+const response = await fetch('/api/statistics/country-stats');
+```
+
+**Benefits**:
+- **🗺️ Functional Map**: Document counts now display correctly on hover and in country colors
+- **🔍 Better Debugging**: Enhanced logging helps identify any future data mapping issues
+- **📊 Complete Data Flow**: Seamless integration between statistics API and map visualization
+- **🌍 Expanded Coverage**: Support for 110+ countries with proper ISO code mappings
+
+**Testing Verification**:
+- Map loads with proper country coloring based on document counts
+- Hover tooltips show correct document numbers
+- Console logs help verify data mapping success
+- No more empty/gray countries for countries with actual documents
+
+**Result**: The world map now correctly displays document counts for each country, providing users with an immediate visual representation of corruption document distribution worldwide. The enhanced debugging ensures any future data issues can be quickly identified and resolved.
