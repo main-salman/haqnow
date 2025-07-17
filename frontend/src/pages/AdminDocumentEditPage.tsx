@@ -51,6 +51,7 @@ export default function AdminDocumentEditPage() {
   const [editedStateProvince, setEditedStateProvince] = useState("");
   const [editedAdminLevel, setEditedAdminLevel] = useState("");
   const [editedTags, setEditedTags] = useState<string[]>([]);
+  const [newTagInput, setNewTagInput] = useState("");
   
   const [isSaving, setIsSaving] = useState(false);
   const [isApproving, setIsApproving] = useState(false);

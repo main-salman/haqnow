@@ -2055,3 +2055,86 @@ This enhanced debugging will definitively identify why the country matching is f
 **Technical Impact**: This fix ensures the map data loads exactly once per component mount, eliminating the race condition that was causing the data to reset after initial successful loading.
 
 **Final Status**: ✅ **WORLD MAP ISSUE COMPLETELY RESOLVED** - Version 1.1.30 deployed to production!
+
+### Version 1.1.31 (January 16, 2025) - 💾 NAVIGATION PERSISTENCE FIX
+
+**Problem**: Despite the duplicate execution fix in v1.1.30, the map was still showing "0 documents" after clicking on countries because navigation was **completely unmounting** the App component, resetting all state and refs.
+
+**Root Cause Identified**: 
+- **Component Unmounting**: When users click on countries → navigate to search page → return to homepage, the App component gets completely remounted
+- **State Reset**: All state (`mapData`) and refs (`hasFetchedMapData`) get reset to initial values on remount
+- **Data Loss**: The useRef fix couldn't prevent this because refs don't persist across component unmounts
+
+**Navigation Flow Issue**:
+1. ✅ Initial load: `InteractiveWorldMap received data: Array(3)` (correct)
+2. 🔄 User clicks country → navigates to `/search?country=Afghanistan`
+3. 🔙 User returns to homepage → **App component remounts fresh**
+4. ❌ Fresh mount: `InteractiveWorldMap received data: Array(0)` (empty state)
+
+**Deployed Solution**:
+
+1. **💾 LOCALSTORAGE PERSISTENCE (COMPLETED ✅)**:
+   ```javascript
+   // Check cache first before API fetch
+   const cachedData = localStorage.getItem('fadih_map_data');
+   const cacheTimestamp = localStorage.getItem('fadih_map_data_timestamp');
+   const cacheMaxAge = 5 * 60 * 1000; // 5 minutes
+   
+   if (cachedData && cacheTimestamp) {
+     const age = Date.now() - parseInt(cacheTimestamp);
+     if (age < cacheMaxAge) {
+       console.log('🎯 Using cached map data');
+       setMapData(JSON.parse(cachedData));
+       setLoadingMapData(false);
+       return;
+     }
+   }
+   
+   // Save to cache after successful fetch
+   localStorage.setItem('fadih_map_data', JSON.stringify(mappedData));
+   localStorage.setItem('fadih_map_data_timestamp', Date.now().toString());
+   ```
+
+2. **⚡ INTELLIGENT CACHING**:
+   - **File Modified**: `frontend/src/pages/App.tsx`
+   - **Cache Duration**: 5 minutes (prevents stale data)
+   - **Cache Keys**: `fadih_map_data` and `fadih_map_data_timestamp`
+   - **Fallback**: If cache expired or missing, fetches from API normally
+   - **Performance**: Instant map loading on navigation return
+
+**Result**: 🎯 **THE WORLD MAP NOW PERSISTS ACROSS NAVIGATION!**
+- **First Visit**: Fetches from API, caches data ✅
+- **Country Click**: Navigation works normally ✅  
+- **Return to Homepage**: Loads from cache instantly ✅
+- **Tooltip Displays**: Shows correct document counts ✅
+
+**Technical Impact**: This fix ensures the map data persists across navigation, providing a seamless user experience where clicking on countries and returning maintains the map's functionality without requiring refetching.
+
+**User Experience**: Users can now click on countries, explore search results, and return to the homepage with the map immediately displaying correct document counts without any loading delays.
+
+**Final Status**: ✅ **COMPLETE SOLUTION DEPLOYED** - Version 1.1.31 provides persistent, fast-loading world map functionality!
+
+---
+
+## 🎉 **CONFIRMED WORKING** - January 16, 2025
+
+**USER CONFIRMATION**: "it's finally working" 
+
+✅ **WORLD MAP ISSUE COMPLETELY RESOLVED**
+
+After 5 versions of iterative fixes addressing multiple root causes:
+- v1.1.25: API endpoint and proxy configuration 
+- v1.1.29: Pattern-matching logic correction
+- v1.1.30: Duplicate execution prevention  
+- v1.1.31: Navigation persistence with localStorage
+
+The interactive world map now provides:
+- ✅ Accurate document counts displayed on hover
+- ✅ Seamless navigation flow (click country → view results → return to map)
+- ✅ Instant loading from cache on navigation return
+- ✅ Real-time statistics from corruption document database
+- ✅ Professional geographic visualization with country boundaries
+
+**Result**: Fadih.org now features a fully functional interactive world map for exploring global corruption document distribution.
+
+---
