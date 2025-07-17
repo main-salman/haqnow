@@ -586,6 +586,22 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
       }
     }
     
+    // Check if this is a country we have data for (to help with debugging)
+    const hasAnyDataInMap = Object.keys(dataMap).length > 0;
+    const isRelevantCountry = hasAnyDataInMap && (
+      documentCount > 0 || 
+      (countryCode && Object.keys(dataMap).includes(countryCode)) ||
+      (countryName && Object.keys(dataMap).some(code => {
+        // Try to match by looking up the country name for this code
+        return countryName.toLowerCase().includes('afghanistan') && code === 'AF' ||
+               countryName.toLowerCase().includes('bangladesh') && code === 'BD' ||
+               countryName.toLowerCase().includes('cayman') && code === 'KY' ||
+               countryName.toLowerCase().includes('canada') && code === 'CA' ||
+               countryName.toLowerCase().includes('united states') && code === 'US' ||
+               countryName.toLowerCase().includes('france') && code === 'FR'
+      }))
+    );
+
     if (documentCount > 0) {
       console.log('✅ Country with data found:', {
         countryCode,
