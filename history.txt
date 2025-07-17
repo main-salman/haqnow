@@ -1908,3 +1908,58 @@ const nameToCode = {
 2. Open browser developer console (F12)
 3. Look for `🔍 DETAILED COUNTRY ANALYSIS` logs for Afghanistan and Bangladesh
 4. Hover over Afghanistan and Bangladesh on the map to verify correct document counts are displayed
+
+### Version 1.1.27 (January 16, 2025) - Enhanced Target Country Debugging
+
+**Problem**: Still showing "0 documents" for Afghanistan and Bangladesh despite correct API data flow and country mapping. The issue appears to be in the GeoJSON feature property matching - we're not seeing any detailed logs for our target countries.
+
+**Enhanced Debugging Deployed**:
+
+1. **Targeted Country Detection (COMPLETED ✅)**:
+   - **File Modified**: `frontend/src/components/InteractiveWorldMap.tsx`
+   - **Enhanced Pattern Matching**: Added comprehensive search for any country containing "afghan", "bangla", or "cayman" in their name
+   - **Detailed Property Logging**: Shows all property values, not just keys, for target countries
+   - **Fallback Name Matching**: Multiple variations including "Islamic Republic of Afghanistan", "People's Republic of Bangladesh"
+
+2. **Advanced Name Matching Logic (COMPLETED ✅)**:
+   - **Pattern-Based Search**: Direct substring matching for "afghan", "bangla", "cayman" regardless of exact format
+   - **Bidirectional Matching**: Checks if country name contains search term OR search term contains country name
+   - **Multiple Name Variations**: Handles official country names with prefixes/suffixes
+
+3. **Noise Reduction & Focus (COMPLETED ✅)**:
+   - **Selective Logging**: Only logs relevant countries to reduce console noise
+   - **Target Country Identification**: Special `🎯 FOUND TARGET COUNTRY` logs for any matching countries
+   - **Property Value Display**: Shows actual property values rather than just property names
+
+**Enhanced Debugging Features**:
+```javascript
+// Pattern-based matching for key countries
+if (lowerName.includes('afghan')) countryCode = 'AF';
+else if (lowerName.includes('bangla')) countryCode = 'BD';
+else if (lowerName.includes('cayman')) countryCode = 'KY';
+
+// Special logging for target countries
+if (countryName && (countryName.toLowerCase().includes('afghan') || 
+                   countryName.toLowerCase().includes('bangla') || 
+                   countryName.toLowerCase().includes('cayman'))) {
+  console.log('🎯 FOUND TARGET COUNTRY:', {...});
+}
+```
+
+**Expected Console Output**:
+- `🎯 FOUND TARGET COUNTRY:` logs for Afghanistan, Bangladesh, and Cayman Islands
+- `🔍 DETAILED COUNTRY ANALYSIS:` with complete property analysis
+- Actual property values like `propertyValues: "NAME: Afghanistan, ISO_A2: AF, ..."`
+
+**Deployment Status**: ✅ **SUCCESSFULLY DEPLOYED TO PRODUCTION** (Version 1.1.27)
+- **Live Site**: http://159.100.250.145
+- **Enhanced Target Detection**: Now specifically looks for countries containing key terms
+- **Comprehensive Property Analysis**: Shows exact GeoJSON property values for debugging
+
+**Next Steps for User**:
+1. **Visit http://159.100.250.145** and open browser developer console (F12)
+2. **Look for `🎯 FOUND TARGET COUNTRY` logs** - these should show if Afghanistan/Bangladesh are being detected
+3. **Check `🔍 DETAILED COUNTRY ANALYSIS` logs** - these will show the exact property values
+4. **Report back with the console output** so we can see exactly what properties the GeoJSON contains for these countries
+
+This enhanced debugging will definitively identify why the country matching is failing and show us the exact property structure of the GeoJSON data for Afghanistan and Bangladesh.

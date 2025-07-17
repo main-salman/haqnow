@@ -274,8 +274,8 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
                              name.toLowerCase().includes(countryName.toLowerCase())
                            )?.[1];
          
-         // Additional pattern-based matching for key countries
-         if (!matchedCode && countryName) {
+         // FIXED: Always check pattern-based matching for key countries first
+         if (countryName) {
            const lowerName = countryName.toLowerCase();
            if (lowerName.includes('afghan')) {
              countryCode = 'AF';
@@ -283,9 +283,9 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
              countryCode = 'BD';
            } else if (lowerName.includes('cayman')) {
              countryCode = 'KY';
+           } else if (matchedCode && dataMap[matchedCode]) {
+             countryCode = matchedCode;
            }
-         } else if (matchedCode && dataMap[matchedCode]) {
-           countryCode = matchedCode;
          }
       }
     }
