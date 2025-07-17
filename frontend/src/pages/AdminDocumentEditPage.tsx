@@ -57,19 +57,53 @@ export default function AdminDocumentEditPage() {
   const [isApproving, setIsApproving] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
 
-  const handleDownloadDocument = useCallback(() => {
+  const handleDownloadDocument = useCallback(async () => {
     try {
       if (!document?.id) {
         toast.error('Document ID is missing');
         return;
       }
       
-      // Direct download - the server now streams the file directly
-      const downloadUrl = `/api/search/download/${document.id}`;
+      const token = localStorage.getItem('jwt_token');
+      if (!token) {
+        toast.error('Authentication required. Please log in again.');
+        return;
+      }
       
-      // Create a temporary link element and click it to trigger download
+      // Admin download endpoint - allows access to pending documents
+      const downloadUrl = `/api/document-processing/download/${document.id}`;
+      
+      // Fetch the file with authentication
+      const response = await fetch(downloadUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      // Create blob from response
+      const blob = await response.blob();
+      
+      // Get filename from Content-Disposition header or use default
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = `document_${document.id}.pdf`; // Default filename
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
       const linkElement = window.document.createElement('a');
-      linkElement.href = downloadUrl;
+      linkElement.href = url;
+      linkElement.download = filename;
       linkElement.target = '_blank';
       linkElement.rel = 'noopener noreferrer';
       
@@ -78,10 +112,13 @@ export default function AdminDocumentEditPage() {
       linkElement.click();
       window.document.body.removeChild(linkElement);
       
+      // Clean up the blob URL
+      window.URL.revokeObjectURL(url);
+      
       toast.success("Document download started");
     } catch (error) {
       console.error('Download error:', error);
-      toast.error('Failed to download document');
+      toast.error(`Failed to download document: ${error.message || 'Unknown error'}`);
     }
   }, [document?.id]);
 

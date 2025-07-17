@@ -852,3 +852,106 @@ async def get_document_by_id(
             status_code=500,
             detail="An error occurred while retrieving the document"
         )
+
+@router.get("/download/{document_id}")
+async def admin_download_document(
+    document_id: int, 
+    admin_user: AdminUser,
+    db: Session = Depends(get_db)
+):
+    """
+    Download a document file for admin review.
+    Admin users can download documents regardless of status.
+    """
+    
+    try:
+        # Get document from database (no status filter for admins)
+        document = db.query(Document).filter(Document.id == document_id).first()
+        
+        if not document:
+            raise HTTPException(status_code=404, detail="Document not found")
+        
+        file_path = document.file_path
+        
+        if not file_path:
+            raise HTTPException(status_code=400, detail="Document file not available")
+        
+        # Get S3 service
+        from app.services.s3_service import s3_service
+        
+        # Generate download URL (used internally to fetch file)
+        download_url = s3_service.get_download_url(file_path)
+        
+        if not download_url:
+            raise HTTPException(status_code=500, detail="Failed to generate download URL")
+        
+        # Fetch file from S3 and stream it to user
+        try:
+            import requests
+            import os
+            from fastapi.responses import StreamingResponse
+            
+            # Get file from S3
+            response = requests.get(download_url, stream=True)
+            response.raise_for_status()
+            
+            # Extract filename from file_path
+            filename = os.path.basename(file_path)
+            
+            # Determine content type based on file extension
+            content_type = "application/octet-stream"  # Default
+            if filename.lower().endswith('.pdf'):
+                content_type = "application/pdf"
+            elif filename.lower().endswith(('.jpg', '.jpeg')):
+                content_type = "image/jpeg"
+            elif filename.lower().endswith('.png'):
+                content_type = "image/png"
+            elif filename.lower().endswith('.gif'):
+                content_type = "image/gif"
+            elif filename.lower().endswith('.doc'):
+                content_type = "application/msword"
+            elif filename.lower().endswith('.docx'):
+                content_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            elif filename.lower().endswith('.xls'):
+                content_type = "application/vnd.ms-excel"
+            elif filename.lower().endswith('.xlsx'):
+                content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            elif filename.lower().endswith('.txt'):
+                content_type = "text/plain"
+            elif filename.lower().endswith('.csv'):
+                content_type = "text/csv"
+            
+            # Create streaming response
+            def generate():
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        yield chunk
+            
+            logger.info("Admin document download completed successfully", 
+                       document_id=document_id,
+                       filename=filename,
+                       admin_user=admin_user.email)
+            
+            return StreamingResponse(
+                generate(),
+                media_type=content_type,
+                headers={
+                    "Content-Disposition": f"attachment; filename=\"{filename}\"",
+                    "Content-Length": str(response.headers.get("content-length", "")),
+                    "Cache-Control": "private, max-age=0, no-cache, no-store, must-revalidate"
+                }
+            )
+            
+        except requests.RequestException as req_error:
+            logger.error("Error fetching file from S3 for admin download", 
+                        document_id=document_id, error=str(req_error))
+            raise HTTPException(status_code=500, detail="Failed to fetch document file")
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error in admin document download", document_id=document_id, error=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while downloading the document"
+        )
