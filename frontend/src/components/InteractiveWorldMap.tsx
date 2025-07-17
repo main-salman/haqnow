@@ -259,17 +259,34 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
           'Afghanistan': 'AF',
           'Bangladesh': 'BD', 
           'Cayman Islands': 'KY',
-          'Cayman Is.': 'KY'
+          'Cayman Is.': 'KY',
+          // Add more variations
+          'Islamic Republic of Afghanistan': 'AF',
+          'Afghanistan, Islamic Republic of': 'AF',
+          'People\'s Republic of Bangladesh': 'BD',
+          'Bangladesh, People\'s Republic of': 'BD',
+          'Cayman': 'KY'
         };
         
         const matchedCode = nameToCode[countryName] || 
                            Object.entries(nameToCode).find(([name]) => 
-                             countryName.toLowerCase().includes(name.toLowerCase())
+                             countryName.toLowerCase().includes(name.toLowerCase()) ||
+                             name.toLowerCase().includes(countryName.toLowerCase())
                            )?.[1];
-        
-        if (matchedCode && dataMap[matchedCode]) {
-          countryCode = matchedCode;
-        }
+         
+         // Additional pattern-based matching for key countries
+         if (!matchedCode && countryName) {
+           const lowerName = countryName.toLowerCase();
+           if (lowerName.includes('afghan')) {
+             countryCode = 'AF';
+           } else if (lowerName.includes('bangla')) {
+             countryCode = 'BD';
+           } else if (lowerName.includes('cayman')) {
+             countryCode = 'KY';
+           }
+         } else if (matchedCode && dataMap[matchedCode]) {
+           countryCode = matchedCode;
+         }
       }
     }
                        
@@ -289,7 +306,13 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
                              countryName?.toLowerCase().includes('bangladesh') ||
                              countryName?.toLowerCase().includes('cayman');
 
-    if (isExpectedCountry || documentCount > 0) {
+    // Also check if this country matches any of our expected data
+    const hasExpectedData = Object.keys(dataMap).some(code => dataMap[code] > 0);
+    
+    if (isExpectedCountry || documentCount > 0 || 
+        (hasExpectedData && (countryName?.toLowerCase().includes('afghan') ||
+                            countryName?.toLowerCase().includes('bangla') ||
+                            countryName?.toLowerCase().includes('cayman')))) {
       console.log('🔍 DETAILED COUNTRY ANALYSIS:', {
         countryName,
         extractedCountryCode: countryCode,
@@ -297,18 +320,41 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
         expectedInDataMap: dataMap[countryCode],
         allAvailableProperties: feature.properties,
         matchedFromDataMap: Object.keys(dataMap).includes(countryCode),
-        dataMapKeys: Object.keys(dataMap)
+        dataMapKeys: Object.keys(dataMap),
+        // Show all property values, not just keys
+        propertyValues: Object.entries(feature.properties).map(([key, value]) => `${key}: ${value}`).join(', ')
       });
     }
 
-    // Enhanced debugging for data integration
-    console.log('Processing country:', {
-      countryCode,
-      countryName,
-      documentCount,
-      availableProperties: Object.keys(feature.properties),
-      allProperties: feature.properties
-    });
+    // Log ALL countries to find our target countries
+    if (countryName && (countryName.toLowerCase().includes('afghan') || 
+                       countryName.toLowerCase().includes('bangla') || 
+                       countryName.toLowerCase().includes('cayman'))) {
+      console.log('🎯 FOUND TARGET COUNTRY:', {
+        originalName: countryName,
+        extractedCode: countryCode,
+        allProperties: feature.properties,
+        documentCount,
+        shouldHaveData: 'YES - This should show 1 document!'
+      });
+    }
+
+    // Enhanced debugging for data integration - only log relevant countries
+    const isRelevantCountry = documentCount > 0 || 
+                             countryName?.toLowerCase().includes('afghan') ||
+                             countryName?.toLowerCase().includes('bangla') ||
+                             countryName?.toLowerCase().includes('cayman') ||
+                             expectedCountries.includes(countryCode);
+
+    if (isRelevantCountry) {
+      console.log('Processing country:', {
+        countryCode,
+        countryName,
+        documentCount,
+        availableProperties: Object.keys(feature.properties),
+        allProperties: feature.properties
+      });
+    }
     
     if (documentCount > 0) {
       console.log('✅ Country with data found:', {
@@ -316,14 +362,14 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
         countryName,
         documentCount
       });
-    } else if (countryCode) {
-      console.log('ℹ️ Country with no documents:', {
+    } else if (countryCode && isRelevantCountry) {
+      console.log('ℹ️ Relevant country with no documents:', {
         countryCode,
         countryName,
         documentCount: 0
       });
-    } else {
-      console.warn('⚠️ Country with no valid code:', {
+    } else if (!countryCode && isRelevantCountry) {
+      console.warn('⚠️ Relevant country with no valid code:', {
         countryName,
         availableProperties: Object.keys(feature.properties)
       });

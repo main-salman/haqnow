@@ -1846,3 +1846,65 @@ const response = await fetch('/api/statistics/country-stats');
 - ✅ Enhanced console logging available for debugging in browser dev tools
 
 🌍 **RESULT**: Fadih.org v1.1.25 is now live with fully functional world map displaying real corruption document statistics!
+
+### Version 1.1.26 (January 16, 2025) - Enhanced Country Code Matching & Debugging
+
+**Problem**: Despite correct API data flow and country mapping (`AF: 1, BD: 1, KY: 1` in dataMap), the map tooltips were still showing "0 documents" for Afghanistan and Bangladesh, indicating a GeoJSON property matching issue.
+
+**Root Cause Analysis**:
+- **GeoJSON Property Mismatch**: The country codes extracted from GeoJSON features weren't matching our dataMap keys (AF, BD, KY)
+- **Limited Property Checking**: Only checking a few property names for country codes in the GeoJSON
+- **Insufficient Debugging**: Needed more detailed logging to identify exactly which properties were available for specific countries
+
+**Solution Implemented**:
+
+1. **Enhanced Country Code Extraction (COMPLETED ✅)**:
+   - **File Modified**: `frontend/src/components/InteractiveWorldMap.tsx`
+   - **Added 8 Additional Property Names**: `iso`, `ISO`, `country_code`, `COUNTRY_CODE`, `alpha_2`, `ALPHA_2`, `A2`, `iso2`
+   - **3-Letter to 2-Letter Code Conversion**: `AFG → AF`, `BGD → BD`, `CYM → KY`
+   - **Fallback Name Matching**: If no code found, match by country name variations
+
+2. **Advanced Property Normalization (COMPLETED ✅)**:
+   - **Case Normalization**: Convert all codes to uppercase for consistent matching
+   - **ISO3 to ISO2 Mapping**: Handle common 3-letter country codes
+   - **Name-Based Fallback**: Match countries by name if code extraction fails
+
+3. **Comprehensive Debugging Enhancement (COMPLETED ✅)**:
+   - **Targeted Country Analysis**: Special logging for AF, BD, KY countries
+   - **Complete Property Inspection**: Log all available GeoJSON properties for expected countries
+   - **DataMap Verification**: Track which countries match successfully vs. fail
+
+**Technical Implementation**:
+```javascript
+// Enhanced country code extraction with 13 property variations
+let countryCode = feature.properties.ISO_A2 || 
+                 feature.properties.ADM0_A3 || 
+                 // ... 11 more property variations
+
+// ISO3 to ISO2 conversion
+const iso3ToIso2 = {
+  'AFG': 'AF', 'BGD': 'BD', 'CYM': 'KY'
+};
+
+// Name-based fallback matching
+const nameToCode = {
+  'Afghanistan': 'AF', 'Bangladesh': 'BD', 'Cayman Islands': 'KY'
+};
+```
+
+**Expected Results**:
+- **🔍 Enhanced Debugging**: Detailed logs show exactly what GeoJSON properties are available for each country
+- **🗺️ Improved Matching**: Multiple fallback methods to extract country codes from GeoJSON
+- **📊 Accurate Tooltips**: Afghanistan and Bangladesh should now show correct document counts (1 each)
+- **⚙️ Robust Handling**: Better handling of various GeoJSON format variations
+
+**Deployment Status**: ✅ **SUCCESSFULLY DEPLOYED TO PRODUCTION** (Version 1.1.26)
+- **Live Site**: http://159.100.250.145
+- **Enhanced Logging**: Open browser dev tools to see detailed country processing logs
+- **Testing**: Check if Afghanistan and Bangladesh now show "1 document" in tooltips
+
+**Next Steps for User**: 
+1. Visit http://159.100.250.145
+2. Open browser developer console (F12)
+3. Look for `🔍 DETAILED COUNTRY ANALYSIS` logs for Afghanistan and Bangladesh
+4. Hover over Afghanistan and Bangladesh on the map to verify correct document counts are displayed
