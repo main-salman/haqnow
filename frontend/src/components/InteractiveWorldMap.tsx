@@ -38,13 +38,36 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
   useEffect(() => {
     const loadCountryData = async () => {
       try {
-        // Using a public GeoJSON source for world countries
-        const response = await fetch('https://raw.githubusercontent.com/hjalmar/world.geo.json/master/countries.geo.json');
-        const geoData = await response.json();
-        setCountryData(geoData);
+        // Try multiple public GeoJSON sources for world countries
+        const sources = [
+          'https://raw.githubusercontent.com/hjalmar/world.geo.json/master/countries.geo.json',
+          'https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson',
+          'https://raw.githubusercontent.com/AshKyd/geojson-regions/master/countries/50m/all.geojson'
+        ];
+        
+        let geoData = null;
+        for (const source of sources) {
+          try {
+            const response = await fetch(source);
+            if (response.ok) {
+              geoData = await response.json();
+              console.log('Successfully loaded country data from:', source);
+              break;
+            }
+          } catch (error) {
+            console.warn('Failed to load from source:', source, error);
+            continue;
+          }
+        }
+        
+        if (geoData) {
+          setCountryData(geoData);
+        } else {
+          console.warn('All external sources failed, using fallback data');
+          setCountryData(createFallbackCountryData());
+        }
       } catch (error) {
         console.error('Failed to load country data:', error);
-        // Fallback: create simplified country data for main countries we have data for
         setCountryData(createFallbackCountryData());
       } finally {
         setLoading(false);
@@ -121,6 +144,30 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
           type: "Polygon",
           coordinates: [[[-74, 5], [-74, -34], [-34, -34], [-34, 5], [-74, 5]]]
         }
+      },
+      {
+        type: "Feature",
+        properties: { ISO_A2: "AF", NAME: "Afghanistan" },
+        geometry: {
+          type: "Polygon",
+          coordinates: [[[60, 30], [60, 20], [75, 20], [75, 30], [60, 30]]]
+        }
+      },
+      {
+        type: "Feature",
+        properties: { ISO_A2: "BD", NAME: "Bangladesh" },
+        geometry: {
+          type: "Polygon",
+          coordinates: [[[88, 22], [88, 20], [92, 20], [92, 22], [88, 22]]]
+        }
+      },
+      {
+        type: "Feature",
+        properties: { ISO_A2: "KY", NAME: "Cayman Islands" },
+        geometry: {
+          type: "Polygon",
+          coordinates: [[[-80, 19], [-80, 18], [-79, 18], [-79, 19], [-80, 19]]]
+        }
       }
     ]
   });
@@ -140,7 +187,14 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
 
   // Style function for GeoJSON countries
   const countryStyle = (feature: any) => {
-    const countryCode = feature.properties.ISO_A2 || feature.properties.ADM0_A3;
+    // Try different possible property names for country code
+    const countryCode = feature.properties.ISO_A2 || 
+                       feature.properties.ADM0_A3 || 
+                       feature.properties.iso_a2 ||
+                       feature.properties.ISO2 ||
+                       feature.properties.code ||
+                       feature.properties.id;
+    
     const fillColor = getCountryColor(countryCode);
     
     return {
@@ -154,9 +208,32 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
 
   // Handle country interactions
   const onEachCountry = (feature: any, layer: any) => {
-    const countryCode = feature.properties.ISO_A2 || feature.properties.ADM0_A3;
-    const countryName = feature.properties.NAME || feature.properties.NAME_EN;
+    // Try different possible property names for country code and name
+    const countryCode = feature.properties.ISO_A2 || 
+                       feature.properties.ADM0_A3 || 
+                       feature.properties.iso_a2 ||
+                       feature.properties.ISO2 ||
+                       feature.properties.code ||
+                       feature.properties.id;
+                       
+    const countryName = feature.properties.NAME || 
+                       feature.properties.NAME_EN ||
+                       feature.properties.name ||
+                       feature.properties.admin ||
+                       feature.properties.ADMIN ||
+                       countryCode;
+                       
     const documentCount = dataMap[countryCode] || 0;
+
+    // Debug logging for data integration
+    if (documentCount > 0) {
+      console.log('Country with data found:', {
+        countryCode,
+        countryName,
+        documentCount,
+        allProperties: feature.properties
+      });
+    }
 
     // Add hover effects
     layer.on({

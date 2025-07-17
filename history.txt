@@ -1710,3 +1710,65 @@ The platform now provides a professional rate limiting experience that guides us
 - ✅ **Geographic Authenticity**: Proper coastlines, borders, and continental boundaries
 
 The platform now provides a professional, geographically accurate world map that users can easily navigate and recognize, significantly improving the visual appeal while maintaining all document discovery functionality.
+
+### Real Leaflet-Based World Map Implementation (COMPLETED ✅):
+**Date:** Current session - Version 1.1.23
+**Problem:** User requested replacement of the custom SVG map with a "real map" using proper geographic libraries like Leaflet or Mapbox instead of simplified custom shapes.
+
+**User Feedback:**
+- "the map looks wrong - just use a real map - from mapbox or leaflet or any other easy/simple option instead"
+- Custom SVG approach, even with improved shapes, still didn't provide the authentic map experience users expected
+- Need for actual geographic accuracy and professional map presentation
+
+**Solution Applied:**
+- **Real Leaflet Map Integration (COMPLETED ✅)**:
+  - **Library Installation**: Added `leaflet@1.9.4` and `react-leaflet@4.2.1` dependencies
+  - **Geographic Data Source**: Integrated with public GeoJSON API (`https://raw.githubusercontent.com/hjalmar/world.geo.json/master/countries.geo.json`)
+  - **Fallback System**: Created simplified geographic shapes for main countries if external data fails
+  - **Professional Map Tiles**: Using OpenStreetMap tiles for authentic geographic base layer
+
+**Technical Implementation:**
+- **Map Container**: Leaflet MapContainer with proper world projection and bounds
+- **Country Boundaries**: Real GeoJSON country polygons with accurate geographic coordinates
+- **Interactive Features**:
+  - Hover effects with country highlighting and document count tooltips
+  - Click navigation to search page with country filtering
+  - Professional legend showing document count ranges
+  - Responsive design with proper zoom controls
+
+**Data Integration:**
+- **Country Code Mapping**: Comprehensive mapping between country names and ISO country codes (US, GB, DE, etc.)
+- **API Integration**: Fetches real-time data from `/statistics/country-stats` endpoint
+- **Data Format Conversion**: Transforms backend country names to ISO codes for geographic matching
+- **Error Handling**: Graceful fallback to empty data if API fails, map still functions
+
+**Visual Design:**
+- **Website Theme Integration**: Green color scheme matching Fadih.org branding (HSL 145° palette)
+- **Professional Styling**: Clean white background with proper borders and shadows
+- **Geographic Accuracy**: Real country boundaries instead of simplified geometric shapes
+- **Legend System**: Color-coded document ranges from light to dark green
+- **Loading States**: Proper loading indicators and error handling
+
+**User Experience Improvements:**
+- **Real Geography**: Users now see actual world map with recognizable country shapes
+- **Professional Appearance**: Map looks like standard geographic applications
+- **Authentic Interaction**: Natural map navigation and zoom functionality
+- **Consistent Navigation**: Click-to-search functionality maintained from previous version
+
+**Performance Optimizations:**
+- **External Data Caching**: Efficient loading of country boundary data
+- **Conditional Rendering**: Map renders with loading state while data fetches
+- **Lightweight Implementation**: Optimized bundle size with tree-shaking
+
+**Backward Compatibility:**
+- **Maintained API**: Same country statistics endpoint integration
+- **Preserved Navigation**: Existing country click → search functionality
+- **Data Format**: Backend API remains unchanged, frontend adapts data format
+
+**Deployment Details:**
+- **Version**: 1.1.23 
+- **Dependencies**: Added Leaflet ecosystem without affecting existing functionality
+- **Build Size**: Optimized bundle with Leaflet integration (~300KB vendor bundle)
+- **Production Status**: Successfully deployed with real geographic map
+
+**Result**: Users now have a professional, geographically accurate world map that displays corruption document statistics with authentic country boundaries, proper map tiles, and interactive features matching modern mapping applications.

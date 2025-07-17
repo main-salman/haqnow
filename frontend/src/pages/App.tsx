@@ -137,7 +137,8 @@ export default function App() {
     'Myanmar': 'MM',
     'Mongolia': 'MN',
     'Kazakhstan': 'KZ',
-    'Uzbekistan': 'UZ'
+    'Uzbekistan': 'UZ',
+    'Cayman Islands': 'KY'
   };
 
   // Fetch country statistics for the map
@@ -158,15 +159,19 @@ export default function App() {
           .map(country => {
             const countryCode = countryCodeMapping[country.country];
             if (countryCode) {
+              console.log('Mapping country:', country.country, '->', countryCode, 'with', country.doc_count, 'documents');
               return {
                 countryCode,
                 totalDocuments: country.doc_count
               };
+            } else {
+              console.warn('No mapping found for country:', country.country);
+              return null;
             }
-            return null;
           })
           .filter((item): item is CountryStats => item !== null);
         
+        console.log('Final mapped data for map:', mappedData);
         setMapData(mappedData);
       } catch (err) {
         console.error('Error fetching map data:', err);
