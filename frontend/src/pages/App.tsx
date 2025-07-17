@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState(""); // Added state for search term
   const [mapData, setMapData] = useState<CountryStats[]>([]);
   const [loadingMapData, setLoadingMapData] = useState(true);
+  const hasFetchedMapData = useRef(false); // Track if we've already fetched to prevent duplicates
   const navigate = useNavigate(); // Added navigation hook
   const { t } = useTranslation(); // Added translation hook
 
@@ -165,8 +166,16 @@ export default function App() {
   // Fetch country statistics for the map
   useEffect(() => {
     const fetchMapData = async () => {
+      // Prevent duplicate fetches
+      if (hasFetchedMapData.current) {
+        console.log('🔒 Map data fetch already initiated, skipping duplicate');
+        return;
+      }
+      hasFetchedMapData.current = true;
+      
       try {
         setLoadingMapData(true);
+        console.log('🚀 Fetching map data...');
         // Fixed API endpoint to match the working endpoint used in CountryDocStatsList
         const response = await fetch('/api/statistics/country-stats');
         
