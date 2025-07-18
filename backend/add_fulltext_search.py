@@ -79,12 +79,12 @@ def add_fulltext_search():
                 # Step 1: Add search_text column if it doesn't exist
                 if not search_text_exists:
                     print("📝 Adding search_text column...")
-                    with conn.begin():
-                        conn.execute(text("""
-                            ALTER TABLE documents 
-                            ADD COLUMN search_text TEXT 
-                            COMMENT 'Combined searchable text from title, description, and OCR content'
-                        """))
+                    conn.execute(text("""
+                        ALTER TABLE documents 
+                        ADD COLUMN search_text TEXT 
+                        COMMENT 'Combined searchable text from title, description, and OCR content'
+                    """))
+                    conn.commit()
                     print("✅ Added search_text column")
                 else:
                     print("ℹ️  search_text column already exists")
@@ -98,23 +98,23 @@ def add_fulltext_search():
                 print(f"📚 Updating {doc_count} documents with combined search text...")
                 
                 # Update search_text with combined content (handling NULL values)
-                with conn.begin():
-                    conn.execute(text("""
-                        UPDATE documents 
-                        SET search_text = CONCAT(
-                            IFNULL(title, ''), ' ',
-                            IFNULL(description, ''), ' ', 
-                            IFNULL(ocr_text, ''), ' ',
-                            IFNULL(country, ''), ' ',
-                            IFNULL(state, ''), ' ',
-                            CASE 
-                                WHEN generated_tags IS NOT NULL AND JSON_LENGTH(generated_tags) > 0 
-                                THEN JSON_UNQUOTE(JSON_EXTRACT(generated_tags, '$[*]'))
-                                ELSE ''
-                            END
-                        )
-                        WHERE search_text IS NULL OR search_text = ''
-                    """))
+                conn.execute(text("""
+                    UPDATE documents 
+                    SET search_text = CONCAT(
+                        IFNULL(title, ''), ' ',
+                        IFNULL(description, ''), ' ', 
+                        IFNULL(ocr_text, ''), ' ',
+                        IFNULL(country, ''), ' ',
+                        IFNULL(state, ''), ' ',
+                        CASE 
+                            WHEN generated_tags IS NOT NULL AND JSON_LENGTH(generated_tags) > 0 
+                            THEN JSON_UNQUOTE(JSON_EXTRACT(generated_tags, '$[*]'))
+                            ELSE ''
+                        END
+                    )
+                    WHERE search_text IS NULL OR search_text = ''
+                """))
+                conn.commit()
                 print("✅ Updated search_text column with combined content")
                 
                 # Step 3: Add full-text indexes
@@ -143,11 +143,11 @@ def add_fulltext_search():
                     
                     try:
                         print(f"🔨 Creating {description}...")
-                        with conn.begin():
-                            conn.execute(text(f"""
-                                ALTER TABLE documents 
-                                ADD FULLTEXT INDEX {index_name} ({columns})
-                            """))
+                        conn.execute(text(f"""
+                            ALTER TABLE documents 
+                            ADD FULLTEXT INDEX {index_name} ({columns})
+                        """))
+                        conn.commit()
                         print(f"✅ Created full-text index: {index_name}")
                     except Exception as idx_error:
                         print(f"⚠️  Warning: Could not create index {index_name}: {idx_error}")
@@ -176,11 +176,11 @@ def add_fulltext_search():
                     
                     try:
                         print(f"🔨 Creating {description}...")
-                        with conn.begin():
-                            conn.execute(text(f"""
-                                ALTER TABLE documents 
-                                ADD INDEX {index_name} ({columns})
-                            """))
+                        conn.execute(text(f"""
+                            ALTER TABLE documents 
+                            ADD INDEX {index_name} ({columns})
+                        """))
+                        conn.commit()
                         print(f"✅ Created index: {index_name}")
                     except Exception as idx_error:
                         print(f"⚠️  Warning: Could not create index {index_name}: {idx_error}")
