@@ -88,26 +88,58 @@ async def search_documents(
         # Filter by status (only approved documents)
         query_builder = query_builder.filter(Document.status == "approved")
         
-        # Search in title, description, OCR text, tags, and country/state fields
+        # Search using full-text search for optimal performance
         if q:
-            # Create search conditions for different fields
-            search_conditions = []
+            # Prepare search query for full-text search
+            search_query = q.strip()
             
-            # Search in title and description
-            search_conditions.append(Document.title.ilike(f"%{q}%"))
-            search_conditions.append(Document.description.ilike(f"%{q}%"))
-            search_conditions.append(Document.ocr_text.ilike(f"%{q}%"))
-            
-            # Search in country and state fields
-            search_conditions.append(Document.country.ilike(f"%{q}%"))
-            search_conditions.append(Document.state.ilike(f"%{q}%"))
-            
-            # Search in generated_tags (JSON field)
-            # For MySQL JSON search, we need to use JSON functions
-            search_conditions.append(func.json_search(Document.generated_tags, 'one', f"%{q}%").isnot(None))
-            
-            # Apply OR condition for all search fields
-            query_builder = query_builder.filter(or_(*search_conditions))
+            # Use full-text search on combined search_text field for best performance
+            try:
+                # Primary search: Full-text search on search_text column
+                fulltext_condition = func.match(Document.search_text).against(
+                    search_query, 
+                    func.text("IN NATURAL LANGUAGE MODE")
+                )
+                
+                # Fallback search conditions for edge cases and exact matches
+                fallback_conditions = []
+                
+                # Exact matches in key fields (for very specific searches)
+                fallback_conditions.append(Document.title.ilike(f"%{search_query}%"))
+                fallback_conditions.append(Document.country.ilike(f"%{search_query}%"))
+                fallback_conditions.append(Document.state.ilike(f"%{search_query}%"))
+                
+                # JSON tag search for exact tag matches
+                fallback_conditions.append(func.json_search(Document.generated_tags, 'one', f"%{search_query}%").isnot(None))
+                
+                # Combine full-text search with fallback conditions
+                # Full-text search gets priority, fallback ensures no results are missed
+                combined_condition = or_(
+                    fulltext_condition,
+                    and_(*[or_(*fallback_conditions)])
+                )
+                
+                query_builder = query_builder.filter(combined_condition)
+                
+                logger.info("Using full-text search", 
+                           query=search_query, 
+                           search_type="fulltext_with_fallback")
+                
+            except Exception as search_error:
+                # Fallback to old LIKE-based search if full-text search fails
+                logger.warning("Full-text search failed, using fallback LIKE search", 
+                             error=str(search_error),
+                             query=search_query)
+                
+                search_conditions = []
+                search_conditions.append(Document.title.ilike(f"%{search_query}%"))
+                search_conditions.append(Document.description.ilike(f"%{search_query}%"))
+                search_conditions.append(Document.ocr_text.ilike(f"%{search_query}%"))
+                search_conditions.append(Document.country.ilike(f"%{search_query}%"))
+                search_conditions.append(Document.state.ilike(f"%{search_query}%"))
+                search_conditions.append(func.json_search(Document.generated_tags, 'one', f"%{search_query}%").isnot(None))
+                
+                query_builder = query_builder.filter(or_(*search_conditions))
         
         # Filter by country
         if country:
@@ -120,8 +152,32 @@ async def search_documents(
         # Get total count before pagination
         total_count = query_builder.count()
         
-        # Order by created_at descending
-        query_builder = query_builder.order_by(Document.created_at.desc())
+        # Order by relevance when searching, otherwise by date
+        if q and q.strip():
+            try:
+                # Order by full-text search relevance score (higher score = more relevant)
+                search_query = q.strip()
+                relevance_score = func.match(Document.search_text).against(
+                    search_query, 
+                    func.text("IN NATURAL LANGUAGE MODE")
+                )
+                
+                # Order by relevance (descending), then by date (descending) for ties
+                query_builder = query_builder.order_by(
+                    relevance_score.desc(),
+                    Document.created_at.desc()
+                )
+                
+                logger.info("Ordering by full-text relevance score", query=search_query)
+                
+            except Exception as order_error:
+                # Fallback to date ordering if relevance scoring fails
+                logger.warning("Relevance scoring failed, using date ordering", 
+                             error=str(order_error))
+                query_builder = query_builder.order_by(Document.created_at.desc())
+        else:
+            # No search query - order by creation date (newest first)
+            query_builder = query_builder.order_by(Document.created_at.desc())
         
         # Apply pagination
         offset = (page - 1) * per_page

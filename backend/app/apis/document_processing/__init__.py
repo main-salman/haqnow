@@ -397,6 +397,23 @@ async def process_document_internal(document_id: int, db: Session) -> dict | Non
         document.processed_at = func.now()
         document.status = "processed"
         
+        # Update combined search_text for full-text search optimization
+        search_text_parts = []
+        if document.title:
+            search_text_parts.append(document.title)
+        if document.description:
+            search_text_parts.append(document.description)
+        if searchable_text:
+            search_text_parts.append(searchable_text)
+        if document.country:
+            search_text_parts.append(document.country)
+        if document.state:
+            search_text_parts.append(document.state)
+        if generated_tags:
+            search_text_parts.extend(generated_tags)
+        
+        document.search_text = ' '.join(search_text_parts)
+        
         try:
             db.commit()
             db.refresh(document)
@@ -492,6 +509,23 @@ async def process_document(
         document.generated_tags = generated_tags
         document.processed_at = func.now()
         document.status = "processed"
+        
+        # Update combined search_text for full-text search optimization
+        search_text_parts = []
+        if document.title:
+            search_text_parts.append(document.title)
+        if document.description:
+            search_text_parts.append(document.description)
+        if searchable_text:
+            search_text_parts.append(searchable_text)
+        if document.country:
+            search_text_parts.append(document.country)
+        if document.state:
+            search_text_parts.append(document.state)
+        if generated_tags:
+            search_text_parts.extend(generated_tags)
+        
+        document.search_text = ' '.join(search_text_parts)
         
         try:
             db.commit()

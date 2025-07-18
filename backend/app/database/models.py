@@ -25,6 +25,7 @@ class Document(Base):
     # Processing information
     ocr_text = Column(Text, nullable=True)
     generated_tags = Column(JSON, nullable=True, default=list)
+    search_text = Column(Text, nullable=True)  # Combined searchable text for full-text search
     
     # Status and workflow
     status = Column(String(50), nullable=False, default="pending", index=True)
@@ -62,6 +63,7 @@ class Document(Base):
             "content_type": self.content_type,
             "ocr_text": self.ocr_text,
             "generated_tags": self.generated_tags or [],
+            "search_text": self.search_text,
             "status": self.status,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
