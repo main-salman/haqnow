@@ -283,21 +283,53 @@ async def change_password(
     current_user: User = Depends(get_current_user)
 ):
     """Change password for the current admin user."""
-    # This is a placeholder implementation
-    # In a real implementation, you would:
-    # 1. Verify current password
-    # 2. Hash new password
-    # 3. Update in database
-    # 4. Optionally invalidate all existing sessions
-    
-    # For now, just validate password strength
-    if len(password_data.new_password) < 8:
+    try:
+        # Get the admin from database
+        admin = db.query(Admin).filter(Admin.email == current_user.email).first()
+        if not admin:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Admin not found"
+            )
+        
+        # Verify current password
+        if not pwd_context.verify(password_data.current_password, admin.password_hash):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Current password is incorrect"
+            )
+        
+        # Validate new password strength
+        if len(password_data.new_password) < 8:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="New password must be at least 8 characters long"
+            )
+        
+        # Check if new password is different from current
+        if password_data.current_password == password_data.new_password:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="New password must be different from current password"
+            )
+        
+        # Hash new password
+        new_password_hash = pwd_context.hash(password_data.new_password)
+        
+        # Update password in database
+        admin.password_hash = new_password_hash
+        db.commit()
+        
+        return {"message": "Password changed successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Password must be at least 8 characters long"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to change password: {str(e)}"
         )
-    
-    return {"message": "Password changed successfully"}
 
 @router.get("/profile", response_model=AdminResponse)
 async def get_admin_profile(
