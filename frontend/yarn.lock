@@ -5573,6 +5573,19 @@
   dependencies:
     is-negated-glob "^1.0.0"
 
+"@hcaptcha/loader@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.npmjs.org/@hcaptcha/loader/-/loader-2.0.0.tgz"
+  integrity sha512-fFQH6ApU/zCCl6Y1bnbsxsp1Er/lKX+qlgljrpWDeFcenpEtoP68hExlKSXECospzKLeSWcr06cbTjlR/x3IJA==
+
+"@hcaptcha/react-hcaptcha@^1.12.0":
+  version "1.12.0"
+  resolved "https://registry.npmjs.org/@hcaptcha/react-hcaptcha/-/react-hcaptcha-1.12.0.tgz"
+  integrity sha512-QiHnQQ52k8SJJSHkc3cq4TlYzag7oPd4f5ZqnjVSe4fJDSlZaOQFtu5F5AYisVslwaitdDELPVLRsRJxiiI0Aw==
+  dependencies:
+    "@babel/runtime" "^7.17.9"
+    "@hcaptcha/loader" "^2.0.0"
+
 "@headlessui/react@^2.2.1":
   version "2.2.4"
   resolved "https://registry.npmjs.org/@headlessui/react/-/react-2.2.4.tgz"

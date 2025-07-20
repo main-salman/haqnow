@@ -1,6 +1,6 @@
 {
   "navigation": {
-    "brand": "Fadih.org",
+    "brand": "HaqNow.com",
     "search": "Ara",
     "upload": "Yükle",
     "privacy": "Gizlilik Garantili",
@@ -10,10 +10,10 @@
   },
   "homepage": {
     "title": "Dünya Çapında Yolsuzluk Belgelerini İfşa Edin",
-    "subtitle": "Fadih.org, dünyanın dört bir yanından yolsuzluğu ifşa eden belgeleri toplama, organize etme ve bunlara erişim sağlama konusunda özel bir platformdur. Anonim olarak yükleyin, özgürce arayın ve büyüyen gerçek ve şeffaflık deposuna katkıda bulunun.",
+    "subtitle": "HaqNow.com, dünyanın dört bir yanından yolsuzluğu ifşa eden belgeleri toplama, organize etme ve bunlara erişim sağlama konusunda özel bir platformdur. Anonim olarak yükleyin, özgürce arayın ve büyüyen gerçek ve şeffaflık deposuna katkıda bulunun.",
     "searchPlaceholder": "Yolsuzluk belgelerini arayın...",
     "mapTitle": "Ülkelere Göre Belgeler",
-    "copyright": "© 2025 Fadih.org. Tüm hakları saklıdır."
+    "copyright": "© 2025 HaqNow.com. Tüm hakları saklıdır."
   },
   "search": {
     "title": "Yolsuzluk Belgelerini Ara",
@@ -100,7 +100,7 @@
     "last": "Son"
   },
   "about": {
-    "title": "Fadih.org Hakkında",
+          "title": "HaqNow.com Hakkında",
     "founder": "Salman Naqvi Tarafından Kuruldu",
     "quote": "Savaşları sona erdirme ve dünyadaki tüm insanların insan haklarına tutkulu bir şekilde bağlıyım.",
     "mission": "Yolsuzlukla Mücadele Misyonumuz",
@@ -117,6 +117,6 @@
     "howTo": "BİB Başvurusu Nasıl Yapılır",
     "countries": "Ülkelere Göre Bilgi Edinme Yasaları ve Portalları",
     "bestPractices": "BİB En İyi Uygulamaları",
-    "connection": "BİB + Fadih.org: Güçlü Şeffaflık Araçları"
+          "connection": "BİB + HaqNow.com: Güçlü Şeffaflık Araçları"
   }
 } 

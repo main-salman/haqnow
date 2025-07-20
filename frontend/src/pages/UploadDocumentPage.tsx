@@ -13,9 +13,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { UploadCloud, FileText, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
+import { UploadCloud, FileText, AlertCircle, CheckCircle, Loader2, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { countriesData, Country, State } from "utils/countriesData"; // Added
+import HCaptcha from '@hcaptcha/react-hcaptcha';
 
 // Mock data - replace with API calls or more robust data source later
 // const mockCountries = [
@@ -62,8 +63,6 @@ interface FormData {
   stateProvince: string;
   adminLevel: string;
   file: File | null;
-  uploader_name: string; // New
-  uploader_email: string; // New
 }
 
 export default function UploadDocumentPage() {
@@ -76,13 +75,11 @@ export default function UploadDocumentPage() {
     stateProvince: "",
     adminLevel: "",
     file: null,
-    uploader_name: "", // New
-    uploader_email: "", // New
   });
   const [currentStates, setCurrentStates] = useState<State[]>([]); // Changed type to State[]
   const [errors, setErrors] = useState<Partial<Record<keyof FormData | 'captcha', string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // const [captchaToken, setCaptchaToken] = useState<string | null>(null); // Placeholder for CAPTCHA integration
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles && acceptedFiles.length > 0) {
@@ -269,7 +266,7 @@ export default function UploadDocumentPage() {
     }
 
     if (!formData.file) newErrors.file = "A PDF file is required for upload.";
-    // if (!captchaToken) newErrors.captcha = "Please complete the CAPTCHA."; // CAPTCHA validation placeholder
+    if (!captchaToken) newErrors.captcha = "Please complete the CAPTCHA verification.";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -489,24 +486,21 @@ export default function UploadDocumentPage() {
               </div>
             </div>
 
-            {/* Uploader Info (Optional) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="uploader_name">Your Name (Optional)</Label>
-                <Input id="uploader_name" name="uploader_name" value={formData.uploader_name} onChange={handleChange} placeholder="e.g., Jane Doe" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="uploader_email">Your Email (Optional)</Label>
-                <Input id="uploader_email" name="uploader_email" type="email" value={formData.uploader_email} onChange={handleChange} placeholder="e.g., jane.doe@example.com" />
-              </div>
-            </div>
 
-            {/* CAPTCHA Placeholder */}
+
+            {/* CAPTCHA Section */}
             <div className="space-y-2">
-              <Label>CAPTCHA</Label>
-              <div className="p-4 border rounded-md bg-muted/50 text-center text-muted-foreground">
-                [CAPTCHA (e.g., hCaptcha, reCAPTCHA) will be integrated here]
-                {/* Example: <HCaptcha sitekey="your-site-key" onVerify={setCaptchaToken} /> */}
+              <Label className="flex items-center gap-2">
+                <Shield className="h-4 w-4" />
+                Security Verification
+              </Label>
+              <div className="flex justify-center">
+                <HCaptcha
+                  sitekey="10000000-ffff-ffff-ffff-000000000001" // Test site key - replace with real one
+                  onVerify={setCaptchaToken}
+                  onError={() => setCaptchaToken(null)}
+                  onExpire={() => setCaptchaToken(null)}
+                />
               </div>
               {errors.captcha && <p className="text-sm text-destructive flex items-center"><AlertCircle className="h-4 w-4 mr-1" />{errors.captcha}</p>}
             </div>

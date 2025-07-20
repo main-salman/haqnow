@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# update.sh - Fast update script for Fadih.org
+# update.sh - Fast update script for HaqNow.com
 # Syncs code changes without full reinstallation
 
 set -e
@@ -17,7 +17,7 @@ SERVER_HOST="159.100.250.145"
 SERVER_USER="root"
 SERVER_DIR="/opt/foi-archive"
 
-echo -e "${BLUE}🚀 Fadih.org - Fast Update${NC}"
+echo -e "${BLUE}🚀 HaqNow.com - Fast Update${NC}"
 echo "=============================="
 
 # Check if we're in a git repository

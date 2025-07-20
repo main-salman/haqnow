@@ -140,7 +140,7 @@ export default function PrivacyGuaranteedPage() {
                 <span>Our Privacy Guarantees</span>
               </CardTitle>
               <CardDescription className="text-lg">
-                We guarantee that Fadih.org:
+                We guarantee that HaqNow.com:
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -459,7 +459,7 @@ export default function PrivacyGuaranteedPage() {
             <CardContent className="text-center space-y-6">
               <div className="prose dark:prose-invert mx-auto">
                 <p className="text-lg">
-                  Fadih.org is committed to fighting corruption worldwide through anonymous document exposure. 
+                  HaqNow.com is committed to fighting corruption worldwide through anonymous document exposure. 
                   We welcome security researchers, privacy advocates, journalists, and developers who share our mission.
                 </p>
                 <p>

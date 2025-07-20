@@ -130,7 +130,7 @@ const AboutPage: React.FC = () => {
           
           <div className="prose prose-lg text-gray-700 space-y-4">
             <p>
-              Fadih.org emerges from a deep commitment to ending systemic corruption that fuels conflicts, 
+              HaqNow.com emerges from a deep commitment to ending systemic corruption that fuels conflicts, 
               undermines human rights, and perpetuates global inequality. Through the power of transparency 
               and document disclosure, we believe that exposing corruption is one of the most effective ways 
               to protect civilians, end wars, and advance human rights worldwide.
@@ -141,7 +141,7 @@ const AboutPage: React.FC = () => {
               inequality and conflict. When corrupt officials, defense contractors, and political elites 
               operate without accountability, the result is often devastating: unnecessary wars, human rights 
               abuses, and the systematic exploitation of vulnerable populations. By creating a secure, 
-              anonymous platform for whistleblowers and truth-tellers, Fadih.org aims to shine light on 
+              anonymous platform for whistleblowers and truth-tellers, HaqNow.com aims to shine light on 
               these dark practices.
             </p>
             

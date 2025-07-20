@@ -1,6 +1,6 @@
 {
   "navigation": {
-    "brand": "Fadih.org",
+    "brand": "HaqNow.com",
     "search": "Rechercher",
     "upload": "Télécharger",
     "privacy": "Confidentialité Garantie",
@@ -10,7 +10,7 @@
   },
   "homepage": {
     "title": "Exposer les Documents de Corruption Mondiaux",
-    "subtitle": "Fadih.org est une plateforme dédiée à la collecte, l'organisation et l'accès aux documents qui exposent la corruption du monde entier. Téléchargez anonymement, recherchez librement, et contribuez à un référentiel croissant de vérité et de transparence.",
+    "subtitle": "HaqNow.com est une plateforme dédiée à la collecte, l'organisation et l'accès aux documents qui exposent la corruption du monde entier. Téléchargez anonymement, recherchez librement, et contribuez à un référentiel croissant de vérité et de transparence.",
     "searchPlaceholder": "Rechercher des documents de corruption par mot-clé, pays, organisation...",
     "searchButton": "Rechercher",
     "mapTitle": "Distribution Mondiale des Documents de Corruption",
@@ -57,7 +57,7 @@
   },
   "privacy": {
     "title": "Confidentialité Garantie",
-    "subtitle": "Fadih.org fournit un ANONYMAT COMPLET pour les lanceurs d'alerte de documents de corruption. Chaque niveau de notre infrastructure a été conçu et vérifié pour assurer zéro suivi ou identification des utilisateurs.",
+      "subtitle": "HaqNow.com fournit un ANONYMAT COMPLET pour les lanceurs d'alerte de documents de corruption. Chaque niveau de notre infrastructure a été conçu et vérifié pour assurer zéro suivi ou identification des utilisateurs.",
     "backToHome": "Retour à l'Accueil",
     "sectionPrivacyImplementation": "Présentation de l'Implémentation de la Confidentialité",
     "cardZeroIpStorage": "Stockage IP Zéro",
@@ -80,7 +80,7 @@
     "layerSecurity": "Couche Sécurité : Limitation de débit sans suivi IP, gestion de session sécurisée",
     "layerNetwork": "Couche Réseau : Configuration proxy propre, gestion des requêtes conforme à la confidentialité",
     "sectionTrustedCollaborators": "Collaborateurs de Confiance",
-    "collaboratorsDescription": "Fadih.org travaille avec des partenaires de confiance pour assurer les plus hauts standards de confidentialité et sécurité pour les lanceurs d'alerte dans le monde entier.",
+          "collaboratorsDescription": "HaqNow.com travaille avec des partenaires de confiance pour assurer les plus hauts standards de confidentialité et sécurité pour les lanceurs d'alerte dans le monde entier.",
     "collaborateWithUs": "Collaborez avec nous via Ministry of Woke",
     "partnersDescription": "Parfait pour les chercheurs en sécurité, défenseurs de la vie privée, journalistes et organisations engagées dans la transparence et la responsabilité.",
     "sectionPrivacyVerification": "Vérification de la Conformité à la Confidentialité",
@@ -122,7 +122,7 @@
     "refresh": "Actualiser"
   },
   "about": {
-    "title": "À Propos de Fadih.org",
+          "title": "À Propos de HaqNow.com",
     "founder": "Fondé par Salman Naqvi",
     "quote": "Je suis passionné par la fin des guerres et les droits humains de tous les êtres humains dans le monde.",
     "mission": "Notre Mission Anti-Corruption",
@@ -139,6 +139,6 @@
     "howTo": "Comment Soumettre des Demandes CADA",
     "countries": "Lois et Portails de Liberté d'Information par Pays",
     "bestPractices": "Meilleures Pratiques CADA",
-    "connection": "CADA + Fadih.org : Outils de Transparence Puissants"
+          "connection": "CADA + HaqNow.com : Outils de Transparence Puissants"
   }
 } 

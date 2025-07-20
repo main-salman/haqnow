@@ -130,7 +130,7 @@ const FOIPage: React.FC = () => {
             
             <p className="font-medium text-green-700">
               💡 Pro Tip: FOI requests are powerful tools for uncovering corruption, government 
-              misconduct, and holding power accountable. Combined with platforms like Fadih.org, 
+              misconduct, and holding power accountable. Combined with platforms like HaqNow.com, 
               they create a comprehensive approach to transparency and anti-corruption work.
             </p>
           </div>
@@ -297,9 +297,9 @@ const FOIPage: React.FC = () => {
         <div className="bg-gradient-to-r from-green-600 to-blue-600 rounded-lg shadow-lg p-8 text-white">
           <div className="text-center">
             <FileText className="w-16 h-16 mx-auto mb-4 text-white" />
-            <h2 className="text-2xl font-bold mb-4">FOI + Fadih.org: Powerful Transparency Tools</h2>
+            <h2 className="text-2xl font-bold mb-4">FOI + HaqNow.com: Powerful Transparency Tools</h2>
             <p className="text-lg mb-6 text-green-100">
-              When FOI requests uncover corruption, Fadih.org provides a secure platform to share 
+              When FOI requests uncover corruption, HaqNow.com provides a secure platform to share 
               those documents with the world. Together, they create a comprehensive approach to 
               fighting corruption and promoting transparency.
             </p>

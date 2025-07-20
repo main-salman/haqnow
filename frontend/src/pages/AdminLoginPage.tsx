@@ -66,7 +66,7 @@ export default function AdminLoginPage() {
       <Card className="w-full max-w-sm shadow-xl">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-serif">Admin Login</CardTitle>
-          <CardDescription>Access the Fadih.org Admin Panel</CardDescription>
+                          <CardDescription>Access the HaqNow.com Admin Panel</CardDescription>
         </CardHeader>
         <form onSubmit={handleLogin}>
           <CardContent className="space-y-4">

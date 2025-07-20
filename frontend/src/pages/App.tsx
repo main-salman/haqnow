@@ -305,8 +305,8 @@ export default function App() {
                 <Button variant="ghost" onClick={() => navigate('/privacy-guaranteed-page')}>
                   {t('navigation.privacy')}
                 </Button>
-                <Button variant="ghost" onClick={() => navigate('/admin-login-page')}>
-                  {t('navigation.admin')}
+                <Button variant="ghost" onClick={() => navigate('/disclaimer')}>
+                  Disclaimer
                 </Button>
               </nav>
               <LanguageSwitcher />
@@ -368,9 +368,9 @@ export default function App() {
                 <Button 
                   variant="ghost" 
                   className="justify-start" 
-                  onClick={() => handleMobileNavigation('/admin-login-page')}
+                  onClick={() => handleMobileNavigation('/disclaimer')}
                 >
-                  {t('navigation.admin')}
+                  Disclaimer
                 </Button>
               </nav>
             </div>

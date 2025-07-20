@@ -1,6 +1,6 @@
 {
   "navigation": {
-    "brand": "Fadih.org",
+    "brand": "HaqNow.com",
     "search": "Suchen",
     "upload": "Hochladen",
     "privacy": "Datenschutz Garantiert",
@@ -10,7 +10,7 @@
   },
   "homepage": {
     "title": "Korruptionsdokumente Weltweit Aufdecken",
-    "subtitle": "Fadih.org ist eine Plattform zur Sammlung, Organisation und Bereitstellung des Zugangs zu Dokumenten, die Korruption aus aller Welt aufdecken. Laden Sie anonym hoch, suchen Sie frei und tragen Sie zu einem wachsenden Repository von Wahrheit und Transparenz bei.",
+    "subtitle": "HaqNow.com ist eine Plattform zur Sammlung, Organisation und Bereitstellung des Zugangs zu Dokumenten, die Korruption aus aller Welt aufdecken. Laden Sie anonym hoch, suchen Sie frei und tragen Sie zu einem wachsenden Repository von Wahrheit und Transparenz bei.",
     "searchPlaceholder": "Korruptionsdokumente nach Stichwort, Land, Organisation suchen...",
     "searchButton": "Suchen",
     "mapTitle": "Globale Verteilung von Korruptionsdokumenten",
@@ -57,7 +57,7 @@
   },
   "privacy": {
     "title": "Datenschutz Garantiert",
-    "subtitle": "Fadih.org bietet VOLLSTÄNDIGE ANONYMITÄT für Whistleblower von Korruptionsdokumenten. Jede Ebene unserer Infrastruktur wurde entwickelt und verifiziert, um null Tracking oder Identifikation von Benutzern zu gewährleisten.",
+      "subtitle": "HaqNow.com bietet VOLLSTÄNDIGE ANONYMITÄT für Whistleblower von Korruptionsdokumenten. Jede Ebene unserer Infrastruktur wurde entwickelt und verifiziert, um null Tracking oder Identifikation von Benutzern zu gewährleisten.",
     "backToHome": "Zurück zur Startseite",
     "sectionPrivacyImplementation": "Datenschutz-Implementierung Showcase",
     "cardZeroIpStorage": "Null IP-Speicherung",
@@ -80,7 +80,7 @@
     "layerSecurity": "Sicherheitsebene: Rate Limiting ohne IP-Tracking, sichere Session-Verwaltung",
     "layerNetwork": "Netzwerkebene: Saubere Proxy-Konfiguration, datenschutzkonforme Anfrageverarbeitung",
     "sectionTrustedCollaborators": "Vertrauenswürdige Mitarbeiter",
-    "collaboratorsDescription": "Fadih.org arbeitet mit vertrauenswürdigen Partnern zusammen, um die höchsten Standards für Datenschutz und Sicherheit für Whistleblower weltweit zu gewährleisten.",
+          "collaboratorsDescription": "HaqNow.com arbeitet mit vertrauenswürdigen Partnern zusammen, um die höchsten Standards für Datenschutz und Sicherheit für Whistleblower weltweit zu gewährleisten.",
     "collaborateWithUs": "Arbeiten Sie mit uns über Ministry of Woke zusammen",
     "partnersDescription": "Perfekt für Sicherheitsforscher, Datenschutz-Aktivisten, Journalisten und Organisationen, die sich für Transparenz und Rechenschaftspflicht einsetzen.",
     "sectionPrivacyVerification": "Datenschutz-Compliance Verifizierung",
@@ -122,7 +122,7 @@
     "refresh": "Aktualisieren"
   },
   "about": {
-    "title": "Über Fadih.org",
+          "title": "Über HaqNow.com",
     "founder": "Gegründet von Salman Naqvi",
     "quote": "Ich bin leidenschaftlich daran interessiert, Kriege zu beenden und die Menschenrechte aller Menschen auf der Welt zu fördern.",
     "mission": "Unsere Anti-Korruptions-Mission",
@@ -139,6 +139,6 @@
     "howTo": "Wie man IFG-Anträge stellt",
     "countries": "Informationsfreiheitsgesetze und Portale nach Ländern",
     "bestPractices": "IFG-Best-Practices",
-    "connection": "IFG + Fadih.org: Mächtige Transparenz-Werkzeuge"
+          "connection": "IFG + HaqNow.com: Mächtige Transparenz-Werkzeuge"
   }
 } 

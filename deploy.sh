@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Comprehensive deployment script for Fadih.org
+# Comprehensive deployment script for HaqNow.com
 # Usage: ./deploy.sh [patch|minor|major]
 # Default: patch
 
@@ -8,7 +8,7 @@ set -e  # Exit on any error
 
 VERSION_TYPE=${1:-patch}
 
-echo "🚀 Starting Fadih.org deployment process..."
+echo "🚀 Starting HaqNow.com deployment process..."
 echo ""
 
 # Step 1: Update version
@@ -60,7 +60,7 @@ echo ""
 # Step 4: Deploy to production server
 echo "🌐 Deploying to production server..."
 ssh root@159.100.250.145 << EOF
-echo "=== Deploying Fadih.org v$NEW_VERSION ==="
+echo "=== Deploying HaqNow.com v$NEW_VERSION ==="
 
 cd /opt/foi-archive
 
@@ -96,7 +96,7 @@ sudo systemctl enable foi-archive
 sudo systemctl reload nginx
 
 echo ""
-echo "✅ Fadih.org v$NEW_VERSION deployed successfully!"
+echo "✅ HaqNow.com v$NEW_VERSION deployed successfully!"
 echo "🔒 Privacy-compliant with complete IP address removal"
 echo "🌍 Visit: http://159.100.250.145"
 echo "📊 Admin: http://159.100.250.145/admin-login-page"

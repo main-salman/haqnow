@@ -132,4 +132,55 @@ class Translation(Base):
             "updated_by": self.updated_by,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None
-        } 
+        }
+
+class Admin(Base):
+    """Model for storing admin users with 2FA support."""
+    
+    __tablename__ = "admins"
+    
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    email = Column(String(255), nullable=False, unique=True, index=True)
+    name = Column(String(255), nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    
+    # 2FA fields
+    two_factor_enabled = Column(Boolean, nullable=False, default=False)
+    two_factor_secret = Column(String(32), nullable=True)  # TOTP secret
+    backup_codes = Column(JSON, nullable=True, default=list)  # Backup codes array
+    
+    # Admin management
+    is_active = Column(Boolean, nullable=False, default=True)
+    is_super_admin = Column(Boolean, nullable=False, default=False)  # Can manage other admins
+    created_by = Column(String(255), nullable=True)  # Email of admin who created this admin
+    
+    # Timestamps
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    last_login_at = Column(DateTime(timezone=True), nullable=True)
+    
+    def __repr__(self):
+        return f"<Admin(id={self.id}, email='{self.email}', name='{self.name}')>"
+    
+    def to_dict(self, include_sensitive=False):
+        """Convert model to dictionary."""
+        data = {
+            "id": self.id,
+            "email": self.email,
+            "name": self.name,
+            "two_factor_enabled": self.two_factor_enabled,
+            "is_active": self.is_active,
+            "is_super_admin": self.is_super_admin,
+            "created_by": self.created_by,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "last_login_at": self.last_login_at.isoformat() if self.last_login_at else None
+        }
+        
+        if include_sensitive:
+            data.update({
+                "two_factor_secret": self.two_factor_secret,
+                "backup_codes": self.backup_codes or []
+            })
+        
+        return data

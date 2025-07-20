@@ -1,4 +1,4 @@
-# Fadih.org - Global Corruption Document Exposure Platform
+# HaqNow.com - Global Corruption Document Exposure Platform
 
 **Fadih** (Arabic for "reveal" or "make apparent") is an anonymous platform for exposing corruption documents worldwide. Citizens and journalists can upload evidence of corruption, which is reviewed by administrators and made searchable by anyone globally.
 
@@ -13,7 +13,7 @@
 
 ## Privacy Compliance & Anonymity Guarantees
 
-**Fadih.org provides COMPLETE ANONYMITY for corruption document whistleblowers.** We have implemented comprehensive privacy protections at every level of the infrastructure to ensure zero tracking or identification of users.
+**HaqNow.com provides COMPLETE ANONYMITY for corruption document whistleblowers.** We have implemented comprehensive privacy protections at every level of the infrastructure to ensure zero tracking or identification of users.
 
 ### 🔒 **Application-Level Privacy**
 
@@ -75,7 +75,7 @@
 
 ### 🌍 **Privacy Guarantees**
 
-**We guarantee that Fadih.org:**
+**We guarantee that HaqNow.com:**
 - **NEVER** stores IP addresses in any database
 - **NEVER** logs IP addresses in web server logs
 - **NEVER** forwards IP addresses to backend applications
@@ -164,11 +164,11 @@ See `.env.example` for complete configuration.
 
 ## Contributing
 
-Fadih.org is dedicated to fighting corruption through transparency. All contributions that advance this mission are welcome.
+HaqNow.com is dedicated to fighting corruption through transparency. All contributions that advance this mission are welcome.
 
 ### Privacy-First Development
 
-When contributing to Fadih.org, please maintain our privacy-first approach:
+When contributing to HaqNow.com, please maintain our privacy-first approach:
 
 - **Never add IP logging** or tracking functionality
 - **Avoid storing identifying information** about users
