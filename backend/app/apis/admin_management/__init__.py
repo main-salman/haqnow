@@ -10,6 +10,10 @@ from ...auth.jwt_auth import get_current_user, User, get_password_hash, verify_p
 from passlib.context import CryptContext
 import secrets
 import string
+import pyotp
+import qrcode
+import io
+import base64
 
 router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -130,26 +134,69 @@ async def setup_two_factor(
     current_user: User = Depends(get_current_user)
 ):
     """Set up 2FA for the current admin user."""
-    # This is a placeholder implementation
-    # In a real implementation, you would:
-    # 1. Generate a TOTP secret using pyotp
-    # 2. Create a QR code URL
-    # 3. Generate backup codes
-    # 4. Store the secret in the database (encrypted)
-    
-    # For now, return placeholder data
-    fake_secret = "JBSWY3DPEHPK3PXP"  # Base32 encoded secret
-    fake_qr_url = f"otpauth://totp/HaqNow.com:{current_user.email}?secret={fake_secret}&issuer=HaqNow.com"
-    fake_backup_codes = [
-        ''.join(secrets.choice(string.digits) for _ in range(8))
-        for _ in range(10)
-    ]
-    
-    return TwoFactorSetupResponse(
-        qr_code_url=fake_qr_url,
-        secret=fake_secret,
-        backup_codes=fake_backup_codes
-    )
+    try:
+        # Get the admin from database
+        admin = db.query(Admin).filter(Admin.email == current_user.email).first()
+        if not admin:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Admin not found"
+            )
+        
+        # Generate a new TOTP secret
+        secret = pyotp.random_base32()
+        
+        # Create TOTP instance
+        totp = pyotp.TOTP(secret)
+        
+        # Generate the provisioning URI for QR code
+        provisioning_uri = totp.provisioning_uri(
+            name=current_user.email,
+            issuer_name="HaqNow.com"
+        )
+        
+        # Generate QR code as base64 image
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+            box_size=6,
+            border=4,
+        )
+        qr.add_data(provisioning_uri)
+        qr.make(fit=True)
+        
+        # Create QR code image
+        qr_image = qr.make_image(fill_color="black", back_color="white")
+        
+        # Convert to base64
+        buffer = io.BytesIO()
+        qr_image.save(buffer, format='PNG')
+        qr_code_base64 = base64.b64encode(buffer.getvalue()).decode()
+        qr_code_data_url = f"data:image/png;base64,{qr_code_base64}"
+        
+        # Generate backup codes
+        backup_codes = [
+            ''.join(secrets.choice(string.digits) for _ in range(8))
+            for _ in range(10)
+        ]
+        
+        # Store the secret in the admin record (temporarily, until verified)
+        admin.two_factor_secret = secret
+        admin.backup_codes = ','.join(backup_codes)  # Store as comma-separated string
+        db.commit()
+        
+        return TwoFactorSetupResponse(
+            qr_code_url=qr_code_data_url,
+            secret=secret,
+            backup_codes=backup_codes
+        )
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to setup 2FA: {str(e)}"
+        )
 
 @router.post("/2fa/verify")
 async def verify_two_factor(
@@ -158,20 +205,44 @@ async def verify_two_factor(
     current_user: User = Depends(get_current_user)
 ):
     """Verify 2FA token and enable 2FA for the user."""
-    # This is a placeholder implementation
-    # In a real implementation, you would:
-    # 1. Verify the TOTP token using pyotp
-    # 2. Enable 2FA for the user
-    # 3. Store backup codes securely
-    
-    # For now, just return success if token is 6 digits
-    if len(verify_data.token) != 6 or not verify_data.token.isdigit():
+    try:
+        # Get the admin from database
+        admin = db.query(Admin).filter(Admin.email == current_user.email).first()
+        if not admin:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Admin not found"
+            )
+        
+        # Check if 2FA secret exists
+        if not admin.two_factor_secret:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="2FA not set up. Please set up 2FA first."
+            )
+        
+        # Verify the TOTP token
+        totp = pyotp.TOTP(admin.two_factor_secret)
+        if not totp.verify(verify_data.token):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid 2FA token"
+            )
+        
+        # Enable 2FA for the user
+        admin.two_factor_enabled = True
+        db.commit()
+        
+        return {"message": "2FA enabled successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid 2FA token"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to verify 2FA: {str(e)}"
         )
-    
-    return {"message": "2FA enabled successfully"}
 
 @router.post("/2fa/disable")
 async def disable_two_factor(
@@ -179,13 +250,31 @@ async def disable_two_factor(
     current_user: User = Depends(get_current_user)
 ):
     """Disable 2FA for the current admin user."""
-    # This is a placeholder implementation
-    # In a real implementation, you would:
-    # 1. Verify current password or 2FA token
-    # 2. Disable 2FA in the database
-    # 3. Clear 2FA secret and backup codes
-    
-    return {"message": "2FA disabled successfully"}
+    try:
+        # Get the admin from database
+        admin = db.query(Admin).filter(Admin.email == current_user.email).first()
+        if not admin:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Admin not found"
+            )
+        
+        # Disable 2FA and clear secrets
+        admin.two_factor_enabled = False
+        admin.two_factor_secret = None
+        admin.backup_codes = None
+        db.commit()
+        
+        return {"message": "2FA disabled successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to disable 2FA: {str(e)}"
+        )
 
 @router.post("/change-password")
 async def change_password(

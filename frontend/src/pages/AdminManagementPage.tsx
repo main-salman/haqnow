@@ -527,7 +527,11 @@ export default function AdminManagementPage() {
             <div className="space-y-4">
               {qrCodeUrl && (
                 <div className="flex justify-center">
-                  <img src={qrCodeUrl} alt="2FA QR Code" className="w-48 h-48" />
+                  <img 
+                    src={qrCodeUrl} 
+                    alt="2FA QR Code" 
+                    className="w-48 h-48"
+                  />
                 </div>
               )}
               <div>

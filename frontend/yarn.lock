@@ -28717,6 +28717,11 @@ qrcode-terminal-nooctal@^0.12.1:
   resolved "https://registry.npmjs.org/qrcode-terminal-nooctal/-/qrcode-terminal-nooctal-0.12.1.tgz"
   integrity sha512-jy/kkD0iIMDjTucB+5T6KBsnirlhegDH47vHgrj5MejchSQmi/EAMM0xMFeePgV9CJkkAapNakpVUWYgHvtdKg==
 
+qrcode.js@^0.0.1:
+  version "0.0.1"
+  resolved "https://registry.npmjs.org/qrcode.js/-/qrcode.js-0.0.1.tgz"
+  integrity sha512-EpHuKYzjYH/+SQtAlo4NYe3wpsYzKadKa154Ch163K+jrUlz6pVInWgJlsj5d1dxngYEjuqnClfzutL8Z9rqcg==
+
 qrcode.react@^1.0.1:
   version "1.0.1"
   resolved "https://registry.npmjs.org/qrcode.react/-/qrcode.react-1.0.1.tgz"
