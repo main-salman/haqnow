@@ -59,22 +59,46 @@ def verify_token(token: str) -> Optional[Dict[str, Any]]:
         return None
 
 def authenticate_admin(email: str, password: str) -> Optional[User]:
-    """Authenticate admin user."""
-    admin_email = os.getenv("admin_email")
-    admin_password = os.getenv("admin_password")
+    """Authenticate admin user against database."""
+    from sqlalchemy.orm import Session
+    from ..database.database import SessionLocal
+    from ..database.models import Admin
+    from passlib.context import CryptContext
+    from datetime import datetime
     
-    if not admin_email or not admin_password:
-        return None
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    db = SessionLocal()
     
-    if email == admin_email and password == admin_password:
+    try:
+        # Find admin in database
+        admin = db.query(Admin).filter(Admin.email == email).first()
+        if not admin:
+            return None
+        
+        # Check if admin is active
+        if not admin.is_active:
+            return None
+        
+        # Verify password
+        if not pwd_context.verify(password, admin.password_hash):
+            return None
+        
+        # Update last login time
+        admin.last_login_at = datetime.utcnow()
+        db.commit()
+        
         return User(
             sub=email,
             user_id=email,
-            name="Admin",
+            name=admin.name,
             email=email,
             is_admin=True
         )
-    return None
+    except Exception as e:
+        print(f"Authentication error: {e}")
+        return None
+    finally:
+        db.close()
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> User:
     """Get current user from JWT token."""
