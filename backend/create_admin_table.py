@@ -1,27 +1,30 @@
 #!/usr/bin/env python3
 """
-Migration script to create the admins table and initial admin user.
-Run this once to set up the new admin system with 2FA support.
+Migration script to create the admins table and set up initial admin user.
+This script should be run once to set up the admin management system.
 """
 
 import os
 import sys
+from datetime import datetime
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from passlib.context import CryptContext
 
-# Add the project root to the path so we can import our modules
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add the current directory to the Python path so we can import our modules
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from app.database.database import get_database_url
+from app.database.database import DATABASE_URL
 from app.database.models import Base, Admin
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def main():
     """Create the admins table and initial admin user."""
     print("🔧 Creating admins table and initial admin user...")
     
     # Get database URL
-    database_url = get_database_url()
+    database_url = DATABASE_URL
     engine = create_engine(database_url)
     
     # Create tables
@@ -50,7 +53,6 @@ def main():
             return
         
         # Create password hash
-        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
         password_hash = pwd_context.hash(admin_password)
         
         # Create initial admin user
