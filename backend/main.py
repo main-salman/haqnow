@@ -87,6 +87,7 @@ def setup_routers(app: FastAPI):
     from app.apis.statistics_api import router as stats_router
     from app.apis.word_stats_api import router as word_stats_router
     from app.apis.translations import router as translations_router
+    from app.apis.admin_management import router as admin_management_router
     
     # Add routers with prefixes
     app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
@@ -96,6 +97,7 @@ def setup_routers(app: FastAPI):
     app.include_router(stats_router, prefix="/statistics", tags=["Statistics"])
     app.include_router(word_stats_router, prefix="/word-stats", tags=["Word Statistics"])
     app.include_router(translations_router, prefix="/translations", tags=["Translations"])
+    app.include_router(admin_management_router, prefix="/admin-management", tags=["Admin Management"])
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""

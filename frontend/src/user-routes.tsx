@@ -10,6 +10,7 @@ const AdminBannedTagsPage = lazy(() => import("./pages/AdminBannedTagsPage.tsx")
 const AdminDashboardPage = lazy(() => import("./pages/AdminDashboardPage.tsx"));
 const AdminDocumentEditPage = lazy(() => import("./pages/AdminDocumentEditPage.tsx"));
 const AdminLoginPage = lazy(() => import("./pages/AdminLoginPage.tsx"));
+const AdminManagementPage = lazy(() => import("./pages/AdminManagementPage.tsx"));
 const AdminPendingDocumentsPage = lazy(() => import("./pages/AdminPendingDocumentsPage.tsx"));
 const AdminTranslationsPage = lazy(() => import("./pages/AdminTranslationsPage.tsx"));
 const AboutPage = lazy(() => import("./pages/AboutPage.tsx"));
@@ -33,6 +34,8 @@ export const userRoutes: RouteObject[] = [
 	{ path: "/admindocumenteditpage", element: <AdminDocumentEditPage />},
 	{ path: "/admin-login-page", element: <AdminLoginPage />},
 	{ path: "/adminloginpage", element: <AdminLoginPage />},
+	{ path: "/admin-management-page", element: <AdminManagementPage />},
+	{ path: "/adminmanagementpage", element: <AdminManagementPage />},
 	{ path: "/admin-pending-documents-page", element: <AdminPendingDocumentsPage />},
 	{ path: "/adminpendingdocumentspage", element: <AdminPendingDocumentsPage />},
 	{ path: "/admin-translations-page", element: <AdminTranslationsPage />},
