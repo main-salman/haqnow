@@ -25,6 +25,11 @@ class AdminCreate(BaseModel):
     password: str
     is_super_admin: bool = False
 
+class AdminUpdate(BaseModel):
+    name: Optional[str] = None
+    is_super_admin: Optional[bool] = None
+    is_active: Optional[bool] = None
+
 class AdminResponse(BaseModel):
     id: int
     email: str
@@ -51,14 +56,22 @@ class PasswordChangeRequest(BaseModel):
 
 def require_super_admin(current_user: User = Depends(get_current_user)):
     """Dependency to ensure user is a super admin."""
-    # For now, we'll check if the user is admin (legacy system)
-    # TODO: Update when we fully migrate to the new admin system
-    if not current_user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Super admin privileges required"
-        )
-    return current_user
+    from sqlalchemy.orm import Session
+    from ..database.database import SessionLocal
+    from ..database.models import Admin
+    
+    db = SessionLocal()
+    try:
+        # Check if user is super admin in database
+        admin = db.query(Admin).filter(Admin.email == current_user.email).first()
+        if not admin or not admin.is_super_admin or not admin.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Super admin privileges required"
+            )
+        return current_user
+    finally:
+        db.close()
 
 @router.get("/admins", response_model=List[AdminResponse])
 async def list_admins(
@@ -127,6 +140,41 @@ async def delete_admin(
     db.commit()
     
     return {"message": "Admin deleted successfully"}
+
+@router.put("/admins/{admin_id}", response_model=AdminResponse)
+async def update_admin(
+    admin_id: int,
+    admin_data: AdminUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_super_admin)
+):
+    """Update admin user details (super admin only)."""
+    admin = db.query(Admin).filter(Admin.id == admin_id).first()
+    if not admin:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Admin not found"
+        )
+    
+    # Don't allow demoting yourself from super admin
+    if admin.email == current_user.email and admin_data.is_super_admin is False:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot remove super admin privileges from your own account"
+        )
+    
+    # Update fields that were provided
+    if admin_data.name is not None:
+        admin.name = admin_data.name
+    if admin_data.is_super_admin is not None:
+        admin.is_super_admin = admin_data.is_super_admin
+    if admin_data.is_active is not None:
+        admin.is_active = admin_data.is_active
+    
+    db.commit()
+    db.refresh(admin)
+    
+    return admin.to_dict()
 
 @router.post("/2fa/setup", response_model=TwoFactorSetupResponse)
 async def setup_two_factor(

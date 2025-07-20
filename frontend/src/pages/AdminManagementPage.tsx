@@ -195,6 +195,39 @@ export default function AdminManagementPage() {
     }
   };
 
+  // Update admin role
+  const handleUpdateAdminRole = async (adminId: number, adminEmail: string, makeSuper: boolean) => {
+    if (adminEmail === currentUserEmail && !makeSuper) {
+      alert('Cannot remove super admin privileges from your own account');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('jwt_token');
+      const response = await fetch(`/api/admin-management/admins/${adminId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          is_super_admin: makeSuper,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to update admin role');
+      }
+
+      await fetchAdmins();
+      alert(`Admin ${makeSuper ? 'promoted to' : 'demoted from'} super admin successfully!`);
+    } catch (error: any) {
+      console.error('Error updating admin role:', error);
+      alert(error.message || 'Failed to update admin role. Please try again.');
+    }
+  };
+
   // Setup 2FA
   const handleSetup2FA = async () => {
     try {
@@ -565,32 +598,93 @@ export default function AdminManagementPage() {
                     )}
                   </p>
                 </div>
-                {isCurrentUserSuperAdmin() && admin.email !== currentUserEmail && (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Administrator</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Are you sure you want to delete the administrator "{admin.name}" ({admin.email})? 
-                          This action cannot be undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction 
-                          onClick={() => handleDeleteAdmin(admin.id, admin.email)}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                {isCurrentUserSuperAdmin() && (
+                  <div className="flex gap-2">
+                    {/* Role Management Buttons */}
+                    {admin.email !== currentUserEmail && (
+                      <>
+                        {!admin.is_super_admin ? (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="outline" size="sm" title="Promote to Super Admin">
+                                <Shield className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Promote to Super Admin</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to promote "{admin.name}" to Super Admin? 
+                                  They will have full administrative privileges.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => handleUpdateAdminRole(admin.id, admin.email, true)}
+                                >
+                                  Promote
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        ) : (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="outline" size="sm" title="Demote from Super Admin">
+                                <ShieldCheck className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Demote from Super Admin</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to demote "{admin.name}" from Super Admin? 
+                                  They will lose administrative privileges.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => handleUpdateAdminRole(admin.id, admin.email, false)}
+                                  className="bg-orange-600 text-white hover:bg-orange-700"
+                                >
+                                  Demote
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                        
+                        {/* Delete Button */}
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" size="sm" title="Delete Admin">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Administrator</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete the administrator "{admin.name}" ({admin.email})? 
+                                This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => handleDeleteAdmin(admin.id, admin.email)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
             ))}
