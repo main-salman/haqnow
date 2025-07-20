@@ -57,8 +57,8 @@ class PasswordChangeRequest(BaseModel):
 def require_super_admin(current_user: User = Depends(get_current_user)):
     """Dependency to ensure user is a super admin."""
     from sqlalchemy.orm import Session
-    from ..database.database import SessionLocal
-    from ..database.models import Admin
+    from ...database.database import SessionLocal
+    from ...database.models import Admin
     
     db = SessionLocal()
     try:
