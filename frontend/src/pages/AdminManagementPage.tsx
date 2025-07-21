@@ -94,6 +94,38 @@ export default function AdminManagementPage() {
     return currentAdmin?.two_factor_enabled || false;
   };
 
+  // Fetch current user's own admin info (for regular admins)
+  const fetchCurrentUserInfo = async () => {
+    try {
+      const token = localStorage.getItem('jwt_token');
+      if (!token) return null;
+      
+      const response = await fetch('/api/admin-management/me', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        console.log('👤 Current user info:', userData);
+        
+        // Set the current user as the only admin in the array for regular admins
+        if (admins.length === 0) {
+          setAdmins([userData]);
+        }
+        
+        setIs2FAEnabled(userData.two_factor_enabled || false);
+        return userData;
+      }
+    } catch (error) {
+      console.log('ℹ️ Could not fetch current user info (normal for super admins)');
+    }
+    return null;
+  };
+
   // Fetch admins list
   const fetchAdmins = async () => {
     setIsLoading(true);
@@ -113,9 +145,19 @@ export default function AdminManagementPage() {
       });
 
       if (!response.ok) {
-        if (response.status === 401 || response.status === 403) {
+        if (response.status === 401) {
+          // Unauthorized - redirect to login
           navigate("/admin-login-page");
           return;
+        }
+        if (response.status === 403) {
+          // Forbidden - regular admin, show limited functionality
+          console.log('🔒 Regular admin detected - showing limited functionality');
+          setAdmins([]); // Empty array for regular admins
+          
+          // Try to get current user's own info
+          await fetchCurrentUserInfo();
+          return; // Don't throw error, just continue with limited functionality
         }
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
@@ -486,8 +528,10 @@ export default function AdminManagementPage() {
         <strong>Debug Info:</strong><br/>
         Current User Email: {currentUserEmail}<br/>
         Admins Loaded: {admins.length}<br/>
-        Is Super Admin: {isCurrentUserSuperAdmin() ? 'YES' : 'NO'}<br/>
-        Should Show Add Admin: {isCurrentUserSuperAdmin() ? 'YES' : 'NO'}
+        User Type: {isCurrentUserSuperAdmin() ? 'SUPER ADMIN' : 'REGULAR ADMIN'}<br/>
+        Can Add/Manage Admins: {isCurrentUserSuperAdmin() ? 'YES' : 'NO'}<br/>
+        Can Change Own Password: YES<br/>
+        Can Setup 2FA: YES
       </div>
       {isCurrentUserSuperAdmin() && (
         <Card>
@@ -578,8 +622,9 @@ export default function AdminManagementPage() {
         </Card>
       )}
 
-      {/* Current Administrators List */}
-      <Card>
+      {/* Current Administrators List - Only for Super Admins */}
+      {isCurrentUserSuperAdmin() && (
+        <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
@@ -710,6 +755,7 @@ export default function AdminManagementPage() {
           </div>
         </CardContent>
       </Card>
+      )}
 
       {/* 2FA Setup Modal */}
       {show2FASetup && (

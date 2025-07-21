@@ -73,6 +73,20 @@ def require_super_admin(current_user: User = Depends(get_current_user)):
     finally:
         db.close()
 
+@router.get("/me", response_model=AdminResponse)
+async def get_current_admin(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get current admin user's own information."""
+    admin = db.query(Admin).filter(Admin.email == current_user.email).first()
+    if not admin:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Admin not found"
+        )
+    return admin.to_dict()
+
 @router.get("/admins", response_model=List[AdminResponse])
 async def list_admins(
     db: Session = Depends(get_db),
