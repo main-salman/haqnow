@@ -74,8 +74,18 @@ export default function AdminManagementPage() {
 
   // Check if current user is super admin
   const isCurrentUserSuperAdmin = () => {
+    // Debug: log the current state
+    console.log('Checking super admin status:', {
+      currentUserEmail,
+      adminsCount: admins.length,
+      admins: admins.map(a => ({ email: a.email, is_super_admin: a.is_super_admin }))
+    });
+    
     const currentAdmin = admins.find(admin => admin.email === currentUserEmail);
-    return currentAdmin?.is_super_admin || false;
+    const isSuperAdmin = currentAdmin?.is_super_admin || false;
+    
+    console.log('Super admin result:', { currentAdmin, isSuperAdmin });
+    return isSuperAdmin;
   };
 
   // Check if current user has 2FA enabled
@@ -470,6 +480,14 @@ export default function AdminManagementPage() {
       </Card>
 
       {/* Add New Admin Section - Only for Super Admins */}
+      {/* Debug: Always show this for debugging */}
+      <div style={{padding: '10px', background: '#f0f0f0', margin: '10px 0', fontSize: '12px'}}>
+        <strong>Debug Info:</strong><br/>
+        Current User Email: {currentUserEmail}<br/>
+        Admins Loaded: {admins.length}<br/>
+        Is Super Admin: {isCurrentUserSuperAdmin() ? 'YES' : 'NO'}<br/>
+        Should Show Add Admin: {isCurrentUserSuperAdmin() ? 'YES' : 'NO'}
+      </div>
       {isCurrentUserSuperAdmin() && (
         <Card>
           <CardHeader>
