@@ -121,7 +121,8 @@ export default function AdminManagementPage() {
       }
 
       const data = await response.json();
-      setAdmins(data.admins || []);
+      console.log('🔍 API Response:', data);
+      setAdmins(data || []);
       setIs2FAEnabled(currentUserHas2FA());
     } catch (error: any) {
       console.error('Error fetching admins:', error);
