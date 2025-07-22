@@ -306,7 +306,7 @@ export default function App() {
                   {t('navigation.privacy')}
                 </Button>
                 <Button variant="ghost" onClick={() => navigate('/disclaimer')}>
-                  Disclaimer
+                  {t('disclaimer.title')}
                 </Button>
               </nav>
               <LanguageSwitcher />
@@ -370,7 +370,7 @@ export default function App() {
                   className="justify-start" 
                   onClick={() => handleMobileNavigation('/disclaimer')}
                 >
-                  Disclaimer
+                  {t('disclaimer.title')}
                 </Button>
               </nav>
             </div>

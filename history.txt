@@ -7153,3 +7153,46 @@ VERIFICATION NEEDED:
 - QR code generation + verification process should be seamless
 - All admin users (regular and super) can enable 2FA security
 
+=== CRITICAL SECURITY FIXES ===
+Date: July 22, 2025
+Issues: 1) 2FA not enforced during login, 2) Password logging in console
+
+PROBLEMS IDENTIFIED:
+🚨 **2FA Bypass**: Users with 2FA enabled could log in with just email/password
+🚨 **Password Logging**: Console showed "JWT login successful: {user data}" including sensitive info
+
+SOLUTION IMPLEMENTED (v1.1.57):
+
+✅ **2FA ENFORCEMENT DURING LOGIN**:
+Backend Changes:
+- Modified /api/auth/login to check if user has 2FA enabled
+- Added TwoFactorRequiredResponse model for 2FA flow
+- Created new /api/auth/login/verify-2fa endpoint for 2FA verification
+- Login now returns {requires_2fa: true, email: "..."} when 2FA is enabled
+- Only returns JWT token after successful 2FA verification
+
+Frontend Changes:
+- Added 2FA state management (requires2FA, twoFactorToken, userEmail)
+- Conditional UI: shows normal login OR 2FA verification form
+- handleVerify2FA function for 2FA token verification
+- "Back to Login" option for UX improvement
+
+✅ **SECURITY LOGGING FIX**:
+- Removed console.log("JWT login successful:", data.user)
+- Changed to console.log("Admin login successful") - no sensitive data
+- Prevents password/user data from appearing in browser console logs
+
+NEW LOGIN FLOW:
+1. User enters email/password → Backend verifies credentials
+2. If 2FA disabled: Return JWT token (normal login)
+3. If 2FA enabled: Return requires_2fa=true (no JWT yet)
+4. Frontend shows 2FA form, user enters 6-digit code
+5. Frontend sends email+token to /verify-2fa endpoint
+6. Backend verifies TOTP token → Returns JWT token
+7. User successfully logged in with full 2FA security
+
+SECURITY IMPACT:
+🔒 **2FA Now Properly Enforced**: Users cannot bypass 2FA anymore
+🔒 **No More Password Leaks**: Console logs are now safe for production
+🔒 **Better UX**: Clear 2FA flow with proper error handling and navigation
+

@@ -41,6 +41,7 @@ const sections = [
   'search',
   'upload',
   'privacy',
+  'disclaimer',
   'general'
 ];
 

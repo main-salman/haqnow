@@ -295,6 +295,49 @@ async def bulk_update_translations(
                     error=str(e))
         raise HTTPException(status_code=500, detail="Failed to bulk update translations")
 
+@router.delete("/admin/delete/{translation_key}")
+async def delete_translation_by_key(
+    translation_key: str,
+    admin_user: AdminUser,
+    db: Session = Depends(get_db),
+    language: str = Query("en", description="Language of translation to delete")
+):
+    """Delete a translation by key and language."""
+    try:
+        # Find and delete the translation
+        translation = db.query(Translation).filter(
+            and_(
+                Translation.key == translation_key,
+                Translation.language == language
+            )
+        ).first()
+        
+        if not translation:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Translation not found for key '{translation_key}' in language '{language}'"
+            )
+        
+        db.delete(translation)
+        db.commit()
+        
+        logger.info("Translation deleted", 
+                   key=translation_key,
+                   language=language,
+                   admin=admin_user.email)
+        
+        return {"message": f"Translation '{translation_key}' deleted successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error("Error deleting translation", 
+                    key=translation_key,
+                    language=language,
+                    error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to delete translation")
+
 @router.delete("/admin/delete/{translation_id}")
 async def delete_translation(
     translation_id: int,
