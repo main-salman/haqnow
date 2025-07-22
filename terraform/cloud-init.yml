@@ -282,7 +282,7 @@ write_files:
 
 # Final message
 final_message: |
-  Fadih.org server setup complete!
+  image.png server setup complete!
   
   To deploy your application:
   1. Clone your repository to /opt/foi-archive

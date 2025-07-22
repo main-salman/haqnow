@@ -69,6 +69,8 @@ export default function AdminTranslationsPage() {
       
       if (response.ok) {
         const data = await response.json();
+        console.log('🔍 Fetched translations:', data.length);
+        console.log('🔍 Disclaimer translations:', data.filter(t => t.section === 'disclaimer').length);
         setTranslations(data);
       } else {
         toast.error('Failed to fetch translations');
@@ -192,6 +194,17 @@ export default function AdminTranslationsPage() {
     
     return matchesLanguage && matchesSection && matchesSearch;
   });
+
+  // Debug logging for disclaimer section
+  if (selectedSection === 'disclaimer' && selectedLanguage === 'en') {
+    console.log('🔍 Filtering disclaimer translations:');
+    console.log('  - Total translations loaded:', translations.length);
+    console.log('  - Selected language:', selectedLanguage);
+    console.log('  - Selected section:', selectedSection);
+    console.log('  - Search term:', searchTerm);
+    console.log('  - Filtered results:', filteredTranslations.length);
+    console.log('  - Disclaimer translations available:', translations.filter(t => t.section === 'disclaimer' && t.language === 'en').length);
+  }
 
   const hasChanges = Object.keys(editedTranslations).length > 0;
 
