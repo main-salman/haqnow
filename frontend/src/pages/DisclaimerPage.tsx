@@ -42,9 +42,9 @@ const DisclaimerPage: React.FC = () => {
         
         // Extract custom FAQ entries from disclaimer section
         Object.keys(translations).forEach(key => {
-          if (key.startsWith('disclaimer.customFaqQ_')) {
-            const faqId = key.replace('disclaimer.customFaqQ_', '');
-            const answerKey = `disclaimer.customFaqA_${faqId}`;
+          if (key.startsWith('customFaqQ_')) {
+            const faqId = key.replace('customFaqQ_', '');
+            const answerKey = `customFaqA_${faqId}`;
             console.log(`🔍 Found FAQ question: ${key}, looking for answer: ${answerKey}`);
             
             if (translations[answerKey]) {

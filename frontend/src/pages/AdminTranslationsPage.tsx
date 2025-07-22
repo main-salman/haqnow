@@ -325,7 +325,7 @@ export default function AdminTranslationsPage() {
         </Card>
 
         {/* Translation Editor */}
-        <Card>
+        <Card className="h-auto">
           <CardHeader>
             <CardTitle>
               Translations for {supportedLanguages[selectedLanguage as keyof typeof supportedLanguages]} 
@@ -335,7 +335,7 @@ export default function AdminTranslationsPage() {
               Click on any value to edit inline, or copy the JSON structure to edit externally
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="h-auto max-h-none overflow-visible">
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin" />
@@ -348,8 +348,10 @@ export default function AdminTranslationsPage() {
                 <p>Try adjusting your filters or create new translations</p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {filteredTranslations.map((translation) => (
+              <div className="space-y-4 max-h-none overflow-visible">
+                {(() => {
+                  console.log(`🔍 Rendering ${filteredTranslations.length} translation elements`);
+                  return filteredTranslations.map((translation) => (
                   <div key={translation.id} className="border rounded-lg p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center space-x-2">
@@ -377,7 +379,8 @@ export default function AdminTranslationsPage() {
                       </div>
                     )}
                   </div>
-                ))}
+                  ));
+                })()}
               </div>
             )}
           </CardContent>
