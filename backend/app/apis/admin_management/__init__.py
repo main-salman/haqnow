@@ -283,12 +283,37 @@ async def verify_two_factor(
                 detail="2FA not set up. Please set up 2FA first."
             )
         
-        # Verify the TOTP token
-        totp = pyotp.TOTP(admin.two_factor_secret)
-        if not totp.verify(verify_data.token):
+        # Validate token format
+        if not verify_data.token or not verify_data.token.isdigit() or len(verify_data.token) != 6:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid 2FA token"
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Verification code must be exactly 6 digits"
+            )
+        
+        # Verify the TOTP token with debugging
+        totp = pyotp.TOTP(admin.two_factor_secret)
+        
+        # Debug information
+        current_token = totp.now()
+        print(f"🔍 2FA Debug Info:")
+        print(f"  - User provided token: {verify_data.token}")
+        print(f"  - Current valid token: {current_token}")
+        print(f"  - Secret length: {len(admin.two_factor_secret)}")
+        print(f"  - Secret: {admin.two_factor_secret[:8]}...")
+        
+        # Try verification with a wider time window (allow ±1 time step = ±30 seconds)
+        is_valid = totp.verify(verify_data.token, valid_window=1)
+        
+        if not is_valid:
+            # Try additional debugging - check a few more time windows
+            print(f"  - Checking additional time windows...")
+            for i in range(-2, 3):
+                test_token = totp.at(totp.timecode(totp.now()) + i)
+                print(f"    Window {i}: {test_token}")
+            
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Invalid verification code. Please ensure your device time is synchronized and try again."
             )
         
         # Enable 2FA for the user
