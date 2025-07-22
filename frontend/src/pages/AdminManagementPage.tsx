@@ -322,7 +322,7 @@ export default function AdminManagementPage() {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          code: verificationCode,
+          token: verificationCode,
         }),
       });
 
