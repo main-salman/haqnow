@@ -7133,3 +7133,23 @@ The search functionality is now optimized for large-scale document collections w
 
 Features: Add admins, promote/demote roles, delete accounts, password changes, 2FA setup
 
+=== 2FA VERIFICATION BUG FIX ===
+Date: July 22, 2025
+Issue: 2FA verification failing with "Invalid verification code" - 422 error
+
+ANALYSIS:
+- Server logs revealed field name mismatch between frontend and backend
+- Frontend sending: {'code': '778638'} 
+- Backend expecting: {'token': 'verification_code'}
+- Error: [{'type': 'missing', 'loc': ('body', 'token'), 'msg': 'Field required'}]
+
+SOLUTION IMPLEMENTED:
+✅ Fixed frontend AdminManagementPage.tsx line 323
+✅ Changed from `code: verificationCode` to `token: verificationCode`
+✅ Deployed v1.1.56 with fix
+
+VERIFICATION NEEDED:
+- 2FA setup should now work properly
+- QR code generation + verification process should be seamless
+- All admin users (regular and super) can enable 2FA security
+
