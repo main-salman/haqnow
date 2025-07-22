@@ -3,10 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { AlertTriangle, Shield, Eye, Globe, ArrowLeft, Plus, Edit, Trash2, HelpCircle } from 'lucide-react';
+import { AlertTriangle, Shield, Eye, Globe, ArrowLeft, HelpCircle } from 'lucide-react';
 
 interface FAQ {
   question: string;
@@ -17,18 +14,7 @@ interface FAQ {
 const DisclaimerPage: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [showAddFAQ, setShowAddFAQ] = useState(false);
-  const [editingFAQ, setEditingFAQ] = useState<FAQ | null>(null);
-  const [newQuestion, setNewQuestion] = useState('');
-  const [newAnswer, setNewAnswer] = useState('');
   const [customFAQs, setCustomFAQs] = useState<FAQ[]>([]);
-
-  // Check if user is admin
-  useEffect(() => {
-    const token = localStorage.getItem('jwt_token');
-    setIsAdmin(!!token);
-  }, []);
 
   // Default FAQs from translations
   const defaultFAQs = [
@@ -45,27 +31,39 @@ const DisclaimerPage: React.FC = () => {
   // Load custom FAQs from translations API
   const loadCustomFAQs = async () => {
     try {
-      const response = await fetch('/api/translations/sections/disclaimer');
+      const response = await fetch('/api/translations/languages/en');
       if (response.ok) {
         const data = await response.json();
         const faqs: FAQ[] = [];
         
-        // Extract custom FAQ entries
-        Object.keys(data.translations).forEach(key => {
-          if (key.startsWith('customFaqQ_')) {
-            const faqId = key.replace('customFaqQ_', '');
-            const answerKey = `customFaqA_${faqId}`;
-            if (data.translations[answerKey]) {
+        // Check if translations exist and access them correctly
+        const translations = data.translations || {};
+        console.log('🔍 Loading custom FAQs, found translations:', Object.keys(translations));
+        
+        // Extract custom FAQ entries from disclaimer section
+        Object.keys(translations).forEach(key => {
+          if (key.startsWith('disclaimer.customFaqQ_')) {
+            const faqId = key.replace('disclaimer.customFaqQ_', '');
+            const answerKey = `disclaimer.customFaqA_${faqId}`;
+            console.log(`🔍 Found FAQ question: ${key}, looking for answer: ${answerKey}`);
+            
+            if (translations[answerKey]) {
               faqs.push({
-                id: faqId,
-                question: data.translations[key],
-                answer: data.translations[answerKey]
+                id: `custom_${faqId}`,
+                question: translations[key],
+                answer: translations[answerKey]
               });
+              console.log(`✅ Added custom FAQ: ${translations[key]}`);
+            } else {
+              console.log(`❌ No answer found for: ${answerKey}`);
             }
           }
         });
         
+        console.log(`📝 Loaded ${faqs.length} custom FAQs:`, faqs);
         setCustomFAQs(faqs);
+      } else {
+        console.error('Failed to fetch translations:', response.status);
       }
     } catch (error) {
       console.error('Error loading custom FAQs:', error);
@@ -76,81 +74,7 @@ const DisclaimerPage: React.FC = () => {
     loadCustomFAQs();
   }, []);
 
-  // Save FAQ via translations API
-  const saveFAQ = async () => {
-    if (!newQuestion.trim() || !newAnswer.trim()) {
-      alert('Please fill in both question and answer');
-      return;
-    }
 
-    try {
-      const faqId = editingFAQ?.id || Date.now().toString();
-      const token = localStorage.getItem('jwt_token');
-      
-      // Create translation entries for question and answer
-      const translations = {
-        [`customFaqQ_${faqId}`]: newQuestion,
-        [`customFaqA_${faqId}`]: newAnswer
-      };
-
-      const response = await fetch('/api/translations/admin/bulk-update/en/disclaimer', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ translations })
-      });
-
-      if (response.ok) {
-        await loadCustomFAQs();
-        setShowAddFAQ(false);
-        setEditingFAQ(null);
-        setNewQuestion('');
-        setNewAnswer('');
-        alert(editingFAQ ? 'FAQ updated successfully!' : 'FAQ added successfully!');
-      } else {
-        alert('Failed to save FAQ');
-      }
-    } catch (error) {
-      console.error('Error saving FAQ:', error);
-      alert('Error saving FAQ');
-    }
-  };
-
-  // Delete FAQ
-  const deleteFAQ = async (faqId: string) => {
-    if (!confirm('Are you sure you want to delete this FAQ?')) return;
-
-    try {
-      const token = localStorage.getItem('jwt_token');
-      
-      // Delete both question and answer translations
-      await fetch(`/api/translations/admin/delete/customFaqQ_${faqId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      
-      await fetch(`/api/translations/admin/delete/customFaqA_${faqId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      await loadCustomFAQs();
-      alert('FAQ deleted successfully!');
-    } catch (error) {
-      console.error('Error deleting FAQ:', error);
-      alert('Error deleting FAQ');
-    }
-  };
-
-  // Start editing FAQ
-  const startEditFAQ = (faq: FAQ) => {
-    setEditingFAQ(faq);
-    setNewQuestion(faq.question);
-    setNewAnswer(faq.answer);
-    setShowAddFAQ(true);
-  };
 
   const allFAQs = [...defaultFAQs, ...customFAQs];
 
@@ -255,56 +179,18 @@ const DisclaimerPage: React.FC = () => {
         {/* FAQ Section */}
         <Card className="border-blue-200 shadow-lg mb-8">
           <CardHeader className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-2xl font-bold flex items-center">
-                <HelpCircle className="h-8 w-8 mr-3" />
-                {t('disclaimer.faqTitle')}
-              </CardTitle>
-              {isAdmin && (
-                <Button 
-                  variant="secondary" 
-                  size="sm"
-                  onClick={() => {
-                    setEditingFAQ(null);
-                    setNewQuestion('');
-                    setNewAnswer('');
-                    setShowAddFAQ(true);
-                  }}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  {t('disclaimer.addQuestionButton')}
-                </Button>
-              )}
-            </div>
+            <CardTitle className="text-2xl font-bold flex items-center">
+              <HelpCircle className="h-8 w-8 mr-3" />
+              {t('disclaimer.faqTitle')}
+            </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
             <div className="space-y-6">
               {allFAQs.map((faq, index) => (
                 <div key={faq.id} className="border-b border-gray-200 pb-6 last:border-b-0">
-                  <div className="flex items-start justify-between mb-3">
-                    <h4 className="text-lg font-semibold text-gray-900 flex-1">
-                      Q{index + 1}: {faq.question}
-                    </h4>
-                    {isAdmin && faq.id.startsWith('custom') && (
-                      <div className="flex items-center space-x-2 ml-4">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => startEditFAQ(faq)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => deleteFAQ(faq.id)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-3">
+                    Q{index + 1}: {faq.question}
+                  </h4>
                   <p className="text-gray-700 leading-relaxed">{faq.answer}</p>
                 </div>
               ))}
@@ -312,46 +198,7 @@ const DisclaimerPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Add/Edit FAQ Dialog */}
-        <AlertDialog open={showAddFAQ} onOpenChange={setShowAddFAQ}>
-          <AlertDialogContent className="max-w-2xl">
-            <AlertDialogHeader>
-              <AlertDialogTitle>
-                {editingFAQ ? t('disclaimer.editQuestionButton') : t('disclaimer.addQuestionButton')}
-              </AlertDialogTitle>
-              <AlertDialogDescription>
-                {editingFAQ ? 'Edit the FAQ question and answer' : 'Add a new frequently asked question'}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <div className="space-y-4 py-4">
-              <div>
-                <label className="text-sm font-medium mb-2 block">{t('disclaimer.questionLabel')}</label>
-                <Input
-                  value={newQuestion}
-                  onChange={(e) => setNewQuestion(e.target.value)}
-                  placeholder="Enter the question..."
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-2 block">{t('disclaimer.answerLabel')}</label>
-                <Textarea
-                  value={newAnswer}
-                  onChange={(e) => setNewAnswer(e.target.value)}
-                  placeholder="Enter the answer..."
-                  rows={6}
-                />
-              </div>
-            </div>
-            <AlertDialogFooter>
-              <Button variant="outline" onClick={() => setShowAddFAQ(false)}>
-                {t('disclaimer.cancelButton')}
-              </Button>
-              <Button onClick={saveFAQ}>
-                {t('disclaimer.saveQuestionButton')}
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">

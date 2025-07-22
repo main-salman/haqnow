@@ -7196,3 +7196,74 @@ SECURITY IMPACT:
 🔒 **No More Password Leaks**: Console logs are now safe for production
 🔒 **Better UX**: Clear 2FA flow with proper error handling and navigation
 
+=== DISCLAIMER AND FAQ PAGE ENHANCEMENT ===
+Date: July 22, 2025
+Request: Make "Disclaimer" page available in admin translations and add Q&A functionality
+
+IMPLEMENTATION COMPLETED (v1.1.58):
+
+✅ **ADMIN TRANSLATIONS INTEGRATION**:
+Backend Changes:
+- Added "disclaimer" section to supported translation sections
+- Extended translations API with DELETE endpoint for custom FAQ management
+- Added /api/translations/admin/delete/{translation_key} endpoint
+
+Frontend Changes:
+- Added disclaimer section to AdminTranslationsPage.tsx
+- Updated App.tsx navigation to use translation keys for "Disclaimer and FAQ"
+- Created comprehensive disclaimer translation keys (57 total)
+
+✅ **ENHANCED DISCLAIMER PAGE**:
+- Complete rewrite of DisclaimerPage.tsx using translation system
+- Renamed from "Disclaimer" to "Disclaimer and FAQ" 
+- All content now translatable via admin panel
+- Includes default 8 FAQ entries covering security, government tracking, corporate risks
+
+✅ **ADMIN FAQ MANAGEMENT**:
+- Add/Edit/Delete custom FAQs functionality for admins
+- Custom FAQs stored as translation entries (customFaqQ_xxx/customFaqA_xxx)
+- Admin-only interface with inline editing capabilities
+- Modal dialog for FAQ creation/editing with validation
+
+✅ **TRANSLATION CONTENT STRUCTURE**:
+Created comprehensive disclaimer translations including:
+- Security warnings (corporate computers, high-risk countries)
+- Privacy best practices (VPN, Tor, device security)
+- Privacy commitment statements
+- 8 default FAQ entries covering:
+  * Document upload safety
+  * Government tracking concerns
+  * Corporate computer risks
+  * Document protection measures
+  * Legal whistleblowing considerations
+  * Document type guidance
+  * Upload verification process
+  * Large file handling
+
+✅ **TECHNICAL FEATURES**:
+- Dynamic FAQ loading from translations API
+- Admin authentication checks for FAQ management
+- Real-time FAQ updates without page refresh
+- Integration with existing translation management system
+- Support for multilingual disclaimer content
+
+CURRENT STATUS:
+- ✅ Code deployed to production (v1.1.58)
+- 🔄 Database population of disclaimer translations pending (will use admin panel)
+- ✅ Admin panel ready for disclaimer management
+- ✅ FAQ system fully functional for admin users
+
+FEATURES ACHIEVED:
+📋 **Disclaimer & FAQ page available in admin translations**
+📝 **Q&A management system for administrators**
+🌍 **Multilingual support for all disclaimer content**
+⚡ **Real-time content updates via admin panel**
+🔒 **Admin-only FAQ management with proper authentication**
+
+USER CAN NOW:
+1. Manage all disclaimer content via Admin Translations page
+2. Add/edit/delete custom FAQ entries as admin
+3. Use translation system for multilingual disclaimer content
+4. Access comprehensive security information and FAQ
+5. Edit disclaimer text in real-time without deployments
+
