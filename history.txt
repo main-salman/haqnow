@@ -7446,3 +7446,83 @@ USER CAN NOW:
 - **Storage**: S3 with language-specific text extraction
 
 The system now provides **complete multilingual document processing** with special focus on Arabic language support, while maintaining backward compatibility and high performance for all existing English content.
+
+---
+
+### User Experience Improvements and Arabic Document Fixes (COMPLETED ✅):
+**Date:** Current session - UX enhancements and Arabic language processing fixes
+**Problem:** Several user experience issues: download rate limit too long, incorrect favicon, Arabic documents showing garbled text, missing English translation downloads.
+
+**Solution: Comprehensive UX and Arabic Processing Improvements (COMPLETED ✅)**
+
+#### 1. Download Rate Limit Optimization (COMPLETED ✅):
+**Updated**: `backend/app/middleware/rate_limit.py`
+**Change**: Reduced download rate limit from 120 seconds to 20 seconds
+**Impact**: Users can download documents more frequently without being blocked
+**Default**: Changed `UPLOAD_TIMEOUT_SECONDS` default from 120 to 20 seconds
+
+#### 2. Brand Identity Enhancement (COMPLETED ✅):
+**Updated**: `frontend/public/favicon.svg` and `frontend/index.html`
+**New Favicon**: Green and white design with Arabic text "حقّ" (meaning "right/truth")
+**Design**: 
+- Green circular background (#16a34a)
+- White Arabic text "حقّ" in center
+- Professional branding aligned with justice/truth theme
+**Browser Support**: SVG with ICO fallback for compatibility
+
+#### 3. Arabic Search Results Optimization (COMPLETED ✅):
+**Updated**: `backend/app/apis/search/__init__.py`
+**Improvement**: Arabic documents now show English translation by default in search results
+**Logic**:
+- For Arabic documents with English translation: Show English text instead of garbled Arabic OCR
+- For Arabic documents without translation: Show original text as fallback
+- Maintains search result quality and readability
+**User Experience**: No more seeing garbled Arabic OCR text in search previews
+
+#### 4. Arabic Download Button Intelligence (COMPLETED ✅):
+**Updated**: `frontend/src/pages/SearchPage.tsx`
+**Smart Download Options**:
+- **Removed**: Confusing "Arabic Text" button that downloaded garbled OCR
+- **Enhanced**: "English Translation" button only appears when translation is actually available
+- **Added**: Informative message "English translation processing in progress..." for Arabic documents without translation
+- **Maintained**: "Original PDF" always available
+
+**User Flow Improvement**:
+- Original PDF ✅ (Always available)
+- English Translation ✅ (Only when Mistral AI has processed the document)
+- No more garbled text downloads ✅
+
+#### 5. Arabic Processing Status Handling (COMPLETED ✅):
+**Enhanced Error Handling**: Better messaging when Mistral AI isn't available
+**User Feedback**: Clear indication when translations are being processed
+**Fallback Behavior**: Graceful degradation when Arabic OCR/translation fails
+
+#### 6. Technical Infrastructure (COMPLETED ✅):
+**Service Restart**: Applied new rate limiting immediately
+**Database Compatibility**: All changes work with existing Arabic documents
+**Backward Compatibility**: English and other language documents unaffected
+**Performance**: No impact on search or download performance
+
+**🎯 User Experience Transformation:**
+✅ **Faster Downloads**: 20-second rate limit instead of 2 minutes
+✅ **Brand Identity**: Professional Arabic "حقّ" favicon
+✅ **Clean Search**: English translation shown instead of garbled Arabic
+✅ **Smart Downloads**: Only shows available options, no more gibberish files
+✅ **Clear Messaging**: Users know when translations are being processed
+✅ **Improved UX**: No confusion about what download options are available
+
+**Technical Details:**
+- **Rate Limiting**: 20-second cooldown for all downloads
+- **Favicon**: Green (#16a34a) circle with white Arabic text "حقّ"
+- **Search Display**: Prioritizes English translation for Arabic documents
+- **Download Logic**: Shows only meaningful download options
+- **Error Handling**: Graceful fallbacks when Mistral AI unavailable
+
+**Arabic Document Processing Status:**
+- **With Mistral API**: Full Arabic OCR → English translation → Bilingual downloads
+- **Without Mistral API**: Shows "translation processing" message, only PDF download
+- **Search Results**: Always show readable text (English when available)
+- **User Experience**: Clear, never confusing, no gibberish downloads
+
+**Next Steps for Full Arabic Support:**
+To enable complete Arabic OCR and translation, set `MISTRAL_API_KEY` in the service environment. When available, Arabic documents will automatically get high-quality OCR and English translation processing.
