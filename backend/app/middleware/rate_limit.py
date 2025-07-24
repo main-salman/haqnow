@@ -9,7 +9,7 @@ import os
 
 # Redis configuration for rate limiting
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
-UPLOAD_TIMEOUT_SECONDS = int(os.getenv("UPLOAD_TIMEOUT_SECONDS", "120"))  # 2 minutes
+UPLOAD_TIMEOUT_SECONDS = int(os.getenv("UPLOAD_TIMEOUT_SECONDS", "20"))  # 20 seconds
 
 # In-memory fallback if Redis is not available
 _memory_store: Dict[str, float] = {}

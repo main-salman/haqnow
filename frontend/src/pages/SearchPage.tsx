@@ -304,23 +304,6 @@ export default function SearchPage() {
                       Original PDF
                     </Button>
                     
-                    {/* Arabic Text Download (for Arabic documents) */}
-                    {doc.document_language === 'arabic' && doc.has_arabic_text && (
-                      <Button
-                        onClick={() => handleDocumentClick(doc.id, "arabic")}
-                        disabled={downloadingDocId === doc.id}
-                        size="sm"
-                        variant="outline"
-                        className="flex items-center gap-2"
-                      >
-                        {downloadingDocId === doc.id && (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        )}
-                        <FileText className="h-3 w-3" />
-                        Arabic Text
-                      </Button>
-                    )}
-                    
                     {/* English Translation Download (for Arabic documents) */}
                     {doc.document_language === 'arabic' && doc.has_english_translation && (
                       <Button
@@ -336,6 +319,13 @@ export default function SearchPage() {
                         <FileText className="h-3 w-3" />
                         English Translation
                       </Button>
+                    )}
+                    
+                    {/* Info message for Arabic documents without translation */}
+                    {doc.document_language === 'arabic' && !doc.has_english_translation && (
+                      <div className="text-sm text-muted-foreground italic">
+                        English translation processing in progress...
+                      </div>
                     )}
                   </div>
                 </div>

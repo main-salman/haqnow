@@ -219,10 +219,18 @@ async def search_documents(
             has_arabic_text = bool(doc_dict.get('ocr_text_original'))
             has_english_translation = bool(doc_dict.get('ocr_text_english'))
             
-            # For Arabic documents, set availability flags
+            # For Arabic documents, prioritize English translation in search results
             if document_language == 'arabic':
                 doc_dict['has_arabic_text'] = has_arabic_text
                 doc_dict['has_english_translation'] = has_english_translation
+                
+                # Show English translation instead of garbled Arabic OCR in search results
+                if has_english_translation:
+                    doc_dict['ocr_text'] = doc_dict.get('ocr_text_english', doc_dict.get('ocr_text', ''))
+                elif doc_dict.get('ocr_text_original'):
+                    # If no English translation but has original Arabic, show it
+                    doc_dict['ocr_text'] = doc_dict.get('ocr_text_original', doc_dict.get('ocr_text', ''))
+                # else keep the existing ocr_text (fallback)
             else:
                 # For non-Arabic documents, no separate language versions
                 doc_dict['has_arabic_text'] = False
