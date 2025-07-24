@@ -324,7 +324,7 @@ export default function SearchPage() {
                     {/* Info message for Arabic documents without translation */}
                     {doc.document_language === 'arabic' && !doc.has_english_translation && (
                       <div className="text-sm text-muted-foreground italic">
-                        English translation not available (requires Mistral AI configuration)
+                        English translation processing... (may take a few minutes for new uploads)
                       </div>
                     )}
                   </div>
