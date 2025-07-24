@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { UploadCloud, FileText, AlertCircle, CheckCircle, Loader2, Shield } from "lucide-react";
+import { UploadCloud, FileText, AlertCircle, CheckCircle, Loader2, Shield, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { countriesData, Country, State } from "utils/countriesData"; // Added
 import HCaptcha from '@hcaptcha/react-hcaptcha';
@@ -56,12 +56,13 @@ const adminLevels = [
   // { id: "local", name: "Local / Municipal" }, // Future option?
 ];
 
-interface FormData {
+export interface FormData {
   title: string;
   description: string;
   country: string;
   stateProvince: string;
   adminLevel: string;
+  documentLanguage: string;  // Added document language field
   file: File | null;
 }
 
@@ -74,12 +75,25 @@ export default function UploadDocumentPage() {
     country: "",
     stateProvince: "",
     adminLevel: "",
+    documentLanguage: "english",  // Default to English
     file: null,
   });
   const [currentStates, setCurrentStates] = useState<State[]>([]); // Changed type to State[]
   const [errors, setErrors] = useState<Partial<Record<keyof FormData | 'captcha', string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+
+  // Available document languages
+  const documentLanguages = [
+    { value: "english", label: "English" },
+    { value: "arabic", label: "العربية (Arabic)" },
+    { value: "french", label: "Français (French)" },
+    { value: "german", label: "Deutsch (German)" },
+    { value: "spanish", label: "Español (Spanish)" },
+    { value: "chinese", label: "中文 (Chinese)" },
+    { value: "russian", label: "Русский (Russian)" },
+    { value: "other", label: "Other" }
+  ];
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles && acceptedFiles.length > 0) {
@@ -238,35 +252,26 @@ export default function UploadDocumentPage() {
 
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof FormData | 'captcha', string>> = {};
-    if (!formData.title.trim()) newErrors.title = "Document title is required.";
-    if (!formData.description.trim()) newErrors.description = "Description is required.";
-    if (formData.description.trim().length < 20) newErrors.description = "Description must be at least 20 characters.";
-    if (!formData.country) newErrors.country = "Country selection is required.";
-    // Adjusted state/province validation
-    if (!formData.adminLevel) {
-      newErrors.adminLevel = "Administrative level is required.";
-    } else if (formData.adminLevel === "federal" && formData.stateProvince !== "Federal / National") {
-      // MYA-19: If admin level is federal, stateProvince MUST be 'Federal / National'
-      newErrors.stateProvince = "State/Province must be \"Federal / National\" for this admin level.";
-    } else if (formData.adminLevel === "state" && (!formData.stateProvince || formData.stateProvince === "Federal / National")) {
-        const selectedCountry = countriesData.find(c => c.name === formData.country);
-        // Allow "Federal / National" if the country has NO other states listed.
-        if (selectedCountry && selectedCountry.states.length > 0 && formData.stateProvince === "Federal / National") {
-             newErrors.stateProvince = "Please select an actual State/Province, not Federal/National, for this admin level.";
-        } else if (!formData.stateProvince) {
-            newErrors.stateProvince = "State/Province is required for this admin level.";
-        }
-        // If selectedCountry.states.length is 0, then "Federal / National" is the only valid choice for stateProvince when adminLevel is 'state'.
-    } else if (formData.adminLevel === "federal" && !formData.stateProvince) { // Should be set by handleSelectChange
-      // If admin level is federal, automatically set state/province to 'Federal / National' if not already chosen.
-      // This simplifies UX, as there's no other valid choice. The form will re-render with this set.
-      // We'll handle this auto-selection in handleSelectChange for adminLevel or directly before submission if preferred.
-      // For now, we ensure that *if* it's federal, stateProvince is not empty (implying it needs to be Federal/National)
-       if (!formData.stateProvince) newErrors.stateProvince = "Please select \"Federal / National\" for State/Province.";
+
+    if (!formData.title.trim()) {
+      newErrors.title = "Document title is required.";
     }
 
-    if (!formData.file) newErrors.file = "A PDF file is required for upload.";
-    if (!captchaToken) newErrors.captcha = "Please complete the CAPTCHA verification.";
+    if (!formData.description.trim()) {
+      newErrors.description = "Description is required.";
+    }
+
+    if (!formData.country.trim()) {
+      newErrors.country = "Country is required.";
+    }
+
+    if (!formData.documentLanguage.trim()) {
+      newErrors.documentLanguage = "Document language is required.";
+    }
+
+    if (!formData.file) {
+      newErrors.file = "Please select a file to upload.";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -304,6 +309,7 @@ export default function UploadDocumentPage() {
       uploadFormData.append('title', formData.title);
       uploadFormData.append('country', formData.country);
       uploadFormData.append('state', formData.stateProvince || formData.country); // Use country as fallback
+      uploadFormData.append('document_language', formData.documentLanguage); // Add document language
       if (formData.description) {
         uploadFormData.append('description', formData.description);
       }
@@ -388,6 +394,14 @@ export default function UploadDocumentPage() {
       <Card className="w-full max-w-2xl shadow-xl">
         <form onSubmit={handleSubmit} noValidate>
           <CardHeader className="text-center">
+            {/* Back Button */}
+            <div className="flex justify-start mb-4">
+              <Button variant="outline" onClick={() => navigate("/")} type="button">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                {t('upload.backToHome', 'Back to Home')}
+              </Button>
+            </div>
+            
             <CardTitle className="text-3xl font-serif">{t('upload.title')}</CardTitle>
             <CardDescription>
               {t('upload.subtitle')}
@@ -437,6 +451,19 @@ export default function UploadDocumentPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="documentLanguage">Document Language <span className="text-destructive">*</span></Label>
+                <Select name="documentLanguage" value={formData.documentLanguage} onValueChange={(value) => handleSelectChange("documentLanguage", value)}>
+                  <SelectTrigger id="documentLanguage" className={errors.documentLanguage ? "border-destructive" : ""} aria-invalid={!!errors.documentLanguage} aria-describedby={errors.documentLanguage ? "documentLanguage-error" : undefined}>
+                    <SelectValue placeholder="Select document language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {documentLanguages.map(lang => <SelectItem key={lang.value} value={lang.value}>{lang.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {errors.documentLanguage && <p id="documentLanguage-error" className="text-sm text-destructive flex items-center"><AlertCircle className="h-4 w-4 mr-1" />{errors.documentLanguage}</p>}
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="country">{t('upload.country')} <span className="text-destructive">*</span></Label>
                 <Select name="country" value={formData.country} onValueChange={(value) => handleSelectChange("country", value)} >

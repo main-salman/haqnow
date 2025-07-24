@@ -17,6 +17,7 @@ import structlog
 from app.auth.user import AdminUser
 from app.services.s3_service import s3_service
 from app.services.email_service import email_service
+from app.services.mistral_service import mistral_service  # Add Mistral service import
 from app.database import get_db, Document, BannedTag
 
 logger = structlog.get_logger()
@@ -361,10 +362,54 @@ async def process_document_internal(document_id: int, db: Session) -> dict | Non
                         file_path=file_path, error=str(e))
             return None
         
-        # Extract text based on file type
+        # Extract text based on file type and document language
         content_type = document.content_type.lower() if document.content_type else ""
+        document_language = getattr(document, 'document_language', 'english')
         
-        extracted_text = extract_text_from_document(file_content, content_type)
+        # Special handling for Arabic documents
+        if document_language == "arabic":
+            logger.info("Processing Arabic document with Mistral AI", document_id=document_id)
+            
+            if mistral_service.is_available():
+                try:
+                    # Use Mistral AI for Arabic OCR and translation
+                    arabic_text, english_translation = await mistral_service.process_arabic_document(file_content)
+                    
+                    if arabic_text:
+                        # Store both Arabic and English text
+                        document.ocr_text_original = arabic_text
+                        document.ocr_text_english = english_translation or ""
+                        
+                        # Use English translation for search if available, otherwise Arabic
+                        extracted_text = english_translation if english_translation else arabic_text
+                        
+                        logger.info("Arabic document processed successfully",
+                                   document_id=document_id,
+                                   arabic_length=len(arabic_text),
+                                   english_length=len(english_translation) if english_translation else 0)
+                    else:
+                        logger.warning("No Arabic text extracted from document", document_id=document_id)
+                        # Fallback to regular OCR
+                        extracted_text = extract_text_from_document(file_content, content_type)
+                        document.ocr_text_original = extracted_text
+                        
+                except Exception as mistral_error:
+                    logger.error("Mistral AI processing failed, falling back to regular OCR", 
+                               document_id=document_id, error=str(mistral_error))
+                    # Fallback to regular OCR
+                    extracted_text = extract_text_from_document(file_content, content_type)
+                    document.ocr_text_original = extracted_text
+            else:
+                logger.warning("Mistral AI not available, using regular OCR for Arabic document", 
+                             document_id=document_id)
+                # Fallback to regular OCR
+                extracted_text = extract_text_from_document(file_content, content_type)
+                document.ocr_text_original = extracted_text
+        else:
+            # Regular processing for non-Arabic documents
+            extracted_text = extract_text_from_document(file_content, content_type)
+            document.ocr_text_original = extracted_text
+            document.ocr_text_english = extracted_text  # Same as original for non-Arabic
         
         if not extracted_text:
             logger.warning("No text extracted from document during internal processing", document_id=document_id)
@@ -411,6 +456,15 @@ async def process_document_internal(document_id: int, db: Session) -> dict | Non
             search_text_parts.append(document.state)
         if generated_tags:
             search_text_parts.extend(generated_tags)
+        
+        # For Arabic documents, include both original Arabic and English translation in search
+        if document_language == "arabic":
+            if hasattr(document, 'ocr_text_original') and document.ocr_text_original:
+                # Include original Arabic text for search
+                search_text_parts.append(document.ocr_text_original)
+            if hasattr(document, 'ocr_text_english') and document.ocr_text_english:
+                # Include English translation for search
+                search_text_parts.append(document.ocr_text_english)
         
         document.search_text = ' '.join(search_text_parts)
         
@@ -474,10 +528,54 @@ async def process_document(
             logger.error("Failed to download file from S3", file_path=file_path, error=str(e))
             raise HTTPException(status_code=500, detail="Failed to download file from storage")
         
-        # Extract text based on file type
+        # Extract text based on file type and document language
         content_type = document.content_type.lower() if document.content_type else ""
+        document_language = getattr(document, 'document_language', 'english')
         
-        extracted_text = extract_text_from_document(file_content, content_type)
+        # Special handling for Arabic documents
+        if document_language == "arabic":
+            logger.info("Processing Arabic document with Mistral AI", document_id=request.document_id)
+            
+            if mistral_service.is_available():
+                try:
+                    # Use Mistral AI for Arabic OCR and translation
+                    arabic_text, english_translation = await mistral_service.process_arabic_document(file_content)
+                    
+                    if arabic_text:
+                        # Store both Arabic and English text
+                        document.ocr_text_original = arabic_text
+                        document.ocr_text_english = english_translation or ""
+                        
+                        # Use English translation for search if available, otherwise Arabic
+                        extracted_text = english_translation if english_translation else arabic_text
+                        
+                        logger.info("Arabic document processed successfully",
+                                   document_id=request.document_id,
+                                   arabic_length=len(arabic_text),
+                                   english_length=len(english_translation) if english_translation else 0)
+                    else:
+                        logger.warning("No Arabic text extracted from document", document_id=request.document_id)
+                        # Fallback to regular OCR
+                        extracted_text = extract_text_from_document(file_content, content_type)
+                        document.ocr_text_original = extracted_text
+                        
+                except Exception as mistral_error:
+                    logger.error("Mistral AI processing failed, falling back to regular OCR", 
+                               document_id=request.document_id, error=str(mistral_error))
+                    # Fallback to regular OCR
+                    extracted_text = extract_text_from_document(file_content, content_type)
+                    document.ocr_text_original = extracted_text
+            else:
+                logger.warning("Mistral AI not available, using regular OCR for Arabic document", 
+                             document_id=request.document_id)
+                # Fallback to regular OCR
+                extracted_text = extract_text_from_document(file_content, content_type)
+                document.ocr_text_original = extracted_text
+        else:
+            # Regular processing for non-Arabic documents
+            extracted_text = extract_text_from_document(file_content, content_type)
+            document.ocr_text_original = extracted_text
+            document.ocr_text_english = extracted_text  # Same as original for non-Arabic
         
         if not extracted_text:
             logger.warning("No text extracted from document", document_id=request.document_id)
@@ -524,6 +622,15 @@ async def process_document(
             search_text_parts.append(document.state)
         if generated_tags:
             search_text_parts.extend(generated_tags)
+        
+        # For Arabic documents, include both original Arabic and English translation in search
+        if document_language == "arabic":
+            if hasattr(document, 'ocr_text_original') and document.ocr_text_original:
+                # Include original Arabic text for search
+                search_text_parts.append(document.ocr_text_original)
+            if hasattr(document, 'ocr_text_english') and document.ocr_text_english:
+                # Include English translation for search
+                search_text_parts.append(document.ocr_text_english)
         
         document.search_text = ' '.join(search_text_parts)
         

@@ -32,6 +32,9 @@ interface SearchDocumentResult {
   ocr_text?: string;
   description?: string;
   created_at?: string;
+  document_language?: string;  // Language of the original document
+  has_arabic_text?: boolean;   // Whether Arabic text is available for download
+  has_english_translation?: boolean;  // Whether English translation is available for download
 }
 
 export default function SearchPage() {
@@ -46,12 +49,15 @@ export default function SearchPage() {
   const [searchAttempted, setSearchAttempted] = useState(false);
   const [downloadingDocId, setDownloadingDocId] = useState<number | null>(null);
 
-  const handleDocumentClick = useCallback(async (documentId: number) => {
+  const handleDocumentClick = useCallback(async (documentId: number, language: string = "original") => {
     setDownloadingDocId(documentId);
     
     try {
-      // Direct download - the server now streams the file directly
-      const downloadUrl = `/api/search/download/${documentId}`;
+      // Direct download with language parameter - the server now streams the file directly
+      let downloadUrl = `/api/search/download/${documentId}`;
+      if (language !== "original") {
+        downloadUrl += `?language=${language}`;
+      }
       
       // Create a temporary link element and click it to trigger download
       const link = document.createElement('a');
@@ -64,7 +70,10 @@ export default function SearchPage() {
       link.click();
       document.body.removeChild(link);
       
-      toast.success("Document download started");
+      const languageText = language === "original" ? "original" : 
+                          language === "english" ? "English translation" : 
+                          language === "arabic" ? "Arabic text" : language;
+      toast.success(`Document download started (${languageText})`);
     } catch (err: any) {
       let errorMsg = "Failed to download document.";
       if (err.message) {
@@ -254,23 +263,15 @@ export default function SearchPage() {
             >
               <CardHeader>
                 <CardTitle className="text-xl font-serif">
-                  {doc.id ? (
-                    <button
-                      onClick={() => handleDocumentClick(doc.id)}
-                      className="text-primary hover:underline text-left flex items-center gap-2"
-                      disabled={downloadingDocId === doc.id}
-                    >
-                      {downloadingDocId === doc.id && (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      )}
-                      {doc.title || "Untitled Document"}
-                    </button>
-                  ) : (
-                    doc.title || "Untitled Document"
-                  )}
+                  {doc.title || "Untitled Document"}
                 </CardTitle>
                 <CardDescription>
                   {t('search.country')}: {doc.country || "N/A"}
+                  {doc.document_language && doc.document_language !== 'english' && (
+                    <Badge variant="outline" className="ml-2">
+                      {doc.document_language === 'arabic' ? 'العربية' : doc.document_language}
+                    </Badge>
+                  )}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -281,6 +282,64 @@ export default function SearchPage() {
                     </p>
                   </div>
                 )}
+                
+                {/* Download Options */}
+                <div className="mb-4">
+                  <h4 className="text-sm font-medium mb-2 text-muted-foreground">
+                    Download Options:
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {/* Original File Download */}
+                    <Button
+                      onClick={() => handleDocumentClick(doc.id, "original")}
+                      disabled={downloadingDocId === doc.id}
+                      size="sm"
+                      variant="default"
+                      className="flex items-center gap-2"
+                    >
+                      {downloadingDocId === doc.id && (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      )}
+                      <FileText className="h-3 w-3" />
+                      Original PDF
+                    </Button>
+                    
+                    {/* Arabic Text Download (for Arabic documents) */}
+                    {doc.document_language === 'arabic' && doc.has_arabic_text && (
+                      <Button
+                        onClick={() => handleDocumentClick(doc.id, "arabic")}
+                        disabled={downloadingDocId === doc.id}
+                        size="sm"
+                        variant="outline"
+                        className="flex items-center gap-2"
+                      >
+                        {downloadingDocId === doc.id && (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        )}
+                        <FileText className="h-3 w-3" />
+                        Arabic Text
+                      </Button>
+                    )}
+                    
+                    {/* English Translation Download (for Arabic documents) */}
+                    {doc.document_language === 'arabic' && doc.has_english_translation && (
+                      <Button
+                        onClick={() => handleDocumentClick(doc.id, "english")}
+                        disabled={downloadingDocId === doc.id}
+                        size="sm"
+                        variant="outline"
+                        className="flex items-center gap-2"
+                      >
+                        {downloadingDocId === doc.id && (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        )}
+                        <FileText className="h-3 w-3" />
+                        English Translation
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                
                 {doc.generated_tags && doc.generated_tags.length > 0 && (
                   <div className="mb-3">
                     <h4 className="text-sm font-medium mb-1 text-muted-foreground">

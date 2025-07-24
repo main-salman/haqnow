@@ -39,12 +39,14 @@ async def upload_file(
     title: str = Form(...),
     country: str = Form(...),
     state: str = Form(...),
+    document_language: str = Form(default="english"),  # Added document language parameter
     description: Optional[str] = Form(None),
     db: Session = Depends(get_db)
 ):
     """
     Upload a document file to S3 and create a database entry.
     Rate limited to 1 upload per IP per 2 minutes.
+    Supports multiple languages including Arabic with Mistral API processing.
     """
     
     # Check rate limit
@@ -67,6 +69,16 @@ async def upload_file(
                 status_code=400,
                 detail="File name is required"
             )
+        
+        # Validate document language
+        valid_languages = ["english", "arabic", "french", "german", "spanish", "chinese", "russian", "other"]
+        if document_language not in valid_languages:
+            document_language = "english"  # Default fallback
+            
+        logger.info("Document upload started", 
+                   filename=file.filename,
+                   language=document_language,
+                   country=country)
         
         # Anonymous upload - no IP tracking
         
@@ -120,6 +132,7 @@ async def upload_file(
             country=country,
             state=state,
             description=description,
+            document_language=document_language,  # Store document language
             file_path=file_path,
             file_url=file_url,
             original_filename=clean_filename,  # Store clean filename
@@ -163,13 +176,20 @@ async def upload_file(
         
         logger.info("Document uploaded successfully", 
                    document_id=document_id,
+                   language=document_language,
                    file_path=file_path)
+        
+        # Success message varies based on language
+        if document_language == "arabic":
+            message = "File uploaded successfully with complete metadata removal for privacy protection. Arabic document will be processed with OCR and translation when approved by admin."
+        else:
+            message = "File uploaded successfully with complete metadata removal for privacy protection. Document converted to clean PDF format and is pending admin approval."
         
         return FileUploadResponse(
             file_url=file_url,
             file_path=file_path,
             document_id=document_id,
-            message="File uploaded successfully with complete metadata removal for privacy protection. Document converted to clean PDF format and is pending admin approval."
+            message=message
         )
     
     except HTTPException:

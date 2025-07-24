@@ -1,13 +1,22 @@
-import React from 'react';
-import { useTranslation } from 'react-i18next';
-import { ExternalLink, Globe, Users, Shield } from 'lucide-react';
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
-const AboutPage: React.FC = () => {
+export default function AboutPage() {
+  const navigate = useNavigate();
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-background text-foreground p-4 md:p-8">
+      <div className="container mx-auto max-w-4xl space-y-8">
+        {/* Back Button */}
+        <Button variant="outline" onClick={() => navigate("/")} className="mb-6">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          {t('navigation.backToHome', 'Back to Home')}
+        </Button>
+
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
@@ -189,6 +198,4 @@ const AboutPage: React.FC = () => {
       </div>
     </div>
   );
-};
-
-export default AboutPage; 
+}; 

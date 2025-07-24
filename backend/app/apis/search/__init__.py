@@ -49,6 +49,9 @@ class SearchDocumentResult(BaseModel):
     ocr_text: Optional[str] = None
     description: Optional[str] = None
     created_at: Optional[str] = None
+    document_language: Optional[str] = None  # Language of the original document
+    has_arabic_text: bool = False  # Whether Arabic text is available
+    has_english_translation: bool = False  # Whether English translation is available
 
 class SearchResponse(BaseModel):
     documents: List[SearchDocumentResult]
@@ -211,6 +214,20 @@ async def search_documents(
                             filtered_tags.append(tag)
                     doc_dict['generated_tags'] = filtered_tags
             
+            # Add language information and availability flags
+            document_language = doc_dict.get('document_language', 'english')
+            has_arabic_text = bool(doc_dict.get('ocr_text_original'))
+            has_english_translation = bool(doc_dict.get('ocr_text_english'))
+            
+            # For Arabic documents, set availability flags
+            if document_language == 'arabic':
+                doc_dict['has_arabic_text'] = has_arabic_text
+                doc_dict['has_english_translation'] = has_english_translation
+            else:
+                # For non-Arabic documents, no separate language versions
+                doc_dict['has_arabic_text'] = False
+                doc_dict['has_english_translation'] = False
+            
             documents.append(SearchDocumentResult(**doc_dict))
         
         # Group by country if requested
@@ -276,10 +293,12 @@ async def get_document(document_id: int, db: Session = Depends(get_db)):
 async def download_document(
     document_id: int, 
     request: Request,
+    language: str = Query(default="original", description="Language version: 'original', 'english', or 'arabic'"),
     db: Session = Depends(get_db)
 ):
     """
     Download a document file directly through the server.
+    For Arabic documents, supports downloading original Arabic or English translation.
     This masks the S3 URL and shows the website URL instead.
     Rate limited to prevent abuse.
     """
@@ -296,6 +315,42 @@ async def download_document(
         if not document:
             raise HTTPException(status_code=404, detail="Document not found")
         
+        # Determine which content to serve based on language parameter and document language
+        document_language = getattr(document, 'document_language', 'english')
+        
+        # For Arabic documents, support bilingual download
+        if document_language == "arabic":
+            if language == "english":
+                # Check if English translation is available
+                english_text = getattr(document, 'ocr_text_english', None)
+                if not english_text:
+                    raise HTTPException(
+                        status_code=404, 
+                        detail="English translation not available for this document"
+                    )
+                # Create a text file with English translation
+                return create_text_download_response(
+                    english_text, 
+                    f"{document.title}_english.txt",
+                    document_id
+                )
+            elif language == "arabic":
+                # Check if original Arabic text is available
+                arabic_text = getattr(document, 'ocr_text_original', None)
+                if not arabic_text:
+                    raise HTTPException(
+                        status_code=404, 
+                        detail="Original Arabic text not available for this document"
+                    )
+                # Create a text file with original Arabic text
+                return create_text_download_response(
+                    arabic_text, 
+                    f"{document.title}_arabic.txt",
+                    document_id
+                )
+            # else language == "original" - download the original PDF file
+        
+        # Default behavior: download original file
         file_path = document.file_path
         
         if not file_path:
@@ -353,7 +408,8 @@ async def download_document(
             
             logger.info("Document download proxied successfully", 
                    document_id=document_id,
-                       filename=filename)
+                   filename=filename,
+                   language=language)
             
             return StreamingResponse(
                 generate(),
@@ -376,6 +432,44 @@ async def download_document(
         raise HTTPException(
             status_code=500,
             detail="An error occurred while downloading the document"
+        )
+
+def create_text_download_response(text_content: str, filename: str, document_id: int) -> StreamingResponse:
+    """
+    Create a StreamingResponse for text content download.
+    Used for Arabic/English text versions of documents.
+    """
+    try:
+        # Encode text as UTF-8 bytes
+        text_bytes = text_content.encode('utf-8')
+        
+        # Create streaming response
+        def generate():
+            yield text_bytes
+        
+        logger.info("Text download created successfully", 
+                   document_id=document_id,
+                   filename=filename,
+                   text_length=len(text_content))
+        
+        return StreamingResponse(
+            generate(),
+            media_type="text/plain; charset=utf-8",
+            headers={
+                "Content-Disposition": f"attachment; filename=\"{filename}\"",
+                "Content-Length": str(len(text_bytes)),
+                "Cache-Control": "private, max-age=0, no-cache, no-store, must-revalidate"
+            }
+        )
+        
+    except Exception as e:
+        logger.error("Error creating text download response", 
+                   document_id=document_id, 
+                   filename=filename, 
+                   error=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to create text download"
         )
 
 @router.post("/add-tag", response_model=AddTagResponse)

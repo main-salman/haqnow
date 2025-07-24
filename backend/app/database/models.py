@@ -15,6 +15,11 @@ class Document(Base):
     state = Column(String(100), nullable=False, index=True)
     description = Column(Text, nullable=True)
     
+    # Document language and translation support
+    document_language = Column(String(10), nullable=False, default="english", index=True)  # Language of original document
+    ocr_text_original = Column(Text, nullable=True)  # OCR text in original language
+    ocr_text_english = Column(Text, nullable=True)   # OCR text translated to English (if needed)
+    
     # File information
     file_path = Column(String(500), nullable=False)
     file_url = Column(String(1000), nullable=False)
@@ -23,7 +28,7 @@ class Document(Base):
     content_type = Column(String(100), nullable=False)
     
     # Processing information
-    ocr_text = Column(Text, nullable=True)
+    ocr_text = Column(Text, nullable=True)  # Combined/processed OCR text for backward compatibility
     generated_tags = Column(JSON, nullable=True, default=list)
     search_text = Column(Text, nullable=True)  # Combined searchable text for full-text search
     
@@ -56,6 +61,9 @@ class Document(Base):
             "country": self.country,
             "state": self.state,
             "description": self.description,
+            "document_language": self.document_language,
+            "ocr_text_original": self.ocr_text_original,
+            "ocr_text_english": self.ocr_text_english,
             "file_path": self.file_path,
             "file_url": self.file_url,
             "original_filename": self.original_filename,

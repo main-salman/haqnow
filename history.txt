@@ -7267,3 +7267,182 @@ USER CAN NOW:
 4. Access comprehensive security information and FAQ
 5. Edit disclaimer text in real-time without deployments
 
+**Version 1.1.60:**
+- Created automated disclaimer translations population script with 2FA support
+- Successfully populated 57 disclaimer translation keys into database
+- Added debugging to admin translations page and disclaimer page for troubleshooting
+
+**Version 1.1.61:**
+- Fixed DisclaimerPage custom FAQ loading by correcting key lookup pattern (customFaqQ_ vs disclaimer.customFaqQ_)
+- Fixed AdminTranslationsPage rendering issue preventing all 59 translations from displaying
+- Added CSS overrides (h-auto max-h-none overflow-visible) to prevent height constraints
+- Resolved sync issues between admin translations changes and public disclaimer page
+- All 59 disclaimer translations now display properly in admin interface
+- Custom FAQs now load correctly on public disclaimer page
+- Fixed frontend bugs that were preventing proper translation management
+
+🎉 **DISCLAIMER & FAQ SYSTEM NOW FULLY FUNCTIONAL** 🎉
+✅ All 59 disclaimer translations populate and display correctly
+✅ Admin can edit all disclaimer content via translations page
+✅ Custom FAQs load properly on public disclaimer page
+✅ Real-time sync between admin changes and public content
+✅ Complete translation-driven multilingual support ready
+
+
+---
+
+### Multilingual Document Processing with Arabic OCR Support (COMPLETED ✅):
+**Date:** Current session - Comprehensive language support implementation
+**Problem:** The system only supported English documents. Users needed the ability to upload documents in different languages, particularly Arabic, with OCR processing and translation capabilities.
+
+**Solution: Complete Multilingual Document System (COMPLETED ✅)**
+
+#### 1. Database Schema Enhancement (COMPLETED ✅):
+**Updated**: `backend/app/database/models.py`
+**Added**: Language support fields to Document model:
+- `document_language`: Language of the original document (default: 'english')
+- `ocr_text_original`: OCR text in the original language
+- `ocr_text_english`: OCR text translated to English (for non-English documents)
+
+**Created**: `backend/add_document_language_support.py` - Migration script
+**Features**:
+- Adds new language support columns with proper indexing
+- Updates existing documents with default language settings
+- Copies existing OCR text to language-specific fields
+- Comprehensive error handling and verification
+
+#### 2. Frontend Language Selection (COMPLETED ✅):
+**Updated**: `frontend/src/pages/UploadDocumentPage.tsx`
+**New Features**:
+- Language selection dropdown with 8 supported languages
+- Arabic (العربية), English, French, German, Spanish, Chinese, Russian, Other
+- Integration with form validation and submission
+- Back button navigation added to upload page
+
+**Updated**: All major pages to include back button navigation:
+- `AboutPage.tsx`: Added back to home button
+- `FOIPage.tsx`: Added back to home button  
+- `PrivacyGuaranteedPage.tsx`: Added back to home button
+- `DisclaimerPage.tsx`: Already had back button (verified)
+- `SearchPage.tsx`: Already had back button (verified)
+
+#### 3. Mistral AI Integration for Arabic Processing (COMPLETED ✅):
+**Created**: `backend/app/services/mistral_service.py`
+**Capabilities**:
+- Arabic OCR using Mistral's Pixtral vision model
+- Arabic to English translation using Mistral Large
+- PDF to image conversion for vision processing
+- Base64 image encoding for API calls
+- Chunk-based processing for long documents
+- Comprehensive error handling and fallbacks
+
+**Dependencies**: Added `mistralai==1.0.1` to requirements.txt
+**Environment**: Uses `MISTRAL_API_KEY` from environment variables
+
+#### 4. Enhanced Document Processing (COMPLETED ✅):
+**Updated**: `backend/app/apis/document_processing/__init__.py`
+**New Logic**:
+- Language-aware document processing
+- Arabic documents processed with Mistral AI OCR and translation
+- Fallback to regular OCR if Mistral AI unavailable
+- Stores both original Arabic and English translation
+- Enhanced search text includes both languages for bilingual search
+
+**Updated**: `backend/app/apis/file_uploader/__init__.py`
+**New Features**:
+- Document language parameter in upload endpoint
+- Language validation and default handling
+- Language-specific success messages
+
+#### 5. Bilingual Search Capabilities (COMPLETED ✅):
+**Enhanced**: Existing full-text search to support multiple languages
+**Features**:
+- Arabic documents searchable in both Arabic and English
+- Combined search text includes original and translated content
+- Language information included in search results
+- Maintains existing high-performance full-text search
+
+**Updated**: `backend/app/apis/search/__init__.py`
+**New Features**:
+- `SearchDocumentResult` model includes language metadata
+- `document_language`, `has_arabic_text`, `has_english_translation` fields
+- Language availability flags for frontend UI
+
+#### 6. Bilingual Download System (COMPLETED ✅):
+**Enhanced**: Download endpoint with language parameter support
+**New Features**:
+- `/api/search/download/{document_id}?language={original|english|arabic}`
+- Original PDF download (default behavior)
+- Arabic text download as .txt file
+- English translation download as .txt file
+- UTF-8 encoded text files with proper headers
+
+**Created**: `create_text_download_response()` function for text downloads
+**Features**:
+- Streaming response for text content
+- Proper filename generation with language suffix
+- Content-Type headers for UTF-8 text files
+
+#### 7. Enhanced Frontend UI (COMPLETED ✅):
+**Updated**: `frontend/src/pages/SearchPage.tsx`
+**New Features**:
+- Multiple download buttons for Arabic documents
+- Language badges showing document language
+- Download options clearly labeled (Original PDF, Arabic Text, English Translation)
+- Progressive enhancement - only shows available options
+- Loading states for each download type
+
+**Interface Updates**:
+- `SearchDocumentResult` includes language metadata
+- Download handler supports language parameter
+- User feedback includes language information
+
+#### 8. Comprehensive Language Support (COMPLETED ✅):
+**Supported Languages**: English (default), Arabic, French, German, Spanish, Chinese, Russian, Other
+**Special Features for Arabic**:
+- Mistral AI vision-based OCR
+- Automatic Arabic to English translation
+- Bilingual search capabilities
+- Multiple download formats
+- Right-to-left text support
+
+**Non-Arabic Languages**: Standard OCR processing with language identification
+
+#### 9. System Integration (COMPLETED ✅):
+**Backend Changes**:
+- Mistral service integration in document processing
+- Language-aware OCR routing
+- Enhanced search indexing for multilingual content
+- Bilingual download endpoint
+
+**Frontend Changes**:
+- Language selection in upload form
+- Multilingual search results display
+- Language-specific download options
+- Back button navigation on all pages
+
+**Performance Optimizations**:
+- Efficient language detection and routing
+- Fallback mechanisms for service unavailability
+- Proper error handling for API limits
+- Streaming downloads for large text files
+
+**🌍 Complete Multilingual Transformation:**
+✅ **Language Selection**: 8 languages supported in upload form
+✅ **Arabic OCR**: Mistral AI vision processing for Arabic documents
+✅ **Translation**: Arabic to English via Mistral AI
+✅ **Bilingual Search**: Search Arabic documents in both languages
+✅ **Multiple Downloads**: Original PDF + language-specific text files
+✅ **Enhanced UX**: Back buttons, language badges, clear download options
+✅ **Database Support**: Full schema for multilingual content
+✅ **API Integration**: Mistral AI with proper fallbacks
+
+**Technical Stack Enhanced**:
+- **Vision AI**: Mistral Pixtral for Arabic OCR
+- **Translation AI**: Mistral Large for Arabic-English translation  
+- **Frontend**: React with language selection and multilingual UI
+- **Backend**: FastAPI with language-aware processing
+- **Database**: MySQL with multilingual schema
+- **Storage**: S3 with language-specific text extraction
+
+The system now provides **complete multilingual document processing** with special focus on Arabic language support, while maintaining backward compatibility and high performance for all existing English content.

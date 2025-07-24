@@ -1,8 +1,11 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileText, ExternalLink, Search, Globe, Shield, Book } from 'lucide-react';
+import { FileText, ExternalLink, Search, Globe, Shield, Book, ArrowLeft } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const FOIPage: React.FC = () => {
+  const navigate = useNavigate();
   const { t } = useTranslation();
 
   const foiCountries = [
@@ -95,6 +98,11 @@ const FOIPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-100 py-12">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Back Button */}
+        <Button variant="outline" onClick={() => navigate("/")} className="mb-6">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          {t('navigation.backToHome', 'Back to Home')}
+        </Button>
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
