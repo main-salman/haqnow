@@ -8029,7 +8029,42 @@ Multiple credentials were exposed in codebase through GitHub security scanning:
 2. **Service Restart**: `systemctl restart foi-archive` 
 3. **Verification**: Service logs show successful startup, no S3 errors
 
+**FOLLOW-UP ISSUE DISCOVERED**: SystemD service file had hardcoded old S3 credentials
+- Problem: Environment variables in `/etc/systemd/system/foi-archive.service` override `.env` file
+- Old keys in systemd: `EXO4e91f55ab10a7d18f49ebc9c` (invalidated)
+- New keys deployed: `EXO1e157b3f3248ab00f125d607` (active)
+
+**FINAL RESOLUTION (COMPLETED ✅)**:
+1. **Updated SystemD Environment**: Modified `/etc/systemd/system/foi-archive.service`
+2. **Reloaded SystemD**: `systemctl daemon-reload && systemctl restart foi-archive`
+3. **Verified Service**: Clean startup logs, no S3 errors
+
 **CURRENT STATUS**: 
-- ✅ Server running with new S3 credentials
-- ✅ Upload endpoint responsive  
-- ⏳ **PENDING**: User verification of upload functionality
+- ✅ SystemD service using new S3 credentials
+- ✅ Service startup successful, no errors
+- ✅ Upload endpoint working (verified by user)
+- ✅ **COMPLETED**: Upload functionality restored
+
+## 22. Multilingual Translation Issue Fix (July 25, 2025)
+
+**ISSUE**: Arabic translation working perfectly but non-Arabic languages (French, etc.) not translating
+
+**ROOT CAUSE**: Google Translate package (`googletrans`) missing or not working in production
+- Multilingual OCR service requires `googletrans==4.0.0rc1` for non-Arabic translations
+- Package was listed in requirements.txt but not functioning properly in production environment
+
+**INVESTIGATION**:
+1. ✅ Multilingual OCR service code is correct and comprehensive
+2. ✅ French language properly mapped in LANGUAGE_MAPPING 
+3. ✅ Translation process should work: OCR → Google Translate → English
+4. ❌ Google Translate package not accessible from service
+
+**RESOLUTION (COMPLETED ✅)**:
+1. **Verified Installation**: `googletrans==4.0.0rc1` already installed in virtual env
+2. **Tested Translation**: Google Translate working within virtual environment
+3. **Service Restart**: Restarted foi-archive service to use updated environment
+
+**CURRENT STATUS**:
+- ✅ Google Translate working for French → English translation
+- ✅ Service restarted with working translation capability
+- ⏳ **PENDING**: User verification of French document translation
