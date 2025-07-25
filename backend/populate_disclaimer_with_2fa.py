@@ -3,6 +3,7 @@
 Populate disclaimer translations via API with 2FA support
 """
 
+import os
 import requests
 import json
 import sys
@@ -23,7 +24,7 @@ def login_with_2fa():
     
     password = getpass.getpass("Enter admin password: ").strip()
     if not password:
-        password = "***REMOVED***"  # Default for automation
+        password = os.getenv('ADMIN_PASSWORD', 'default_password_please_set_env')  # From environment for automation
     
     # Step 1: Initial login
     print(f"🔐 Logging in as {email}...")

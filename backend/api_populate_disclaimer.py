@@ -12,7 +12,7 @@ import sys
 BASE_URL = "https://www.haqnow.com"
 # You'll need to provide admin credentials
 ADMIN_EMAIL = "salman.naqvi@gmail.com"
-ADMIN_PASSWORD = "***REMOVED***"
+ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'default_password_please_set_env')
 
 def flatten_dict(d, parent_key='', sep='.'):
     """Flatten nested dictionary with dot notation."""

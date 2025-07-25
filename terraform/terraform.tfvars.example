@@ -28,6 +28,7 @@ jwt_secret_key = "your-jwt-secret-key-change-this-in-production"
 mysql_plan     = "hobbyist-2"              # Plan: hobbyist-2, startup-4, business-4, premium-4, etc.
 mysql_user     = "foi_user"                # Database username (will be created automatically)
 mysql_password = "your-secure-mysql-password"  # Database password (generate a secure password)
+mysql_root_password = "your-secure-root-password"  # MySQL root password for local fallback (generate a secure password)
 mysql_database = "foi_archive"             # Database name (will be created automatically)
 
 # SendGrid configuration for email notifications

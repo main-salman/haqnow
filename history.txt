@@ -204,8 +204,8 @@ All databutton dependencies removed and replaced with industry standard componen
 4. **SSH Access Resolution (COMPLETED ✅)**:
    - Identified password confusion: Multiple passwords in config for different purposes
    - admin_password = "freepalestine" (application admin, NOT system login)
-   - mysql_password = "***REMOVED***" (database access)
-   - Console password = "***REMOVED***" (system login from Exoscale console)
+   - mysql_password = "[REDACTED]" (database access)
+   - Console password = "[REDACTED]" (system login from Exoscale console)
    - SOLUTION: SSH key authentication works for ROOT USER (not ubuntu user)
    - Successfully connected: ssh root@159.100.250.145 (no password needed)
    - Server accessible via web (nginx running) at 159.100.250.145
@@ -1796,7 +1796,7 @@ The admin interface no longer shows "No translations found" and administrators c
 ## Database Connectivity Resolution (v1.1.16) - July 16, 2025
 
 ### Issue Identified:
-- **External Database Failure**: External Aiven/Exoscale cloud database hostname `***REMOVED***` failing DNS resolution (NXDOMAIN)
+- **External Database Failure**: External Aiven/Exoscale cloud database hostname `[REDACTED_EXOSCALE_HOST]` failing DNS resolution (NXDOMAIN)
 - **Service Impact**: Statistics API returning 500 errors, database-dependent features non-functional
 - **Root Cause**: External cloud database service likely terminated or hostname changed
 
@@ -1810,11 +1810,11 @@ The admin interface no longer shows "No translations found" and administrators c
 ### Technical Changes:
 ```bash
 # Database URL Update
-OLD: DATABASE_URL=mysql://foi_user:***REMOVED***@***REMOVED***:21699/foi_archive
-NEW: DATABASE_URL=mysql://foi_user:***REMOVED***@localhost:3306/foi_archive
+OLD: DATABASE_URL=mysql://foi_user:[REDACTED]@[REDACTED_EXOSCALE_HOST]:21699/foi_archive
+NEW: DATABASE_URL=mysql://foi_user:[REDACTED]@localhost:3306/foi_archive
 
 # User Password Reset
-ALTER USER 'foi_user'@'localhost' IDENTIFIED BY '***REMOVED***';
+ALTER USER 'foi_user'@'localhost' IDENTIFIED BY '[REDACTED]';
 FLUSH PRIVILEGES;
 ```
 
@@ -7848,7 +7848,7 @@ Successfully migrated from local MySQL to EXOscale Database-as-a-Service (DBaaS)
 4. **Service Status**: All API endpoints responding correctly
 
 ### Technical Details:
-- **Database Host**: ***REMOVED***
+- **Database Host**: [REDACTED_EXOSCALE_HOST]
 - **Database Status**: Running (MySQL 8.0.35)
 - **Application Status**: Healthy and operational
 - **Environment**: Production configuration active
@@ -7887,7 +7887,7 @@ Migration completed successfully - no manual data migration needed as applicatio
 
 ### Current System State:
 - **Application**: 🟢 Running successfully on EXOscale database
-- **Database**: 🟢 EXOscale MySQL (***REMOVED***:21699)
+- **Database**: 🟢 EXOscale MySQL ([REDACTED_EXOSCALE_HOST]:21699)
 - **Local MySQL**: ⚠️ Still running (will be disabled after testing period)
 - **Testing Phase**: 🔄 Started (recommended minimum 1 week before cleanup)
 

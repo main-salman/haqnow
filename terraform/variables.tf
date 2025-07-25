@@ -130,6 +130,12 @@ variable "mysql_password" {
   sensitive   = true
 }
 
+variable "mysql_root_password" {
+  description = "MySQL root password for local fallback database"
+  type        = string
+  sensitive   = true
+}
+
 variable "mysql_database" {
   description = "MySQL database name"
   type        = string

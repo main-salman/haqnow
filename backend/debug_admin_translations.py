@@ -3,6 +3,7 @@
 Debug script to test admin translations API
 """
 
+import os
 import requests
 import json
 
@@ -11,7 +12,7 @@ def get_fresh_token():
     # Step 1: Login
     response = requests.post('https://www.haqnow.com/api/auth/login', json={
         'email': 'salman.naqvi@gmail.com',
-        'password': '***REMOVED***'
+        'password': os.getenv('ADMIN_PASSWORD', 'default_password_please_set_env')
     })
 
     if response.status_code == 200:

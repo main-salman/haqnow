@@ -134,10 +134,10 @@ runcmd:
             log("Setting up local MySQL as fallback...")
             
             # MySQL root password setup
-            mysql_root_password = "***REMOVED***"
-            mysql_user = "foi_user"
-            mysql_password = "***REMOVED***"
-            mysql_database = "foi_archive"
+            mysql_root_password = "${mysql_root_password}"
+            mysql_user = "${mysql_user}"
+            mysql_password = "${mysql_password}"
+            mysql_database = "${mysql_database}"
             
             # Set MySQL root password
             subprocess.run([
