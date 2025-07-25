@@ -208,7 +208,7 @@ export default function AdminTranslationsPage() {
 
       // Save to server
       for (const translation of newTranslations) {
-        const response = await fetch('/api/translations/admin/translate', {
+        const response = await fetch('/api/translations/admin/create', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

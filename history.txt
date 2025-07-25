@@ -7715,3 +7715,29 @@ systemctl restart foi-archive && npm run build
 - ✅ All 1.2.4-1.2.6 features now live on https://www.haqnow.com
 
 **System Status**: 🟢 **Fully Operational** with complete feature set active.
+
+## 2024-12-19: Fixed Two Critical Errors
+
+### Error 1: ExternalLink not defined in AboutPage (COMPLETED ✅)
+- **Issue**: AboutPage.tsx was missing imports for Lucide React icons (ExternalLink, Globe, Users, Shield)
+- **Fix**: Added missing imports to the existing import statement from "lucide-react"
+- **Location**: `frontend/src/pages/AboutPage.tsx` line 3
+- **Result**: AboutPage now loads without ReferenceError
+
+### Error 2: FAQ Addition Failing in AdminTranslationsPage (COMPLETED ✅)
+- **Issue**: Frontend was calling non-existent API endpoint `/api/translations/admin/translate`
+- **Root Cause**: The actual translation creation endpoint is `/api/translations/admin/create`
+- **Fix**: Updated the fetch URL in the `addNewFAQ` function to use the correct endpoint
+- **Location**: `frontend/src/pages/AdminTranslationsPage.tsx` line 210
+- **Result**: New FAQs can now be successfully added to the disclaimer section
+
+### Technical Details:
+- The translation API router exposes `/admin/create` endpoint for new translations
+- Frontend was using `/api` prefix + `/translations` router prefix + `/admin/translate` (incorrect)
+- Corrected to `/api` prefix + `/translations` router prefix + `/admin/create` (correct)  
+- Both issues were simple import/endpoint naming problems that prevented core functionality
+
+### Testing Status:
+- AboutPage should now load correctly at https://www.haqnow.com/about
+- Admin FAQ addition should work in AdminTranslationsPage
+- No breaking changes made to existing functionality

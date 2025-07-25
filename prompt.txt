@@ -82,3 +82,25 @@ Let me know your answers or if you want to discuss any of these in more detail!
 
 How can we contact the site administrators? How can we report bugs or request features?
 You can connect with us in multiple ways. Connect via LinkedIn https://www.linkedin.com/in/salmannaqvi/ or send us an anonymous message via https://salmannaqvi.com/centered-heading-with-contact-form/ (you can provide a fake name/email address if you like). Contact info is also listed on https://www.haqnow.com/about page.
+
+
+
+1. unable to add FAQ:
+Fs @ vendor-5848d5cd.js:37
+cg @ vendor-5848d5cd.js:37Understand this error
+AdminTranslationsPage-27ec8fda.js:16 Error adding new FAQ: Error: Failed to save new FAQ
+    at ne (AdminTranslationsPage-27ec8fda.js:16:2940)
+
+- 2. @https://www.haqnow.com/about is no longer working: @https://www.haqnow.com/about Unexpected Application Error!
+ExternalLink is not defined
+ReferenceError: ExternalLink is not defined
+    at m (https://www.haqnow.com/assets/AboutPage-5d269e2d.js:1:1241)
+    at tu (https://www.haqnow.com/assets/vendor-5848d5cd.js:38:16999)
+    at Jl (https://www.haqnow.com/assets/vendor-5848d5cd.js:40:3139)
+    at Pp (https://www.haqnow.com/assets/vendor-5848d5cd.js:40:44490)
+    at kp (https://www.haqnow.com/assets/vendor-5848d5cd.js:40:39724)
+    at Cm (https://www.haqnow.com/assets/vendor-5848d5cd.js:40:39652)
+    at ia (https://www.haqnow.com/assets/vendor-5848d5cd.js:40:39506)
+    at ss (https://www.haqnow.com/assets/vendor-5848d5cd.js:40:35874)
+    at Tc (https://www.haqnow.com/assets/vendor-5848d5cd.js:40:36677)
+    at Tn (https://www.haqnow.com/assets/vendor-5848d5cd.js:38:3274)
