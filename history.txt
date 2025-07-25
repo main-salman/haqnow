@@ -8013,3 +8013,23 @@ Multiple credentials were exposed in codebase through GitHub security scanning:
 5. **Credential Rotation**: All exposed keys invalidated and replaced
 
 **Security Status**: 🟢 **FULLY REMEDIATED** - All credential exposure eliminated
+
+## 21. Document Upload Functionality Fix (July 25, 2025)
+
+**ISSUE**: Users experiencing 500 Internal Server Error when uploading documents
+- Error: `Failed to upload cleaned file to storage`
+- Backend logs: `InvalidAccessKeyId: Access Key you provided does not exist in our records`
+
+**ROOT CAUSE**: Server still using old S3 credentials that were rotated for security
+- Server `.env`: Old credentials (`EXO4e91f55ab10a7d18f49ebc9c`)  
+- Local `.env`: New credentials (`EXO1e157b3f3248ab00f125d607`)
+
+**RESOLUTION (COMPLETED ✅)**:
+1. **Deployed Updated Credentials**: Copied local `.env` to server
+2. **Service Restart**: `systemctl restart foi-archive` 
+3. **Verification**: Service logs show successful startup, no S3 errors
+
+**CURRENT STATUS**: 
+- ✅ Server running with new S3 credentials
+- ✅ Upload endpoint responsive  
+- ⏳ **PENDING**: User verification of upload functionality
