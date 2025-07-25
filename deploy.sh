@@ -64,8 +64,33 @@ echo "=== Deploying HaqNow.com v$NEW_VERSION ==="
 
 cd /opt/foi-archive
 
-# Pull latest changes
-git pull origin main
+# Force sync with latest changes (handles divergent branches)
+echo "🔄 Force syncing with remote repository..."
+echo "📋 Current repository status:"
+git status --porcelain
+
+# Clean up any untracked files that might interfere
+echo "🧹 Cleaning untracked files..."
+git clean -fd
+
+# Force sync to match remote exactly
+if ! git fetch origin; then
+    echo "❌ Failed to fetch from remote repository"
+    exit 1
+fi
+
+if ! git reset --hard origin/main; then
+    echo "❌ Failed to reset to origin/main"
+    exit 1
+fi
+
+CURRENT_COMMIT=\$(git rev-parse --short HEAD)
+echo "✅ Repository synced to latest version: \$CURRENT_COMMIT"
+
+# Verify we're on the correct branch and commit
+if [ "\$(git rev-parse --abbrev-ref HEAD)" != "main" ]; then
+    echo "⚠️  Warning: Not on main branch"
+fi
 
 # Stop backend service during deployment
 sudo systemctl stop foi-archive || true
