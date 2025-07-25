@@ -7648,3 +7648,39 @@ The system now provides **complete multilingual document processing** with speci
 - Manual reprocessing script available for batch updates
 
 **Result**: Arabic document processing is now fully functional with high-quality OCR and translation using open source tools.
+
+---
+
+## User Experience Enhancements: Polish & Professional UX (Version 1.2.4)
+
+**User Feedback**: "it works! GREAT! Thank you! More changes/fixes..."
+
+### 🎯 **Four Key UX Improvements**:
+
+#### 1. **Friendly Rate Limit Messages** (`backend/app/middleware/rate_limit.py`):
+- **Before**: `{"detail":{"message":"Download rate limit exceeded","remaining_time":16,"timeout_seconds":20}}`
+- **After**: "Please wait 16 seconds before downloading another document. This helps us prevent server overload."
+- **Impact**: Human-readable error messages instead of raw JSON
+
+#### 2. **Professional Footer** (`frontend/src/pages/App.tsx` + all locales):
+- **Before**: "© 2024 HaqNow.com. footer.rights" (broken translation)
+- **After**: "© 2025 HaqNow.com. All Rights Reserved" (auto-updating year)
+- **Added**: Translation keys for all 7 languages (EN, AR, DE, FR, PL, RU, TR)
+
+#### 3. **Production Captcha** (`frontend/src/pages/UploadDocumentPage.tsx`):
+- **Before**: Test key showing "This hCaptcha is for testing only. Please contact the site admin"
+- **After**: Production site key `50b2fe65-b00b-4b9e-ad62-3ba471098be2`
+- **Result**: Clean captcha without confusing test messages
+
+#### 4. **Admin FAQ Management** (`frontend/src/pages/AdminTranslationsPage.tsx`):
+- **Added**: "Add FAQ" button in disclaimer section
+- **Features**: Modal dialog, smart numbering, immediate integration
+- **Keys**: `customFaqQ_1`, `customFaqA_1` etc. for unlimited Q&A expansion
+- **Capability**: Full CRUD for disclaimer FAQ management
+
+### 🔧 **Technical Challenge**: Dependency Resolution Crisis
+- **Issue**: `googletrans==4.0.0rc1` incompatible with updated `httpcore`
+- **Error**: `AttributeError: module 'httpcore' has no attribute 'SyncHTTPTransport'`
+- **Fix**: Compatible versions: `httpcore==0.9.1`, `httpx==0.13.3`, `h11==0.9.0`
+
+### ✅ **Deployment Success**: Version 1.2.4 live with all UX improvements functional
