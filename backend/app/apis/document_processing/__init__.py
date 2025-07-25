@@ -17,7 +17,7 @@ import structlog
 from app.auth.user import AdminUser
 from app.services.s3_service import s3_service
 from app.services.email_service import email_service
-from app.services.mistral_service import mistral_service  # Add Mistral service import
+from app.services.arabic_ocr_service import arabic_ocr_service  # Add Arabic OCR service import
 from app.database import get_db, Document, BannedTag
 
 logger = structlog.get_logger()
@@ -368,12 +368,12 @@ async def process_document_internal(document_id: int, db: Session) -> dict | Non
         
         # Special handling for Arabic documents
         if document_language == "arabic":
-            logger.info("Processing Arabic document with Mistral AI", document_id=document_id)
+            logger.info("Processing Arabic document with Tesseract OCR", document_id=document_id)
             
-            if mistral_service.is_available():
+            if arabic_ocr_service.is_available():
                 try:
-                    # Use Mistral AI for Arabic OCR and translation
-                    arabic_text, english_translation = await mistral_service.process_arabic_document(file_content)
+                    # Use Tesseract for Arabic OCR and Google Translate for translation
+                    arabic_text, english_translation = await arabic_ocr_service.process_arabic_document(file_content)
                     
                     if arabic_text:
                         # Store both Arabic and English text
@@ -400,7 +400,7 @@ async def process_document_internal(document_id: int, db: Session) -> dict | Non
                     extracted_text = extract_text_from_document(file_content, content_type)
                     document.ocr_text_original = extracted_text
             else:
-                logger.warning("Mistral AI not available, using regular OCR for Arabic document", 
+                logger.warning("Arabic OCR service not available, using regular OCR for Arabic document", 
                              document_id=document_id)
                 # Fallback to regular OCR
                 extracted_text = extract_text_from_document(file_content, content_type)
@@ -534,12 +534,12 @@ async def process_document(
         
         # Special handling for Arabic documents
         if document_language == "arabic":
-            logger.info("Processing Arabic document with Mistral AI", document_id=request.document_id)
+            logger.info("Processing Arabic document with Tesseract OCR", document_id=request.document_id)
             
-            if mistral_service.is_available():
+            if arabic_ocr_service.is_available():
                 try:
-                    # Use Mistral AI for Arabic OCR and translation
-                    arabic_text, english_translation = await mistral_service.process_arabic_document(file_content)
+                    # Use Tesseract for Arabic OCR and Google Translate for translation
+                    arabic_text, english_translation = await arabic_ocr_service.process_arabic_document(file_content)
                     
                     if arabic_text:
                         # Store both Arabic and English text
@@ -566,7 +566,7 @@ async def process_document(
                     extracted_text = extract_text_from_document(file_content, content_type)
                     document.ocr_text_original = extracted_text
             else:
-                logger.warning("Mistral AI not available, using regular OCR for Arabic document", 
+                logger.warning("Arabic OCR service not available, using regular OCR for Arabic document", 
                              document_id=request.document_id)
                 # Fallback to regular OCR
                 extracted_text = extract_text_from_document(file_content, content_type)

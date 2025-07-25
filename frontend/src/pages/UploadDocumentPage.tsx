@@ -523,7 +523,7 @@ export default function UploadDocumentPage() {
               </Label>
               <div className="flex justify-center">
                 <HCaptcha
-                  sitekey="10000000-ffff-ffff-ffff-000000000001" // Test site key - replace with real one
+                  sitekey="50b2fe65-b00b-4b9e-ad62-3ba471098be2" // Production site key for haqnow.com
                   onVerify={setCaptchaToken}
                   onError={() => setCaptchaToken(null)}
                   onExpire={() => setCaptchaToken(null)}

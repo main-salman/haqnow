@@ -431,7 +431,7 @@ export default function App() {
       <footer className="border-t border-border bg-muted/10 py-6">
         <div className="container mx-auto px-4 flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            © 2024 {t('navigation.brand')}. {t('footer.rights')}
+            © {new Date().getFullYear()} {t('navigation.brand')}. {t('footer.rights')}
           </p>
           <Version />
         </div>

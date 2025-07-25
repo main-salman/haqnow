@@ -107,13 +107,17 @@ def check_upload_rate_limit(request: Request) -> None:
     remaining_time = rate_limiter.check_rate_limit(client_id, "upload")
     
     if remaining_time is not None:
+        minutes = int(remaining_time // 60)
+        seconds = int(remaining_time % 60)
+        
+        if minutes > 0:
+            time_text = f"{minutes} minute{'s' if minutes != 1 else ''} and {seconds} second{'s' if seconds != 1 else ''}"
+        else:
+            time_text = f"{seconds} second{'s' if seconds != 1 else ''}"
+        
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail={
-                "message": "Upload rate limit exceeded. Please wait before uploading another document.",
-                "remaining_time": int(remaining_time),
-                "timeout_seconds": UPLOAD_TIMEOUT_SECONDS
-            }
+            detail=f"Please wait {time_text} before uploading another document. This helps us maintain service quality for everyone."
         )
 
 def check_download_rate_limit(request: Request) -> None:
@@ -122,13 +126,17 @@ def check_download_rate_limit(request: Request) -> None:
     remaining_time = rate_limiter.check_rate_limit(client_id, "download")
     
     if remaining_time is not None:
+        minutes = int(remaining_time // 60)
+        seconds = int(remaining_time % 60)
+        
+        if minutes > 0:
+            time_text = f"{minutes} minute{'s' if minutes != 1 else ''} and {seconds} second{'s' if seconds != 1 else ''}"
+        else:
+            time_text = f"{seconds} second{'s' if seconds != 1 else ''}"
+        
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail={
-                "message": "Download rate limit exceeded. Please wait before downloading another document.",
-                "remaining_time": int(remaining_time),
-                "timeout_seconds": UPLOAD_TIMEOUT_SECONDS
-            }
+            detail=f"Please wait {time_text} before downloading another document. This helps us prevent server overload."
         )
 
 def record_upload(request: Request) -> None:

@@ -62,5 +62,8 @@ qrcode[pil]==8.0
 # Mistral AI for Arabic OCR and Translation
 mistralai==1.0.1
 
+# Arabic OCR and Translation
+googletrans==4.0.0rc1
+
 # Development dependencies
 ipykernel==6.29.5

@@ -19,7 +19,9 @@ import {
   AlertCircle,
   Loader2,
   Download,
-  Upload
+  Upload,
+  Plus,
+  HelpCircle
 } from "lucide-react";
 import { toast } from "sonner";
 import { supportedLanguages } from "../i18n";
@@ -56,6 +58,12 @@ export default function AdminTranslationsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [editedTranslations, setEditedTranslations] = useState<Record<string, string>>({});
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // New FAQ state
+  const [showAddFAQDialog, setShowAddFAQDialog] = useState(false);
+  const [newFAQQuestion, setNewFAQQuestion] = useState('');
+  const [newFAQAnswer, setNewFAQAnswer] = useState('');
+  const [isAddingFAQ, setIsAddingFAQ] = useState(false);
 
   // Fetch translations
   const fetchTranslations = async () => {
@@ -151,6 +159,87 @@ export default function AdminTranslationsPage() {
   };
 
   // Copy section as JSON for easy editing
+  // Add new FAQ function
+  const addNewFAQ = async () => {
+    if (!newFAQQuestion.trim() || !newFAQAnswer.trim()) {
+      toast.error('Please enter both question and answer');
+      return;
+    }
+
+    setIsAddingFAQ(true);
+    try {
+      // Find the next available FAQ number
+      const disclaimerTranslations = translations.filter(t => 
+        t.section === 'disclaimer' && 
+        t.language === selectedLanguage &&
+        (t.key.startsWith('customFaqQ_') || t.key.startsWith('faqQ'))
+      );
+      
+      // Extract existing FAQ numbers
+      const existingNumbers = disclaimerTranslations
+        .map(t => {
+          const match = t.key.match(/(?:custom)?[Ff]aq[QA]_?(\d+)/);
+          return match ? parseInt(match[1]) : 0;
+        })
+        .filter(n => n > 0);
+      
+      const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
+      
+      // Create new FAQ entries
+      const questionKey = `customFaqQ_${nextNumber}`;
+      const answerKey = `customFaqA_${nextNumber}`;
+      
+      const newTranslations = [
+        {
+          key: questionKey,
+          language: selectedLanguage,
+          value: newFAQQuestion.trim(),
+          section: 'disclaimer',
+          updated_by: 'admin'
+        },
+        {
+          key: answerKey,
+          language: selectedLanguage,
+          value: newFAQAnswer.trim(),
+          section: 'disclaimer',
+          updated_by: 'admin'
+        }
+      ];
+
+      // Save to server
+      for (const translation of newTranslations) {
+        const response = await fetch('/api/translations/admin/translate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`
+          },
+          body: JSON.stringify(translation)
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to save new FAQ');
+        }
+      }
+
+      toast.success('New FAQ added successfully!');
+      
+      // Reset form and close dialog
+      setNewFAQQuestion('');
+      setNewFAQAnswer('');
+      setShowAddFAQDialog(false);
+      
+      // Refresh translations
+      await fetchTranslations();
+      
+    } catch (error) {
+      console.error('Error adding new FAQ:', error);
+      toast.error('Failed to add new FAQ');
+    } finally {
+      setIsAddingFAQ(false);
+    }
+  };
+
   const copyAsJSON = () => {
     const filtered = translations.filter(t => 
       t.language === selectedLanguage && t.section === selectedSection
@@ -320,6 +409,12 @@ export default function AdminTranslationsPage() {
                 <Copy className="mr-2 h-4 w-4" />
                 Copy as JSON
               </Button>
+              {selectedSection === 'disclaimer' && (
+                <Button variant="outline" onClick={() => setShowAddFAQDialog(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add FAQ
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -386,6 +481,72 @@ export default function AdminTranslationsPage() {
           </CardContent>
         </Card>
       </main>
+
+      {/* Add FAQ Dialog */}
+      {showAddFAQDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-2xl mx-4">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <HelpCircle className="mr-2 h-5 w-5" />
+                Add New FAQ
+              </CardTitle>
+              <CardDescription>
+                Add a new frequently asked question to the disclaimer section
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Question</label>
+                <Textarea
+                  placeholder="Enter the FAQ question..."
+                  value={newFAQQuestion}
+                  onChange={(e) => setNewFAQQuestion(e.target.value)}
+                  className="min-h-[80px]"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Answer</label>
+                <Textarea
+                  placeholder="Enter the FAQ answer..."
+                  value={newFAQAnswer}
+                  onChange={(e) => setNewFAQAnswer(e.target.value)}
+                  className="min-h-[120px]"
+                />
+              </div>
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setShowAddFAQDialog(false);
+                    setNewFAQQuestion('');
+                    setNewFAQAnswer('');
+                  }}
+                  disabled={isAddingFAQ}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={addNewFAQ}
+                  disabled={isAddingFAQ || !newFAQQuestion.trim() || !newFAQAnswer.trim()}
+                >
+                  {isAddingFAQ ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Adding...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add FAQ
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 } 
