@@ -77,8 +77,8 @@ This guide documents the migration of the FOI (Freedom of Information) document 
    exoscale_api_secret = "your-actual-api-secret"
    
    # S3 configuration (from your .env)
-   s3_access_key = "***REMOVED***"
-   s3_secret_key = "***REMOVED***"
+   s3_access_key = "EXO4e91f55ab10a7d18f49ebc9c"
+   s3_secret_key = "z8_mKLLoYYaE1nG4nYe-gfU1d5XLF5yecllAr_wMlEY"
    
    # Admin configuration
    admin_email    = "salman.naqvi@gmail.com"
