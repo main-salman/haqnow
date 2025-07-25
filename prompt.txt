@@ -80,8 +80,6 @@ Let me know your answers or if you want to discuss any of these in more detail!
 1. no 2. keep it to approval and banning tags only 3. only approve/reject 4. all of these - but description should be options 5. @countriesData.ts 6. all 7. tesseract 8. no 9. free-form 10. there are no existing documents 11. embedded pdf viewer 12. both should be rate limited, one document every 2 min, there should be a visibile warning when rate limit is reached 13. use any existing library to do this - anything that's simple to implement 14. one document per ip per 2 min 15. no 16. any type of document should be allowed - max 100 mb 17. no 18. upon approval 19. yes, email notification, email specified in .env file 20. english only to start - add french, german, spanish if it's easy - add whichever languages are easy.
 
 
-How can we contact the site administrators? How can we report bugs or request features?
-You can connect with us in multiple ways. Connect via LinkedIn https://www.linkedin.com/in/salmannaqvi/ or send us an anonymous message via https://salmannaqvi.com/centered-heading-with-contact-form/ (you can provide a fake name/email address if you like). Contact info is also listed on https://www.haqnow.com/about page.
 
 
 

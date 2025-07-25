@@ -24,10 +24,11 @@ admin_password = "your-secure-admin-password"
 # JWT secret key (generate a secure random string)
 jwt_secret_key = "your-jwt-secret-key-change-this-in-production"
 
-# MySQL configuration (will be automatically created by Terraform)
-mysql_user     = "foi_user"
-mysql_password = "your-secure-mysql-password"
-mysql_database = "foi_archive"
+# EXOscale MySQL Database Configuration
+mysql_plan     = "hobbyist-2"              # Plan: hobbyist-2, startup-4, business-4, premium-4, etc.
+mysql_user     = "foi_user"                # Database username (will be created automatically)
+mysql_password = "your-secure-mysql-password"  # Database password (generate a secure password)
+mysql_database = "foi_archive"             # Database name (will be created automatically)
 
 # SendGrid configuration for email notifications
 sendgrid_api_key = "your-sendgrid-api-key"

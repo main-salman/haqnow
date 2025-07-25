@@ -109,4 +109,29 @@ variable "custom_domain" {
   description = "Custom domain for the application (optional)"
   type        = string
   default     = ""
+}
+
+# MySQL Database Configuration
+variable "mysql_plan" {
+  description = "EXOscale DBaaS MySQL plan (hobbyist-2, startup-4, business-4, premium-8, etc.)"
+  type        = string
+  default     = "hobbyist-2"
+}
+
+variable "mysql_user" {
+  description = "MySQL database username"
+  type        = string
+  default     = "foi_user"
+}
+
+variable "mysql_password" {
+  description = "MySQL database password"
+  type        = string
+  sensitive   = true
+}
+
+variable "mysql_database" {
+  description = "MySQL database name"
+  type        = string
+  default     = "foi_archive"
 } 

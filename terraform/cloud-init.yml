@@ -15,6 +15,9 @@ packages:
   - wget
   - unzip
   - mysql-server
+  - mysql-client
+  - python3
+  - python3-pip
 
 # Create foi user
 users:
@@ -31,56 +34,243 @@ runcmd:
   - usermod -aG docker ubuntu
   - usermod -aG docker foi
 
-  # Setup MySQL
+  # Setup MySQL (as fallback option)
   - systemctl enable mysql
   - systemctl start mysql
 
+  # Install Python dependencies for database management
+  - pip3 install pymysql requests
+
   # Create application directories
   - mkdir -p /opt/foi-archive
+  - mkdir -p /var/log/foi
   - chown foi:foi /opt/foi-archive
+  - chown foi:foi /var/log/foi
   - cd /opt/foi-archive
 
-  # Create environment file
+  # Create database configuration script
   - |
-    cat > /opt/foi-archive/.env << EOF
-    # Exoscale S3 Configuration
-    EXOSCALE_S3_ACCESS_KEY=${s3_access_key}
-    EXOSCALE_S3_SECRET_KEY=${s3_secret_key}
-    EXOSCALE_S3_ENDPOINT=${s3_endpoint}
-    EXOSCALE_S3_REGION=${s3_region}
-    EXOSCALE_BUCKET=${s3_bucket}
-    EXOSCALE_S3_PUBLIC_URL=https://${s3_endpoint}/${s3_bucket}
+    cat > /opt/foi-archive/configure_database.py << 'EOF'
+    #!/usr/bin/env python3
+    """
+    Database Configuration Script for HaqNow.com
+    Automatically detects and configures the best available database option:
+    1. EXOscale DBaaS (preferred)
+    2. Local MySQL (fallback)
+    """
+    
+    import os
+    import sys
+    import time
+    import pymysql
+    import subprocess
+    
+    def log(message):
+        print(f"[DB-CONFIG] {message}")
+    
+    def test_exoscale_database():
+        """Test EXOscale database connectivity."""
+        try:
+            exoscale_host = "${mysql_host}"
+            if not exoscale_host or exoscale_host == "YOUR_EXOSCALE_DB_HOST":
+                log("EXOscale database not configured")
+                return False
+                
+            # Parse the MySQL URI to get connection details
+            if exoscale_host.startswith('mysql://'):
+                # Parse mysql://user:password@host:port/database
+                from urllib.parse import urlparse
+                parsed = urlparse(exoscale_host)
+                host = parsed.hostname
+                port = parsed.port or 3306
+                user = parsed.username
+                password = parsed.password
+                database = parsed.path.lstrip('/')
+            else:
+                # Direct host configuration
+                host = exoscale_host
+                port = 3306
+                user = "${mysql_user}"
+                password = "${mysql_password}"
+                database = "${mysql_database}"
+            
+            log(f"Testing EXOscale database connection to {host}:{port}")
+            
+            connection = pymysql.connect(
+                host=host,
+                port=port,
+                user=user,
+                password=password,
+                database=database,
+                connect_timeout=10
+            )
+            cursor = connection.cursor()
+            cursor.execute("SELECT 1")
+            result = cursor.fetchone()
+            cursor.close()
+            connection.close()
+            
+            if result and result[0] == 1:
+                log("✅ EXOscale database connection successful")
+                return {
+                    'type': 'exoscale',
+                    'host': host,
+                    'port': port,
+                    'user': user,
+                    'password': password,
+                    'database': database
+                }
+            else:
+                log("❌ EXOscale database connection failed")
+                return False
+                
+        except Exception as e:
+            log(f"❌ EXOscale database connection error: {e}")
+            return False
+    
+    def setup_local_mysql():
+        """Setup local MySQL as fallback."""
+        try:
+            log("Setting up local MySQL as fallback...")
+            
+            # MySQL root password setup
+            mysql_root_password = "***REMOVED***"
+            mysql_user = "foi_user"
+            mysql_password = "***REMOVED***"
+            mysql_database = "foi_archive"
+            
+            # Set MySQL root password
+            subprocess.run([
+                "mysql", "-e", 
+                f"ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '{mysql_root_password}';"
+            ], check=True)
+            
+            # Create database and user
+            mysql_commands = [
+                f"CREATE DATABASE IF NOT EXISTS {mysql_database};",
+                f"CREATE USER IF NOT EXISTS '{mysql_user}'@'localhost' IDENTIFIED BY '{mysql_password}';",
+                f"GRANT ALL PRIVILEGES ON {mysql_database}.* TO '{mysql_user}'@'localhost';",
+                "FLUSH PRIVILEGES;"
+            ]
+            
+            for cmd in mysql_commands:
+                subprocess.run([
+                    "mysql", "-u", "root", f"-p{mysql_root_password}", "-e", cmd
+                ], check=True)
+            
+            # Test the connection
+            connection = pymysql.connect(
+                host='localhost',
+                port=3306,
+                user=mysql_user,
+                password=mysql_password,
+                database=mysql_database
+            )
+            cursor = connection.cursor()
+            cursor.execute("SELECT 1")
+            result = cursor.fetchone()
+            cursor.close()
+            connection.close()
+            
+            if result and result[0] == 1:
+                log("✅ Local MySQL setup successful")
+                return {
+                    'type': 'local',
+                    'host': 'localhost',
+                    'port': 3306,
+                    'user': mysql_user,
+                    'password': mysql_password,
+                    'database': mysql_database
+                }
+            else:
+                log("❌ Local MySQL setup failed")
+                return False
+                
+        except Exception as e:
+            log(f"❌ Local MySQL setup error: {e}")
+            return False
+    
+    def create_env_file(db_config):
+        """Create .env file with the appropriate database configuration."""
+        env_content = f'''# Exoscale S3 Configuration
+EXOSCALE_S3_ACCESS_KEY=${s3_access_key}
+EXOSCALE_S3_SECRET_KEY=${s3_secret_key}
+EXOSCALE_S3_ENDPOINT=${s3_endpoint}
+EXOSCALE_S3_REGION=${s3_region}
+EXOSCALE_BUCKET=${s3_bucket}
+EXOSCALE_S3_PUBLIC_URL=https://${s3_endpoint}/${s3_bucket}
 
-    # Admin Configuration
-    admin_email=${admin_email}
-    admin_password=${admin_password}
+# Admin Configuration
+admin_email=${admin_email}
+admin_password=${admin_password}
 
-    # Rate limiting
-    UPLOAD_TIMEOUT_SECONDS=120
+# Rate limiting
+UPLOAD_TIMEOUT_SECONDS=120
 
-    # JWT Configuration
-    JWT_SECRET_KEY=${jwt_secret}
+# JWT Configuration
+JWT_SECRET_KEY=${jwt_secret}
 
-    # Database - Local MySQL
-    MYSQL_HOST=localhost
-    MYSQL_PORT=3306
-    MYSQL_USER=foi_user
-    MYSQL_PASSWORD=***REMOVED***
-    MYSQL_DATABASE=foi_archive
-    DATABASE_URL=mysql+pymysql://foi_user:***REMOVED***@localhost:3306/foi_archive
+# Database Configuration - {db_config['type'].upper()}
+MYSQL_HOST={db_config['host']}
+MYSQL_PORT={db_config['port']}
+MYSQL_USER={db_config['user']}
+MYSQL_PASSWORD={db_config['password']}
+MYSQL_DATABASE={db_config['database']}
+DATABASE_URL=mysql+pymysql://{db_config['user']}:{db_config['password']}@{db_config['host']}:{db_config['port']}/{db_config['database']}
+DATABASE_TYPE={db_config['type']}
 
-    # Email Configuration
-    SENDGRID_API_KEY=${sendgrid_api_key}
-    FROM_EMAIL=noreply@fadih.org
+# Email Configuration
+SENDGRID_API_KEY=${sendgrid_api_key}
+FROM_EMAIL=noreply@fadih.org
 
-    # Redis Configuration
-    REDIS_URL=redis://localhost:6379
+# Redis Configuration
+REDIS_URL=redis://localhost:6379
 
-    # Application Configuration
-    HOST=0.0.0.0
-    PORT=8000
-    DEBUG=false
+# Application Configuration
+HOST=0.0.0.0
+PORT=8000
+DEBUG=false
+'''
+        
+        with open('/opt/foi-archive/.env', 'w') as f:
+            f.write(env_content)
+        
+        log(f"✅ Environment file created with {db_config['type']} database configuration")
+    
+    def main():
+        log("🚀 Starting database configuration...")
+        
+        # Try EXOscale database first
+        db_config = test_exoscale_database()
+        
+        if not db_config:
+            log("🔄 Falling back to local MySQL...")
+            db_config = setup_local_mysql()
+        
+        if not db_config:
+            log("❌ No database configuration succeeded")
+            sys.exit(1)
+        
+        # Create environment file
+        create_env_file(db_config)
+        
+        log(f"🎉 Database configuration completed using {db_config['type']} database")
+        
+        # Create status file
+        with open('/opt/foi-archive/.db_status', 'w') as f:
+            f.write(f"DATABASE_TYPE={db_config['type']}\n")
+            f.write(f"DATABASE_HOST={db_config['host']}\n")
+            f.write(f"CONFIGURED_AT={time.time()}\n")
+    
+    if __name__ == "__main__":
+        main()
     EOF
+
+  # Make the database configuration script executable
+  - chmod +x /opt/foi-archive/configure_database.py
+
+  # Run database configuration
+  - cd /opt/foi-archive && python3 configure_database.py
 
   # Create Docker Compose file
   - |
@@ -148,24 +338,18 @@ runcmd:
         build-essential \
         && rm -rf /var/lib/apt/lists/*
 
-    # Copy requirements and install Python dependencies
+    # Install Python dependencies
     COPY requirements.txt .
     RUN pip install --no-cache-dir -r requirements.txt
 
-    # Download spaCy model
-    RUN python -m spacy download en_core_web_sm
-
     # Copy application code
     COPY . .
-
-    # Create log directory
-    RUN mkdir -p /var/log/foi
 
     # Expose port
     EXPOSE 8000
 
     # Start application
-    CMD ["python", "main.py"]
+    CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
     EOF
 
   # Create frontend Dockerfile
@@ -178,24 +362,22 @@ runcmd:
 
     # Copy package files
     COPY package*.json ./
-
-    # Install dependencies
     RUN npm ci
 
     # Copy source code
     COPY . .
 
-    # Build the application
+    # Build application
     RUN npm run build
 
     # Expose port
     EXPOSE 3000
 
     # Start application
-    CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "3000"]
+    CMD ["npm", "start"]
     EOF
 
-  # Create nginx configuration
+  # Setup Nginx
   - |
     cat > /etc/nginx/sites-available/foi-archive << 'EOF'
     server {
@@ -234,6 +416,11 @@ runcmd:
         location /health {
             proxy_pass http://localhost:8000/health;
         }
+
+        # Database status endpoint
+        location /db-status {
+            alias /opt/foi-archive/.db_status;
+        }
     }
     EOF
 
@@ -247,14 +434,60 @@ runcmd:
   # Set permissions
   - chown -R foi:foi /opt/foi-archive
   - chmod 600 /opt/foi-archive/.env
+  - chmod 644 /opt/foi-archive/.db_status
+
+  # Create database management scripts
+  - |
+    cat > /opt/foi-archive/check_database.py << 'EOF'
+    #!/usr/bin/env python3
+    """Database health check script."""
+    import os
+    import sys
+    import pymysql
+    from urllib.parse import urlparse
+    
+    def check_database():
+        try:
+            # Read database config from environment
+            db_url = os.getenv('DATABASE_URL')
+            if not db_url:
+                return False
+                
+            parsed = urlparse(db_url)
+            connection = pymysql.connect(
+                host=parsed.hostname,
+                port=parsed.port or 3306,
+                user=parsed.username,
+                password=parsed.password,
+                database=parsed.path.lstrip('/')
+            )
+            cursor = connection.cursor()
+            cursor.execute("SELECT COUNT(*) FROM documents")
+            result = cursor.fetchone()
+            cursor.close()
+            connection.close()
+            return True
+        except:
+            return False
+    
+    if __name__ == "__main__":
+        if check_database():
+            print("✅ Database connection OK")
+            sys.exit(0)
+        else:
+            print("❌ Database connection failed")
+            sys.exit(1)
+    EOF
+
+  - chmod +x /opt/foi-archive/check_database.py
 
   # Create systemd service for the application
   - |
     cat > /etc/systemd/system/foi-archive.service << 'EOF'
     [Unit]
-    Description=Fadih.org Application
-    After=docker.service mysql.service
-    Requires=docker.service mysql.service
+    Description=HaqNow.com Application
+    After=docker.service network.target
+    Requires=docker.service
 
     [Service]
     Type=oneshot
@@ -264,7 +497,8 @@ runcmd:
     Group=foi
     ExecStart=/usr/bin/docker-compose up -d
     ExecStop=/usr/bin/docker-compose down
-    TimeoutStartSec=0
+    TimeoutStartSec=300
+    Restart=on-failure
 
     [Install]
     WantedBy=multi-user.target
@@ -273,23 +507,60 @@ runcmd:
   - systemctl daemon-reload
   - systemctl enable foi-archive
 
+  # Create a status report
+  - |
+    cat > /opt/foi-archive/deployment_status.txt << 'EOF'
+    HaqNow.com Server Deployment Status
+    ==================================
+    
+    ✅ Server configuration completed
+    ✅ Docker and Docker Compose installed
+    ✅ Nginx configured and running
+    ✅ Database configuration completed
+    ✅ Application service configured
+    
+    Next Steps:
+    1. Clone your application repository to /opt/foi-archive
+    2. Verify database connectivity: python3 /opt/foi-archive/check_database.py
+    3. Start the application: sudo systemctl start foi-archive
+    4. Check application logs: sudo journalctl -u foi-archive -f
+    
+    Database Information:
+    - Check database type: cat /opt/foi-archive/.db_status
+    - Database health check available at: http://your-server-ip/db-status
+    
+    Application URLs:
+    - Frontend: http://your-server-ip/
+    - Backend API: http://your-server-ip/api/
+    - Health check: http://your-server-ip/health
+    - Database status: http://your-server-ip/db-status
+    EOF
+
 # Create log files
 write_files:
   - path: /var/log/foi/application.log
     content: ""
     owner: foi:foi
     permissions: '0644'
+  - path: /var/log/foi/database.log
+    content: ""
+    owner: foi:foi
+    permissions: '0644'
 
 # Final message
 final_message: |
-  image.png server setup complete!
+  🎉 HaqNow.com server setup complete!
   
-  To deploy your application:
-  1. Clone your repository to /opt/foi-archive
-  2. Update the .env file with your actual credentials
-  3. Start the application: sudo systemctl start foi-archive
+  Database configuration has been automatically detected and configured.
+  
+  To check the deployment status:
+  cat /opt/foi-archive/deployment_status.txt
+  
+  To verify database configuration:
+  cat /opt/foi-archive/.db_status
   
   The application will be available at:
   - Frontend: http://your-server-ip/
   - Backend API: http://your-server-ip/api/
-  - Health check: http://your-server-ip/health 
+  - Health check: http://your-server-ip/health
+  - Database status: http://your-server-ip/db-status 

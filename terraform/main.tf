@@ -2,7 +2,7 @@ terraform {
   required_providers {
     exoscale = {
       source  = "exoscale/exoscale"
-      version = "~> 0.62"
+      version = "~> 0.64"
     }
   }
   required_version = ">= 1.0"
@@ -14,10 +14,32 @@ provider "exoscale" {
   secret = var.exoscale_secret_key
 }
 
+# EXOscale Database as a Service (DBaaS) - MySQL
+resource "exoscale_dbaas" "foi_mysql" {
+  zone = var.zone
+  name = "${var.project_name}-mysql-${var.environment}"
+  type = "mysql"
+  plan = var.mysql_plan
+  
+  mysql {
+    admin_username   = var.mysql_user
+    admin_password   = var.mysql_password
+    ip_filter        = ["159.100.250.145/32"]  # Allow access from our server
+    backup_schedule  = "02:00"  # Daily backup at 2 AM UTC
+  }
+}
+
+# Data source to get database connection URI
+data "exoscale_database_uri" "foi_mysql_uri" {
+  name = exoscale_dbaas.foi_mysql.name
+  zone = var.zone
+  type = "mysql"
+}
+
 # Security Group for web traffic
 resource "exoscale_security_group" "foi_web" {
-  name        = "${var.project_name}-web-${var.environment}-v2"
-  description = "Security group for Fadih.org web traffic"
+  name        = "${var.project_name}-web-${var.environment}-v3"
+  description = "Security group for HaqNow.com web traffic"
   
   lifecycle {
     create_before_destroy = true
@@ -77,23 +99,29 @@ resource "exoscale_compute_instance" "foi_app" {
   security_group_ids = [exoscale_security_group.foi_web.id]
 
   user_data = base64encode(templatefile("${path.module}/cloud-init.yml", {
-    project_name     = var.project_name
-    environment      = var.environment
-    s3_bucket        = var.s3_bucket_name
-    s3_access_key    = var.s3_access_key
-    s3_secret_key    = var.s3_secret_key
-    s3_endpoint      = var.s3_endpoint
-    s3_region        = var.s3_region
-    admin_email      = var.admin_email
-    admin_password   = var.admin_password
-    jwt_secret       = var.jwt_secret_key
-    sendgrid_api_key = var.sendgrid_api_key
+    project_name       = var.project_name
+    environment        = var.environment
+    s3_bucket          = var.s3_bucket_name
+    s3_access_key      = var.s3_access_key
+    s3_secret_key      = var.s3_secret_key
+    s3_endpoint        = var.s3_endpoint
+    s3_region          = var.s3_region
+    admin_email        = var.admin_email
+    admin_password     = var.admin_password
+    jwt_secret         = var.jwt_secret_key
+    sendgrid_api_key   = var.sendgrid_api_key
+         mysql_host         = data.exoscale_database_uri.foi_mysql_uri.uri
+    mysql_user         = var.mysql_user
+    mysql_password     = var.mysql_password
+    mysql_database     = var.mysql_database
   }))
+  
+
 }
 
 # Outputs
 output "instance_ip" {
-  description = "Public IP of the Fadih.org instance"
+  description = "Public IP of the HaqNow.com instance"
   value       = exoscale_compute_instance.foi_app.public_ip_address
 }
 
@@ -102,12 +130,24 @@ output "instance_id" {
   value       = exoscale_compute_instance.foi_app.id
 }
 
+output "database_uri" {
+  description = "Database connection URI"
+  value       = data.exoscale_database_uri.foi_mysql_uri.uri
+  sensitive   = true
+}
+
+output "database_host" {
+  description = "Database host"
+  value       = data.exoscale_database_uri.foi_mysql_uri.uri
+  sensitive   = true
+}
+
 output "ssh_command" {
   description = "SSH command to connect to the instance"
-  value       = "ssh ubuntu@${exoscale_compute_instance.foi_app.public_ip_address}"
+  value       = "ssh root@${exoscale_compute_instance.foi_app.public_ip_address}"
 }
 
 output "application_url" {
-  description = "URL to access the Fadih.org application"
+  description = "URL to access the HaqNow.com application"
   value       = "http://${exoscale_compute_instance.foi_app.public_ip_address}"
 } 

@@ -279,8 +279,8 @@ export default function App() {
         <div className="container mx-auto">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="h-8 w-8 bg-primary rounded-md flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">F</span>
+              <div className="h-8 w-8 rounded-md flex items-center justify-center">
+                <img src="/favicon.svg" alt="HaqNow.com" className="h-8 w-8" />
               </div>
               <h1 className="text-xl md:text-2xl font-bold tracking-tight">
                 {t('navigation.brand')}
