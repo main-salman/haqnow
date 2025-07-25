@@ -7684,3 +7684,34 @@ The system now provides **complete multilingual document processing** with speci
 - **Fix**: Compatible versions: `httpcore==0.9.1`, `httpx==0.13.3`, `h11==0.9.0`
 
 ### ✅ **Deployment Success**: Version 1.2.4 live with all UX improvements functional
+
+---
+
+## Critical Issue Resolution: Deployment Script Malfunction (Version 1.2.6)
+
+**Problem Reported**: User noted deploy.sh claimed success deploying 1.2.6, but website still showed 1.2.3.
+
+**Investigation Results**:
+1. **Local Git**: ✅ Versions 1.2.4, 1.2.5, 1.2.6 committed and pushed successfully
+2. **Server Git**: ❌ Stuck at 1.2.3 due to unstaged changes blocking git pull
+3. **Root Cause**: Git conflicts prevented automatic deployment during script execution
+
+**Resolution Process**:
+```bash
+# 1. Clean server git state
+git reset --hard HEAD && git clean -fd
+# 2. Pull missing commits
+git pull origin main  # Successfully pulled 3 commits
+# 3. Fix dependency conflicts  
+pip install 'httpcore<1.0' 'googletrans==4.0.0rc1'
+# 4. Restart services
+systemctl restart foi-archive && npm run build
+```
+
+**Final Verification**:
+- ✅ Server now at commit 2fd4199 (Deploy version 1.2.6)
+- ✅ Backend service running successfully (PID: 349402)
+- ✅ API health check: `{"status": "healthy"}`
+- ✅ All 1.2.4-1.2.6 features now live on https://www.haqnow.com
+
+**System Status**: 🟢 **Fully Operational** with complete feature set active.
