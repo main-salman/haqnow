@@ -8167,3 +8167,26 @@ Multiple credentials were exposed in codebase through GitHub security scanning:
 
 **SOLUTION FOR EXISTING DOCUMENTS**:
 Upload new French documents to test the fix OR existing documents may auto-reprocess on next admin action
+
+### 2025-01-17 - Fixed Translation Download Buttons for Non-Arabic Languages
+
+**ISSUE**: 
+- Arabic documents showed proper download buttons: "Original PDF", "English Translation", "Arabic Text"  
+- Non-Arabic documents (French, German, etc.) stuck showing "English translation processing..." indefinitely
+- Translations were actually working (visible in tags) but download buttons weren't appearing
+
+**ROOT CAUSE**:
+In `backend/app/apis/search/__init__.py`, line 237 hardcoded `has_english_translation = False` for all non-Arabic documents, regardless of whether they actually had English translations available.
+
+**SOLUTION APPLIED ✅**:
+1. **Fixed Logic**: Changed hardcoded `False` to `has_english_translation = bool(doc_dict.get('ocr_text_english'))`
+2. **Added Consistent Handling**: Non-Arabic multilingual documents now follow same translation logic as Arabic documents
+3. **Enhanced Display Logic**: For non-English documents, prioritize English translation in search results
+
+**CODE CHANGES**:
+- Updated search endpoint to properly check `ocr_text_english` field for all languages
+- Added proper OCR text prioritization for non-Arabic multilingual documents
+- Ensures all languages (Arabic, French, German, etc.) handled consistently
+
+**EXPECTED RESULT**: 
+French, German, and other non-Arabic documents should now show proper download buttons instead of processing message when translations are ready.

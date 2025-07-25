@@ -232,9 +232,17 @@ async def search_documents(
                     doc_dict['ocr_text'] = doc_dict.get('ocr_text_original', doc_dict.get('ocr_text', ''))
                 # else keep the existing ocr_text (fallback)
             else:
-                # For non-Arabic documents, no separate language versions
+                # For non-Arabic multilingual documents, check for translations
                 doc_dict['has_arabic_text'] = False
-                doc_dict['has_english_translation'] = False
+                doc_dict['has_english_translation'] = has_english_translation
+                
+                # For non-English documents, prioritize English translation in search results
+                if document_language != 'english' and has_english_translation:
+                    doc_dict['ocr_text'] = doc_dict.get('ocr_text_english', doc_dict.get('ocr_text', ''))
+                elif document_language != 'english' and doc_dict.get('ocr_text_original'):
+                    # If no English translation but has original text, show it
+                    doc_dict['ocr_text'] = doc_dict.get('ocr_text_original', doc_dict.get('ocr_text', ''))
+                # else keep the existing ocr_text (fallback for English documents)
             
             documents.append(SearchDocumentResult(**doc_dict))
         
