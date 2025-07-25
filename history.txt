@@ -8120,3 +8120,40 @@ Multiple credentials were exposed in codebase through GitHub security scanning:
 - ✅ **Clean State**: Removes leftover files from previous operations
 
 **CURRENT STATUS**: Deploy script now bulletproof against git synchronization issues
+
+## 25. French Translation Download Options Issue (July 25, 2025)
+
+**ISSUE**: French documents not showing English translation download options like Arabic documents
+
+**ROOT CAUSE**: Missing Tesseract language packs for non-Arabic languages
+- Tesseract OCR couldn't find French language data (`fra.traineddata`)
+- Error: `Failed loading language 'fra' Tesseract couldn't load any languages!`
+- Multilingual OCR processing failed, leaving documents without English translations
+
+**INVESTIGATION**:
+1. ✅ **Download API**: Backend supports English translation downloads for multilingual documents
+2. ✅ **Frontend Logic**: Shows download options when `ocr_text_english` exists and differs from original
+3. ❌ **Language Packs**: Missing Tesseract language data for French, German, Spanish, etc.
+4. ❌ **Processing**: French documents failed OCR, have no `ocr_text_english` stored
+
+**RESOLUTION (COMPLETED ✅)**:
+1. **Installed Language Packs**: Added 16 Tesseract language packs:
+   ```bash
+   apt install tesseract-ocr-fra tesseract-ocr-deu tesseract-ocr-spa 
+   tesseract-ocr-rus tesseract-ocr-chi-sim tesseract-ocr-chi-tra
+   tesseract-ocr-jpn tesseract-ocr-kor tesseract-ocr-por tesseract-ocr-ita
+   tesseract-ocr-pol tesseract-ocr-tur tesseract-ocr-nld tesseract-ocr-vie
+   tesseract-ocr-tha tesseract-ocr-ukr
+   ```
+2. **Verified Installation**: French (`fra.traineddata`) and 18 other languages now available
+3. **Service Restart**: Restarted foi-archive service to load new language packs
+4. **Tested OCR**: Google Translate + Tesseract French OCR both working
+
+**CURRENT STATUS**:
+- ✅ **New French Documents**: Will get proper OCR + translation + download options
+- ✅ **19 Languages Available**: French, German, Spanish, Russian, Chinese, Japanese, etc.
+- ⚠️ **Existing Documents**: Need manual reprocessing to get translation downloads
+- ⚠️ **Document ID 42** (Libya French): Needs reprocessing to show English translation option
+
+**SOLUTION FOR EXISTING DOCUMENTS**:
+Upload new French documents OR admin can manually reprocess existing ones via admin panel
