@@ -366,50 +366,77 @@ async def process_document_internal(document_id: int, db: Session) -> dict | Non
         content_type = document.content_type.lower() if document.content_type else ""
         document_language = getattr(document, 'document_language', 'english')
         
-        # Special handling for Arabic documents
-        if document_language == "arabic":
-            logger.info("Processing Arabic document with Tesseract OCR", document_id=document_id)
+        # Import multilingual OCR service
+        from app.services.multilingual_ocr_service import multilingual_ocr_service
+        
+        # Check if document language is supported for multilingual processing
+        supported_languages = multilingual_ocr_service.get_supported_languages()
+        language_key = document_language.lower().replace(' ', '_').replace('(', '').replace(')', '')
+        
+        # Try to find language in supported languages (handle common variations)
+        language_mapping = {
+            'chinese': 'chinese_simplified',
+            'mandarin': 'chinese_simplified', 
+            'cantonese': 'chinese_traditional',
+            'farsi': 'persian',
+            'dari': 'persian',
+            'myanmar': 'myanmar',
+            'burmese': 'myanmar'
+        }
+        
+        if language_key in language_mapping:
+            language_key = language_mapping[language_key]
+        
+        if language_key in supported_languages and multilingual_ocr_service.is_available():
+            logger.info("Processing multilingual document with Tesseract OCR and Google Translate", 
+                       document_id=document_id, 
+                       language=document_language,
+                       language_key=language_key)
             
-            if arabic_ocr_service.is_available():
-                try:
-                    # Use Tesseract for Arabic OCR and Google Translate for translation
-                    arabic_text, english_translation = await arabic_ocr_service.process_arabic_document(file_content)
+            try:
+                # Use multilingual OCR service for supported languages
+                original_text, english_translation = await multilingual_ocr_service.process_multilingual_document(
+                    file_content, language_key
+                )
+                
+                if original_text:
+                    # Store both original language and English text
+                    document.ocr_text_original = original_text
+                    document.ocr_text_english = english_translation or ""
                     
-                    if arabic_text:
-                        # Store both Arabic and English text
-                        document.ocr_text_original = arabic_text
-                        document.ocr_text_english = english_translation or ""
-                        
-                        # Use English translation for search if available, otherwise Arabic
-                        extracted_text = english_translation if english_translation else arabic_text
-                        
-                        logger.info("Arabic document processed successfully",
-                                   document_id=document_id,
-                                   arabic_length=len(arabic_text),
-                                   english_length=len(english_translation) if english_translation else 0)
-                    else:
-                        logger.warning("No Arabic text extracted from document", document_id=document_id)
-                        # Fallback to regular OCR
-                        extracted_text = extract_text_from_document(file_content, content_type)
-                        document.ocr_text_original = extracted_text
-                        
-                except Exception as mistral_error:
-                    logger.error("Mistral AI processing failed, falling back to regular OCR", 
-                               document_id=document_id, error=str(mistral_error))
+                    # Use English translation for search if available, otherwise original text
+                    extracted_text = english_translation if english_translation else original_text
+                    
+                    logger.info("Multilingual document processed successfully",
+                               document_id=document_id,
+                               language=document_language,
+                               original_length=len(original_text),
+                               english_length=len(english_translation) if english_translation else 0)
+                else:
+                    logger.warning("No text extracted from multilingual document", 
+                                 document_id=document_id, 
+                                 language=document_language)
                     # Fallback to regular OCR
                     extracted_text = extract_text_from_document(file_content, content_type)
                     document.ocr_text_original = extracted_text
-            else:
-                logger.warning("Arabic OCR service not available, using regular OCR for Arabic document", 
-                             document_id=document_id)
+                    
+            except Exception as e:
+                logger.error("Error processing multilingual document", 
+                           document_id=document_id, 
+                           language=document_language,
+                           error=str(e))
                 # Fallback to regular OCR
                 extracted_text = extract_text_from_document(file_content, content_type)
                 document.ocr_text_original = extracted_text
         else:
-            # Regular processing for non-Arabic documents
+            # Regular processing for unsupported languages or when service unavailable
+            logger.info("Using regular OCR for unsupported language or service unavailable",
+                       document_id=document_id,
+                       language=document_language,
+                       service_available=multilingual_ocr_service.is_available())
             extracted_text = extract_text_from_document(file_content, content_type)
             document.ocr_text_original = extracted_text
-            document.ocr_text_english = extracted_text  # Same as original for non-Arabic
+            document.ocr_text_english = extracted_text  # Same as original for unsupported languages
         
         if not extracted_text:
             logger.warning("No text extracted from document during internal processing", document_id=document_id)
@@ -532,50 +559,77 @@ async def process_document(
         content_type = document.content_type.lower() if document.content_type else ""
         document_language = getattr(document, 'document_language', 'english')
         
-        # Special handling for Arabic documents
-        if document_language == "arabic":
-            logger.info("Processing Arabic document with Tesseract OCR", document_id=request.document_id)
+        # Import multilingual OCR service
+        from app.services.multilingual_ocr_service import multilingual_ocr_service
+        
+        # Check if document language is supported for multilingual processing
+        supported_languages = multilingual_ocr_service.get_supported_languages()
+        language_key = document_language.lower().replace(' ', '_').replace('(', '').replace(')', '')
+        
+        # Try to find language in supported languages (handle common variations)
+        language_mapping = {
+            'chinese': 'chinese_simplified',
+            'mandarin': 'chinese_simplified', 
+            'cantonese': 'chinese_traditional',
+            'farsi': 'persian',
+            'dari': 'persian',
+            'myanmar': 'myanmar',
+            'burmese': 'myanmar'
+        }
+        
+        if language_key in language_mapping:
+            language_key = language_mapping[language_key]
+        
+        if language_key in supported_languages and multilingual_ocr_service.is_available():
+            logger.info("Processing multilingual document with Tesseract OCR and Google Translate", 
+                       document_id=request.document_id, 
+                       language=document_language,
+                       language_key=language_key)
             
-            if arabic_ocr_service.is_available():
-                try:
-                    # Use Tesseract for Arabic OCR and Google Translate for translation
-                    arabic_text, english_translation = await arabic_ocr_service.process_arabic_document(file_content)
+            try:
+                # Use multilingual OCR service for supported languages
+                original_text, english_translation = await multilingual_ocr_service.process_multilingual_document(
+                    file_content, language_key
+                )
+                
+                if original_text:
+                    # Store both original language and English text
+                    document.ocr_text_original = original_text
+                    document.ocr_text_english = english_translation or ""
                     
-                    if arabic_text:
-                        # Store both Arabic and English text
-                        document.ocr_text_original = arabic_text
-                        document.ocr_text_english = english_translation or ""
-                        
-                        # Use English translation for search if available, otherwise Arabic
-                        extracted_text = english_translation if english_translation else arabic_text
-                        
-                        logger.info("Arabic document processed successfully",
-                                   document_id=request.document_id,
-                                   arabic_length=len(arabic_text),
-                                   english_length=len(english_translation) if english_translation else 0)
-                    else:
-                        logger.warning("No Arabic text extracted from document", document_id=request.document_id)
-                        # Fallback to regular OCR
-                        extracted_text = extract_text_from_document(file_content, content_type)
-                        document.ocr_text_original = extracted_text
-                        
-                except Exception as mistral_error:
-                    logger.error("Mistral AI processing failed, falling back to regular OCR", 
-                               document_id=request.document_id, error=str(mistral_error))
+                    # Use English translation for search if available, otherwise original text
+                    extracted_text = english_translation if english_translation else original_text
+                    
+                    logger.info("Multilingual document processed successfully",
+                               document_id=request.document_id,
+                               language=document_language,
+                               original_length=len(original_text),
+                               english_length=len(english_translation) if english_translation else 0)
+                else:
+                    logger.warning("No text extracted from multilingual document", 
+                                 document_id=request.document_id, 
+                                 language=document_language)
                     # Fallback to regular OCR
                     extracted_text = extract_text_from_document(file_content, content_type)
                     document.ocr_text_original = extracted_text
-            else:
-                logger.warning("Arabic OCR service not available, using regular OCR for Arabic document", 
-                             document_id=request.document_id)
+                    
+            except Exception as e:
+                logger.error("Error processing multilingual document", 
+                           document_id=request.document_id, 
+                           language=document_language,
+                           error=str(e))
                 # Fallback to regular OCR
                 extracted_text = extract_text_from_document(file_content, content_type)
                 document.ocr_text_original = extracted_text
         else:
-            # Regular processing for non-Arabic documents
+            # Regular processing for unsupported languages or when service unavailable
+            logger.info("Using regular OCR for unsupported language or service unavailable",
+                       document_id=request.document_id,
+                       language=document_language,
+                       service_available=multilingual_ocr_service.is_available())
             extracted_text = extract_text_from_document(file_content, content_type)
             document.ocr_text_original = extracted_text
-            document.ocr_text_english = extracted_text  # Same as original for non-Arabic
+            document.ocr_text_english = extracted_text  # Same as original for unsupported languages
         
         if not extracted_text:
             logger.warning("No text extracted from document", document_id=request.document_id)
@@ -623,14 +677,13 @@ async def process_document(
         if generated_tags:
             search_text_parts.extend(generated_tags)
         
-        # For Arabic documents, include both original Arabic and English translation in search
-        if document_language == "arabic":
-            if hasattr(document, 'ocr_text_original') and document.ocr_text_original:
-                # Include original Arabic text for search
-                search_text_parts.append(document.ocr_text_original)
-            if hasattr(document, 'ocr_text_english') and document.ocr_text_english:
-                # Include English translation for search
-                search_text_parts.append(document.ocr_text_english)
+        # For multilingual documents, include both original language and English translation in search
+        if hasattr(document, 'ocr_text_original') and document.ocr_text_original:
+            # Include original language text for search
+            search_text_parts.append(document.ocr_text_original)
+        if hasattr(document, 'ocr_text_english') and document.ocr_text_english:
+            # Include English translation for search
+            search_text_parts.append(document.ocr_text_english)
         
         document.search_text = ' '.join(search_text_parts)
         

@@ -83,16 +83,86 @@ export default function UploadDocumentPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
-  // Available document languages
+  // Available document languages - comprehensive list for all supported OCR languages
   const documentLanguages = [
+    // Major world languages
     { value: "english", label: "English" },
     { value: "arabic", label: "العربية (Arabic)" },
+    { value: "chinese_simplified", label: "中文简体 (Chinese Simplified)" },
+    { value: "chinese_traditional", label: "中文繁體 (Chinese Traditional)" },
     { value: "french", label: "Français (French)" },
     { value: "german", label: "Deutsch (German)" },
     { value: "spanish", label: "Español (Spanish)" },
-    { value: "chinese", label: "中文 (Chinese)" },
     { value: "russian", label: "Русский (Russian)" },
-    { value: "other", label: "Other" }
+    { value: "hindi", label: "हिन्दी (Hindi)" },
+    { value: "japanese", label: "日本語 (Japanese)" },
+    { value: "korean", label: "한국어 (Korean)" },
+    { value: "portuguese", label: "Português (Portuguese)" },
+    { value: "italian", label: "Italiano (Italian)" },
+    { value: "polish", label: "Polski (Polish)" },
+    { value: "turkish", label: "Türkçe (Turkish)" },
+    { value: "dutch", label: "Nederlands (Dutch)" },
+    { value: "vietnamese", label: "Tiếng Việt (Vietnamese)" },
+    { value: "thai", label: "ไทย (Thai)" },
+    { value: "ukrainian", label: "Українська (Ukrainian)" },
+    
+    // European languages
+    { value: "bulgarian", label: "Български (Bulgarian)" },
+    { value: "croatian", label: "Hrvatski (Croatian)" },
+    { value: "czech", label: "Čeština (Czech)" },
+    { value: "danish", label: "Dansk (Danish)" },
+    { value: "estonian", label: "Eesti (Estonian)" },
+    { value: "finnish", label: "Suomi (Finnish)" },
+    { value: "greek", label: "Ελληνικά (Greek)" },
+    { value: "hungarian", label: "Magyar (Hungarian)" },
+    { value: "icelandic", label: "Íslenska (Icelandic)" },
+    { value: "latvian", label: "Latviešu (Latvian)" },
+    { value: "lithuanian", label: "Lietuvių (Lithuanian)" },
+    { value: "norwegian", label: "Norsk (Norwegian)" },
+    { value: "romanian", label: "Română (Romanian)" },
+    { value: "serbian", label: "Српски (Serbian)" },
+    { value: "slovak", label: "Slovenčina (Slovak)" },
+    { value: "slovenian", label: "Slovenščina (Slovenian)" },
+    { value: "swedish", label: "Svenska (Swedish)" },
+    
+    // Asian languages
+    { value: "bengali", label: "বাংলা (Bengali)" },
+    { value: "gujarati", label: "ગુજરાતી (Gujarati)" },
+    { value: "kannada", label: "ಕನ್ನಡ (Kannada)" },
+    { value: "malayalam", label: "മലയാളം (Malayalam)" },
+    { value: "marathi", label: "मराठी (Marathi)" },
+    { value: "nepali", label: "नेपाली (Nepali)" },
+    { value: "punjabi", label: "ਪੰਜਾਬੀ (Punjabi)" },
+    { value: "tamil", label: "தமிழ் (Tamil)" },
+    { value: "telugu", label: "తెలుగు (Telugu)" },
+    { value: "urdu", label: "اردو (Urdu)" },
+    { value: "persian", label: "فارسی (Persian)" },
+    { value: "hebrew", label: "עברית (Hebrew)" },
+    { value: "indonesian", label: "Bahasa Indonesia (Indonesian)" },
+    { value: "malay", label: "Bahasa Melayu (Malay)" },
+    { value: "khmer", label: "ភាសាខ្មែរ (Khmer)" },
+    { value: "lao", label: "ລາວ (Lao)" },
+    { value: "myanmar", label: "မြန်မာ (Myanmar)" },
+    
+    // African languages
+    { value: "afrikaans", label: "Afrikaans" },
+    { value: "amharic", label: "አማርኛ (Amharic)" },
+    { value: "swahili", label: "Kiswahili (Swahili)" },
+    
+    // Other languages
+    { value: "azerbaijani", label: "Azərbaycan (Azerbaijani)" },
+    { value: "basque", label: "Euskera (Basque)" },
+    { value: "belarusian", label: "Беларуская (Belarusian)" },
+    { value: "bosnian", label: "Bosanski (Bosnian)" },
+    { value: "catalan", label: "Català (Catalan)" },
+    { value: "esperanto", label: "Esperanto" },
+    { value: "irish", label: "Gaeilge (Irish)" },
+    { value: "latin", label: "Latine (Latin)" },
+    { value: "macedonian", label: "Македонски (Macedonian)" },
+    { value: "maltese", label: "Malti (Maltese)" },
+    { value: "welsh", label: "Cymraeg (Welsh)" },
+    
+    { value: "other", label: "Other (use English OCR)" }
   ];
 
   const onDrop = useCallback((acceptedFiles: File[]) => {

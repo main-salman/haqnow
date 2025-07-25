@@ -72,7 +72,7 @@ export default function SearchPage() {
       
       const languageText = language === "original" ? "original" : 
                           language === "english" ? "English translation" : 
-                          language === "arabic" ? "Arabic text" : language;
+                          `${language} text`;
       toast.success(`Document download started (${languageText})`);
     } catch (err: any) {
       let errorMsg = "Failed to download document.";
@@ -304,8 +304,8 @@ export default function SearchPage() {
                       Original PDF
                     </Button>
                     
-                    {/* English Translation Download (for Arabic documents) */}
-                    {doc.document_language === 'arabic' && doc.has_english_translation && (
+                    {/* English Translation Download (for multilingual documents) */}
+                    {doc.document_language !== 'english' && doc.has_english_translation && (
                       <Button
                         onClick={() => handleDocumentClick(doc.id, "english")}
                         disabled={downloadingDocId === doc.id}
@@ -321,8 +321,25 @@ export default function SearchPage() {
                       </Button>
                     )}
                     
-                    {/* Info message for Arabic documents without translation */}
-                    {doc.document_language === 'arabic' && !doc.has_english_translation && (
+                    {/* Original Language Text Download (for multilingual documents) */}
+                    {doc.document_language !== 'english' && doc.has_english_translation && (
+                      <Button
+                        onClick={() => handleDocumentClick(doc.id, doc.document_language.toLowerCase())}
+                        disabled={downloadingDocId === doc.id}
+                        size="sm"
+                        variant="outline"
+                        className="flex items-center gap-2"
+                      >
+                        {downloadingDocId === doc.id && (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        )}
+                        <FileText className="h-3 w-3" />
+                        {doc.document_language.charAt(0).toUpperCase() + doc.document_language.slice(1)} Text
+                      </Button>
+                    )}
+                    
+                    {/* Info message for multilingual documents without translation */}
+                    {doc.document_language !== 'english' && !doc.has_english_translation && (
                       <div className="text-sm text-muted-foreground italic">
                         English translation processing... (may take a few minutes for new uploads)
                       </div>

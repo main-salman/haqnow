@@ -301,12 +301,12 @@ async def get_document(document_id: int, db: Session = Depends(get_db)):
 async def download_document(
     document_id: int, 
     request: Request,
-    language: str = Query(default="original", description="Language version: 'original', 'english', or 'arabic'"),
+    language: str = Query(default="original", description="Language version: 'original', 'english', or the document's original language code"),
     db: Session = Depends(get_db)
 ):
     """
     Download a document file directly through the server.
-    For Arabic documents, supports downloading original Arabic or English translation.
+    For multilingual documents, supports downloading original language text or English translation.
     This masks the S3 URL and shows the website URL instead.
     Rate limited to prevent abuse.
     """
@@ -326,10 +326,20 @@ async def download_document(
         # Determine which content to serve based on language parameter and document language
         document_language = getattr(document, 'document_language', 'english')
         
-        # For Arabic documents, support bilingual download
-        if document_language == "arabic":
+        # Import multilingual service to check supported languages
+        from app.services.multilingual_ocr_service import multilingual_ocr_service
+        supported_languages = multilingual_ocr_service.get_supported_languages()
+        
+        # Check if this is a multilingual document (has both original and English text)
+        has_multilingual_content = (
+            hasattr(document, 'ocr_text_original') and document.ocr_text_original and
+            hasattr(document, 'ocr_text_english') and document.ocr_text_english and
+            document.ocr_text_original != document.ocr_text_english
+        )
+        
+        if has_multilingual_content:
             if language == "english":
-                # Check if English translation is available
+                # Download English translation
                 english_text = getattr(document, 'ocr_text_english', None)
                 if not english_text:
                     raise HTTPException(
@@ -342,18 +352,18 @@ async def download_document(
                     f"{document.title}_english.txt",
                     document_id
                 )
-            elif language == "arabic":
-                # Check if original Arabic text is available
-                arabic_text = getattr(document, 'ocr_text_original', None)
-                if not arabic_text:
+            elif language == document_language.lower() or language in [doc_lang.lower() for doc_lang in supported_languages.keys()]:
+                # Download original language text
+                original_text = getattr(document, 'ocr_text_original', None)
+                if not original_text:
                     raise HTTPException(
                         status_code=404, 
-                        detail="Original Arabic text not available for this document"
+                        detail=f"Original {document_language} text not available for this document"
                     )
-                # Create a text file with original Arabic text
+                # Create a text file with original language text
                 return create_text_download_response(
-                    arabic_text, 
-                    f"{document.title}_arabic.txt",
+                    original_text, 
+                    f"{document.title}_{document_language.lower()}.txt",
                     document_id
                 )
             # else language == "original" - download the original PDF file
