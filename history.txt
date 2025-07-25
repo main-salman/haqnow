@@ -8155,5 +8155,15 @@ Multiple credentials were exposed in codebase through GitHub security scanning:
 - ⚠️ **Existing Documents**: Need manual reprocessing to get translation downloads
 - ⚠️ **Document ID 42** (Libya French): Needs reprocessing to show English translation option
 
+**FINAL ROOT CAUSE DISCOVERED & FIXED (July 25, 2025)**:
+**Issue**: Missing `TESSDATA_PREFIX` environment variable in systemd service
+- Even after installing language packs, Tesseract couldn't find them
+- Error: `Please make sure the TESSDATA_PREFIX environment variable is set to your "tessdata" directory`
+
+**FINAL RESOLUTION (COMPLETED ✅)**:
+1. **Added Environment Variable**: `TESSDATA_PREFIX=/usr/share/tesseract-ocr/5/tessdata` to `/etc/systemd/system/foi-archive.service`
+2. **Reloaded & Restarted**: `systemctl daemon-reload && systemctl restart foi-archive`
+3. **Verified Fix**: French language pack now accessible: `fra` found in available languages
+
 **SOLUTION FOR EXISTING DOCUMENTS**:
-Upload new French documents OR admin can manually reprocess existing ones via admin panel
+Upload new French documents to test the fix OR existing documents may auto-reprocess on next admin action
