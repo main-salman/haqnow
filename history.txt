@@ -8243,3 +8243,29 @@ Browser language detection returns different codes (`en` vs `en-US`, `fr` vs `fr
 
 **EXPECTED RESULT**: 
 Consistent admin-controlled content regardless of browser language detection (en vs en-US). No more switching between static and dynamic content after refresh.
+
+### 2025-01-17 - Fixed Translation Loading Race Condition (Final Fix)
+
+**ISSUE**: 
+- Race condition where sometimes translations loaded before React render (✅ correct admin content)
+- Sometimes React rendered first with static content, then translations loaded (❌ stuck with static)
+- Console logs showed: correct version = translations load first, wrong version = map loads then translations
+
+**ROOT CAUSE**:
+`AppWrapper.tsx` called `initializeTranslations()` asynchronously but didn't wait for completion before rendering. React would render immediately with static content, and when translations loaded later, components wouldn't re-render.
+
+**SOLUTION APPLIED ✅**:
+1. **Added Loading State**: Modified `AppWrapper` to show loading screen until translations complete
+2. **Async/Await**: Properly wait for `initializeTranslations()` before rendering app
+3. **Error Handling**: Falls back gracefully if translation loading fails
+4. **Race Condition Eliminated**: Translations always load before any content renders
+
+**CODE CHANGES**:
+- `frontend/src/AppWrapper.tsx`: Added `useState` for `translationsLoaded` state
+- Shows "Loading..." until translations ready, then renders RouterProvider
+- Prevents premature rendering with static content
+
+**DEPLOYED**: Version 2.2.9 (Live on server)
+
+**EXPECTED RESULT**: 
+Consistent admin-controlled content on every page load. No more race condition or intermittent switching between admin and static content.
