@@ -15,6 +15,7 @@ from urllib.parse import urlparse
 from app.middleware.rate_limit import check_download_rate_limit, record_download
 from app.auth.user import AdminUser
 from app.database import get_db, Document, BannedTag
+from app.services.semantic_search_service import semantic_search_service
 
 logger = structlog.get_logger()
 
@@ -52,6 +53,8 @@ class SearchDocumentResult(BaseModel):
     document_language: Optional[str] = None  # Language of the original document
     has_arabic_text: bool = False  # Whether Arabic text is available
     has_english_translation: bool = False  # Whether English translation is available
+    similarity_score: Optional[float] = None  # For semantic search results
+    search_type: Optional[str] = None  # 'semantic', 'keyword', or 'hybrid'
 
 class SearchResponse(BaseModel):
     documents: List[SearchDocumentResult]
@@ -77,6 +80,7 @@ async def search_documents(
     country: Optional[str] = Query(None, description="Filter by country"),
     state: Optional[str] = Query(None, description="Filter by state"),
     group_by_country: bool = Query(False, description="Group results by country"),
+    search_type: str = Query("hybrid", description="Search type: 'semantic', 'keyword', or 'hybrid'"),
     db: Session = Depends(get_db)
 ):
     """
@@ -85,109 +89,206 @@ async def search_documents(
     """
     
     try:
-        # Build query
-        query_builder = db.query(Document)
+        search_query = q.strip() if q else ""
+        documents_data = []
+        total_count = 0
         
-        # Filter by status (only approved documents)
-        query_builder = query_builder.filter(Document.status == "approved")
-        
-        # Search using full-text search for optimal performance
-        if q:
-            # Prepare search query for full-text search
-            search_query = q.strip()
+        # Choose search strategy based on search_type parameter
+        if not search_query:
+            # No search query - return all documents by date
+            query_builder = db.query(Document).filter(Document.status == "approved")
             
-            # Use full-text search on combined search_text field for best performance
+            # Apply filters
+            if country:
+                query_builder = query_builder.filter(Document.country == country)
+            if state:
+                query_builder = query_builder.filter(Document.state == state)
+            
+            total_count = query_builder.count()
+            
+            # Apply pagination and ordering
+            offset = (page - 1) * per_page
+            documents_data = query_builder.order_by(Document.created_at.desc()).offset(offset).limit(per_page).all()
+            
+            logger.info("No search query, returning all documents", 
+                       total_count=total_count,
+                       search_type="none")
+        
+        elif search_type == "semantic":
+            # Pure semantic search
+            if semantic_search_service.is_available():
+                semantic_results = semantic_search_service.search_similar_documents(
+                    search_query, db, limit=per_page * 3  # Get more for filtering
+                )
+                
+                # Apply country/state filters
+                if country or state:
+                    semantic_results = [
+                        doc for doc in semantic_results 
+                        if (not country or doc.get('country') == country) and 
+                           (not state or doc.get('state') == state)
+                    ]
+                
+                # Apply pagination
+                start_idx = (page - 1) * per_page
+                end_idx = start_idx + per_page
+                paginated_results = semantic_results[start_idx:end_idx]
+                
+                total_count = len(semantic_results)
+                documents_data = [type('Document', (), doc) for doc in paginated_results]
+                
+                logger.info("Semantic search completed", 
+                           query=search_query,
+                           results_found=len(semantic_results),
+                           search_type="semantic")
+            else:
+                logger.warning("Semantic search not available, falling back to keyword search")
+                search_type = "keyword"  # Fallback to keyword search
+        
+        if search_type == "keyword" or (search_type == "semantic" and not semantic_search_service.is_available()):
+            # Traditional keyword search
+            query_builder = db.query(Document).filter(Document.status == "approved")
+            
             try:
-                # Primary search: Full-text search on search_text column
+                # Full-text search on search_text column
                 fulltext_condition = func.match(Document.search_text).against(
                     search_query, 
                     func.text("IN NATURAL LANGUAGE MODE")
                 )
                 
-                # Fallback search conditions for edge cases and exact matches
-                fallback_conditions = []
+                # Fallback search conditions
+                fallback_conditions = [
+                    Document.title.ilike(f"%{search_query}%"),
+                    Document.country.ilike(f"%{search_query}%"),
+                    Document.state.ilike(f"%{search_query}%"),
+                    func.json_search(Document.generated_tags, 'one', f"%{search_query}%").isnot(None)
+                ]
                 
-                # Exact matches in key fields (for very specific searches)
-                fallback_conditions.append(Document.title.ilike(f"%{search_query}%"))
-                fallback_conditions.append(Document.country.ilike(f"%{search_query}%"))
-                fallback_conditions.append(Document.state.ilike(f"%{search_query}%"))
-                
-                # JSON tag search for exact tag matches
-                fallback_conditions.append(func.json_search(Document.generated_tags, 'one', f"%{search_query}%").isnot(None))
-                
-                # Combine full-text search with fallback conditions
-                # Full-text search gets priority, fallback ensures no results are missed
-                combined_condition = or_(
-                    fulltext_condition,
-                    and_(*[or_(*fallback_conditions)])
-                )
-                
+                combined_condition = or_(fulltext_condition, or_(*fallback_conditions))
                 query_builder = query_builder.filter(combined_condition)
                 
-                logger.info("Using full-text search", 
-                           query=search_query, 
-                           search_type="fulltext_with_fallback")
+                logger.info("Using keyword search", query=search_query, search_type="keyword")
                 
             except Exception as search_error:
-                # Fallback to old LIKE-based search if full-text search fails
-                logger.warning("Full-text search failed, using fallback LIKE search", 
-                             error=str(search_error),
-                             query=search_query)
-                
-                search_conditions = []
-                search_conditions.append(Document.title.ilike(f"%{search_query}%"))
-                search_conditions.append(Document.description.ilike(f"%{search_query}%"))
-                search_conditions.append(Document.ocr_text.ilike(f"%{search_query}%"))
-                search_conditions.append(Document.country.ilike(f"%{search_query}%"))
-                search_conditions.append(Document.state.ilike(f"%{search_query}%"))
-                search_conditions.append(func.json_search(Document.generated_tags, 'one', f"%{search_query}%").isnot(None))
-                
+                logger.warning("Full-text search failed, using LIKE search", error=str(search_error))
+                search_conditions = [
+                    Document.title.ilike(f"%{search_query}%"),
+                    Document.description.ilike(f"%{search_query}%"),
+                    Document.ocr_text.ilike(f"%{search_query}%"),
+                    Document.country.ilike(f"%{search_query}%"),
+                    Document.state.ilike(f"%{search_query}%"),
+                    func.json_search(Document.generated_tags, 'one', f"%{search_query}%").isnot(None)
+                ]
                 query_builder = query_builder.filter(or_(*search_conditions))
+            
+            # Apply filters
+            if country:
+                query_builder = query_builder.filter(Document.country == country)
+            if state:
+                query_builder = query_builder.filter(Document.state == state)
+            
+            total_count = query_builder.count()
+            
+            # Apply pagination and ordering
+            offset = (page - 1) * per_page
+            query_builder = query_builder.order_by(Document.created_at.desc()).offset(offset).limit(per_page)
+            documents_data = query_builder.all()
         
-        # Filter by country
-        if country:
-            query_builder = query_builder.filter(Document.country == country)
-        
-        # Filter by state
-        if state:
-            query_builder = query_builder.filter(Document.state == state)
-        
-        # Get total count before pagination
-        total_count = query_builder.count()
-        
-        # Order by relevance when searching, otherwise by date
-        if q and q.strip():
+        elif search_type == "hybrid":
+            # Hybrid search: combine semantic and keyword results
+            all_results = []
+            
+            # Get semantic results if available
+            if semantic_search_service.is_available():
+                semantic_results = semantic_search_service.search_similar_documents(
+                    search_query, db, limit=per_page * 2
+                )
+                for result in semantic_results:
+                    result['search_type'] = 'semantic'
+                all_results.extend(semantic_results)
+                
+                logger.info("Hybrid search: semantic results", count=len(semantic_results))
+            
+            # Get keyword results
+            query_builder = db.query(Document).filter(Document.status == "approved")
+            
             try:
-                # Order by full-text search relevance score (higher score = more relevant)
-                search_query = q.strip()
-                relevance_score = func.match(Document.search_text).against(
+                fulltext_condition = func.match(Document.search_text).against(
                     search_query, 
                     func.text("IN NATURAL LANGUAGE MODE")
                 )
+                fallback_conditions = [
+                    Document.title.ilike(f"%{search_query}%"),
+                    Document.country.ilike(f"%{search_query}%"),
+                    Document.state.ilike(f"%{search_query}%"),
+                    func.json_search(Document.generated_tags, 'one', f"%{search_query}%").isnot(None)
+                ]
+                combined_condition = or_(fulltext_condition, or_(*fallback_conditions))
+                query_builder = query_builder.filter(combined_condition)
                 
-                # Order by relevance (descending), then by date (descending) for ties
-                query_builder = query_builder.order_by(
-                    relevance_score.desc(),
-                    Document.created_at.desc()
-                )
-                
-                logger.info("Ordering by full-text relevance score", query=search_query)
-                
-            except Exception as order_error:
-                # Fallback to date ordering if relevance scoring fails
-                logger.warning("Relevance scoring failed, using date ordering", 
-                             error=str(order_error))
-                query_builder = query_builder.order_by(Document.created_at.desc())
-        else:
-            # No search query - order by creation date (newest first)
-            query_builder = query_builder.order_by(Document.created_at.desc())
-        
-        # Apply pagination
-        offset = (page - 1) * per_page
-        query_builder = query_builder.offset(offset).limit(per_page)
-        
-        # Execute query
-        documents_data = query_builder.all()
+            except Exception:
+                search_conditions = [
+                    Document.title.ilike(f"%{search_query}%"),
+                    Document.description.ilike(f"%{search_query}%"),
+                    Document.ocr_text.ilike(f"%{search_query}%"),
+                    func.json_search(Document.generated_tags, 'one', f"%{search_query}%").isnot(None)
+                ]
+                query_builder = query_builder.filter(or_(*search_conditions))
+            
+            # Apply filters for keyword search
+            if country:
+                query_builder = query_builder.filter(Document.country == country)
+            if state:
+                query_builder = query_builder.filter(Document.state == state)
+            
+            keyword_docs = query_builder.limit(per_page * 2).all()
+            keyword_results = []
+            for doc in keyword_docs:
+                doc_dict = doc.to_dict()
+                doc_dict['search_type'] = 'keyword'
+                doc_dict['similarity_score'] = None
+                keyword_results.append(doc_dict)
+            
+            all_results.extend(keyword_results)
+            
+            logger.info("Hybrid search: keyword results", count=len(keyword_results))
+            
+            # Remove duplicates (prefer semantic results)
+            seen_ids = set()
+            unique_results = []
+            for result in all_results:
+                doc_id = result['id']
+                if doc_id not in seen_ids:
+                    seen_ids.add(doc_id)
+                    unique_results.append(result)
+            
+            # Apply country/state filters to all results
+            if country or state:
+                unique_results = [
+                    doc for doc in unique_results 
+                    if (not country or doc.get('country') == country) and 
+                       (not state or doc.get('state') == state)
+                ]
+            
+            # Sort by similarity score (semantic first), then by date
+            unique_results.sort(key=lambda x: (
+                x.get('similarity_score', 0) if x.get('search_type') == 'semantic' else 0,
+                x.get('created_at', '')
+            ), reverse=True)
+            
+            # Apply pagination
+            start_idx = (page - 1) * per_page
+            end_idx = start_idx + per_page
+            paginated_results = unique_results[start_idx:end_idx]
+            
+            total_count = len(unique_results)
+            documents_data = [type('Document', (), doc) for doc in paginated_results]
+            
+            logger.info("Hybrid search completed", 
+                       total_results=len(unique_results),
+                       semantic_count=len([r for r in unique_results if r.get('search_type') == 'semantic']),
+                       keyword_count=len([r for r in unique_results if r.get('search_type') == 'keyword']),
+                       search_type="hybrid")
         
         # Get banned words for filtering search results
         banned_words = []

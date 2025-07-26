@@ -18,6 +18,7 @@ from app.auth.user import AdminUser
 from app.services.s3_service import s3_service
 from app.services.email_service import email_service
 from app.services.arabic_ocr_service import arabic_ocr_service  # Add Arabic OCR service import
+from app.services.semantic_search_service import semantic_search_service
 from app.database import get_db, Document, BannedTag
 
 logger = structlog.get_logger()
@@ -686,6 +687,33 @@ async def process_document(
             search_text_parts.append(document.ocr_text_english)
         
         document.search_text = ' '.join(search_text_parts)
+        
+        # Generate semantic search embedding
+        try:
+            if semantic_search_service.is_available():
+                document_dict = {
+                    'id': document.id,
+                    'title': document.title,
+                    'description': document.description,
+                    'search_text': document.search_text,
+                    'generated_tags': generated_tags
+                }
+                
+                embedding = semantic_search_service.generate_document_embedding(document_dict)
+                if embedding:
+                    import json
+                    document.embedding = json.dumps(embedding)
+                    logger.info("Generated semantic embedding", 
+                               document_id=document.id,
+                               embedding_dimensions=len(embedding))
+                else:
+                    logger.warning("Failed to generate embedding", document_id=document.id)
+            else:
+                logger.info("Semantic search service not available, skipping embedding generation")
+        except Exception as embedding_error:
+            logger.warning("Error generating embedding", 
+                          document_id=document.id, 
+                          error=str(embedding_error))
         
         try:
             db.commit()

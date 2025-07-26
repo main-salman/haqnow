@@ -31,6 +31,7 @@ class Document(Base):
     ocr_text = Column(Text, nullable=True)  # Combined/processed OCR text for backward compatibility
     generated_tags = Column(JSON, nullable=True, default=list)
     search_text = Column(Text, nullable=True)  # Combined searchable text for full-text search
+    embedding = Column(JSON, nullable=True)  # Semantic search embedding vector (384 dimensions)
     
     # Status and workflow
     status = Column(String(50), nullable=False, default="pending", index=True)

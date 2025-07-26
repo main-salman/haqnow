@@ -54,6 +54,7 @@ structlog==23.2.0
 
 # AI/ML
 openai==1.12.0
+sentence-transformers==2.7.0
 
 # Two-Factor Authentication
 pyotp==2.9.0
