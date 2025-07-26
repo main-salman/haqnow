@@ -8218,3 +8218,28 @@ French, German, and other non-Arabic documents should now show proper download b
 
 **EXPECTED RESULT**: 
 Admin can now control homepage content through admin translations page. Changes to `homepage.title`, `homepage.subtitle`, and other content will immediately reflect on the main website and all translated versions.
+
+### 2025-01-17 - Fixed Translation Language Detection Inconsistency  
+
+**ISSUE**: 
+- Sometimes showing admin-controlled content, sometimes static content after hard refresh
+- Browser detecting `en-US` instead of `en`, causing 0 translations to load
+- Inconsistent behavior between page loads due to language code variations
+
+**ROOT CAUSE**:
+Browser language detection returns different codes (`en` vs `en-US`, `fr` vs `fr-FR`) but database only stores normalized codes (`en`, `fr`, etc.), causing API calls to fail for regional variants.
+
+**SOLUTION APPLIED ✅**:
+1. **Added Language Normalization**: Created `normalizeLanguageCode()` to convert `en-US` → `en`, `fr-FR` → `fr`
+2. **Fixed API Calls**: Normalized language codes in API requests while maintaining original codes for i18n bundles
+3. **Added Cache Prevention**: Added timestamp parameter to prevent stale translation caching
+4. **Enhanced Logging**: Added detailed logging to debug translation loading process
+5. **Improved Error Handling**: Better fallback handling when translations fail to load
+
+**CODE CHANGES**:
+- `frontend/src/i18n/index.ts`: Added language normalization and cache busting
+- Enhanced error handling and logging for translation loading
+- Fixed initialization to work with regional language codes
+
+**EXPECTED RESULT**: 
+Consistent admin-controlled content regardless of browser language detection (en vs en-US). No more switching between static and dynamic content after refresh.

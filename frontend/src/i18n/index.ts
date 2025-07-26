@@ -116,24 +116,42 @@ const convertToNestedObject = (flatObj: Record<string, string>): Record<string, 
   return result;
 };
 
+// Helper function to normalize language codes (en-US -> en, fr-FR -> fr)
+const normalizeLanguageCode = (languageCode: string): string => {
+  return languageCode.split('-')[0].toLowerCase();
+};
+
 // Load translations dynamically from API (for admin updates)
 export const loadTranslationsFromAPI = async (languageCode: string) => {
   try {
-    const response = await fetch(`/api/translations/languages/${languageCode}`);
+    // Normalize language code (en-US -> en, fr-FR -> fr, etc.)
+    const normalizedCode = normalizeLanguageCode(languageCode);
+    
+    console.log(`🔄 Loading dynamic translations for ${languageCode} (requesting ${normalizedCode})...`);
+    
+    const response = await fetch(`/api/translations/languages/${normalizedCode}?t=${Date.now()}`);
     if (response.ok) {
       const data = await response.json();
+      
+      if (!data.translations || Object.keys(data.translations).length === 0) {
+        console.warn(`⚠️ No translations found for ${normalizedCode}, using static fallback`);
+        return false;
+      }
       
       // Convert flat dot notation to nested object structure
       const nestedTranslations = convertToNestedObject(data.translations);
       
       // Merge with existing translations (admin overrides static)
+      // Use the original languageCode for the bundle (to match i18n's detected language)
       i18n.addResourceBundle(languageCode, 'translation', nestedTranslations, true, true);
       
-      console.log(`✅ Loaded ${Object.keys(data.translations).length} dynamic translations for ${languageCode}`);
+      console.log(`✅ Loaded ${Object.keys(data.translations).length} dynamic translations for ${languageCode} (from ${normalizedCode})`);
       return true;
+    } else {
+      console.warn(`❌ API request failed for ${normalizedCode}: ${response.status} ${response.statusText}`);
     }
   } catch (error) {
-    console.warn(`Failed to load translations for ${languageCode}:`, error);
+    console.warn(`❌ Failed to load translations for ${languageCode}:`, error);
   }
   return false;
 };
@@ -141,12 +159,13 @@ export const loadTranslationsFromAPI = async (languageCode: string) => {
 // Initialize with dynamic loading
 export const initializeTranslations = async () => {
   const currentLanguage = i18n.language;
+  const normalizedLanguage = normalizeLanguageCode(currentLanguage);
   
   // Always load English translations first (admin can edit them)
   await loadTranslationsFromAPI('en');
   
-  // Load current language translations if it's not English
-  if (currentLanguage && currentLanguage !== 'en') {
+  // Load current language translations if it's not English (normalized)
+  if (currentLanguage && normalizedLanguage !== 'en') {
     await loadTranslationsFromAPI(currentLanguage);
   }
   
