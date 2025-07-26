@@ -24,7 +24,7 @@ import structlog
 # Add the app directory to the Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'app'))
 
-from app.database.database import Base, get_db_url
+from app.database.database import Base
 from app.database.models import Document
 from app.services.semantic_search_service import semantic_search_service
 
@@ -150,8 +150,11 @@ def main():
     print("=" * 50)
     
     try:
-        # Get database URL
-        database_url = get_db_url()
+        # Get database URL from environment  
+        database_url = os.getenv("DATABASE_URL")
+        if not database_url:
+            logger.error("DATABASE_URL not found in environment")
+            return False
         logger.info("Connecting to database", url=database_url.split('@')[1] if '@' in database_url else "local")
         
         # Create engine and session
