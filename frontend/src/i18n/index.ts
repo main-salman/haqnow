@@ -94,13 +94,42 @@ export const setDocumentDirection = (languageCode: string) => {
   document.documentElement.lang = languageCode;
 };
 
+// Helper function to convert flat dot notation to nested object
+const convertToNestedObject = (flatObj: Record<string, string>): Record<string, any> => {
+  const result: Record<string, any> = {};
+  
+  for (const [key, value] of Object.entries(flatObj)) {
+    const keys = key.split('.');
+    let current = result;
+    
+    for (let i = 0; i < keys.length - 1; i++) {
+      const k = keys[i];
+      if (!(k in current)) {
+        current[k] = {};
+      }
+      current = current[k];
+    }
+    
+    current[keys[keys.length - 1]] = value;
+  }
+  
+  return result;
+};
+
 // Load translations dynamically from API (for admin updates)
 export const loadTranslationsFromAPI = async (languageCode: string) => {
   try {
     const response = await fetch(`/api/translations/languages/${languageCode}`);
     if (response.ok) {
       const data = await response.json();
-      i18n.addResourceBundle(languageCode, 'translation', data.translations, true, true);
+      
+      // Convert flat dot notation to nested object structure
+      const nestedTranslations = convertToNestedObject(data.translations);
+      
+      // Merge with existing translations (admin overrides static)
+      i18n.addResourceBundle(languageCode, 'translation', nestedTranslations, true, true);
+      
+      console.log(`✅ Loaded ${Object.keys(data.translations).length} dynamic translations for ${languageCode}`);
       return true;
     }
   } catch (error) {
@@ -112,8 +141,14 @@ export const loadTranslationsFromAPI = async (languageCode: string) => {
 // Initialize with dynamic loading
 export const initializeTranslations = async () => {
   const currentLanguage = i18n.language;
+  
+  // Always load English translations first (admin can edit them)
+  await loadTranslationsFromAPI('en');
+  
+  // Load current language translations if it's not English
   if (currentLanguage && currentLanguage !== 'en') {
     await loadTranslationsFromAPI(currentLanguage);
   }
+  
   setDocumentDirection(currentLanguage);
 }; 

@@ -19,10 +19,8 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ className = 
 
   const handleLanguageChange = async (languageCode: string) => {
     try {
-      // Load fresh translations from API if not English
-      if (languageCode !== 'en') {
-        await loadTranslationsFromAPI(languageCode);
-      }
+      // Always load fresh translations from API (admin can edit all languages including English)
+      await loadTranslationsFromAPI(languageCode);
       
       // Change language
       await i18n.changeLanguage(languageCode);

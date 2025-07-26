@@ -8190,3 +8190,31 @@ In `backend/app/apis/search/__init__.py`, line 237 hardcoded `has_english_transl
 
 **EXPECTED RESULT**: 
 French, German, and other non-Arabic documents should now show proper download buttons instead of processing message when translations are ready.
+
+### 2025-01-17 - Fixed Homepage Content to Use Admin-Controlled Translations
+
+**ISSUE**: 
+- Homepage content was hardcoded in static translation files (`frontend/src/i18n/locales/en.json`) 
+- Admin translations page couldn't control main website content
+- Changes made through admin interface didn't reflect on the homepage
+- Static content didn't match admin-editable database content
+
+**ROOT CAUSE**:
+1. `initializeTranslations()` function existed but was never called during app startup
+2. `loadTranslationsFromAPI()` only loaded for non-English languages
+3. Translation system used static files instead of dynamic database content
+
+**SOLUTION APPLIED ✅**:
+1. **Added Translation Initialization**: Modified `AppWrapper.tsx` to call `initializeTranslations()` on app startup
+2. **Fixed English Translation Loading**: Updated `initializeTranslations()` to always load English translations from database first
+3. **Added Nested Object Conversion**: Created `convertToNestedObject()` helper to convert flat dot notation (`homepage.title`) to nested structure
+4. **Updated Language Switcher**: Modified to always reload dynamic translations for all languages, including English
+5. **Enhanced Merge Logic**: Dynamic translations now properly override static translations
+
+**CODE CHANGES**:
+- `frontend/src/AppWrapper.tsx`: Added `useEffect` to call `initializeTranslations()`
+- `frontend/src/i18n/index.ts`: Enhanced translation loading with proper structure conversion
+- `frontend/src/components/LanguageSwitcher.tsx`: Fixed to load dynamic translations for all languages
+
+**EXPECTED RESULT**: 
+Admin can now control homepage content through admin translations page. Changes to `homepage.title`, `homepage.subtitle`, and other content will immediately reflect on the main website and all translated versions.
