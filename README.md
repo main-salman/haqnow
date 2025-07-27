@@ -4,9 +4,6 @@
 
 ## 🌍 **Live Platform**
 - **Website**: https://www.haqnow.com *(Complete anonymity guaranteed)*
-- **API Documentation**: https://www.haqnow.com/api/docs
-- **Admin Portal**: https://www.haqnow.com/admin-login-page
-
 ---
 
 ## 🏗️ **System Architecture**
