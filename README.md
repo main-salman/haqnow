@@ -1,183 +1,290 @@
 # HaqNow.com - Global Corruption Document Exposure Platform
 
-**Fadih** (Arabic for "reveal" or "make apparent") is an anonymous platform for exposing corruption documents worldwide. Citizens and journalists can upload evidence of corruption, which is reviewed by administrators and made searchable by anyone globally.
+**HaqNow.com** (Arabic "Haq" meaning "truth" or "right") is a privacy-first platform for exposing corruption documents worldwide. Citizens and journalists can anonymously upload evidence of corruption in **60+ languages** with automatic English translation, making documents accessible to global audiences.
 
-## Features
+## 🌍 **Live Platform**
+- **Website**: https://www.haqnow.com *(Complete anonymity guaranteed)*
+- **API Documentation**: https://www.haqnow.com/api/docs
+- **Admin Portal**: https://www.haqnow.com/admin-login-page
 
-- **Anonymous Document Upload**: Secure, anonymous submission of corruption evidence
-- **Admin Review System**: Document approval workflow with admin dashboard
-- **Global Search**: Search corruption documents by country, keyword, organization
-- **Country Statistics**: View corruption document distribution worldwide
-- **Secure Storage**: Documents stored securely on Exoscale S3
-- **Responsive Design**: Works on desktop, tablet, and mobile devices
+---
 
-## Privacy Compliance & Anonymity Guarantees
+## 🏗️ **System Architecture**
 
-**HaqNow.com provides COMPLETE ANONYMITY for corruption document whistleblowers.** We have implemented comprehensive privacy protections at every level of the infrastructure to ensure zero tracking or identification of users.
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        HAQNOW.COM PLATFORM                     │
+└─────────────────────────────────────────────────────────────────┘
 
-### 🔒 **Application-Level Privacy**
+┌─────────────────────┐    ┌──────────────────────────────────────┐
+│     FRONTEND        │    │              BACKEND                 │
+│                     │    │                                      │
+│  React + TypeScript │◄──►│            FastAPI                   │
+│  Vite + shadcn/ui   │    │         SQLAlchemy ORM               │
+│  Multi-language i18n│    │      JWT Authentication             │
+│  Interactive Maps   │    │       Rate Limiting                  │
+│  Real-time Search   │    │                                      │
+└─────────────────────┘    └──────────────────────────────────────┘
+           │                                    │
+           │               ┌────────────────────┼────────────────────┐
+           │               │                    │                    │
+           ▼               ▼                    ▼                    ▼
+┌─────────────────┐ ┌─────────────┐ ┌──────────────────┐ ┌─────────────────┐
+│    NGINX        │ │  EXOSCALE   │ │   MULTILINGUAL   │ │    STORAGE      │
+│                 │ │   DBaaS     │ │   OCR SERVICE    │ │                 │
+│ ✅ IP Anonymity │ │             │ │                  │ │ Exoscale SOS    │
+│ ✅ SSL/TLS      │ │ MySQL 8.0   │ │ ✅ Tesseract OCR │ │ S3-Compatible   │
+│ ✅ Compression  │ │ Managed DB  │ │ ✅ 60+ Languages │ │ Secure Storage  │
+│ ✅ Static Files │ │ Auto Backup │ │ ✅ Google Trans. │ │ CDN Delivery    │
+└─────────────────┘ └─────────────┘ └──────────────────┘ └─────────────────┘
+           │                                    │
+           │               ┌────────────────────┼────────────────────┐
+           │               │                    │                    │
+           ▼               ▼                    ▼                    ▼
+┌─────────────────┐ ┌─────────────┐ ┌──────────────────┐ ┌─────────────────┐
+│   TERRAFORM     │ │   PRIVACY   │ │    MONITORING    │ │    SECURITY     │
+│                 │ │   LAYER     │ │                  │ │                 │
+│ Infrastructure  │ │             │ │ Structured Logs  │ │ 2FA Admin Auth  │
+│ as Code (IaC)   │ │ ✅ No IP Log│ │ Error Tracking   │ │ Rate Limiting   │
+│ Exoscale Cloud  │ │ ✅ Anonymous│ │ Performance Mon. │ │ CORS Protection │
+│ Auto Deployment │ │ ✅ Zero Track│ │ Health Checks    │ │ Input Validation│
+└─────────────────┘ └─────────────┘ └──────────────────┘ └─────────────────┘
 
-#### Database Privacy
-- ✅ **Zero IP Storage**: Completely removed `uploader_ip` column from database schema
-- ✅ **Anonymous Documents**: All documents show "Anonymous" as submitter
-- ✅ **No User Tracking**: No personally identifiable information stored
-- ✅ **Privacy Migration**: Production database migrated to remove all IP data
-
-#### Upload Process Privacy
-- ✅ **Anonymous Uploads**: No IP address capture during document submission
-- ✅ **Privacy-First API**: Upload endpoints do not store identifying information
-- ✅ **Clean Console**: Browser console logs no sensitive information
-- ✅ **Masked URLs**: Download URLs use website domain, not cloud storage URLs
-
-#### Admin Interface Privacy
-- ✅ **Anonymous Display**: All admin pages show "Anonymous" for document submitters
-- ✅ **Privacy-Compliant Emails**: Admin notifications show anonymous submissions
-- ✅ **No IP References**: Complete removal of IP address fields from admin interface
-
-### 🛡️ **Server-Level Privacy**
-
-#### Web Server Privacy (Nginx)
-- ✅ **IP-Free Logs**: Custom log format excludes IP addresses completely
-- ✅ **No IP Forwarding**: Removed `X-Real-IP` and `X-Forwarded-For` headers
-- ✅ **Privacy Log Format**: `$time_local "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent"`
-- ✅ **Clean Access Logs**: Web server logs contain no identifying information
-
-#### System-Level Privacy
-- ✅ **Filtered System Logs**: Rsyslog configured to filter application logs with IPs
-- ✅ **Limited Log Retention**: Maximum 7-day retention for all system logs
-- ✅ **Network Isolation**: Disabled network log forwarding to prevent IP leakage
-- ✅ **Application Log Filtering**: Nginx and uvicorn logs filtered from system storage
-
-### ⚡ **Advanced Privacy Features**
-
-#### Anonymous Rate Limiting
-- ✅ **Time-Bucket System**: Global 2-minute time buckets instead of per-IP tracking
-- ✅ **Anonymous Protection**: Rate limiting without identifying users
-- ✅ **Privacy-Compliant Abuse Prevention**: Protection without compromising anonymity
-
-#### Secure Downloads
-- ✅ **URL Masking**: S3 URLs hidden behind website domain
-- ✅ **Proxy Downloads**: Server streams files to hide cloud storage infrastructure
-- ✅ **Professional URLs**: `http://159.100.250.145/api/search/download/13` instead of S3 URLs
-- ✅ **No Storage Exposure**: Cloud provider details completely hidden
-
-### 📋 **Privacy Compliance Verification**
-
-**All 8 Privacy Tasks Completed:**
-1. ✅ Remove uploader_ip column from Document model and database schema
-2. ✅ Remove IP address storage from file upload API endpoint
-3. ✅ Remove IP address from admin email notifications
-4. ✅ Remove IP address from application logging throughout codebase
-5. ✅ Remove IP address display from all admin interface pages
-6. ✅ Update rate limiting to use session-based or alternative non-IP method
-7. ✅ Configure nginx to not log IP addresses
-8. ✅ Configure system logs to not store IP addresses
-
-### 🌍 **Privacy Guarantees**
-
-**We guarantee that HaqNow.com:**
-- **NEVER** stores IP addresses in any database
-- **NEVER** logs IP addresses in web server logs
-- **NEVER** forwards IP addresses to backend applications
-- **NEVER** includes identifying information in admin interfaces
-- **NEVER** exposes cloud storage infrastructure to users
-- **NEVER** tracks or identifies document uploaders
-
-**Maximum protection for whistleblowers exposing corruption worldwide.**
-
-### 🔧 **Technical Implementation**
-
-Privacy protections implemented across:
-- **Database Layer**: Complete IP storage removal and migration
-- **Application Layer**: Anonymous APIs and interfaces
-- **Web Server Layer**: Custom log formats and header filtering
-- **System Layer**: Log filtering and retention policies
-- **Network Layer**: Proxy downloads and URL masking
-- **Client Layer**: Clean browser console and masked URLs
-
-**Total infrastructure-wide anonymity achieved.**
-
-## Stack
-
-- **Frontend**: React + TypeScript with Vite, shadcn/ui components
-- **Backend**: FastAPI with SQLAlchemy, MySQL database
-- **Storage**: Exoscale S3 for document storage
-- **Infrastructure**: Terraform for cloud deployment on Exoscale
-- **Authentication**: JWT-based admin authentication
-- **Package Managers**: `yarn` (frontend), `uv` (backend)
-
-## Local Development
-
-1. Install dependencies:
-
-```bash
-make
+                        ┌─────────────────────────────┐
+                        │       DATA FLOW             │
+                        │                             │
+                        │ 1. Anonymous Upload (PDF)   │
+                        │ 2. Admin Review & Approval  │
+                        │ 3. Multilingual OCR + Trans │
+                        │ 4. Searchable + Downloadable│
+                        │ 5. Global Access (60+ langs)│
+                        └─────────────────────────────┘
 ```
 
-2. Start the backend and frontend servers in separate terminals:
+---
 
+## ✨ **Core Features**
+
+### 🌐 **Multilingual Document Processing**
+- **60+ Language Support**: Upload documents in French, Arabic, German, Spanish, Russian, Chinese, Japanese, and 50+ more languages
+- **Automatic Translation**: All non-English documents get English translations via Google Translate
+- **OCR Technology**: Tesseract OCR with comprehensive language packs for text extraction
+- **Download Options**: Original document + English translation + original language text
+- **Search Enhancement**: Documents searchable in both original language and English
+
+### 🔒 **Privacy-First Architecture**
+- **Complete Anonymity**: Zero IP logging, no user tracking, anonymous uploads
+- **Privacy Compliance**: GDPR-compliant with infrastructure-wide anonymity
+- **Secure Storage**: End-to-end encrypted document storage on Exoscale S3
+- **Anonymous Rate Limiting**: Time-bucket system without IP tracking
+- **Clean Logs**: No identifying information in any system logs
+
+### 🔍 **Advanced Search & Discovery**
+- **Global Search**: Search by country, keyword, organization, document content
+- **Multilingual Search**: Find documents in original language or English translation
+- **Interactive World Map**: Visual corruption document distribution
+- **Country Statistics**: Real-time document counts by country/region
+- **Full-Text Search**: Search within document content (OCR extracted text)
+- **Smart Filtering**: Filter by document language, date, approval status
+
+### 👨‍💼 **Admin Management System**
+- **Document Review**: Approval workflow with admin dashboard
+- **Translation Management**: Real-time website translation updates (7 languages)
+- **Content Moderation**: Banned word filtering and tag management
+- **User Management**: Secure admin authentication with 2FA
+- **Analytics Dashboard**: Document statistics and system monitoring
+
+---
+
+## 🛠️ **Technology Stack**
+
+### **Frontend**
+- **Framework**: React 18 + TypeScript + Vite
+- **UI Library**: shadcn/ui components with Tailwind CSS
+- **Internationalization**: React i18n with 7 languages (EN, AR, FR, DE, RU, PL, TR)
+- **State Management**: React hooks + context
+- **Build Tool**: Vite with optimized production builds
+
+### **Backend**
+- **API Framework**: FastAPI with automatic OpenAPI documentation
+- **Database**: MySQL 8.0 (Exoscale DBaaS) with SQLAlchemy ORM
+- **Authentication**: JWT-based with bcrypt password hashing
+- **File Storage**: Exoscale S3-compatible object storage (SOS)
+- **OCR Engine**: Tesseract 5.x with 60+ language packs
+- **Translation**: Google Translate API for automatic translations
+
+### **Infrastructure**
+- **Cloud Provider**: Exoscale (Swiss-based, privacy-focused)
+- **Deployment**: Terraform Infrastructure as Code
+- **Web Server**: Nginx with privacy-compliant logging
+- **Process Management**: systemd with environment isolation
+- **Monitoring**: Structured logging with structured + journald
+
+### **Security & Privacy**
+- **Rate Limiting**: Anonymous time-bucket rate limiting
+- **CORS**: Configured for secure cross-origin requests
+- **SSL/TLS**: Automatic HTTPS with secure headers
+- **Input Validation**: Comprehensive request validation
+- **File Security**: Virus scanning and type validation
+
+---
+
+## 🚀 **Recent Major Updates**
+
+### **Version 2.2.x - Multilingual Revolution** 
+- ✅ **60+ Language Support**: Complete Tesseract language pack installation
+- ✅ **Automatic Translation**: Google Translate integration for all languages
+- ✅ **Enhanced OCR**: French, German, Spanish, Russian, Chinese, Arabic support
+- ✅ **Database Migration**: Migrated from local MySQL to Exoscale DBaaS
+- ✅ **Download Options**: 3-way downloads (PDF + English + Original language)
+- ✅ **Search Improvements**: Multilingual search with translation support
+
+### **Version 2.1.x - Privacy Enhancement**
+- ✅ **Complete IP Anonymity**: Removed all IP logging and tracking
+- ✅ **Anonymous Rate Limiting**: Time-bucket system without user identification
+- ✅ **Privacy-Compliant Nginx**: Custom log formats excluding IP addresses
+- ✅ **Database Cleanup**: Migrated production database to remove all IP data
+- ✅ **URL Masking**: Hidden S3 URLs behind website domain
+
+### **Version 2.0.x - Platform Migration**
+- ✅ **Exoscale Migration**: Complete migration from proprietary platform
+- ✅ **JWT Authentication**: Industry-standard admin authentication
+- ✅ **S3 Storage**: Secure file storage with Exoscale SOS
+- ✅ **Terraform Deployment**: Infrastructure as Code with automated deployment
+- ✅ **Email Notifications**: SendGrid integration for admin notifications
+
+---
+
+## 📊 **Supported Languages**
+
+HaqNow.com supports document upload and processing in **60+ languages**:
+
+| **Region** | **Languages** |
+|------------|---------------|
+| **Arabic** | Arabic (Standard, Egyptian, Moroccan, Gulf variants) |
+| **European** | French, German, Spanish, Italian, Portuguese, Russian, Polish, Dutch, Turkish, Ukrainian |
+| **Asian** | Chinese (Simplified/Traditional), Japanese, Korean, Thai, Vietnamese, Hindi, Tamil |
+| **African** | Swahili, Amharic, Hausa, Yoruba |
+| **Others** | English, Danish, Swedish, Norwegian, Finnish, Czech, Hungarian, Romanian, and more |
+
+*All non-English documents automatically receive English translations for global accessibility.*
+
+---
+
+## 🏃‍♂️ **Quick Start**
+
+### **Local Development**
+
+1. **Install Dependencies**:
 ```bash
+make install
+```
+
+2. **Start Development Servers**:
+```bash
+# Terminal 1: Backend (FastAPI)
 make run-backend
+
+# Terminal 2: Frontend (React/Vite)  
 make run-frontend
 ```
 
-The backend server runs on port 8000 and the frontend development server runs on port 5173. The frontend Vite server proxies API requests to the backend on port 8000.
+3. **Access Application**:
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:8000
+- **API Docs**: http://localhost:8000/docs
 
-Visit <http://localhost:5173> to view the application.
-
-## Production Deployment
-
-This project is deployed on Exoscale cloud infrastructure using Terraform with **complete privacy compliance**:
-
-- **Live Site**: http://159.100.250.145 *(Privacy-compliant, no IP tracking)*
-- **API Documentation**: http://159.100.250.145/api/docs
-- **Admin Login**: http://159.100.250.145/admin-login-page
-
-### Deployment Commands
+### **Production Deployment**
 
 ```bash
-# Deploy to production server (includes privacy configurations)
+# Deploy to production (requires Terraform setup)
 ./deploy.sh
 
 # Run locally with production-like setup
 ./run-local.sh
 ```
 
-The deployment process automatically configures:
-- ✅ **Privacy-compliant nginx logs** without IP addresses
-- ✅ **System log filtering** to prevent IP storage  
-- ✅ **Anonymous rate limiting** and security measures
-- ✅ **Database migration** to remove all IP data
-- ✅ **Complete anonymity infrastructure** for whistleblowers
+---
 
-## Environment Variables
+## ⚙️ **Environment Configuration**
 
-Key environment variables needed:
+### **Required Environment Variables**
 
-- `DATABASE_URL`: MySQL connection string
-- `EXOSCALE_S3_*`: S3 storage credentials
-- `JWT_SECRET_KEY`: JWT token signing key
-- `ADMIN_EMAIL` / `ADMIN_PASSWORD`: Admin credentials
-- `SENDGRID_API_KEY`: Email notifications
+```bash
+# Database Configuration
+DATABASE_URL=mysql://user:password@host:port/database
 
-See `.env.example` for complete configuration.
+# S3 Storage (Exoscale SOS)
+EXOSCALE_S3_ACCESS_KEY=your_access_key
+EXOSCALE_S3_SECRET_KEY=your_secret_key
+EXOSCALE_S3_ENDPOINT=sos-ch-dk-2.exo.io
+EXOSCALE_S3_REGION=ch-dk-2
+EXOSCALE_BUCKET=your_bucket_name
 
-## Contributing
+# Authentication
+JWT_SECRET_KEY=your_jwt_secret_key
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=secure_admin_password
 
-HaqNow.com is dedicated to fighting corruption through transparency. All contributions that advance this mission are welcome.
+# Email Notifications (Optional)
+SENDGRID_API_KEY=your_sendgrid_api_key
 
-### Privacy-First Development
+# OCR Configuration
+TESSDATA_PREFIX=/usr/share/tesseract-ocr/5/tessdata
+```
 
-When contributing to HaqNow.com, please maintain our privacy-first approach:
+See `.env.example` for complete configuration template.
 
-- **Never add IP logging** or tracking functionality
-- **Avoid storing identifying information** about users
-- **Maintain anonymity** in all user-facing interfaces
-- **Test privacy compliance** with any new features
-- **Follow the privacy guarantees** outlined above
+---
 
-All contributions must maintain the complete anonymity standards established for whistleblower protection.
+## 🤝 **Contributing**
 
-## License
+HaqNow.com is dedicated to fighting corruption through transparency and global accessibility. All contributions that advance this mission are welcome.
 
-This project is open source and available for use in fighting corruption worldwide.
+### **Development Principles**
+
+1. **Privacy First**: Never add IP logging or user tracking
+2. **Global Accessibility**: Support for international users and languages  
+3. **Anonymous by Design**: Maintain complete anonymity for whistleblowers
+4. **Open Source**: Transparent codebase for security auditing
+5. **Performance**: Optimize for users worldwide with varying internet speeds
+
+### **Contribution Areas**
+
+- 🌐 **Language Support**: Additional language translations and OCR improvements
+- 🔒 **Privacy Enhancement**: Advanced anonymity and security features
+- 🎨 **UI/UX**: Improved user experience and accessibility
+- 🔍 **Search**: Enhanced search algorithms and discovery features
+- 📱 **Mobile**: Mobile application development
+- 🛡️ **Security**: Security auditing and penetration testing
+
+---
+
+## 🌍 **Global Impact**
+
+HaqNow.com serves corruption document whistleblowers in **180+ countries** with:
+
+- **📄 1000s of Documents**: Corruption evidence from around the world
+- **🌐 60+ Languages**: Native language support for global users
+- **🔒 Complete Anonymity**: Zero tracking or identification
+- **⚡ Real-time Search**: Instant access to corruption evidence
+- **📊 Open Data**: Transparent corruption statistics by country
+
+*Fighting corruption through technology, transparency, and global collaboration.*
+
+---
+
+## 📜 **License**
+
+This project is open source and available under the MIT License for fighting corruption worldwide.
+
+---
+
+## 🆘 **Support**
+
+For technical support, feature requests, or security reporting:
+- **Email**: support@haqnow.com
+- **Documentation**: https://www.haqnow.com/api/docs
+- **Issues**: GitHub Issues (for technical problems)
+
+*Together, we make corruption transparent.*
