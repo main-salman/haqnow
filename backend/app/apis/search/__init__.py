@@ -135,7 +135,7 @@ async def search_documents(
                 paginated_results = semantic_results[start_idx:end_idx]
                 
                 total_count = len(semantic_results)
-                documents_data = [type('Document', (), doc) for doc in paginated_results]
+                documents_data = paginated_results  # These are already dictionaries
                 
                 logger.info("Semantic search completed", 
                            query=search_query,
@@ -282,7 +282,7 @@ async def search_documents(
             paginated_results = unique_results[start_idx:end_idx]
             
             total_count = len(unique_results)
-            documents_data = [type('Document', (), doc) for doc in paginated_results]
+            documents_data = paginated_results  # These are already dictionaries
             
             logger.info("Hybrid search completed", 
                        total_results=len(unique_results),
@@ -301,7 +301,11 @@ async def search_documents(
         # Convert to response format and filter banned words from results
         documents = []
         for doc in documents_data:
-            doc_dict = doc.to_dict()
+            # Handle both Document objects (from keyword search) and dictionaries (from semantic search)
+            if hasattr(doc, 'to_dict'):
+                doc_dict = doc.to_dict()
+            else:
+                doc_dict = doc  # Already a dictionary from semantic search
             
             # Filter banned words from OCR text and tags in search results
             if banned_words:
