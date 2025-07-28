@@ -280,8 +280,6 @@ This project is open source and available under the MIT License for fighting cor
 ## 🆘 **Support**
 
 For technical support, feature requests, or security reporting:
-- **Email**: support@haqnow.com
-- **Documentation**: https://www.haqnow.com/api/docs
 - **Issues**: GitHub Issues (for technical problems)
 
 *Together, we make corruption transparent.*
