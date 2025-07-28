@@ -16,7 +16,7 @@
     "subtitle": "HaqNow.com to platforma dedykowana zbieraniu, organizowaniu i zapewnianiu dostępu do dokumentów ujawniających korupcję z całego świata. Nasz zaawansowany system automatycznie tłumaczy dokumenty z ponad 60 języków, udostępniając zarówno oryginalne dokumenty, jak i tłumaczenia użytkownikom na całym świecie. Przesyłaj anonimowo, przeszukuj swobodnie i przyczyniaj się do rosnącego repozytorium prawdy i przejrzystości.",
     "searchPlaceholder": "Wyszukaj dokumenty korupcji...",
     "mapTitle": "Dokumenty według Krajów",
-    "copyright": "© 2025 Fadih.org. Wszelkie prawa zastrzeżone."
+    "copyright": "© 2025 HaqNow.com. Wszelkie prawa zastrzeżone."
   },
   "search": {
     "title": "Wyszukaj Dokumenty Korupcji",
@@ -103,7 +103,7 @@
     "last": "Ostatni"
   },
   "about": {
-    "title": "O Fadih.org",
+    "title": "O HaqNow.com",
     "founder": "Założone przez Salmana Naqvi",
     "quote": "Pasjonuje mnie kończenie wojen i prawa człowieka wszystkich ludzi na całym świecie.",
     "mission": "Nasza Misja Antykorupcyjna",
@@ -120,6 +120,6 @@
     "howTo": "Jak Składać Wnioski o Dostęp do Informacji",
     "countries": "Przepisy o Dostępie do Informacji według Krajów",
     "bestPractices": "Najlepsze Praktyki FOI",
-    "connection": "FOI + Fadih.org: Potężne Narzędzia Przejrzystości"
+    "connection": "FOI + HaqNow.com: Potężne Narzędzia Przejrzystości"
   }
 } 

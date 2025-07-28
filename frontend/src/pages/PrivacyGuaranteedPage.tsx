@@ -33,31 +33,31 @@ export default function PrivacyGuaranteedPage() {
       icon: <Database className="h-6 w-6" />,
       title: t('privacy.cardZeroIpStorage'),
       description: t('privacy.cardZeroIpDescription'),
-      githubLink: "https://github.com/main-salman/fadih/blob/main/backend/app/database/models.py"
+      githubLink: "https://github.com/main-salman/haqnow/blob/main/backend/app/database/models.py"
     },
     {
       icon: <Shield className="h-6 w-6" />,
       title: t('privacy.cardAnonymousInterface'),
       description: t('privacy.cardAnonymousDescription'),
-      githubLink: "https://github.com/main-salman/fadih/blob/main/frontend/src/pages/AdminApprovedDocumentsPage.tsx"
+      githubLink: "https://github.com/main-salman/haqnow/blob/main/frontend/src/pages/AdminApprovedDocumentsPage.tsx"
     },
     {
       icon: <FileText className="h-6 w-6" />,
       title: t('privacy.cardPrivacyFirstUpload'),
       description: t('privacy.cardPrivacyFirstDescription'),
-      githubLink: "https://github.com/main-salman/fadih/blob/main/backend/app/apis/file_uploader/__init__.py"
+      githubLink: "https://github.com/main-salman/haqnow/blob/main/backend/app/apis/file_uploader/__init__.py"
     },
     {
       icon: <Server className="h-6 w-6" />,
       title: t('privacy.cardCleanServerLogs'),
       description: t('privacy.cardCleanServerDescription'),
-      githubLink: "https://github.com/main-salman/fadih/blob/main/backend/app/middleware/rate_limit.py"
+      githubLink: "https://github.com/main-salman/haqnow/blob/main/backend/app/middleware/rate_limit.py"
     },
     {
       icon: <Shield className="h-6 w-6" />,
       title: "Complete Metadata Removal",
       description: "All uploaded documents are automatically stripped of metadata and converted to clean PDFs. Original files are never stored, ensuring no identifying information can trace back to uploaders.",
-      githubLink: "https://github.com/main-salman/fadih/blob/main/backend/app/services/metadata_service.py"
+      githubLink: "https://github.com/main-salman/haqnow/blob/main/backend/app/services/metadata_service.py"
     }
   ];
 
@@ -373,7 +373,7 @@ export default function PrivacyGuaranteedPage() {
                         Every line of code is public and auditable
                       </p>
                       <Button variant="outline" size="sm" asChild>
-                        <a href="https://github.com/main-salman/fadih" target="_blank" rel="noopener noreferrer">
+                        <a href="https://github.com/main-salman/haqnow" target="_blank" rel="noopener noreferrer">
                           View Repository
                           <ExternalLink className="h-3 w-3 ml-1" />
                         </a>
@@ -389,7 +389,7 @@ export default function PrivacyGuaranteedPage() {
                         Detailed privacy code examples and documentation
                       </p>
                       <Button variant="outline" size="sm" asChild>
-                        <a href="https://github.com/main-salman/fadih/blob/main/README.md#privacy-compliance--anonymity-guarantees" target="_blank" rel="noopener noreferrer">
+                        <a href="https://github.com/main-salman/haqnow/blob/main/README.md#privacy-compliance--anonymity-guarantees" target="_blank" rel="noopener noreferrer">
                           View Privacy Docs
                           <ExternalLink className="h-3 w-3 ml-1" />
                         </a>
@@ -405,7 +405,7 @@ export default function PrivacyGuaranteedPage() {
                         Server configurations and deployment scripts
                       </p>
                       <Button variant="outline" size="sm" asChild>
-                        <a href="https://github.com/main-salman/fadih/tree/main/terraform" target="_blank" rel="noopener noreferrer">
+                        <a href="https://github.com/main-salman/haqnow/tree/main/terraform" target="_blank" rel="noopener noreferrer">
                           View Infrastructure
                           <ExternalLink className="h-3 w-3 ml-1" />
                         </a>
@@ -424,7 +424,7 @@ export default function PrivacyGuaranteedPage() {
                         # to_dict() excludes IP from responses
                       </code>
                       <Button variant="link" size="sm" className="p-0 h-auto" asChild>
-                        <a href="https://github.com/main-salman/fadih/blob/main/backend/app/database/models.py#L20-L50" target="_blank" rel="noopener noreferrer">
+                        <a href="https://github.com/main-salman/haqnow/blob/main/backend/app/database/models.py#L20-L50" target="_blank" rel="noopener noreferrer">
                           View Database Model <ExternalLink className="h-3 w-3 ml-1" />
                         </a>
                       </Button>
@@ -436,7 +436,7 @@ export default function PrivacyGuaranteedPage() {
                         # No $remote_addr (IP) logged
                       </code>
                       <Button variant="link" size="sm" className="p-0 h-auto" asChild>
-                        <a href="https://github.com/main-salman/fadih/blob/main/history.txt#L950-L980" target="_blank" rel="noopener noreferrer">
+                        <a href="https://github.com/main-salman/haqnow/blob/main/history.txt#L950-L980" target="_blank" rel="noopener noreferrer">
                           View Server Config <ExternalLink className="h-3 w-3 ml-1" />
                         </a>
                       </Button>
@@ -480,7 +480,7 @@ export default function PrivacyGuaranteedPage() {
                     </a>
                   </Button>
                   <Button variant="outline" asChild className="min-w-[200px]">
-                    <a href="https://github.com/main-salman/fadih/issues" target="_blank" rel="noopener noreferrer">
+                    <a href="https://github.com/main-salman/haqnow/issues" target="_blank" rel="noopener noreferrer">
                       <Github className="h-4 w-4 mr-2" />
                       Report Issues
                       <ExternalLink className="h-3 w-3 ml-1" />

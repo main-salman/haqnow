@@ -168,8 +168,8 @@ export default function App() {
   useEffect(() => {
     const fetchMapData = async () => {
       // Check if we have cached data first
-      const cachedData = localStorage.getItem('fadih_map_data');
-      const cacheTimestamp = localStorage.getItem('fadih_map_data_timestamp');
+              const cachedData = localStorage.getItem('haqnow_map_data');
+        const cacheTimestamp = localStorage.getItem('haqnow_map_data_timestamp');
       const cacheMaxAge = 5 * 60 * 1000; // 5 minutes
       
       if (cachedData && cacheTimestamp) {
@@ -233,8 +233,8 @@ export default function App() {
         console.log('Unmapped countries:', unmappedCountries.length);
         
         // Cache the data in localStorage
-        localStorage.setItem('fadih_map_data', JSON.stringify(mappedData));
-        localStorage.setItem('fadih_map_data_timestamp', Date.now().toString());
+                  localStorage.setItem('haqnow_map_data', JSON.stringify(mappedData));
+          localStorage.setItem('haqnow_map_data_timestamp', Date.now().toString());
         console.log('💾 Map data cached to localStorage');
         
         setMapData(mappedData);
