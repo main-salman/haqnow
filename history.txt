@@ -8441,3 +8441,62 @@ Infrastructure      Zero IP Tracking      Secure Files
 **CURRENT STATUS**: README.md completely updated with HaqNow.com branding, comprehensive feature documentation, ASCII architecture diagram, and professional presentation suitable for a global corruption transparency platform.
 
 The README now properly reflects HaqNow.com as a world-class, privacy-first platform serving corruption document whistleblowers in 180+ countries with 60+ language support and complete anonymity guarantees.
+
+## 27. Frontend Branding Update - Complete Fadih.org to HaqNow.com Migration (July 28, 2025)
+
+**ISSUE**: Live website at https://www.haqnow.com/ still showed "Fadih.org" branding instead of "HaqNow.com"
+
+**SCOPE**: Complete frontend branding migration including:
+1. ✅ **Translation Files**: Updated Polish language file references
+2. ✅ **GitHub Links**: Updated all repository URLs from "main-salman/fadih" to "main-salman/haqnow"
+3. ✅ **LocalStorage Keys**: Updated cache keys from "fadih_map_data" to "haqnow_map_data"
+4. ✅ **Comments**: Updated code comments to reference HaqNow.com
+5. ✅ **Privacy Page**: Updated all GitHub repository links in privacy documentation
+
+**IMPLEMENTATION COMPLETED ✅**:
+
+### 1. **Polish Translation Updates**:
+- **Copyright**: "© 2025 Fadih.org" → "© 2025 HaqNow.com"
+- **About Title**: "O Fadih.org" → "O HaqNow.com"  
+- **FOI Connection**: "FOI + Fadih.org" → "FOI + HaqNow.com"
+
+### 2. **GitHub Repository Links Updated**:
+- **Models**: `main-salman/fadih/blob/main/backend/app/database/models.py` → `main-salman/haqnow/...`
+- **Admin Pages**: `main-salman/fadih/blob/main/frontend/src/pages/AdminApprovedDocumentsPage.tsx` → `main-salman/haqnow/...`
+- **File Uploader**: `main-salman/fadih/blob/main/backend/app/apis/file_uploader/__init__.py` → `main-salman/haqnow/...`
+- **Rate Limiting**: `main-salman/fadih/blob/main/backend/app/middleware/rate_limit.py` → `main-salman/haqnow/...`
+- **Metadata Service**: `main-salman/fadih/blob/main/backend/app/services/metadata_service.py` → `main-salman/haqnow/...`
+- **Main Repository**: `main-salman/fadih` → `main-salman/haqnow`
+- **Privacy Docs**: `main-salman/fadih/blob/main/README.md#privacy-compliance` → `main-salman/haqnow/...`
+- **Infrastructure**: `main-salman/fadih/tree/main/terraform` → `main-salman/haqnow/...`
+- **Database Model**: `main-salman/fadih/blob/main/backend/app/database/models.py#L20-L50` → `main-salman/haqnow/...`
+- **History**: `main-salman/fadih/blob/main/history.txt#L950-L980` → `main-salman/haqnow/...`
+- **Issues**: `main-salman/fadih/issues` → `main-salman/haqnow/issues`
+
+### 3. **LocalStorage Cache Updates**:
+- **Map Data**: `localStorage.getItem('fadih_map_data')` → `localStorage.getItem('haqnow_map_data')`
+- **Timestamp**: `localStorage.getItem('fadih_map_data_timestamp')` → `localStorage.getItem('haqnow_map_data_timestamp')`
+- **Cache Set**: `localStorage.setItem('fadih_map_data', ...)` → `localStorage.setItem('haqnow_map_data', ...)`
+
+### 4. **Code Comments**:
+- **FOI Page**: `{/* Connection to Fadih */}` → `{/* Connection to HaqNow.com */}`
+
+### 5. **Deployment**:
+- **Version**: Deployed as v2.3.7 with complete branding migration
+- **Build Status**: ✅ Frontend built successfully with 1788 modules transformed
+- **Live Status**: ✅ Website now shows HaqNow.com branding at https://www.haqnow.com/
+
+**VERIFICATION**:
+- ✅ **Homepage**: Now displays "HaqNow.com" branding throughout
+- ✅ **Polish Language**: Copyright and titles updated to HaqNow.com
+- ✅ **Privacy Page**: All GitHub links point to "main-salman/haqnow" repository
+- ✅ **Map Caching**: LocalStorage uses "haqnow_" prefixes
+- ✅ **No Fadih References**: All "Fadih.org" references removed from frontend
+
+**BENEFITS**:
+- ✅ **Consistent Branding**: Complete alignment between README.md and live website
+- ✅ **Professional Presentation**: Unified HaqNow.com identity across all touchpoints
+- ✅ **Updated Documentation Links**: GitHub repository links now point to correct "haqnow" repository
+- ✅ **Clean Migration**: No legacy "Fadih" references remain in user-facing content
+
+**CURRENT STATUS**: Live website at https://www.haqnow.com/ now completely reflects HaqNow.com branding throughout all pages, translations, and documentation links. The rebranding migration is 100% complete across both documentation (README.md) and live frontend application.
