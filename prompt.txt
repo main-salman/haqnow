@@ -94,3 +94,7 @@ Let me know your answers or if you want to discuss any of these in more detail!
 Translations for https://www.haqnow.com/about and https://www.haqnow.com/foi are missing. They should also be available here https://www.haqnow.com/admin-translations-page to be editable. All content on the website should be editable on https://www.haqnow.com/admin-translations-page 
 
 
+
+
+More:
+

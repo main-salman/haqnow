@@ -3,21 +3,18 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, ExternalLink, Globe, Users, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import Navigation from "@/components/Navigation";
 
 export default function AboutPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-screen bg-white p-4 md:p-8">
-      <div className="container mx-auto max-w-4xl space-y-8">
-        {/* Back Button */}
-        <Button variant="outline" onClick={() => navigate("/")} className="mb-6">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          {t('navigation.backToHome', 'Back to Home')}
-        </Button>
-
-        {/* Header */}
+    <div className="min-h-screen bg-white">
+      <Navigation />
+      <div className="p-4 md:p-8">
+        <div className="container mx-auto max-w-4xl space-y-8">
+          {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             {t('navigation.about')}
@@ -182,6 +179,7 @@ export default function AboutPage() {
               </p>
             </div>
           </div>
+        </div>
         </div>
       </div>
       

@@ -105,8 +105,8 @@ const DisclaimerPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-white">
       <Navigation />
-      <div className="py-8">
-        <div className="container mx-auto px-4 max-w-4xl">
+      <div className="py-12">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main Warning Card */}
         <Card className="border-green-200 shadow-lg mb-8">
           <CardHeader className="bg-gradient-to-r from-green-500 to-green-600 text-white">
@@ -119,17 +119,17 @@ const DisclaimerPage: React.FC = () => {
             <div className="prose prose-lg max-w-none">
               {/* Corporate Warning */}
               <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
-                <h3 className="text-xl font-bold text-green-800 mb-4 flex items-center">
+                <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
                   <Shield className="h-6 w-6 mr-2" />
                   {t('disclaimer.corporateWarningTitle')}
                 </h3>
-                <p className="text-green-700 font-medium mb-4">
+                <p className="text-gray-700 font-medium mb-4">
                   <strong>{t('disclaimer.corporateWarningText')}</strong>
                 </p>
-                <p className="text-green-600 mb-4">
+                <p className="text-gray-600 mb-4">
                   {t('disclaimer.corporateWarningDescription')}
                 </p>
-                <ul className="list-disc list-inside text-green-600 space-y-2 ml-4">
+                <ul className="list-disc list-inside text-gray-600 space-y-2 ml-4">
                   <li>{t('disclaimer.corporateWarningItem1')}</li>
                   <li>{t('disclaimer.corporateWarningItem2')}</li>
                   <li>{t('disclaimer.corporateWarningItem3')}</li>
@@ -139,16 +139,16 @@ const DisclaimerPage: React.FC = () => {
 
               {/* Country Warning */}
               <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
-                <h3 className="text-xl font-bold text-green-800 mb-4 flex items-center">
+                <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
                   <Globe className="h-6 w-6 mr-2" />
                   {t('disclaimer.countryWarningTitle')}
                 </h3>
-                <p className="text-green-700 font-medium mb-4">
+                <p className="text-gray-700 font-medium mb-4">
                   {t('disclaimer.countryWarningText')}
                 </p>
                 <div className="bg-green-100 border border-green-300 rounded-md p-4 mb-4">
-                  <h4 className="font-semibold text-green-800 mb-2">{t('disclaimer.countryWarningSubtitle')}</h4>
-                  <ul className="list-disc list-inside text-green-700 space-y-1 ml-4">
+                  <h4 className="font-semibold text-gray-900 mb-2">{t('disclaimer.countryWarningSubtitle')}</h4>
+                  <ul className="list-disc list-inside text-gray-700 space-y-1 ml-4">
                     <li>{t('disclaimer.countryWarningItem1')}</li>
                     <li>{t('disclaimer.countryWarningItem2')}</li>
                     <li>{t('disclaimer.countryWarningItem3')}</li>
@@ -159,11 +159,11 @@ const DisclaimerPage: React.FC = () => {
 
               {/* Best Practices */}
               <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
-                <h3 className="text-xl font-bold text-green-800 mb-4 flex items-center">
+                <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
                   <Eye className="h-6 w-6 mr-2" />
                   {t('disclaimer.bestPracticesTitle')}
                 </h3>
-                <ul className="list-disc list-inside text-green-700 space-y-2 ml-4">
+                <ul className="list-disc list-inside text-gray-700 space-y-2 ml-4">
                   <li>{t('disclaimer.bestPracticesItem1')}</li>
                   <li>{t('disclaimer.bestPracticesItem2')}</li>
                   <li>{t('disclaimer.bestPracticesItem3')}</li>
@@ -174,17 +174,17 @@ const DisclaimerPage: React.FC = () => {
 
               {/* Privacy Commitment */}
               <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-                <h3 className="text-xl font-bold text-green-800 mb-4">{t('disclaimer.privacyCommitmentTitle')}</h3>
-                <p className="text-green-700 mb-4">
+                <h3 className="text-xl font-bold text-gray-900 mb-4">{t('disclaimer.privacyCommitmentTitle')}</h3>
+                <p className="text-gray-700 mb-4">
                   {t('disclaimer.privacyCommitmentText')}
                 </p>
-                <ul className="list-disc list-inside text-green-700 space-y-1 ml-4">
+                <ul className="list-disc list-inside text-gray-700 space-y-1 ml-4">
                   <li>{t('disclaimer.privacyCommitmentItem1')}</li>
                   <li>{t('disclaimer.privacyCommitmentItem2')}</li>
                   <li>{t('disclaimer.privacyCommitmentItem3')}</li>
                   <li>{t('disclaimer.privacyCommitmentItem4')}</li>
                 </ul>
-                <p className="text-green-600 mt-4 font-medium">
+                <p className="text-gray-600 mt-4 font-medium">
                   {t('disclaimer.privacyCommitmentNote')}
                 </p>
               </div>
