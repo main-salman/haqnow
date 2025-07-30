@@ -17,6 +17,7 @@ import { UploadCloud, FileText, AlertCircle, CheckCircle, Loader2, Shield, Arrow
 import { toast } from "sonner";
 import { countriesData, Country, State } from "utils/countriesData"; // Added
 import HCaptcha from '@hcaptcha/react-hcaptcha';
+import Navigation from "@/components/Navigation";
 
 // Mock data - replace with API calls or more robust data source later
 // const mockCountries = [
@@ -460,17 +461,12 @@ export default function UploadDocumentPage() {
   };
 
   return (
-    <div className="min-h-screen bg-muted/40 py-8 px-4 flex justify-center items-start font-sans">
-      <Card className="w-full max-w-2xl shadow-xl">
-        <form onSubmit={handleSubmit} noValidate>
-          <CardHeader className="text-center">
-            {/* Back Button */}
-            <div className="flex justify-start mb-4">
-              <Button variant="outline" onClick={() => navigate("/")} type="button">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                {t('upload.backToHome', 'Back to Home')}
-              </Button>
-            </div>
+    <div className="min-h-screen bg-white">
+      <Navigation />
+      <div className="py-8 px-4 flex justify-center items-start font-sans">
+        <Card className="w-full max-w-2xl shadow-xl">
+          <form onSubmit={handleSubmit} noValidate>
+            <CardHeader className="text-center">
             
             <CardTitle className="text-3xl font-serif">{t('upload.title')}</CardTitle>
             <CardDescription>
@@ -617,6 +613,16 @@ export default function UploadDocumentPage() {
           </CardFooter>
         </form>
       </Card>
+      </div>
+      
+      {/* Footer */}
+      <footer className="border-t border-border bg-muted/10 py-6 mt-8">
+        <div className="container mx-auto px-4 flex items-center justify-center">
+          <p className="text-sm text-muted-foreground">
+            © {new Date().getFullYear()} {t('navigation.brand')}. {t('footer.rights')}
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }

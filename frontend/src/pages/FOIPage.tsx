@@ -96,7 +96,7 @@ const FOIPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-green-50 py-12">
+    <div className="min-h-screen bg-white py-12">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Back Button */}
         <Button variant="outline" onClick={() => navigate("/")} className="mb-6">

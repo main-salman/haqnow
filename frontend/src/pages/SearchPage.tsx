@@ -19,6 +19,7 @@ import {
   FileText,
 } from "lucide-react";
 import { toast } from "sonner";
+import Navigation from "@/components/Navigation";
 
 // Define the document result interface
 interface SearchDocumentResult {
@@ -87,7 +88,7 @@ export default function SearchPage() {
 
   const performSearch = useCallback(
     async (tagsToSearch: string, countryFilter?: string | null) => {
-      if (!tagsToSearch.trim()) {
+      if (!tagsToSearch.trim() && !countryFilter) {
         setSearchResults([]);
         setError(null);
         if (searchAttempted) {
@@ -101,7 +102,10 @@ export default function SearchPage() {
       setSearchAttempted(true);
       
       // Update URL params
-      const newParams: Record<string, string> = { q: tagsToSearch };
+      const newParams: Record<string, string> = {};
+      if (tagsToSearch.trim()) {
+        newParams.q = tagsToSearch;
+      }
       if (countryFilter) {
         newParams.country = countryFilter;
       }
@@ -112,7 +116,7 @@ export default function SearchPage() {
         
         // Use the new backend search API
         const searchUrl = new URL('/api/search/search', window.location.origin);
-        searchUrl.searchParams.append('q', tagsToSearch);
+        searchUrl.searchParams.append('q', tagsToSearch || ''); // Allow empty queries for country-only searches
         searchUrl.searchParams.append('per_page', '50');
         
         // Add country filter if provided
@@ -163,9 +167,9 @@ export default function SearchPage() {
       setTagsInput(initialTags);
       performSearch(initialTags, initialCountry);
     } else if (initialCountry) {
-      // If only country is provided, search for that country
-      setTagsInput(initialCountry);
-      performSearch(initialCountry, initialCountry);
+      // If only country is provided, show all documents from that country
+      setTagsInput(""); // Clear the search input
+      performSearch("", initialCountry); // Empty query with country filter
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run only on initial mount to get tags from URL
@@ -187,11 +191,9 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="container mx-auto p-4 md:p-8 max-w-4xl">
-      <Button variant="outline" onClick={() => navigate("/")} className="mb-6">
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        {t('search.backToHome')}
-      </Button>
+    <div className="min-h-screen bg-white">
+      <Navigation />
+      <div className="container mx-auto p-4 md:p-8 max-w-4xl">
 
       <h1 className="text-3xl font-bold mb-2 font-serif text-center">
         {t('search.title')}
@@ -376,6 +378,7 @@ export default function SearchPage() {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }

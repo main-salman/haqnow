@@ -273,7 +273,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-green-50">
+    <div className="min-h-screen bg-white">
       <ProminentLanguageBar />
       <header className="py-6 px-4 md:px-8 border-b border-border">
         <div className="container mx-auto">
@@ -282,7 +282,7 @@ export default function App() {
               <div className="h-8 w-8 rounded-md flex items-center justify-center">
                 <img src="/favicon.svg" alt="HaqNow.com" className="h-8 w-8" />
               </div>
-              <h1 className="text-xl md:text-2xl font-bold tracking-tight">
+              <h1 className="text-xl md:text-2xl font-bold tracking-tight text-green-600">
                 {t('navigation.brand')}
               </h1>
             </div>

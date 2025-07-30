@@ -42,25 +42,25 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ className = 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className={`gap-2 ${className}`}>
-          <Globe className="h-4 w-4" />
-          <span className="hidden sm:inline">{currentLanguageName}</span>
-          <span className="sm:hidden">{currentLanguage.toUpperCase()}</span>
+        <Button variant="ghost" size="sm" className={`gap-1 text-xs px-2 py-1 h-7 ${className}`}>
+          <Globe className="h-3 w-3" />
+          <span className="hidden sm:inline text-xs">{currentLanguageName}</span>
+          <span className="sm:hidden text-xs">{currentLanguage.toUpperCase()}</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-[160px]">
+      <DropdownMenuContent align="end" className="min-w-[110px]">
         {Object.entries(supportedLanguages).map(([code, name]) => (
           <DropdownMenuItem
             key={code}
             onClick={() => handleLanguageChange(code)}
-            className={`cursor-pointer ${currentLanguage === code ? 'bg-accent' : ''}`}
+            className={`cursor-pointer text-xs py-1 ${currentLanguage === code ? 'bg-accent' : ''}`}
           >
             <div className="flex items-center justify-between w-full">
-              <span>{name}</span>
-              <span className="text-xs text-muted-foreground ml-2">{code.toUpperCase()}</span>
+              <span className="text-xs">{name}</span>
+              <span className="text-xs text-muted-foreground ml-1">{code.toUpperCase()}</span>
             </div>
             {currentLanguage === code && (
-              <span className="ml-2 text-primary">✓</span>
+              <span className="ml-1 text-primary text-xs">✓</span>
             )}
           </DropdownMenuItem>
         ))}

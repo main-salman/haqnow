@@ -108,7 +108,7 @@ export default function PrivacyGuaranteedPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-green-50 text-white p-4 md:p-8">
+    <div className="min-h-screen bg-white p-4 md:p-8">
       <div className="container mx-auto max-w-4xl space-y-8">
         {/* Back Button */}
         <Button variant="outline" onClick={() => navigate("/")} className="mb-6">
