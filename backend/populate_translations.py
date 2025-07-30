@@ -71,8 +71,14 @@ def determine_section(key):
         return 'search'
     elif key.startswith('upload.'):
         return 'upload'
+    elif key.startswith('about.'):
+        return 'about'
+    elif key.startswith('foi.'):
+        return 'foi'
     elif key.startswith('privacy.'):
         return 'privacy'
+    elif key.startswith('disclaimer.'):
+        return 'disclaimer'
     elif key.startswith('general.'):
         return 'general'
     else:

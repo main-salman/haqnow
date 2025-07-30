@@ -103,6 +103,10 @@ source .venv/bin/activate && pip install -r requirements.txt
 echo "🔒 Running privacy migration (IP address removal)..."
 source .venv/bin/activate && python run_migration.py || echo "Migration already applied or not needed"
 
+# Populate translations with about and foi sections
+echo "🌍 Populating translations with updated sections..."
+source .venv/bin/activate && python populate_translations.py || echo "Translation population completed or already up to date"
+
 cd ..
 
 # Build frontend on server

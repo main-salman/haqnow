@@ -98,3 +98,4 @@ Translations for https://www.haqnow.com/about and https://www.haqnow.com/foi are
 
 More:
 
+If I search Iran, I get some resulst - but if I search Irani or Iranian, I don't get any results. https://www.haqnow.com/search-page?q=iranian - I thought the semantic search that was implemented would fix these types of issues. Also when people are searching, it would be great if there could be an autocomplete to help guide the users on what can be searched. Tell me about what free or open source options that can be implemented.
