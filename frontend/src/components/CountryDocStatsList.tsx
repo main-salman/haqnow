@@ -56,7 +56,7 @@ const CountryDocStatsList: React.FC<Props> = () => {
   }, []);
 
   const handleCountryClick = (countryName: string) => {
-    navigate(`/search-page?q=${encodeURIComponent(countryName)}&country=${encodeURIComponent(countryName)}`);
+    navigate(`/search-page?country=${encodeURIComponent(countryName)}`);
   };
 
   if (isLoading) {
@@ -114,7 +114,7 @@ const CountryDocStatsList: React.FC<Props> = () => {
               onClick={() => handleCountryClick(stat.country)}
               className="flex justify-between items-center p-3 rounded-md hover:bg-muted/50 cursor-pointer transition-colors border border-transparent hover:border-primary/30"
             >
-              <span className="font-medium text-foreground text-base">{stat.country}</span>
+              <span className="font-medium text-foreground text-lg">{stat.country}</span>
               <span className="text-lg font-semibold text-primary">{stat.doc_count}</span>
             </div>
           ))}

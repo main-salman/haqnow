@@ -81,5 +81,16 @@ Let me know your answers or if you want to discuss any of these in more detail!
 
 
 
+	- Add an additional "Upload" below the search bar on the main page https://www.haqnow.com/
+	- Map should show country names in English and native language (currently it's native language only)
+	- Search is not working properly when clicking on countries in the list under the map - e.g. https://www.haqnow.com/search-page?q=United+States&country=United+States shows 0 documents even though there are 2
+	- Increase font size in the list of countries under the map by 20%
+	- Increase font size for "Global Corruption Document Distribution" by 20%
+	- Consider moving "About" to be the first in the list/navigation bar
+	- https://www.haqnow.com/foi both links at the bottom of this page are broken
+	- Footer and Nav should remain same on all pages. "All Rights Reserved" should be at the bottom of every page
+	- https://www.haqnow.com/privacy-guaranteed-page - arrows should be removed - users think they are clickable
+	- https://www.haqnow.com/disclaimer - avoid red text on red, yellow on yellow, blue on blue - make the theme consistent throughout the website - let's do light-green background and white foreground on all pages. Improve the design for https://www.haqnow.com/about and other pages background and foreground are the same colour - should be different
+Translations for https://www.haqnow.com/about and https://www.haqnow.com/foi are missing. They should also be available here https://www.haqnow.com/admin-translations-page to be editable. All content on the website should be editable on https://www.haqnow.com/admin-translations-page 
 
 

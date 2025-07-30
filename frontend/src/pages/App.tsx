@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Menu, X } from "lucide-react";
+import { Search, Menu, X, Upload } from "lucide-react";
 import CountryDocStatsList from '../components/CountryDocStatsList';
 import InteractiveWorldMap from '../components/InteractiveWorldMap';
 import Version from '../components/Version';
@@ -273,7 +273,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-green-50">
       <ProminentLanguageBar />
       <header className="py-6 px-4 md:px-8 border-b border-border">
         <div className="container mx-auto">
@@ -290,14 +290,14 @@ export default function App() {
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-4">
               <nav className="flex space-x-6">
+                <Button variant="ghost" onClick={() => navigate('/about')}>
+                  {t('navigation.about')}
+                </Button>
                 <Button variant="ghost" onClick={() => navigate('/search-page')}>
                   {t('navigation.search')}
                 </Button>
                 <Button variant="ghost" onClick={() => navigate('/upload-document-page')}>
                   {t('navigation.upload')}
-                </Button>
-                <Button variant="ghost" onClick={() => navigate('/about')}>
-                  {t('navigation.about')}
                 </Button>
                 <Button variant="ghost" onClick={() => navigate('/foi')}>
                   {t('navigation.foi')}
@@ -333,6 +333,13 @@ export default function App() {
                 <Button 
                   variant="ghost" 
                   className="justify-start" 
+                  onClick={() => handleMobileNavigation('/about')}
+                >
+                  {t('navigation.about')}
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className="justify-start" 
                   onClick={() => handleMobileNavigation('/search-page')}
                 >
                   {t('navigation.search')}
@@ -343,13 +350,6 @@ export default function App() {
                   onClick={() => handleMobileNavigation('/upload-document-page')}
                 >
                   {t('navigation.upload')}
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  className="justify-start" 
-                  onClick={() => handleMobileNavigation('/about')}
-                >
-                  {t('navigation.about')}
                 </Button>
                 <Button 
                   variant="ghost" 
@@ -405,11 +405,24 @@ export default function App() {
                 {t('homepage.searchButton')}
               </Button>
             </div>
+            
+            {/* Additional Upload Button */}
+            <div className="mt-4 text-center">
+              <Button 
+                variant="outline" 
+                size="lg"
+                onClick={() => navigate('/upload-document-page')}
+                className="px-8 py-3"
+              >
+                <Upload className="h-5 w-5 mr-2" />
+                {t('navigation.upload')}
+              </Button>
+            </div>
           </section>
 
           <section className="space-y-6">
             <div className="text-center">
-              <h3 className="text-xl md:text-2xl font-semibold tracking-tight">
+              <h3 className="text-2xl md:text-3xl font-semibold tracking-tight">
                 {t('homepage.mapTitle')}
               </h3>
             </div>

@@ -17,11 +17,9 @@ import {
   ExternalLink,
   CheckCircle,
   Users,
-
   Download,
   Upload,
-  Trash2,
-  ArrowRight
+  Trash2
 } from "lucide-react";
 
 export default function PrivacyGuaranteedPage() {
@@ -110,7 +108,7 @@ export default function PrivacyGuaranteedPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-4 md:p-8">
+    <div className="min-h-screen bg-green-50 text-white p-4 md:p-8">
       <div className="container mx-auto max-w-4xl space-y-8">
         {/* Back Button */}
         <Button variant="outline" onClick={() => navigate("/")} className="mb-6">
@@ -210,7 +208,7 @@ export default function PrivacyGuaranteedPage() {
                 <div className="bg-white dark:bg-gray-900 rounded-lg p-6 mb-6 border border-gray-200 dark:border-gray-700">
                   <div className="flex flex-col space-y-4">
                     {/* Step 1: Upload */}
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center">
                       <div className="flex items-center space-x-3 flex-1">
                         <div className="flex items-center justify-center w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full">
                           <Upload className="h-5 w-5 text-blue-600 dark:text-blue-400" />
@@ -220,11 +218,10 @@ export default function PrivacyGuaranteedPage() {
                           <p className="text-sm text-gray-600 dark:text-gray-400">User uploads document (PDF, Word, Excel, Image, etc.)</p>
                         </div>
                       </div>
-                      <ArrowRight className="h-5 w-5 text-gray-400" />
                     </div>
 
                     {/* Step 2: Processing */}
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center">
                       <div className="flex items-center space-x-3 flex-1">
                         <div className="flex items-center justify-center w-10 h-10 bg-orange-100 dark:bg-orange-900 rounded-full">
                           <Shield className="h-5 w-5 text-orange-600 dark:text-orange-400" />
@@ -234,11 +231,10 @@ export default function PrivacyGuaranteedPage() {
                           <p className="text-sm text-gray-600 dark:text-gray-400">Automatic removal of EXIF data, author info, creation dates, GPS coordinates</p>
                         </div>
                       </div>
-                      <ArrowRight className="h-5 w-5 text-gray-400" />
                     </div>
 
                     {/* Step 3: Conversion */}
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center">
                       <div className="flex items-center space-x-3 flex-1">
                         <div className="flex items-center justify-center w-10 h-10 bg-green-100 dark:bg-green-900 rounded-full">
                           <FileText className="h-5 w-5 text-green-600 dark:text-green-400" />
@@ -248,11 +244,10 @@ export default function PrivacyGuaranteedPage() {
                           <p className="text-sm text-gray-600 dark:text-gray-400">Convert to clean, standardized PDF format with zero metadata</p>
                         </div>
                       </div>
-                      <ArrowRight className="h-5 w-5 text-gray-400" />
                     </div>
 
                     {/* Step 4: Storage */}
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center">
                       <div className="flex items-center space-x-3 flex-1">
                         <div className="flex items-center justify-center w-10 h-10 bg-purple-100 dark:bg-purple-900 rounded-full">
                           <Database className="h-5 w-5 text-purple-600 dark:text-purple-400" />
@@ -262,11 +257,10 @@ export default function PrivacyGuaranteedPage() {
                           <p className="text-sm text-gray-600 dark:text-gray-400">Only clean PDF stored in database - original file never saved</p>
                         </div>
                       </div>
-                      <ArrowRight className="h-5 w-5 text-gray-400" />
                     </div>
 
                     {/* Step 5: Deletion */}
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center">
                       <div className="flex items-center space-x-3 flex-1">
                         <div className="flex items-center justify-center w-10 h-10 bg-red-100 dark:bg-red-900 rounded-full">
                           <Trash2 className="h-5 w-5 text-red-600 dark:text-red-400" />
@@ -276,7 +270,6 @@ export default function PrivacyGuaranteedPage() {
                           <p className="text-sm text-gray-600 dark:text-gray-400">Original file permanently deleted from memory - no traces remain</p>
                         </div>
                       </div>
-                      <ArrowRight className="h-5 w-5 text-gray-400" />
                     </div>
 
                     {/* Step 6: Download */}
@@ -550,6 +543,15 @@ export default function PrivacyGuaranteedPage() {
             </Card>
           </section>
         </main>
+        
+        {/* Footer */}
+        <footer className="border-t border-border bg-muted/10 py-6 mt-8">
+          <div className="container mx-auto px-4 flex items-center justify-center">
+            <p className="text-sm text-muted-foreground">
+              © {new Date().getFullYear()} {t('navigation.brand')}. {t('footer.rights')}
+            </p>
+          </div>
+        </footer>
       </div>
     </div>
   );

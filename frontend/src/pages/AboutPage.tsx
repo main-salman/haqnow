@@ -9,7 +9,7 @@ export default function AboutPage() {
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-4 md:p-8">
+    <div className="min-h-screen bg-green-50 text-white p-4 md:p-8">
       <div className="container mx-auto max-w-4xl space-y-8">
         {/* Back Button */}
         <Button variant="outline" onClick={() => navigate("/")} className="mb-6">
@@ -26,10 +26,10 @@ export default function AboutPage() {
         </div>
 
         {/* Founder Section */}
-        <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
+        <div className="bg-white text-gray-800 rounded-lg shadow-lg p-8 mb-8">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Founded by Salman Naqvi
+              {t('about.founder')}
             </h2>
             <div className="flex justify-center mb-6">
               <a 
@@ -39,11 +39,11 @@ export default function AboutPage() {
                 className="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium"
               >
                 <ExternalLink className="w-4 h-4 mr-2" />
-                Connect on LinkedIn
+                {t('about.linkedinConnect')}
               </a>
             </div>
             <blockquote className="text-lg italic text-gray-700 mb-6">
-              "I'm passionate about ending wars and human rights of all human beings around the world."
+              "{t('about.quote')}"
             </blockquote>
           </div>
 
@@ -51,24 +51,24 @@ export default function AboutPage() {
           <div className="grid md:grid-cols-3 gap-6 mb-8">
             <div className="text-center">
               <Globe className="w-12 h-12 text-indigo-600 mx-auto mb-3" />
-              <h3 className="font-semibold text-gray-900 mb-2">Global Transparency</h3>
-              <p className="text-gray-600 text-sm">Exposing corruption worldwide through document disclosure</p>
+              <h3 className="font-semibold text-gray-900 mb-2">{t('about.globalTransparency')}</h3>
+              <p className="text-gray-600 text-sm">{t('about.globalTransparencyDesc')}</p>
             </div>
             <div className="text-center">
               <Users className="w-12 h-12 text-indigo-600 mx-auto mb-3" />
-              <h3 className="font-semibold text-gray-900 mb-2">Human Rights</h3>
-              <p className="text-gray-600 text-sm">Protecting civilians through accountability and transparency</p>
+              <h3 className="font-semibold text-gray-900 mb-2">{t('about.humanRights')}</h3>
+              <p className="text-gray-600 text-sm">{t('about.humanRightsDesc')}</p>
             </div>
             <div className="text-center">
               <Shield className="w-12 h-12 text-indigo-600 mx-auto mb-3" />
-              <h3 className="font-semibold text-gray-900 mb-2">Anti-Corruption</h3>
-              <p className="text-gray-600 text-sm">Fighting systemic corruption through evidence-based exposure</p>
+              <h3 className="font-semibold text-gray-900 mb-2">{t('about.antiCorruption')}</h3>
+              <p className="text-gray-600 text-sm">{t('about.antiCorruptionDesc')}</p>
             </div>
           </div>
 
           {/* Connected Projects */}
           <div className="border-t pt-6">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">Connected Projects</h3>
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">{t('about.connectedProjects')}</h3>
             <div className="grid md:grid-cols-2 gap-4">
               <a 
                 href="https://www.ministryofwoke.com" 
@@ -78,8 +78,8 @@ export default function AboutPage() {
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="font-semibold text-gray-900">Ministry of Woke</h4>
-                    <p className="text-gray-600 text-sm">Anti-corruption advocacy platform</p>
+                    <h4 className="font-semibold text-gray-900">{t('about.ministryOfWoke')}</h4>
+                    <p className="text-gray-600 text-sm">{t('about.ministryOfWokeDesc')}</p>
                   </div>
                   <ExternalLink className="w-4 h-4 text-gray-400" />
                 </div>
@@ -93,8 +93,8 @@ export default function AboutPage() {
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="font-semibold text-gray-900">Salman Naqvi</h4>
-                    <p className="text-gray-600 text-sm">Personal website and portfolio</p>
+                    <h4 className="font-semibold text-gray-900">{t('about.salmanNaqvi')}</h4>
+                    <p className="text-gray-600 text-sm">{t('about.salmanNaqviDesc')}</p>
                   </div>
                   <ExternalLink className="w-4 h-4 text-gray-400" />
                 </div>
@@ -108,8 +108,8 @@ export default function AboutPage() {
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="font-semibold text-gray-900">Ace The Interview</h4>
-                    <p className="text-gray-600 text-sm">Professional development platform</p>
+                    <h4 className="font-semibold text-gray-900">{t('about.aceTheInterview')}</h4>
+                    <p className="text-gray-600 text-sm">{t('about.aceTheInterviewDesc')}</p>
                   </div>
                   <ExternalLink className="w-4 h-4 text-gray-400" />
                 </div>
@@ -123,8 +123,8 @@ export default function AboutPage() {
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="font-semibold text-gray-900">Connect</h4>
-                    <p className="text-gray-600 text-sm">Get in touch directly</p>
+                    <h4 className="font-semibold text-gray-900">{t('about.connect')}</h4>
+                    <p className="text-gray-600 text-sm">{t('about.connectDesc')}</p>
                   </div>
                   <ExternalLink className="w-4 h-4 text-gray-400" />
                 </div>
@@ -134,68 +134,65 @@ export default function AboutPage() {
         </div>
 
         {/* Mission Statement */}
-        <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Our Anti-Corruption Mission</h2>
+        <div className="bg-white text-gray-800 rounded-lg shadow-lg p-8 mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('about.missionTitle')}</h2>
           
           <div className="prose prose-lg text-gray-700 space-y-4">
             <p>
-              HaqNow.com emerges from a deep commitment to ending systemic corruption that fuels conflicts, 
-              undermines human rights, and perpetuates global inequality. Through the power of transparency 
-              and document disclosure, we believe that exposing corruption is one of the most effective ways 
-              to protect civilians, end wars, and advance human rights worldwide.
+              {t('about.missionDesc1')}
             </p>
             
             <p>
-              Corruption thrives in darkness, protected by secrecy and enabled by those who profit from 
-              inequality and conflict. When corrupt officials, defense contractors, and political elites 
-              operate without accountability, the result is often devastating: unnecessary wars, human rights 
-              abuses, and the systematic exploitation of vulnerable populations. By creating a secure, 
-              anonymous platform for whistleblowers and truth-tellers, HaqNow.com aims to shine light on 
-              these dark practices.
+              {t('about.missionDesc2')}
             </p>
             
             <p>
-              Our work is rooted in the understanding that transparency is not just a democratic ideal—it's 
-              a tool for peace and justice. Every document exposed, every corrupt scheme revealed, and every 
-              truth brought to light contributes to a world where accountability replaces impunity, where 
-              human rights are protected, and where the powerful can no longer operate with complete disregard 
-              for human suffering.
+              {t('about.missionDesc3')}
             </p>
           </div>
         </div>
 
         {/* Platform Features */}
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Platform Features</h2>
+        <div className="bg-white text-gray-800 rounded-lg shadow-lg p-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('about.platformFeaturesTitle')}</h2>
           
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <h3 className="font-semibold text-gray-900 mb-2">Anonymous & Secure</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">{t('about.featureAnonymousSecure')}</h3>
               <p className="text-gray-600">
-                Advanced encryption and anonymization to protect whistleblowers and sources.
+                {t('about.featureAnonymousSecureDesc')}
               </p>
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900 mb-2">Global Accessibility</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">{t('about.featureGlobalAccess')}</h3>
               <p className="text-gray-600">
-                Multi-language support including Arabic, French, German, Russian, Polish, and Turkish.
+                {t('about.featureGlobalAccessDesc')}
               </p>
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900 mb-2">Open Archive</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">{t('about.featureOpenArchive')}</h3>
               <p className="text-gray-600">
-                Searchable database of corruption documents accessible to journalists and researchers.
+                {t('about.featureOpenArchiveDesc')}
               </p>
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900 mb-2">Freedom of Information</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">{t('about.featureFOI')}</h3>
               <p className="text-gray-600">
-                Comprehensive FOI resources to help citizens demand transparency from their governments.
+                {t('about.featureFOIDesc')}
               </p>
             </div>
           </div>
         </div>
       </div>
+      
+      {/* Footer */}
+      <footer className="border-t border-border bg-muted/10 py-6 mt-8">
+        <div className="container mx-auto px-4 flex items-center justify-center">
+          <p className="text-sm text-muted-foreground">
+            © {new Date().getFullYear()} {t('navigation.brand')}. {t('footer.rights')}
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }; 

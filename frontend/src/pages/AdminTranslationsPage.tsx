@@ -42,6 +42,8 @@ const sections = [
   'homepage', 
   'search',
   'upload',
+  'about',
+  'foi',
   'privacy',
   'disclaimer',
   'general'

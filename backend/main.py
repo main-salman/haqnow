@@ -102,7 +102,7 @@ def setup_routers(app: FastAPI):
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
     app = FastAPI(
-        title="Fadih.org API",
+        title="HaqNow.com API",
         description="Anonymous Corruption Document Exposure Platform API",
         version="1.0.0"
     )
@@ -141,13 +141,13 @@ def create_app() -> FastAPI:
     @app.get("/health")
     async def health_check():
         """Health check endpoint."""
-        return {"status": "healthy", "message": "Fadih.org API is running"}
+        return {"status": "healthy", "message": "HaqNow.com API is running"}
     
     # Root endpoint
     @app.get("/")
     async def root():
         """Root endpoint."""
-        return {"message": "Fadih.org API", "version": "1.0.0"}
+        return {"message": "HaqNow.com API", "version": "1.0.0"}
     
     return app
 
@@ -158,7 +158,7 @@ app = create_app()
 @app.on_event("startup")
 async def startup_event():
     """Startup event handler."""
-    logger.info("Fadih.org API starting up...")
+    logger.info("HaqNow.com API starting up...")
     
     # Initialize database (non-blocking)
     from app.database.database import init_db
@@ -183,7 +183,7 @@ async def startup_event():
     else:
         logger.info("Email service initialized successfully")
     
-    logger.info("Fadih.org API startup complete")
+    logger.info("HaqNow.com API startup complete")
 
 @app.on_event("shutdown")
 async def shutdown_event():

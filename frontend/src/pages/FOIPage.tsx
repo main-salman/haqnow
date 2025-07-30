@@ -96,7 +96,7 @@ const FOIPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-100 py-12">
+    <div className="min-h-screen bg-green-50 py-12">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Back Button */}
         <Button variant="outline" onClick={() => navigate("/")} className="mb-6">
@@ -110,7 +110,7 @@ const FOIPage: React.FC = () => {
           </h1>
           <div className="w-24 h-1 bg-green-600 mx-auto mb-6"></div>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Your guide to accessing government information and promoting transparency worldwide
+            {t('foi.subtitle')}
           </p>
         </div>
 
@@ -118,43 +118,35 @@ const FOIPage: React.FC = () => {
         <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
           <div className="flex items-center mb-6">
             <Book className="w-8 h-8 text-green-600 mr-3" />
-            <h2 className="text-2xl font-bold text-gray-900">What is Freedom of Information?</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{t('foi.whatIs')}</h2>
           </div>
           
           <div className="prose prose-lg text-gray-700 space-y-4 mb-6">
             <p>
-              Freedom of Information (FOI) laws give citizens the right to access government documents, 
-              records, and data. These laws are fundamental tools for democracy, transparency, and 
-              accountability. They allow journalists, researchers, activists, and ordinary citizens 
-              to uncover government activities, expose corruption, and hold public officials accountable.
+              {t('foi.whatIsDesc1')}
             </p>
             
             <p>
-              FOI laws typically cover government agencies, departments, and public institutions. 
-              They require these bodies to respond to information requests within specified timeframes, 
-              though certain exemptions may apply for national security, personal privacy, or 
-              commercial confidentiality reasons.
+              {t('foi.whatIsDesc2')}
             </p>
             
             <p className="font-medium text-green-700">
-              💡 Pro Tip: FOI requests are powerful tools for uncovering corruption, government 
-              misconduct, and holding power accountable. Combined with platforms like HaqNow.com, 
-              they create a comprehensive approach to transparency and anti-corruption work.
+              {t('foi.proTip')}
             </p>
           </div>
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-800">
-              <strong>Source:</strong> This information is based on{' '}
+              <strong>{t('foi.source')}</strong> {t('foi.sourceText')}{' '}
               <a 
                 href="https://en.wikipedia.org/wiki/Freedom_of_information_laws_by_country"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-600 hover:text-blue-800 underline"
               >
-                Wikipedia's comprehensive article on Freedom of Information laws by country
+                {t('foi.wikipediaLink')}
               </a>
-              {' '}and various government sources.
+              {' '}{t('foi.sourceEnd')}
             </p>
           </div>
         </div>
@@ -163,7 +155,7 @@ const FOIPage: React.FC = () => {
         <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
           <div className="flex items-center mb-6">
             <Search className="w-8 h-8 text-green-600 mr-3" />
-            <h2 className="text-2xl font-bold text-gray-900">How to Submit FOI Requests</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{t('foi.howTo')}</h2>
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -171,32 +163,32 @@ const FOIPage: React.FC = () => {
               <div className="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl font-bold text-green-600">1</span>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Identify Agency</h3>
-              <p className="text-gray-600 text-sm">Determine which government body holds the information you need</p>
+              <h3 className="font-semibold text-gray-900 mb-2">{t('foi.step1')}</h3>
+              <p className="text-gray-600 text-sm">{t('foi.step1Desc')}</p>
             </div>
             
             <div className="text-center">
               <div className="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl font-bold text-green-600">2</span>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Be Specific</h3>
-              <p className="text-gray-600 text-sm">Make your request clear, specific, and focused to get better results</p>
+              <h3 className="font-semibold text-gray-900 mb-2">{t('foi.step2')}</h3>
+              <p className="text-gray-600 text-sm">{t('foi.step2Desc')}</p>
             </div>
             
             <div className="text-center">
               <div className="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl font-bold text-green-600">3</span>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Submit Request</h3>
-              <p className="text-gray-600 text-sm">Use official portals or contact agencies directly through proper channels</p>
+              <h3 className="font-semibold text-gray-900 mb-2">{t('foi.step3')}</h3>
+              <p className="text-gray-600 text-sm">{t('foi.step3Desc')}</p>
             </div>
             
             <div className="text-center">
               <div className="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl font-bold text-green-600">4</span>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Follow Up</h3>
-              <p className="text-gray-600 text-sm">Track your request and appeal if necessary to ensure compliance</p>
+              <h3 className="font-semibold text-gray-900 mb-2">{t('foi.step4')}</h3>
+              <p className="text-gray-600 text-sm">{t('foi.step4Desc')}</p>
             </div>
           </div>
         </div>
@@ -205,7 +197,7 @@ const FOIPage: React.FC = () => {
         <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
           <div className="flex items-center mb-6">
             <Globe className="w-8 h-8 text-green-600 mr-3" />
-            <h2 className="text-2xl font-bold text-gray-900">FOI Laws and Portals by Country</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{t('foi.countries')}</h2>
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -221,7 +213,7 @@ const FOIPage: React.FC = () => {
                 
                 <div className="mb-4">
                   <p className="text-sm text-gray-600 mb-2">
-                    <strong>Agency:</strong> {country.agency}
+                    <strong>{t('foi.agency')}</strong> {country.agency}
                   </p>
                 </div>
                 
@@ -232,7 +224,7 @@ const FOIPage: React.FC = () => {
                   className="inline-flex items-center text-green-600 hover:text-green-800 font-medium text-sm"
                 >
                   <ExternalLink className="w-4 h-4 mr-2" />
-                  Submit FOI Request
+                  {t('foi.submitRequest')}
                 </a>
               </div>
             ))}
@@ -243,58 +235,58 @@ const FOIPage: React.FC = () => {
         <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
           <div className="flex items-center mb-6">
             <Shield className="w-8 h-8 text-green-600 mr-3" />
-            <h2 className="text-2xl font-bold text-gray-900">FOI Best Practices</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{t('foi.bestPractices')}</h2>
           </div>
           
           <div className="grid md:grid-cols-2 gap-8">
             <div>
-              <h3 className="font-semibold text-gray-900 mb-4">✅ Do's</h3>
+              <h3 className="font-semibold text-gray-900 mb-4">{t('foi.dos')}</h3>
               <ul className="space-y-2 text-gray-700">
                 <li className="flex items-start">
                   <span className="text-green-600 mr-2">•</span>
-                  Be specific about dates, departments, and document types
+                  {t('foi.do1')}
                 </li>
                 <li className="flex items-start">
                   <span className="text-green-600 mr-2">•</span>
-                  Request information, not opinions or analysis
+                  {t('foi.do2')}
                 </li>
                 <li className="flex items-start">
                   <span className="text-green-600 mr-2">•</span>
-                  Keep records of all correspondence
+                  {t('foi.do3')}
                 </li>
                 <li className="flex items-start">
                   <span className="text-green-600 mr-2">•</span>
-                  Be patient but persistent with follow-ups
+                  {t('foi.do4')}
                 </li>
                 <li className="flex items-start">
                   <span className="text-green-600 mr-2">•</span>
-                  Consider appealing rejections when appropriate
+                  {t('foi.do5')}
                 </li>
               </ul>
             </div>
             
             <div>
-              <h3 className="font-semibold text-gray-900 mb-4">❌ Don'ts</h3>
+              <h3 className="font-semibold text-gray-900 mb-4">{t('foi.donts')}</h3>
               <ul className="space-y-2 text-gray-700">
                 <li className="flex items-start">
                   <span className="text-red-600 mr-2">•</span>
-                  Make overly broad or fishing expedition requests
+                  {t('foi.dont1')}
                 </li>
                 <li className="flex items-start">
                   <span className="text-red-600 mr-2">•</span>
-                  Request information that clearly falls under exemptions
+                  {t('foi.dont2')}
                 </li>
                 <li className="flex items-start">
                   <span className="text-red-600 mr-2">•</span>
-                  Use FOI for personal disputes or harassment
+                  {t('foi.dont3')}
                 </li>
                 <li className="flex items-start">
                   <span className="text-red-600 mr-2">•</span>
-                  Expect immediate responses - processing takes time
+                  {t('foi.dont4')}
                 </li>
                 <li className="flex items-start">
                   <span className="text-red-600 mr-2">•</span>
-                  Give up after initial rejection without considering appeals
+                  {t('foi.dont5')}
                 </li>
               </ul>
             </div>
@@ -305,29 +297,36 @@ const FOIPage: React.FC = () => {
         <div className="bg-gradient-to-r from-green-600 to-blue-600 rounded-lg shadow-lg p-8 text-white">
           <div className="text-center">
             <FileText className="w-16 h-16 mx-auto mb-4 text-white" />
-            <h2 className="text-2xl font-bold mb-4">FOI + HaqNow.com: Powerful Transparency Tools</h2>
+            <h2 className="text-2xl font-bold mb-4">{t('foi.connection')}</h2>
             <p className="text-lg mb-6 text-green-100">
-              When FOI requests uncover corruption, HaqNow.com provides a secure platform to share 
-              those documents with the world. Together, they create a comprehensive approach to 
-              fighting corruption and promoting transparency.
+              {t('foi.connectionDesc')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a 
-                href="/upload" 
+                href="/upload-document-page" 
                 className="bg-white text-green-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
               >
-                Upload FOI Documents
+                {t('foi.uploadDocuments')}
               </a>
               <a 
-                href="/search" 
+                href="/search-page" 
                 className="bg-green-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-400 transition-colors"
               >
-                Search Existing Documents
+                {t('foi.searchExisting')}
               </a>
             </div>
           </div>
         </div>
       </div>
+      
+      {/* Footer */}
+      <footer className="border-t border-border bg-muted/10 py-6 mt-8">
+        <div className="container mx-auto px-4 flex items-center justify-center">
+          <p className="text-sm text-muted-foreground">
+            © {new Date().getFullYear()} {t('navigation.brand')}. {t('footer.rights')}
+          </p>
+        </div>
+      </footer>
     </div>
   );
 };
