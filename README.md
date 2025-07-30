@@ -193,13 +193,118 @@ make run-frontend
 
 ### **Production Deployment**
 
-```bash
-# Deploy to production (requires Terraform setup)
-./deploy.sh
+The `deploy.sh` script handles automated deployment to production with semantic versioning and comprehensive deployment workflows.
 
+#### **Deployment Script Usage**
+
+The `deploy.sh` script uses semantic versioning (`major.minor.patch`) to manage releases:
+
+```bash
+# Patch Release (bug fixes, small updates) - increments 1.2.3 → 1.2.4
+./deploy.sh patch
+
+# Minor Release (new features, non-breaking changes) - increments 1.2.3 → 1.3.0  
+./deploy.sh minor
+
+# Major Release (breaking changes, major updates) - increments 1.2.3 → 2.0.0
+./deploy.sh major
+```
+
+#### **When to Deploy**
+
+**Always run deployment after making code changes:**
+
+1. **Bug Fixes & Small Updates** → Use `patch`
+   ```bash
+   # After fixing search functionality, UI improvements, etc.
+   ./deploy.sh patch
+   ```
+
+2. **New Features & Enhancements** → Use `minor`
+   ```bash
+   # After adding new language support, admin features, etc.
+   ./deploy.sh minor
+   ```
+
+3. **Breaking Changes & Major Overhauls** → Use `major`
+   ```bash
+   # After database schema changes, API breaking changes, etc.
+   ./deploy.sh major
+   ```
+
+#### **Deployment Process**
+
+The `deploy.sh` script performs the following automated tasks:
+
+1. **Version Management**
+   - Updates version numbers in package.json and relevant files
+   - Creates git tags for release tracking
+   - Commits version changes to repository
+
+2. **Build Process**
+   - Builds optimized production frontend (React/Vite)
+   - Prepares backend with all dependencies
+   - Generates static assets and documentation
+
+3. **Infrastructure Deployment**
+   - Runs Terraform to provision/update cloud resources
+   - Deploys application to Exoscale cloud servers
+   - Updates database schemas if needed
+   - Configures SSL/TLS and domain settings
+
+4. **Service Management**
+   - Restarts backend services (FastAPI + Gunicorn)
+   - Updates nginx configuration
+   - Restarts frontend serving
+   - Verifies all services are running
+
+5. **Health Checks**
+   - Tests API endpoints and database connectivity
+   - Verifies file upload and OCR functionality
+   - Checks translation services and search features
+   - Confirms admin authentication and security
+
+#### **Example Deployment Workflows**
+
+```bash
+# Scenario 1: Fixed country search bug
+git add .
+git commit -m "Fix country search functionality for Saudi Arabia/Switzerland"
+./deploy.sh patch
+# → Deploys as version 1.2.4
+
+# Scenario 2: Added new admin translation management
+git add .
+git commit -m "Add comprehensive translation management for About/FOI pages"  
+./deploy.sh minor
+# → Deploys as version 1.3.0
+
+# Scenario 3: Migrated to new database system
+git add .
+git commit -m "Migrate from MySQL to PostgreSQL with new schema"
+./deploy.sh major
+# → Deploys as version 2.0.0
+```
+
+#### **Local Testing**
+
+Before production deployment, test locally:
+
+```bash
 # Run locally with production-like setup
 ./run-local.sh
+
+# Test specific components
+make test-backend
+make test-frontend
 ```
+
+#### **Deployment Requirements**
+
+- **Terraform Setup**: Exoscale credentials configured in `.env`
+- **Server Access**: SSH keys configured for production server
+- **Environment Variables**: All production env vars set in `.env.production`
+- **Database Access**: Production database credentials and connectivity
 
 ---
 

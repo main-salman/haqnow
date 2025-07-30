@@ -21,6 +21,7 @@ import {
   Upload,
   Trash2
 } from "lucide-react";
+import Navigation from "@/components/Navigation";
 
 export default function PrivacyGuaranteedPage() {
   const navigate = useNavigate();
@@ -108,17 +109,13 @@ export default function PrivacyGuaranteedPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white p-4 md:p-8">
-      <div className="container mx-auto max-w-4xl space-y-8">
-        {/* Back Button */}
-        <Button variant="outline" onClick={() => navigate("/")} className="mb-6">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          {t('navigation.backToHome', 'Back to Home')}
-        </Button>
-
-        {/* Header */}
-        <header className="py-6 px-4 md:px-8 border-b border-border">
-          <div className="container mx-auto">
+    <div className="min-h-screen bg-white">
+      <Navigation />
+      <div className="p-4 md:p-8">
+        <div className="container mx-auto max-w-4xl space-y-8">
+          {/* Header */}
+          <header className="py-6 px-4 md:px-8 border-b border-border">
+            <div className="container mx-auto">
             <div className="text-center">
               <div className="flex items-center justify-center space-x-2 mb-4">
                 <Shield className="h-8 w-8 text-primary" />
@@ -552,6 +549,7 @@ export default function PrivacyGuaranteedPage() {
             </p>
           </div>
         </footer>
+        </div>
       </div>
     </div>
   );

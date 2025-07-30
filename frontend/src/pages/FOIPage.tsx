@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { FileText, ExternalLink, Search, Globe, Shield, Book, ArrowLeft } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import Navigation from "@/components/Navigation";
 
 const FOIPage: React.FC = () => {
   const navigate = useNavigate();
@@ -96,13 +97,10 @@ const FOIPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white py-12">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Back Button */}
-        <Button variant="outline" onClick={() => navigate("/")} className="mb-6">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          {t('navigation.backToHome', 'Back to Home')}
-        </Button>
+    <div className="min-h-screen bg-white">
+      <Navigation />
+      <div className="py-12">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
@@ -316,6 +314,7 @@ const FOIPage: React.FC = () => {
               </a>
             </div>
           </div>
+        </div>
         </div>
       </div>
       
