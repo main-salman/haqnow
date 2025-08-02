@@ -99,3 +99,45 @@ Translations for https://www.haqnow.com/about and https://www.haqnow.com/foi are
 More:
 
 If I search Iran, I get some resulst - but if I search Irani or Iranian, I don't get any results. https://www.haqnow.com/search-page?q=iranian - I thought the semantic search that was implemented would fix these types of issues. Also when people are searching, it would be great if there could be an autocomplete to help guide the users on what can be searched. Tell me about what free or open source options that can be implemented.
+
+
+Users 4 feedback:
+	- Who is funding this? - Funded personally by Salman Naqvi - costing around $25 USD per month
+	- How can I fund it? - Add a Donate button
+	- Don't display "Salman Naqvi" so prominently - explain why the name is there - there is no fun in hacking
+	- Website is hosted in European servers across multiple countries in Europe
+	- Show how HaqNow.com will prevent spamming
+	- Love the FOIA page - there may be confusion between Sunshine Laws and FOIA laws
+	- Privacy Guaranteed - need a non-techie explanation
+	- I don't understand what are the priorities of this project - what's next? What's the plan here? When is it going to be available in Malawi?
+	- Wikipedia is super easy to use - compare this against Wikipedia - how things are different
+	- Non techie people don't care about open source code
+	- Hi again - I can think of two US-based folks who may be very interested in and aligned with what you're doing. The first is the Daily Beans podcast, here. The second is YK Hong, here. There is nothing urgent about this, rather I'm sending it just in case you're keeping a list.
+
+User 5 feedback:
+	- Decide what the name of the platform is - HaqNow or HaqNow.com - HaqNow alone is better - change all mentions of HaqNow.com in database to HaqNow and don't call it a platform
+	- "HaqNow is a dedicated to collecting"
+	- Likes the map
+	- Likes the order of countries
+	- Make the list of countries drop down
+	- Add a picture and short bio
+	- Add more faces and affiliations
+	- Add TOC to about page
+	- Upload page: Description word limit 500 characters
+	- Make State/Province/Region
+	- Admin Level: Change it to a checkbox
+	- Change FOI to Freedom Of Information
+	- FOI Page: get rid of FOI Info
+	- FOI Page: alphabetize countries
+	- FOI page: move best practices up
+	- Privacy Guarantee to Privacy Features
+	- Privacy Guarantee: get rid of Guarantee everywhere
+	- Privacy G: What get's removed - move that section up
+	- Privacy G: Maximum protection -  
+	- Disclaimer and FAQ: change to Security and FAQ
+	- Assume everyone in the target userbase is completely ignorant
+	- In the upload page, have a link to Disclaimer and FAQ page on top - 
+	- Change name of Disclaimer and FAQ to "Security and FAQ"
+	- Q2: Can my government track me if I upload documents? - mention public libraries
+	- Get a lawyer to take a look at this page
+Upload page: Remove this: By submitting, you confirm that this document exposes legitimate corruption and that you have the right to share it anonymously.

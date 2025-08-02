@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ExternalLink, Globe, Users, Shield } from "lucide-react";
+import { ArrowLeft, ExternalLink, Globe, Users, Shield, List } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import Navigation from "@/components/Navigation";
@@ -22,8 +22,33 @@ export default function AboutPage() {
           <div className="w-24 h-1 bg-indigo-600 mx-auto"></div>
         </div>
 
+        {/* Table of Contents */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg shadow-lg p-6 mb-8">
+          <div className="flex items-center mb-4">
+            <List className="w-6 h-6 text-blue-600 mr-3" />
+            <h2 className="text-xl font-bold text-gray-900">Table of Contents</h2>
+          </div>
+          <nav className="space-y-2">
+            <a href="#founder" className="block text-blue-600 hover:text-blue-800 hover:underline transition-colors">
+              • Meet the Founder
+            </a>
+            <a href="#mission" className="block text-blue-600 hover:text-blue-800 hover:underline transition-colors">
+              • Mission & Values
+            </a>
+            <a href="#projects" className="block text-blue-600 hover:text-blue-800 hover:underline transition-colors">
+              • Connected Projects & Links
+            </a>
+            <a href="#mission-statement" className="block text-blue-600 hover:text-blue-800 hover:underline transition-colors">
+              • Mission Statement
+            </a>
+            <a href="#technical" className="block text-blue-600 hover:text-blue-800 hover:underline transition-colors">
+              • Platform Features & Technical Details
+            </a>
+          </nav>
+        </div>
+
         {/* Founder Section */}
-        <div className="bg-white text-gray-800 rounded-lg shadow-lg p-8 mb-8">
+        <div id="founder" className="bg-white text-gray-800 rounded-lg shadow-lg p-8 mb-8">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
               {t('about.founder')}
@@ -45,7 +70,7 @@ export default function AboutPage() {
           </div>
 
           {/* Mission Alignment */}
-          <div className="grid md:grid-cols-3 gap-6 mb-8">
+          <div id="mission" className="grid md:grid-cols-3 gap-6 mb-8">
             <div className="text-center">
               <Globe className="w-12 h-12 text-indigo-600 mx-auto mb-3" />
               <h3 className="font-semibold text-gray-900 mb-2">{t('about.globalTransparency')}</h3>
@@ -64,7 +89,7 @@ export default function AboutPage() {
           </div>
 
           {/* Connected Projects */}
-          <div className="border-t pt-6">
+          <div id="projects" className="border-t pt-6">
             <h3 className="text-xl font-semibold text-gray-900 mb-4">{t('about.connectedProjects')}</h3>
             <div className="grid md:grid-cols-2 gap-4">
               <a 
@@ -131,7 +156,7 @@ export default function AboutPage() {
         </div>
 
         {/* Mission Statement */}
-        <div className="bg-white text-gray-800 rounded-lg shadow-lg p-8 mb-8">
+        <div id="mission-statement" className="bg-white text-gray-800 rounded-lg shadow-lg p-8 mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('about.missionTitle')}</h2>
           
           <div className="prose prose-lg text-gray-700 space-y-4">
@@ -150,7 +175,7 @@ export default function AboutPage() {
         </div>
 
         {/* Platform Features */}
-        <div className="bg-white text-gray-800 rounded-lg shadow-lg p-8">
+        <div id="technical" className="bg-white text-gray-800 rounded-lg shadow-lg p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('about.platformFeaturesTitle')}</h2>
           
           <div className="grid md:grid-cols-2 gap-6">

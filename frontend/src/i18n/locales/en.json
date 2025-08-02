@@ -59,8 +59,8 @@
     "backToHome": "Back to Home"
   },
   "privacy": {
-    "title": "Privacy Guaranteed",
-          "subtitle": "HaqNow.com provides COMPLETE ANONYMITY for corruption document whistleblowers. Every level of our infrastructure has been designed and verified to ensure zero tracking or identification of users.",
+    "title": "Privacy Features",
+          "subtitle": "HaqNow provides COMPLETE ANONYMITY for corruption document whistleblowers. Every level of our infrastructure has been designed and verified to ensure zero tracking or identification of users.",
     "backToHome": "Back to Home",
     "sectionPrivacyImplementation": "Privacy Implementation Showcase",
     "cardZeroIpStorage": "Zero IP Storage",
@@ -174,13 +174,13 @@
     "featureFOI": "Freedom of Information",
     "featureFOIDesc": "Comprehensive FOI resources to help citizens demand transparency from their governments."
   },
-  "foi": {
-    "title": "FOI Info - Freedom of Information Laws",
+      "foi": {
+    "title": "Freedom of Information Laws",
     "subtitle": "Your guide to accessing government information and promoting transparency worldwide",
     "whatIs": "What is Freedom of Information?",
     "whatIsDesc1": "Freedom of Information (FOI) laws give citizens the right to access government documents, records, and data. These laws are fundamental tools for democracy, transparency, and accountability. They allow journalists, researchers, activists, and ordinary citizens to uncover government activities, expose corruption, and hold public officials accountable.",
     "whatIsDesc2": "FOI laws typically cover government agencies, departments, and public institutions. They require these bodies to respond to information requests within specified timeframes, though certain exemptions may apply for national security, personal privacy, or commercial confidentiality reasons.",
-    "proTip": "💡 Pro Tip: FOI requests are powerful tools for uncovering corruption, government misconduct, and holding power accountable. Combined with platforms like HaqNow.com, they create a comprehensive approach to transparency and anti-corruption work.",
+    "proTip": "💡 Pro Tip: FOI requests are powerful tools for uncovering corruption, government misconduct, and holding power accountable. Combined with platforms like HaqNow, they create a comprehensive approach to transparency and anti-corruption work.",
     "source": "Source:",
     "sourceText": "This information is based on",
     "wikipediaLink": "Wikipedia's comprehensive article on Freedom of Information laws by country",
@@ -220,7 +220,7 @@
     "searchExisting": "Search Existing Documents"
   },
   "disclaimer": {
-    "title": "Disclaimer and FAQ",
+    "title": "Security and FAQ",
     "subtitle": "Important security information and frequently asked questions",
     "backToHome": "Back to Home",
     "securityWarningTitle": "Important Security Disclaimer",

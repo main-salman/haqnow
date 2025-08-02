@@ -138,7 +138,7 @@ export default function PrivacyGuaranteedPage() {
                   <span>Our Privacy Guarantees</span>
                 </CardTitle>
                 <CardDescription className="text-lg">
-                  We guarantee that HaqNow.com:
+                  We guarantee that HaqNow:
                 </CardDescription>
               </CardHeader>
               <CardContent>

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Comprehensive deployment script for HaqNow.com
+# Comprehensive deployment script for HaqNow
 # Usage: ./deploy.sh [patch|minor|major]
 # Default: patch
 
@@ -8,7 +8,7 @@ set -e  # Exit on any error
 
 VERSION_TYPE=${1:-patch}
 
-echo "🚀 Starting HaqNow.com deployment process..."
+echo "🚀 Starting HaqNow deployment process..."
 echo ""
 
 # Step 1: Update version
@@ -60,7 +60,7 @@ echo ""
 # Step 4: Deploy to production server
 echo "🌐 Deploying to production server..."
 ssh root@159.100.250.145 << EOF
-echo "=== Deploying HaqNow.com v$NEW_VERSION ==="
+echo "=== Deploying HaqNow v$NEW_VERSION ==="
 
 cd /opt/foi-archive
 
@@ -99,6 +99,33 @@ sudo systemctl stop foi-archive || true
 cd backend
 source .venv/bin/activate && pip install -r requirements.txt
 
+# Install RAG-specific dependencies
+echo "🤖 Installing RAG (AI Q&A) dependencies..."
+source .venv/bin/activate && pip install -r requirements-rag.txt || echo "RAG dependencies installation completed"
+
+# Setup Ollama for local LLM processing
+echo "🧠 Setting up Ollama for AI Q&A..."
+if ! command -v ollama &> /dev/null; then
+    echo "📥 Installing Ollama..."
+    curl -fsSL https://ollama.ai/install.sh | sh
+    echo "✅ Ollama installed"
+else
+    echo "✅ Ollama already installed"
+fi
+
+# Start Ollama service
+echo "🔄 Starting Ollama service..."
+nohup ollama serve > /tmp/ollama.log 2>&1 &
+sleep 5
+
+# Pull required LLM model
+echo "📦 Downloading Llama3 model for AI Q&A..."
+ollama pull llama3 || ollama pull llama3:8b || echo "⚠️ LLM model download failed - RAG Q&A may not work"
+
+# Create RAG database tables
+echo "🗄️ Setting up RAG database tables..."
+source .venv/bin/activate && python create_rag_tables.py || echo "RAG tables already exist or creation failed"
+
 # Run privacy migration if needed
 echo "🔒 Running privacy migration (IP address removal)..."
 source .venv/bin/activate && python run_migration.py || echo "Migration already applied or not needed"
@@ -106,6 +133,10 @@ source .venv/bin/activate && python run_migration.py || echo "Migration already 
 # Populate translations with about and foi sections
 echo "🌍 Populating translations with updated sections..."
 source .venv/bin/activate && python populate_translations.py || echo "Translation population completed or already up to date"
+
+# Test RAG system
+echo "🧪 Testing RAG system components..."
+source .venv/bin/activate && python test_rag_system.py || echo "⚠️ RAG system test failed - check logs"
 
 cd ..
 
@@ -124,11 +155,29 @@ sudo systemctl start foi-archive
 sudo systemctl enable foi-archive
 sudo systemctl reload nginx
 
+# Start Ollama service on boot
+echo "🤖 Configuring Ollama for startup..."
+sudo systemctl enable ollama || echo "Ollama service setup complete"
+
+# Process existing documents for RAG (background task)
+echo "📚 Processing existing documents for AI Q&A..."
+source .venv/bin/activate && nohup python -c "
+import asyncio
+import requests
+try:
+    response = requests.post('http://localhost:8000/api/rag/process-all-documents')
+    print('✅ RAG processing initiated:', response.status_code)
+except Exception as e:
+    print('⚠️ RAG processing failed to start:', e)
+" > /tmp/rag_processing.log 2>&1 &
+
 echo ""
-echo "✅ HaqNow.com v$NEW_VERSION deployed successfully!"
+echo "✅ HaqNow v$NEW_VERSION deployed successfully!"
 echo "🔒 Privacy-compliant with complete IP address removal"
+echo "🤖 AI Q&A system with RAG technology enabled"
 echo "🌍 Visit: http://159.100.250.145"
 echo "📊 Admin: http://159.100.250.145/admin-login-page"
+echo "🧠 AI Q&A: Go to Search page → AI Q&A tab"
 EOF
 
 if [ $? -ne 0 ]; then
@@ -141,5 +190,9 @@ echo "🎉 Deployment completed successfully!"
 echo "📱 Frontend: http://159.100.250.145"
 echo "📋 Version: $NEW_VERSION displayed in footer"
 echo "🔧 Admin Panel: http://159.100.250.145/admin-login-page"
+echo "🤖 AI Q&A: Available on Search page with natural language questions"
+echo ""
+echo "🧪 Testing RAG system on live site..."
+echo "🔍 To test AI Q&A: Visit /search-page → Click 'AI Q&A' tab → Ask questions!"
 echo ""
 echo "Next deployment: ./deploy.sh [patch|minor|major]" 

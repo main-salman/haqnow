@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertCircle, Loader2, ChevronDown } from 'lucide-react';
 
 // Remove brain import and use direct API call
 // import brain from 'brain';
@@ -26,6 +27,7 @@ const CountryDocStatsList: React.FC<Props> = () => {
   const [stats, setStats] = useState<CountryStat[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState<string>("");
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -55,8 +57,14 @@ const CountryDocStatsList: React.FC<Props> = () => {
     fetchStats();
   }, []);
 
-  const handleCountryClick = (countryName: string) => {
+  const handleCountrySelect = (countryName: string) => {
+    setSelectedCountry(countryName);
     navigate(`/search-page?country=${encodeURIComponent(countryName)}`);
+  };
+
+  const getSelectedCountryStats = () => {
+    if (!selectedCountry) return null;
+    return stats.find(stat => stat.country === selectedCountry);
   };
 
   if (isLoading) {
@@ -104,20 +112,53 @@ const CountryDocStatsList: React.FC<Props> = () => {
   return (
     <Card className="w-full shadow-lg">
       <CardHeader>
-        <CardTitle className="text-xl font-semibold font-serif">Top Countries by Documents</CardTitle>
+        <CardTitle className="text-xl font-semibold font-serif">Documents by Country</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
-          {stats.map((stat) => (
-            <div 
-              key={stat.country} 
-              onClick={() => handleCountryClick(stat.country)}
-              className="flex justify-between items-center p-3 rounded-md hover:bg-muted/50 cursor-pointer transition-colors border border-transparent hover:border-primary/30"
-            >
-              <span className="font-medium text-foreground text-lg">{stat.country}</span>
-              <span className="text-lg font-semibold text-primary">{stat.doc_count}</span>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Select a Country:</label>
+            <Select value={selectedCountry} onValueChange={handleCountrySelect}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Choose a country to view documents..." />
+              </SelectTrigger>
+              <SelectContent>
+                {stats.map((stat) => (
+                  <SelectItem key={stat.country} value={stat.country}>
+                    <div className="flex justify-between items-center w-full">
+                      <span>{stat.country}</span>
+                      <span className="ml-4 font-semibold text-primary">({stat.doc_count} docs)</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {selectedCountry && getSelectedCountryStats() && (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="font-semibold text-gray-900">{selectedCountry}</h3>
+                  <p className="text-sm text-gray-600">Click below to view all documents</p>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-primary">{getSelectedCountryStats()?.doc_count}</div>
+                  <div className="text-xs text-gray-500">documents</div>
+                </div>
+              </div>
+              <Button 
+                className="w-full mt-3" 
+                onClick={() => navigate(`/search-page?country=${encodeURIComponent(selectedCountry)}`)}
+              >
+                View {selectedCountry} Documents →
+              </Button>
             </div>
-          ))}
+          )}
+
+          <div className="text-xs text-gray-500 text-center">
+            Total countries with documents: {stats.length}
+          </div>
         </div>
       </CardContent>
     </Card>

@@ -1,6 +1,18 @@
-# HaqNow.com - Global Corruption Document Exposure Platform
+# HaqNow - Global Corruption Document Exposure Platform
 
-**HaqNow.com** (Arabic "Haq" meaning "truth" or "right") is a privacy-first platform for exposing corruption documents worldwide. Citizens and journalists can anonymously upload evidence of corruption in **60+ languages** with automatic English translation, making documents accessible to global audiences.
+**HaqNow** (Arabic "Haq" meaning "truth" or "right") is a privacy-first platform for exposing corruption documents worldwide. Citizens and journalists can anonymously upload evidence of corruption in **60+ languages** with automatic English translation, making documents accessible to global audiences.
+
+## 🤖 **NEW: AI-Powered Q&A System**
+
+**Revolutionary RAG (Retrieval-Augmented Generation) technology now enables intelligent question answering about corruption documents using only open source components:**
+
+✨ **Ask Natural Language Questions**: "What corruption cases involve Brazil?" or "What types of government fraud are mentioned?"  
+🔍 **AI-Powered Answers**: Get detailed responses synthesized from relevant documents  
+📚 **Source Attribution**: Every answer includes clickable links to source documents  
+🎯 **Confidence Scoring**: Know how reliable each answer is (High/Medium/Low confidence)  
+🔒 **Fully Private**: All AI processing happens locally with open source models (Ollama + sentence-transformers)  
+🌍 **Multi-Language**: Works with documents in all 60+ supported languages  
+📈 **Smart Discovery**: Find relevant information across thousands of documents instantly
 
 ## 🌍 **Live Platform**
 - **Website**: https://www.haqnow.com *(Complete anonymity guaranteed)*
@@ -10,7 +22,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        HAQNOW.COM PLATFORM                     │
+│                        HAQNOW PLATFORM                     │
 └─────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────┐    ┌──────────────────────────────────────┐

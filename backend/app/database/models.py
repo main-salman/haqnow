@@ -1,8 +1,16 @@
 """SQLAlchemy models for FOI Archive database."""
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, JSON, Float, Boolean, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Text, DateTime, JSON, Float, Boolean, UniqueConstraint, ForeignKey
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 from .database import Base
+
+# Import pgvector for vector operations
+try:
+    from pgvector.sqlalchemy import Vector
+except ImportError:
+    # Fallback if pgvector not available
+    Vector = Text
 
 class Document(Base):
     """Document model for storing FOI documents."""
@@ -193,3 +201,66 @@ class Admin(Base):
             })
         
         return data
+
+class DocumentChunk(Base):
+    """Model for storing document chunks with embeddings for RAG."""
+    
+    __tablename__ = "document_chunks"
+    
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    document_id = Column(Integer, ForeignKey("documents.id", ondelete="CASCADE"), nullable=False, index=True)
+    chunk_index = Column(Integer, nullable=False)
+    content = Column(Text, nullable=False)
+    embedding = Column(Vector(384), nullable=True)  # all-MiniLM-L6-v2 produces 384-dim embeddings
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    
+    # Relationships
+    document = relationship("Document", backref="chunks")
+    
+    # Unique constraint on document_id + chunk_index
+    __table_args__ = (
+        UniqueConstraint('document_id', 'chunk_index', name='uq_document_chunk'),
+    )
+    
+    def __repr__(self):
+        return f"<DocumentChunk(id={self.id}, doc_id={self.document_id}, chunk={self.chunk_index})>"
+    
+    def to_dict(self):
+        """Convert model to dictionary."""
+        return {
+            "id": self.id,
+            "document_id": self.document_id,
+            "chunk_index": self.chunk_index,
+            "content": self.content,
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }
+
+class RAGQuery(Base):
+    """Model for logging RAG Q&A interactions for monitoring and improvement."""
+    
+    __tablename__ = "rag_queries"
+    
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    query_text = Column(Text, nullable=False)
+    answer_text = Column(Text, nullable=True)
+    confidence_score = Column(Float, nullable=True)
+    sources_count = Column(Integer, nullable=True)
+    response_time_ms = Column(Integer, nullable=True)
+    user_feedback = Column(String(50), nullable=True)  # 'helpful', 'not_helpful', etc.
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+    
+    def __repr__(self):
+        return f"<RAGQuery(id={self.id}, query='{self.query_text[:50]}...')>"
+    
+    def to_dict(self):
+        """Convert model to dictionary."""
+        return {
+            "id": self.id,
+            "query_text": self.query_text,
+            "answer_text": self.answer_text,
+            "confidence_score": self.confidence_score,
+            "sources_count": self.sources_count,
+            "response_time_ms": self.response_time_ms,
+            "user_feedback": self.user_feedback,
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }

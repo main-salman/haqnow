@@ -13,6 +13,7 @@ from sqlalchemy import func
 from app.services.s3_service import s3_service
 from app.services.email_service import email_service
 from app.services.metadata_service import metadata_service
+from app.services.rag_service import rag_service
 from app.middleware.rate_limit import check_upload_rate_limit, record_upload
 from app.database import get_db, Document
 

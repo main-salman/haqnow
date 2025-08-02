@@ -11,15 +11,18 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Loader2,
   Search as SearchIcon,
   AlertCircle,
   ArrowLeft,
   FileText,
+  Brain,
 } from "lucide-react";
 import { toast } from "sonner";
 import Navigation from "@/components/Navigation";
+import RAGQuestionAnswering from "@/components/RAGQuestionAnswering";
 
 // Define the document result interface
 interface SearchDocumentResult {
@@ -42,6 +45,7 @@ export default function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const [activeTab, setActiveTab] = useState("search");
 
   const [tagsInput, setTagsInput] = useState(searchParams.get("tags") || "");
   const [searchResults, setSearchResults] = useState<SearchDocumentResult[]>([]);
@@ -50,49 +54,76 @@ export default function SearchPage() {
   const [searchAttempted, setSearchAttempted] = useState(false);
   const [downloadingDocId, setDownloadingDocId] = useState<number | null>(null);
 
-  const handleDocumentClick = useCallback(async (documentId: number, language: string = "original") => {
-    setDownloadingDocId(documentId);
-    
+  // Extract initial country filter from URL
+  const countryFilter = searchParams.get("country");
+
+  const handleDocumentClick = async (docId: number, format: "original" | "english" | string) => {
     try {
-      // Direct download with language parameter - the server now streams the file directly
-      let downloadUrl = `/api/search/download/${documentId}`;
-      if (language !== "original") {
-        downloadUrl += `?language=${language}`;
+      setDownloadingDocId(docId);
+      
+      // Different endpoints based on format
+      let endpoint;
+      if (format === "original") {
+        endpoint = `/api/search/document/${docId}`;
+      } else if (format === "english") {
+        endpoint = `/api/search/document/${docId}/english-text`;
+      } else {
+        // For specific language downloads
+        endpoint = `/api/search/document/${docId}/${format}-text`;
       }
       
-      // Create a temporary link element and click it to trigger download
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
+      const response = await fetch(endpoint);
       
-      // Add the link to the document, click it, and remove it
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      const languageText = language === "original" ? "original" : 
-                          language === "english" ? "English translation" : 
-                          `${language} text`;
-      toast.success(`Document download started (${languageText})`);
-    } catch (err: any) {
-      let errorMsg = "Failed to download document.";
-      if (err.message) {
-        errorMsg = err.message;
+      if (!response.ok) {
+        throw new Error(`Failed to download: ${response.statusText}`);
       }
-      toast.error(`Document download failed: ${errorMsg}`);
+      
+      // Get the filename from response headers or create a default one
+      const contentDisposition = response.headers.get('content-disposition');
+      let filename = `document_${docId}`;
+      
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      } else {
+        // Add appropriate extension based on format
+        if (format === "original") {
+          filename += ".pdf";
+        } else {
+          filename += ".txt";
+        }
+      }
+      
+      // Create blob and download
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast.success(`Downloaded: ${filename}`);
+    } catch (error) {
+      console.error('Download failed:', error);
+      toast.error('Failed to download document');
     } finally {
       setDownloadingDocId(null);
     }
-  }, []);
+  };
 
   const performSearch = useCallback(
-    async (tagsToSearch: string, countryFilter?: string | null) => {
-      if (!tagsToSearch.trim() && !countryFilter) {
-        setSearchResults([]);
-        setError(null);
+    async (tagsToSearch: string, specificCountry?: string | null) => {
+      const finalCountryFilter = specificCountry !== undefined ? specificCountry : countryFilter;
+      
+      // Allow empty searches when there's a country filter
+      if (!tagsToSearch.trim() && !finalCountryFilter) {
         if (searchAttempted) {
-          setError(null);
+          toast.error(t('search.enterTags'));
         }
         return;
       }
@@ -106,13 +137,13 @@ export default function SearchPage() {
       if (tagsToSearch.trim()) {
         newParams.q = tagsToSearch;
       }
-      if (countryFilter) {
-        newParams.country = countryFilter;
+      if (finalCountryFilter) {
+        newParams.country = finalCountryFilter;
       }
       setSearchParams(newParams);
 
       try {
-        console.log(`[SearchPage] Searching for tags: ${tagsToSearch}, country: ${countryFilter || 'none'}`);
+        console.log(`[SearchPage] Searching for tags: ${tagsToSearch}, country: ${finalCountryFilter || 'none'}`);
         
         // Use the new backend search API
         const searchUrl = new URL('/api/search/search', window.location.origin);
@@ -120,8 +151,8 @@ export default function SearchPage() {
         searchUrl.searchParams.append('per_page', '50');
         
         // Add country filter if provided
-        if (countryFilter) {
-          searchUrl.searchParams.append('country', countryFilter);
+        if (finalCountryFilter) {
+          searchUrl.searchParams.append('country', finalCountryFilter);
         }
         
         const response = await fetch(searchUrl.toString(), {
@@ -136,27 +167,28 @@ export default function SearchPage() {
         }
 
         const data = await response.json();
-        console.log("[SearchPage] Search results:", data);
+        console.log('[SearchPage] Search results:', data);
 
-        if (data && data.documents) {
+        if (data.documents && Array.isArray(data.documents)) {
           setSearchResults(data.documents);
+          if (data.documents.length === 0) {
+            toast.info(t('search.noResults'));
+          } else {
+            toast.success(`${data.documents.length} ${t('search.resultsFound')}`);
+          }
         } else {
-          setSearchResults([]);
+          console.error('[SearchPage] Unexpected response format:', data);
+          setError('Unexpected response format from server');
         }
-      } catch (err: any) {
-        console.error("[SearchPage] Search error:", err);
-        let errorMsg = "An error occurred while searching.";
-        if (err.message) {
-          errorMsg = err.message;
-        }
-        setError(errorMsg);
-        setSearchResults([]);
-        toast.error(`Search failed: ${errorMsg}`);
+      } catch (err) {
+        console.error('[SearchPage] Search error:', err);
+        setError(err instanceof Error ? err.message : 'An error occurred while searching');
+        toast.error(t('search.error'));
       } finally {
         setIsLoading(false);
       }
     },
-    [setSearchParams, searchAttempted],
+    [setSearchParams, searchAttempted, countryFilter, t],
   );
 
   useEffect(() => {
@@ -194,190 +226,234 @@ export default function SearchPage() {
     <div className="min-h-screen bg-white">
       <Navigation />
       <div className="container mx-auto p-4 md:p-8 max-w-4xl">
-
-      <h1 className="text-3xl font-bold mb-2 font-serif text-center">
-        {t('search.title')}
-      </h1>
-      <p className="text-muted-foreground mb-8 text-center">
-        {t('search.subtitle')}
-      </p>
-
-      <form onSubmit={handleSubmit} className="flex items-center space-x-2 mb-8">
-        <Input
-          type="text"
-          placeholder={t('search.placeholder')}
-          value={tagsInput}
-          onChange={handleInputChange}
-          className="flex-grow text-base p-3"
-        />
-        <Button type="submit" size="lg" disabled={isLoading}>
-          {isLoading ? (
-            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-          ) : (
-            <SearchIcon className="mr-2 h-5 w-5" />
-          )}
-          {t('search.button')}
-        </Button>
-      </form>
-
-      {isLoading && (
-        <div className="flex justify-center items-center py-10">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="ml-3 text-lg">{t('search.searching')}</p>
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            {t('search.title')}
+          </h1>
+          <div className="w-24 h-1 bg-green-600 mx-auto mb-6"></div>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            {t('search.subtitle')}
+          </p>
         </div>
-      )}
 
-      {!isLoading && error && (
-        <Card className="bg-destructive/10 border-destructive">
-          <CardHeader>
-            <CardTitle className="flex items-center text-destructive">
-              <AlertCircle className="mr-2 h-5 w-5" /> {t('search.errorTitle')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>{error}</p>
-          </CardContent>
-        </Card>
-      )}
+        {/* Search Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="search" className="flex items-center space-x-2">
+              <SearchIcon className="w-4 h-4" />
+              <span>Document Search</span>
+            </TabsTrigger>
+            <TabsTrigger value="qa" className="flex items-center space-x-2">
+              <Brain className="w-4 h-4" />
+              <span>AI Q&A</span>
+            </TabsTrigger>
+          </TabsList>
 
-      {!isLoading &&
-        !error &&
-        searchAttempted &&
-        searchResults.length === 0 && (
-          <div className="text-center text-muted-foreground py-12">
-            <FileText className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-            <p className="text-xl font-semibold">{t('search.noResults')}</p>
-            <p>
-              {t('search.tryDifferent')}
-            </p>
-          </div>
-        )}
-
-      {!isLoading && !error && searchResults.length > 0 && (
-        <div className="space-y-6">
-          <h2 className="text-2xl font-semibold">
-            {searchResults.length} {t('search.resultsFound')}
-          </h2>
-          {searchResults.map((doc) => (
-            <Card
-              key={doc.id}
-              className="hover:shadow-lg transition-shadow duration-200 ease-in-out"
-            >
-              <CardHeader>
-                <CardTitle className="text-xl font-serif">
-                  {doc.title || "Untitled Document"}
+          {/* Traditional Search Tab */}
+          <TabsContent value="search" className="space-y-6 mt-6">
+            {/* Search Input */}
+            <Card className="w-full shadow-lg">
+              <CardHeader className="text-center">
+                <CardTitle className="text-2xl font-serif">
+                  {t('search.inputTitle')}
                 </CardTitle>
                 <CardDescription>
-                  {t('search.country')}: {doc.country || "N/A"}
-                  {doc.document_language && doc.document_language !== 'english' && (
-                    <Badge variant="outline" className="ml-2">
-                      {doc.document_language === 'arabic' ? 'العربية' : doc.document_language}
-                    </Badge>
-                  )}
+                  {t('search.inputDescription')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {doc.description && (
-                  <div className="mb-4">
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {doc.description}
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <label htmlFor="tags" className="text-sm font-medium">
+                      {t('search.tags')}
+                    </label>
+                    <Input
+                      id="tags"
+                      type="text"
+                      placeholder={t('search.tagsPlaceholder')}
+                      value={tagsInput}
+                      onChange={handleInputChange}
+                      className="text-base"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {t('search.tagsHelp')}
                     </p>
                   </div>
-                )}
-                
-                {/* Download Options */}
-                <div className="mb-4">
-                  <h4 className="text-sm font-medium mb-2 text-muted-foreground">
-                    Download Options:
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {/* Original File Download */}
-                    <Button
-                      onClick={() => handleDocumentClick(doc.id, "original")}
-                      disabled={downloadingDocId === doc.id}
-                      size="sm"
-                      variant="default"
-                      className="flex items-center gap-2"
-                    >
-                      {downloadingDocId === doc.id && (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      )}
-                      <FileText className="h-3 w-3" />
-                      Original PDF
-                    </Button>
-                    
-                    {/* English Translation Download (for multilingual documents) */}
-                    {doc.document_language !== 'english' && doc.has_english_translation && (
-                      <Button
-                        onClick={() => handleDocumentClick(doc.id, "english")}
-                        disabled={downloadingDocId === doc.id}
-                        size="sm"
-                        variant="outline"
-                        className="flex items-center gap-2"
-                      >
-                        {downloadingDocId === doc.id && (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        )}
-                        <FileText className="h-3 w-3" />
-                        English Translation
-                      </Button>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        {t('search.searching')}
+                      </>
+                    ) : (
+                      <>
+                        <SearchIcon className="h-4 w-4 mr-2" />
+                        {t('search.searchButton')}
+                      </>
                     )}
-                    
-                    {/* Original Language Text Download (for multilingual documents) */}
-                    {doc.document_language !== 'english' && doc.has_english_translation && (
-                      <Button
-                        onClick={() => handleDocumentClick(doc.id, doc.document_language.toLowerCase())}
-                        disabled={downloadingDocId === doc.id}
-                        size="sm"
-                        variant="outline"
-                        className="flex items-center gap-2"
-                      >
-                        {downloadingDocId === doc.id && (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        )}
-                        <FileText className="h-3 w-3" />
-                        {doc.document_language.charAt(0).toUpperCase() + doc.document_language.slice(1)} Text
-                      </Button>
-                    )}
-                    
-                    {/* Info message for multilingual documents without translation */}
-                    {doc.document_language !== 'english' && !doc.has_english_translation && (
-                      <div className="text-sm text-muted-foreground italic">
-                        English translation processing... (may take a few minutes for new uploads)
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                {doc.generated_tags && doc.generated_tags.length > 0 && (
-                  <div className="mb-3">
-                    <h4 className="text-sm font-medium mb-1 text-muted-foreground">
-                      {t('search.tags')}:
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
-                      {doc.generated_tags.map((tag, index) => (
-                        <Badge
-                          key={index}
-                          variant="secondary"
-                          className="text-xs"
-                        >
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {!doc.generated_tags ||
-                  (doc.generated_tags.length === 0 && (
-                    <p className="text-sm text-muted-foreground">
-                      No tags available for this document.
-                    </p>
-                  ))}
+                  </Button>
+                </form>
               </CardContent>
             </Card>
-          ))}
-        </div>
-      )}
+
+            {/* Error Display */}
+            {error && (
+              <Card className="border-destructive">
+                <CardContent className="pt-6">
+                  <div className="flex items-center space-x-2 text-destructive">
+                    <AlertCircle className="h-5 w-5" />
+                    <span>{error}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* No Results Message */}
+            {!isLoading && !error && searchAttempted && 
+              searchResults.length === 0 && (
+                <div className="text-center text-muted-foreground py-12">
+                  <FileText className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+                  <p className="text-xl font-semibold">{t('search.noResults')}</p>
+                  <p>
+                    {t('search.tryDifferent')}
+                  </p>
+                </div>
+              )}
+
+            {/* Search Results */}
+            {!isLoading && !error && searchResults.length > 0 && (
+              <div className="space-y-6">
+                <h2 className="text-2xl font-semibold">
+                  {searchResults.length} {t('search.resultsFound')}
+                </h2>
+                {searchResults.map((doc) => (
+                  <Card
+                    key={doc.id}
+                    className="hover:shadow-lg transition-shadow duration-200 ease-in-out"
+                  >
+                    <CardHeader>
+                      <CardTitle className="text-xl font-serif">
+                        {doc.title || "Untitled Document"}
+                      </CardTitle>
+                      <CardDescription>
+                        {t('search.country')}: {doc.country || "N/A"}
+                        {doc.document_language && doc.document_language !== 'english' && (
+                          <Badge variant="outline" className="ml-2">
+                            {doc.document_language === 'arabic' ? 'العربية' : doc.document_language}
+                          </Badge>
+                        )}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {doc.description && (
+                        <div className="mb-4">
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            {doc.description}
+                          </p>
+                        </div>
+                      )}
+                      
+                      {/* Download Options */}
+                      <div className="mb-4">
+                        <h4 className="text-sm font-medium mb-2 text-muted-foreground">
+                          Download Options:
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {/* Original File Download */}
+                          <Button
+                            onClick={() => handleDocumentClick(doc.id, "original")}
+                            disabled={downloadingDocId === doc.id}
+                            size="sm"
+                            variant="default"
+                            className="flex items-center gap-2"
+                          >
+                            {downloadingDocId === doc.id && (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            )}
+                            <FileText className="h-3 w-3" />
+                            Original PDF
+                          </Button>
+                          
+                          {/* English Translation Download (for multilingual documents) */}
+                          {doc.document_language !== 'english' && doc.has_english_translation && (
+                            <Button
+                              onClick={() => handleDocumentClick(doc.id, "english")}
+                              disabled={downloadingDocId === doc.id}
+                              size="sm"
+                              variant="outline"
+                              className="flex items-center gap-2"
+                            >
+                              {downloadingDocId === doc.id && (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              )}
+                              <FileText className="h-3 w-3" />
+                              English Translation
+                            </Button>
+                          )}
+                          
+                          {/* Original Language Text Download (for multilingual documents) */}
+                          {doc.document_language !== 'english' && doc.has_english_translation && (
+                            <Button
+                              onClick={() => handleDocumentClick(doc.id, doc.document_language.toLowerCase())}
+                              disabled={downloadingDocId === doc.id}
+                              size="sm"
+                              variant="outline"
+                              className="flex items-center gap-2"
+                            >
+                              {downloadingDocId === doc.id && (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              )}
+                              <FileText className="h-3 w-3" />
+                              {doc.document_language.charAt(0).toUpperCase() + doc.document_language.slice(1)} Text
+                            </Button>
+                          )}
+                          
+                          {/* Info message for multilingual documents without translation */}
+                          {doc.document_language !== 'english' && !doc.has_english_translation && (
+                            <div className="text-sm text-muted-foreground italic">
+                              English translation processing... (may take a few minutes for new uploads)
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {doc.generated_tags && doc.generated_tags.length > 0 && (
+                        <div className="mb-3">
+                          <h4 className="text-sm font-medium mb-1 text-muted-foreground">
+                            {t('search.tags')}:
+                          </h4>
+                          <div className="flex flex-wrap gap-2">
+                            {doc.generated_tags.map((tag, index) => (
+                              <Badge
+                                key={index}
+                                variant="secondary"
+                                className="text-xs"
+                              >
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {!doc.generated_tags ||
+                        (doc.generated_tags.length === 0 && (
+                          <p className="text-sm text-muted-foreground">
+                            No tags available for this document.
+                          </p>
+                        ))}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* AI Q&A Tab */}
+          <TabsContent value="qa" className="space-y-6 mt-6">
+            <RAGQuestionAnswering />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

@@ -472,6 +472,19 @@ export default function UploadDocumentPage() {
             <CardDescription>
               {t('upload.subtitle')}
             </CardDescription>
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800 text-center">
+                📚 <strong>Important:</strong> Please read our{' '}
+                <Button
+                  variant="link" 
+                  className="p-0 h-auto text-blue-600 hover:text-blue-800 underline"
+                  onClick={() => navigate('/disclaimer')}
+                >
+                  Security and FAQ
+                </Button>
+                {' '}before uploading for important safety information.
+              </p>
+            </div>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* File Upload Section */}
@@ -512,7 +525,10 @@ export default function UploadDocumentPage() {
 
             <div className="space-y-2">
               <Label htmlFor="description">{t('upload.description')} <span className="text-destructive">*</span></Label>
-              <Textarea id="description" name="description" value={formData.description} onChange={handleChange} placeholder={t('upload.descriptionPlaceholder')} rows={4} className={errors.description ? "border-destructive" : ""} aria-invalid={!!errors.description} aria-describedby={errors.description ? "description-error" : undefined} />
+              <Textarea id="description" name="description" value={formData.description} onChange={handleChange} placeholder={t('upload.descriptionPlaceholder')} rows={4} maxLength={500} className={errors.description ? "border-destructive" : ""} aria-invalid={!!errors.description} aria-describedby={errors.description ? "description-error" : undefined} />
+              <div className="text-xs text-muted-foreground text-right">
+                {formData.description.length}/500 characters
+              </div>
               {errors.description && <p id="description-error" className="text-sm text-destructive flex items-center"><AlertCircle className="h-4 w-4 mr-1" />{errors.description}</p>}
             </div>
 
@@ -567,14 +583,26 @@ export default function UploadDocumentPage() {
               
               <div className="space-y-2">
                 <Label htmlFor="adminLevel">Administrative Level <span className="text-destructive">*</span></Label>
-                <Select name="adminLevel" value={formData.adminLevel} onValueChange={(value) => handleSelectChange("adminLevel", value)}>
-                  <SelectTrigger id="adminLevel" className={errors.adminLevel ? "border-destructive" : ""} aria-invalid={!!errors.adminLevel} aria-describedby={errors.adminLevel ? "adminLevel-error" : undefined}>
-                    <SelectValue placeholder="Select admin level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {adminLevels.map(level => <SelectItem key={level.id} value={level.id}>{level.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <div className="space-y-3">
+                  {adminLevels.map(level => (
+                    <div key={level.id} className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id={`adminLevel-${level.id}`}
+                        name="adminLevel"
+                        value={level.id}
+                        checked={formData.adminLevel === level.id}
+                        onChange={(e) => handleSelectChange("adminLevel", e.target.value)}
+                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300"
+                        aria-invalid={!!errors.adminLevel}
+                        aria-describedby={errors.adminLevel ? "adminLevel-error" : undefined}
+                      />
+                      <Label htmlFor={`adminLevel-${level.id}`} className="text-sm font-normal cursor-pointer">
+                        {level.name}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
                 {errors.adminLevel && <p id="adminLevel-error" className="text-sm text-destructive flex items-center"><AlertCircle className="h-4 w-4 mr-1" />{errors.adminLevel}</p>}
               </div>
             </div>
@@ -600,9 +628,6 @@ export default function UploadDocumentPage() {
 
           </CardContent>
           <CardFooter className="flex flex-col items-center space-y-3">
-            <p className="text-xs text-muted-foreground text-center px-4">
-                By submitting, you confirm that this document exposes legitimate corruption and that you have the right to share it anonymously.
-            </p>
             <Button type="submit" className="w-full md:w-1/2 py-3 text-base" disabled={isSubmitting}>
               {isSubmitting ? (
                 <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> {t('upload.uploading')}</>

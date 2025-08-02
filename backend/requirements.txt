@@ -1,70 +1,27 @@
-# FastAPI and server dependencies
-uvicorn[standard]==0.24.0
 fastapi==0.104.1
+uvicorn==0.24.0
+sqlalchemy==2.0.23
+psycopg2-binary==2.9.9
 python-multipart==0.0.6
-
-# Authentication and security
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
-bcrypt==4.1.2
-
-# Database - MySQL with SQLAlchemy (and SQLite for local development)
-sqlalchemy==2.0.25
-alembic==1.13.1
-pymysql==1.1.0
-mysqlclient==2.2.4
-
-# File storage and cloud services
-boto3==1.34.162
-botocore==1.34.162
-
-# Document processing
-pytesseract==0.3.10
-pdf2image==1.17.0
-Pillow==10.2.0
-python-docx==1.1.2
-pandas==2.2.2
-openpyxl==3.1.5
-xlrd==2.0.1
-
-# Metadata stripping and PDF conversion
+python-dotenv==1.0.0
+Pillow==10.1.0
 PyPDF2==3.0.1
-reportlab==4.2.0
-ExifRead==3.0.0
-
-# NLP and text processing
-spacy==3.7.6
-
-# HTTP requests and web scraping
+langchain==0.1.0
+langchain-community==0.0.12
+sentence-transformers==2.2.2
+ollama==0.1.7
+chromadb==0.4.22
+pypdf==3.17.4
+langchain-text-splitters==0.0.1
+pydantic==2.5.2
 requests==2.31.0
-beautifulsoup4==4.12.3
-
-# Rate limiting
-slowapi==0.1.9
-redis==5.0.1
-
-# Email notifications
-sendgrid==6.11.0
-
-# Environment and configuration
-python-dotenv==1.0.1
-
-# Logging and monitoring
-structlog==23.2.0
-
-# AI/ML
-openai==1.12.0
-sentence-transformers==2.7.0
-
-# Two-Factor Authentication
+mistralai==0.1.2
 pyotp==2.9.0
-qrcode[pil]==8.0
-
-# Mistral AI for Arabic OCR and Translation
-mistralai==1.0.1
-
-# Arabic OCR and Translation
-googletrans==4.0.0rc1
-
-# Development dependencies
-ipykernel==6.29.5
+qrcode==7.4.2
+easyocr==1.7.0
+opencv-python==4.8.1.78
+numpy==1.24.3
+Pillow==10.1.0
+exiftool==0.0.2

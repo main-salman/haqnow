@@ -11,18 +11,18 @@ const FOIPage: React.FC = () => {
 
   const foiCountries = [
     {
-      country: "United States",
-      law: "Freedom of Information Act (FOIA)",
-      portal: "https://www.foia.gov/",
-      agency: "FOIA.gov",
-      flag: "🇺🇸"
+      country: "Australia",
+      law: "Freedom of Information Act 1982",
+      portal: "https://www.oaic.gov.au/freedom-of-information",
+      agency: "Office of the Australian Information Commissioner",
+      flag: "🇦🇺"
     },
     {
-      country: "United Kingdom", 
-      law: "Freedom of Information Act 2000",
-      portal: "https://www.gov.uk/make-a-freedom-of-information-request",
-      agency: "GOV.UK",
-      flag: "🇬🇧"
+      country: "Brazil",
+      law: "Lei de Acesso à Informação",
+      portal: "https://www.gov.br/acessoainformacao/pt-br",
+      agency: "Governo Federal",
+      flag: "🇧🇷"
     },
     {
       country: "Canada",
@@ -32,18 +32,11 @@ const FOIPage: React.FC = () => {
       flag: "🇨🇦"
     },
     {
-      country: "Australia",
-      law: "Freedom of Information Act 1982",
-      portal: "https://www.oaic.gov.au/freedom-of-information",
-      agency: "Office of the Australian Information Commissioner",
-      flag: "🇦🇺"
-    },
-    {
-      country: "Germany",
-      law: "Informationsfreiheitsgesetz (IFG)",
-      portal: "https://fragdenstaat.de/",
-      agency: "FragDenStaat",
-      flag: "🇩🇪"
+      country: "European Union",
+      law: "Regulation 1049/2001",
+      portal: "https://www.asktheeu.org/",
+      agency: "AskTheEU.org",
+      flag: "🇪🇺"
     },
     {
       country: "France",
@@ -53,11 +46,11 @@ const FOIPage: React.FC = () => {
       flag: "🇫🇷"
     },
     {
-      country: "European Union",
-      law: "Regulation 1049/2001",
-      portal: "https://www.asktheeu.org/",
-      agency: "AskTheEU.org",
-      flag: "🇪🇺"
+      country: "Germany",
+      law: "Informationsfreiheitsgesetz (IFG)",
+      portal: "https://fragdenstaat.de/",
+      agency: "FragDenStaat",
+      flag: "🇩🇪"
     },
     {
       country: "India",
@@ -67,11 +60,11 @@ const FOIPage: React.FC = () => {
       flag: "🇮🇳"
     },
     {
-      country: "Brazil",
-      law: "Lei de Acesso à Informação",
-      portal: "https://www.gov.br/acessoainformacao/pt-br",
-      agency: "Governo Federal",
-      flag: "🇧🇷"
+      country: "Japan",
+      law: "Act on Access to Information",
+      portal: "https://www.soumu.go.jp/main_sosiki/gyoukan/kanri/jyohokokai/index.html",
+      agency: "Ministry of Internal Affairs and Communications",
+      flag: "🇯🇵"
     },
     {
       country: "Mexico",
@@ -88,11 +81,18 @@ const FOIPage: React.FC = () => {
       flag: "🇿🇦"
     },
     {
-      country: "Japan",
-      law: "Act on Access to Information",
-      portal: "https://www.soumu.go.jp/main_sosiki/gyoukan/kanri/jyohokokai/index.html",
-      agency: "Ministry of Internal Affairs and Communications",
-      flag: "🇯🇵"
+      country: "United Kingdom", 
+      law: "Freedom of Information Act 2000",
+      portal: "https://www.gov.uk/make-a-freedom-of-information-request",
+      agency: "GOV.UK",
+      flag: "🇬🇧"
+    },
+    {
+      country: "United States",
+      law: "Freedom of Information Act (FOIA)",
+      portal: "https://www.foia.gov/",
+      agency: "FOIA.gov",
+      flag: "🇺🇸"
     }
   ];
 
@@ -104,7 +104,7 @@ const FOIPage: React.FC = () => {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            {t('navigation.foi')} - Freedom of Information Laws
+            Freedom of Information Laws
           </h1>
           <div className="w-24 h-1 bg-green-600 mx-auto mb-6"></div>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
@@ -145,6 +145,42 @@ const FOIPage: React.FC = () => {
                 {t('foi.wikipediaLink')}
               </a>
               {' '}{t('foi.sourceEnd')}
+            </p>
+          </div>
+        </div>
+
+        {/* Best Practices */}
+        <div className="bg-green-50 border border-green-200 rounded-lg shadow-lg p-8 mb-8">
+          <div className="flex items-center mb-6">
+            <Shield className="w-8 h-8 text-green-600 mr-3" />
+            <h2 className="text-2xl font-bold text-gray-900">Best Practices for FOI Requests</h2>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-3">📝 Before Submitting</h3>
+              <ul className="space-y-2 text-gray-700">
+                <li>• Be specific about what information you want</li>
+                <li>• Research which agency likely holds the information</li>
+                <li>• Check if the information is already public</li>
+                <li>• Use precise language and avoid broad requests</li>
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-3">⏰ During Process</h3>
+              <ul className="space-y-2 text-gray-700">
+                <li>• Keep records of all communications</li>
+                <li>• Follow up if deadlines are missed</li>
+                <li>• Be prepared to appeal decisions</li>
+                <li>• Consider narrowing requests if they're too broad</li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800">
+              <strong>💡 Pro Tip:</strong> FOI requests work best when combined with platforms like HaqNow for sharing obtained documents with journalists and researchers worldwide.
             </p>
           </div>
         </div>

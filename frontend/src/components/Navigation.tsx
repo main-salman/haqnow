@@ -21,7 +21,7 @@ export default function Navigation() {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4 cursor-pointer" onClick={() => navigate('/')}>
             <div className="h-8 w-8 rounded-md flex items-center justify-center">
-              <img src="/favicon.svg" alt="HaqNow.com" className="h-8 w-8" />
+              <img src="/favicon.svg" alt="HaqNow" className="h-8 w-8" />
             </div>
             <h1 className="text-xl md:text-2xl font-bold tracking-tight text-green-600">
               {t('navigation.brand')}
@@ -41,13 +41,13 @@ export default function Navigation() {
                 {t('navigation.upload')}
               </Button>
               <Button variant="ghost" onClick={() => navigate('/foi')}>
-                {t('navigation.foi')}
+                Freedom of Information
               </Button>
               <Button variant="ghost" onClick={() => navigate('/privacy-guaranteed-page')}>
-                {t('navigation.privacy')}
+                Privacy Features
               </Button>
               <Button variant="ghost" onClick={() => navigate('/disclaimer')}>
-                {t('disclaimer.title')}
+                Security and FAQ
               </Button>
             </nav>
             <LanguageSwitcher />
@@ -97,21 +97,21 @@ export default function Navigation() {
                 className="justify-start" 
                 onClick={() => handleMobileNavigation('/foi')}
               >
-                {t('navigation.foi')}
+                Freedom of Information
               </Button>
               <Button 
                 variant="ghost"
                 className="justify-start" 
                 onClick={() => handleMobileNavigation('/privacy-guaranteed-page')}
               >
-                {t('navigation.privacy')}
+                Privacy Features
               </Button>
               <Button 
                 variant="ghost" 
                 className="justify-start" 
                 onClick={() => handleMobileNavigation('/disclaimer')}
               >
-                {t('disclaimer.title')}
+                Security and FAQ
               </Button>
             </nav>
           </div>
