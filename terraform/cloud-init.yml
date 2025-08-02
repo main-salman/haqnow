@@ -39,7 +39,7 @@ runcmd:
   - systemctl start mysql
 
   # Install Python dependencies for database management
-  - pip3 install pymysql requests
+  - pip3 install pymysql psycopg2-binary requests
 
   # Create application directories
   - mkdir -p /opt/foi-archive
@@ -218,6 +218,12 @@ MYSQL_PASSWORD={db_config['password']}
 MYSQL_DATABASE={db_config['database']}
 DATABASE_URL=mysql+pymysql://{db_config['user']}:{db_config['password']}@{db_config['host']}:{db_config['port']}/{db_config['database']}
 DATABASE_TYPE={db_config['type']}
+
+# PostgreSQL RAG Database Configuration
+POSTGRES_RAG_URI=${postgres_rag_uri}
+POSTGRES_RAG_USER=${postgres_user}
+POSTGRES_RAG_PASSWORD=${postgres_password}
+POSTGRES_RAG_DATABASE=${postgres_database}
 
 # Email Configuration
 SENDGRID_API_KEY=${sendgrid_api_key}

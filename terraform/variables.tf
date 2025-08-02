@@ -140,4 +140,29 @@ variable "mysql_database" {
   description = "MySQL database name"
   type        = string
   default     = "foi_archive"
+}
+
+# PostgreSQL Database Configuration for RAG/Vector Operations
+variable "postgres_plan" {
+  description = "EXOscale DBaaS PostgreSQL plan for RAG vector database"
+  type        = string
+  default     = "hobbyist-2"
+}
+
+variable "postgres_user" {
+  description = "PostgreSQL database username for RAG"
+  type        = string
+  default     = "rag_user"
+}
+
+variable "postgres_password" {
+  description = "PostgreSQL database password for RAG"
+  type        = string
+  sensitive   = true
+}
+
+variable "postgres_database" {
+  description = "PostgreSQL database name for RAG"
+  type        = string
+  default     = "rag_vectors"
 } 

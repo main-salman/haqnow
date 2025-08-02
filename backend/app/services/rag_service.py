@@ -28,6 +28,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from ..database.database import get_db
+from ..database.rag_database import get_rag_db, init_rag_db, ensure_pgvector_extension
 from ..database.models import Document
 
 logger = logging.getLogger(__name__)
@@ -61,6 +62,7 @@ class RAGService:
         self.ollama_client = None
         self.model_name = "llama3"  # Default Ollama model
         self._initialize_models()
+        self._initialize_rag_database()
     
     def _initialize_models(self):
         """Initialize open source AI models"""
@@ -104,6 +106,25 @@ class RAGService:
         except Exception as e:
             logger.error(f"Failed to initialize RAG models: {e}")
             raise
+    
+    def _initialize_rag_database(self):
+        """Initialize RAG database and ensure pgvector extension"""
+        try:
+            logger.info("Initializing RAG database...")
+            
+            # Ensure pgvector extension is available
+            if ensure_pgvector_extension():
+                logger.info("✅ pgvector extension is available")
+            else:
+                logger.warning("⚠️ pgvector extension not available - vector operations may fail")
+            
+            # Initialize RAG database tables
+            init_rag_db()
+            logger.info("✅ RAG database initialized successfully")
+            
+        except Exception as e:
+            logger.error(f"Failed to initialize RAG database: {e}")
+            # Don't raise exception as this shouldn't prevent the main app from starting
     
     async def generate_embeddings(self, texts: List[str]) -> List[List[float]]:
         """Generate embeddings for texts using sentence-transformers"""
@@ -173,16 +194,24 @@ class RAGService:
             logger.error(f"Failed to chunk document {document_id}: {e}")
             raise
     
-    async def store_document_chunks(self, chunks: List[DocumentChunk], db: Session):
-        """Store document chunks with embeddings in database"""
+    async def store_document_chunks(self, chunks: List[DocumentChunk], db: Session = None):
+        """Store document chunks with embeddings in RAG database"""
         try:
+            # Use RAG database if no db session provided
+            if db is None:
+                rag_db = next(get_rag_db())
+                should_close = True
+            else:
+                rag_db = db
+                should_close = False
+                
             # Generate embeddings for all chunks
             chunk_texts = [chunk.content for chunk in chunks]
             embeddings = await self.generate_embeddings(chunk_texts)
             
-            # Store chunks in database
+            # Store chunks in RAG database
             for chunk, embedding in zip(chunks, embeddings):
-                # Store in document_chunks table
+                # Store in document_chunks table in RAG database
                 query = text("""
                     INSERT INTO document_chunks 
                     (document_id, chunk_index, content, embedding)
@@ -191,47 +220,55 @@ class RAGService:
                     DO UPDATE SET content = :content, embedding = :embedding
                 """)
                 
-                db.execute(query, {
+                rag_db.execute(query, {
                     'document_id': chunk.document_id,
                     'chunk_index': chunk.chunk_index,
                     'content': chunk.content,
                     'embedding': embedding
                 })
             
-            db.commit()
-            logger.info(f"Stored {len(chunks)} chunks for document {chunks[0].document_id}")
+            rag_db.commit()
+            logger.info(f"Stored {len(chunks)} chunks for document {chunks[0].document_id} in RAG database")
+            
+            if should_close:
+                rag_db.close()
             
         except Exception as e:
             logger.error(f"Failed to store document chunks: {e}")
-            db.rollback()
+            if 'rag_db' in locals():
+                rag_db.rollback()
+                if should_close:
+                    rag_db.close()
             raise
     
-    async def retrieve_relevant_chunks(self, query: str, db: Session, 
-                                     limit: int = 5) -> List[DocumentChunk]:
+    async def retrieve_relevant_chunks(self, query_embedding: List[float], 
+                                     limit: int = 5, db: Session = None) -> List[DocumentChunk]:
         """Retrieve most relevant document chunks for query"""
         try:
-            # Generate embedding for query
-            query_embeddings = await self.generate_embeddings([query])
-            query_embedding = query_embeddings[0]
+            # Use RAG database if no db session provided
+            if db is None:
+                rag_db = next(get_rag_db())
+                should_close = True
+            else:
+                rag_db = db
+                should_close = False
             
-            # Search for similar chunks
+            # Search for similar chunks using vector similarity in RAG database
             search_query = text("""
                 SELECT 
                     dc.document_id,
                     dc.chunk_index,
                     dc.content,
-                    d.title,
-                    d.country,
+                    dc.document_title,
+                    dc.document_country,
                     (dc.embedding <=> :query_embedding::vector) as similarity
                 FROM document_chunks dc
-                JOIN documents d ON dc.document_id = d.id
-                WHERE d.status = 'approved'
                 ORDER BY dc.embedding <=> :query_embedding::vector
                 LIMIT :limit
             """)
             
-            results = db.execute(search_query, {
-                'query_embedding': query_embedding,
+            results = rag_db.execute(search_query, {
+                'query_embedding': str(query_embedding),
                 'limit': limit
             })
             
@@ -240,16 +277,21 @@ class RAGService:
                 chunks.append(DocumentChunk(
                     content=row.content,
                     document_id=row.document_id,
-                    document_title=row.title,
-                    document_country=row.country,
+                    document_title=row.document_title,
+                    document_country=row.document_country,
                     chunk_index=row.chunk_index
                 ))
             
-            logger.info(f"Retrieved {len(chunks)} relevant chunks for query")
+            if should_close:
+                rag_db.close()
+                
+            logger.info(f"Retrieved {len(chunks)} relevant chunks for query from RAG database")
             return chunks
             
         except Exception as e:
             logger.error(f"Failed to retrieve relevant chunks: {e}")
+            if 'rag_db' in locals() and should_close:
+                rag_db.close()
             raise
     
     async def generate_answer(self, query: str, context_chunks: List[DocumentChunk]) -> RAGResult:
@@ -400,8 +442,8 @@ Please provide a detailed and accurate answer based only on the information prov
                 document_country=document.country
             )
             
-            # Store chunks with embeddings
-            await self.store_document_chunks(chunks, db)
+            # Store chunks with embeddings in RAG database
+            await self.store_document_chunks(chunks)
             
             logger.info(f"Successfully processed document {document_id} for RAG")
             

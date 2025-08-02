@@ -36,6 +36,29 @@ data "exoscale_database_uri" "foi_mysql_uri" {
   type = "mysql"
 }
 
+# EXOscale Database as a Service (DBaaS) - PostgreSQL for RAG/Vector Operations
+resource "exoscale_dbaas" "foi_postgres_rag" {
+  zone = var.zone
+  name = "${var.project_name}-postgres-rag-${var.environment}"
+  type = "pg"
+  plan = var.postgres_plan
+  
+  pg {
+    admin_username   = var.postgres_user
+    admin_password   = var.postgres_password
+    ip_filter        = ["159.100.250.145/32"]  # Allow access from our server
+    backup_schedule  = "03:00"  # Daily backup at 3 AM UTC
+    version         = "15"      # PostgreSQL 15 supports pgvector
+  }
+}
+
+# Data source to get PostgreSQL connection URI
+data "exoscale_database_uri" "foi_postgres_rag_uri" {
+  name = exoscale_dbaas.foi_postgres_rag.name
+  zone = var.zone
+  type = "pg"
+}
+
 # Security Group for web traffic
 resource "exoscale_security_group" "foi_web" {
   name        = "${var.project_name}-web-${var.environment}-v3"
@@ -114,6 +137,10 @@ resource "exoscale_compute_instance" "foi_app" {
     mysql_user         = var.mysql_user
     mysql_password     = var.mysql_password
     mysql_database     = var.mysql_database
+    postgres_rag_uri   = data.exoscale_database_uri.foi_postgres_rag_uri.uri
+    postgres_user      = var.postgres_user
+    postgres_password  = var.postgres_password
+    postgres_database  = var.postgres_database
   }))
   
 
@@ -150,4 +177,16 @@ output "ssh_command" {
 output "application_url" {
   description = "URL to access the HaqNow.com application"
   value       = "http://${exoscale_compute_instance.foi_app.public_ip_address}"
+}
+
+output "postgres_rag_uri" {
+  description = "PostgreSQL RAG database connection URI"
+  value       = data.exoscale_database_uri.foi_postgres_rag_uri.uri
+  sensitive   = true
+}
+
+output "postgres_rag_host" {
+  description = "PostgreSQL RAG database host"
+  value       = data.exoscale_database_uri.foi_postgres_rag_uri.uri
+  sensitive   = true
 } 

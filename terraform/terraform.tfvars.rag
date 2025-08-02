@@ -1,0 +1,8 @@
+# PostgreSQL RAG Database Configuration
+# Copy these values to your main terraform.tfvars file
+
+# PostgreSQL RAG Database Settings
+postgres_plan = "hobbyist-2"
+postgres_user = "rag_user"
+postgres_password = "your-secure-rag-password-here"
+postgres_database = "rag_vectors"
