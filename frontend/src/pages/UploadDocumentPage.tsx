@@ -480,7 +480,7 @@ export default function UploadDocumentPage() {
                   className="p-0 h-auto text-blue-600 hover:text-blue-800 underline"
                   onClick={() => navigate('/disclaimer')}
                 >
-                  Security and FAQ
+                  Disclaimer and FAQ
                 </Button>
                 {' '}before uploading for important safety information.
               </p>

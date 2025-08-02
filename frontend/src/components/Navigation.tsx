@@ -47,7 +47,7 @@ export default function Navigation() {
                 Privacy Features
               </Button>
               <Button variant="ghost" onClick={() => navigate('/disclaimer')}>
-                Security and FAQ
+                Disclaimer and FAQ
               </Button>
             </nav>
             <LanguageSwitcher />
@@ -111,7 +111,7 @@ export default function Navigation() {
                 className="justify-start" 
                 onClick={() => handleMobileNavigation('/disclaimer')}
               >
-                Security and FAQ
+                Disclaimer and FAQ
               </Button>
             </nav>
           </div>

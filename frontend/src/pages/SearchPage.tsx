@@ -229,11 +229,11 @@ export default function SearchPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            {t('search.title')}
+            Search
           </h1>
           <div className="w-24 h-1 bg-green-600 mx-auto mb-6"></div>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            {t('search.subtitle')}
+            Find corruption documents using keyword search or ask AI questions in natural language
           </p>
         </div>
 
@@ -256,28 +256,28 @@ export default function SearchPage() {
             <Card className="w-full shadow-lg">
               <CardHeader className="text-center">
                 <CardTitle className="text-2xl font-serif">
-                  {t('search.inputTitle')}
+                  Document Search
                 </CardTitle>
                 <CardDescription>
-                  {t('search.inputDescription')}
+                  Enter keywords or tags to find relevant documents
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
                     <label htmlFor="tags" className="text-sm font-medium">
-                      {t('search.tags')}
+                      Search Keywords
                     </label>
                     <Input
                       id="tags"
                       type="text"
-                      placeholder={t('search.tagsPlaceholder')}
+                      placeholder="Enter keywords like: corruption, bribery, fraud, contracts..."
                       value={tagsInput}
                       onChange={handleInputChange}
                       className="text-base"
                     />
                     <p className="text-xs text-muted-foreground">
-                      {t('search.tagsHelp')}
+                      Search for documents by entering relevant keywords, country names, or corruption types
                     </p>
                   </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>

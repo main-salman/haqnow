@@ -409,5 +409,32 @@ Please provide a detailed and accurate answer based only on the information prov
             logger.error(f"Failed to process document {document_id} for RAG: {e}")
             raise
 
+    async def process_document_for_rag(self, document_id: int, content: str, title: str, country: str) -> bool:
+        """
+        Process a document for RAG by chunking content and generating embeddings
+        """
+        try:
+            if not content or not content.strip():
+                logger.warning(f"Document {document_id} has no content for RAG processing")
+                return False
+            
+            # Create document chunks
+            chunks = await self.chunk_document(content, document_id, title, country)
+            
+            if not chunks:
+                logger.warning(f"No chunks created for document {document_id}")
+                return False
+                
+            # Store chunks in database
+            db = next(get_db())
+            await self.store_document_chunks(chunks, db)
+            
+            logger.info(f"Successfully processed document {document_id} for RAG: {len(chunks)} chunks created")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to process document {document_id} for RAG: {e}")
+            return False
+
 # Global RAG service instance
 rag_service = RAGService()
