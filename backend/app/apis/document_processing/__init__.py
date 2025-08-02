@@ -797,6 +797,25 @@ async def approve_document(
         except Exception as e:
             logger.warning("Failed to send approval notification", error=str(e))
         
+        # Process document for RAG (Q&A system) in background
+        if RAG_AVAILABLE and rag_service:
+            try:
+                # Process asynchronously in background
+                import asyncio
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                loop.run_until_complete(rag_service.process_document_for_rag(
+                    document_id=document_id,
+                    content=processing_result.get('ocr_text', ''),
+                    title=document.title or "Untitled Document",
+                    country=document.country or "Unknown"
+                ))
+                loop.close()
+                logger.info(f"Document {document_id} processed for RAG successfully")
+            except Exception as e:
+                logger.warning(f"Failed to process document {document_id} for RAG: {e}")
+                # Don't fail approval if RAG processing fails
+        
         logger.info("Document approved and processed successfully", 
                    document_id=document_id,
                    approved_by=admin_user.email,
