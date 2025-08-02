@@ -9,8 +9,21 @@ from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass
 import json
 
-import ollama
-from sentence_transformers import SentenceTransformer
+# Optional imports for RAG functionality
+try:
+    import ollama
+    OLLAMA_AVAILABLE = True
+except ImportError:
+    OLLAMA_AVAILABLE = False
+    ollama = None
+
+try:
+    from sentence_transformers import SentenceTransformer
+    SENTENCE_TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    SENTENCE_TRANSFORMERS_AVAILABLE = False
+    SentenceTransformer = None
+
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
@@ -52,14 +65,23 @@ class RAGService:
     def _initialize_models(self):
         """Initialize open source AI models"""
         try:
-            # Initialize sentence-transformers for embeddings
-            logger.info("Loading sentence-transformers embedding model...")
-            self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-            logger.info("✅ Embedding model loaded successfully")
+            # Check if dependencies are available
+            if not SENTENCE_TRANSFORMERS_AVAILABLE:
+                logger.warning("sentence-transformers not available - RAG embeddings disabled")
+                self.embedding_model = None
+            else:
+                # Initialize sentence-transformers for embeddings
+                logger.info("Loading sentence-transformers embedding model...")
+                self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+                logger.info("✅ Embedding model loaded successfully")
             
-            # Initialize Ollama client
-            logger.info("Connecting to Ollama...")
-            self.ollama_client = ollama.Client()
+            if not OLLAMA_AVAILABLE:
+                logger.warning("ollama not available - RAG text generation disabled")
+                self.ollama_client = None
+            else:
+                # Initialize Ollama client
+                logger.info("Connecting to Ollama...")
+                self.ollama_client = ollama.Client()
             
             # Check if model is available, pull if needed
             try:
@@ -85,6 +107,9 @@ class RAGService:
     
     async def generate_embeddings(self, texts: List[str]) -> List[List[float]]:
         """Generate embeddings for texts using sentence-transformers"""
+        if not self.embedding_model:
+            raise RuntimeError("Embedding model not available - install sentence-transformers")
+        
         try:
             # Run in thread pool to avoid blocking
             loop = asyncio.get_event_loop()
@@ -229,6 +254,15 @@ class RAGService:
     
     async def generate_answer(self, query: str, context_chunks: List[DocumentChunk]) -> RAGResult:
         """Generate answer using Ollama LLM with retrieved context"""
+        if not self.ollama_client:
+            return RAGResult(
+                answer="AI text generation is not available. Please install Ollama and required dependencies.",
+                sources=[],
+                confidence=0.0,
+                query=query,
+                context_used=""
+            )
+        
         try:
             # Prepare context from chunks
             context_text = "\n\n".join([
