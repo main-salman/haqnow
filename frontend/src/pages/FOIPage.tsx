@@ -327,7 +327,7 @@ const FOIPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Connection to HaqNow.com */}
+        {/* Connection to HaqNow */}
         <div className="bg-gradient-to-r from-green-600 to-blue-600 rounded-lg shadow-lg p-8 text-white">
           <div className="text-center">
             <FileText className="w-16 h-16 mx-auto mb-4 text-white" />

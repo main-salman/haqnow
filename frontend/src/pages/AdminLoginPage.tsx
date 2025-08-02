@@ -141,7 +141,7 @@ export default function AdminLoginPage() {
           <CardDescription>
             {requires2FA 
               ? "Enter your 6-digit authentication code" 
-              : "Access the HaqNow.com Admin Panel"}
+              : "Access the HaqNow Admin Panel"}
           </CardDescription>
         </CardHeader>
         

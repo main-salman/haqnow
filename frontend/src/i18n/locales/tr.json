@@ -1,6 +1,6 @@
 {
   "navigation": {
-    "brand": "HaqNow.com",
+    "brand": "HaqNow",
     "search": "Ara",
     "upload": "Yükle",
     "privacy": "Gizlilik Garantili",
@@ -13,10 +13,10 @@
   },
   "homepage": {
     "title": "Dünya Çapında Yolsuzluk Belgelerini İfşa Edin",
-    "subtitle": "HaqNow.com, dünyanın dört bir yanından yolsuzluğu ifşa eden belgeleri toplama, organize etme ve bunlara erişim sağlama konusunda özel bir platformdur. Gelişmiş sistemimiz 60'tan fazla dilden belgeleri otomatik olarak çevirerek hem orijinal belgeleri hem de çevirileri dünya çapındaki kullanıcılara erişilebilir hale getirir. Anonim olarak yükleyin, özgürce arayın ve büyüyen gerçek ve şeffaflık deposuna katkıda bulunun.",
+    "subtitle": "HaqNow, dünyanın dört bir yanından yolsuzluğu ifşa eden belgeleri toplama, organize etme ve bunlara erişim sağlama konusunda özel bir platformdur. Gelişmiş sistemimiz 60'tan fazla dilden belgeleri otomatik olarak çevirerek hem orijinal belgeleri hem de çevirileri dünya çapındaki kullanıcılara erişilebilir hale getirir. Anonim olarak yükleyin, özgürce arayın ve büyüyen gerçek ve şeffaflık deposuna katkıda bulunun.",
     "searchPlaceholder": "Yolsuzluk belgelerini arayın...",
     "mapTitle": "Ülkelere Göre Belgeler",
-    "copyright": "© 2025 HaqNow.com. Tüm hakları saklıdır."
+    "copyright": "© 2025 HaqNow. Tüm hakları saklıdır."
   },
   "search": {
     "title": "Yolsuzluk Belgelerini Ara",
@@ -103,7 +103,7 @@
     "last": "Son"
   },
   "about": {
-          "title": "HaqNow.com Hakkında",
+          "title": "HaqNow Hakkında",
     "founder": "Salman Naqvi Tarafından Kuruldu",
     "quote": "Savaşları sona erdirme ve dünyadaki tüm insanların insan haklarına tutkulu bir şekilde bağlıyım.",
     "mission": "Yolsuzlukla Mücadele Misyonumuz",
@@ -120,7 +120,7 @@
     "howTo": "BİB Başvurusu Nasıl Yapılır",
     "countries": "Ülkelere Göre Bilgi Edinme Yasaları ve Portalları",
     "bestPractices": "BİB En İyi Uygulamaları",
-          "connection": "BİB + HaqNow.com: Güçlü Şeffaflık Araçları"
+          "connection": "BİB + HaqNow: Güçlü Şeffaflık Araçları"
   },
   "disclaimer": {
     "title": "Sorumluluk Reddi ve SSS",
@@ -148,7 +148,7 @@
     "bestPracticesItem4": "Tarayıcı verilerini temizleyin - Ziyaretten sonra tarama geçmişinizi ve çerezleri temizleyin",
     "bestPracticesItem5": "Çevrenizin farkında olun - Yüklerken fiziksel gizlilik sağlayın",
     "privacyCommitmentTitle": "Gizlilik Taahhüdümüz",
-    "privacyCommitmentText": "HaqNow.com belge yüklemeleri için tam anonimlik sağlar:",
+    "privacyCommitmentText": "HaqNow belge yüklemeleri için tam anonimlik sağlar:",
     "privacyCommitmentItem1": "IP adreslerini asla saklamayız",
     "privacyCommitmentItem2": "Kullanıcı aktivitesini asla kaydetmeyiz",
     "privacyCommitmentItem3": "Tüm yüklemeler tamamen anonimdir",

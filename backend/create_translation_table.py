@@ -72,13 +72,13 @@ def create_translation_table():
                 print("📝 Inserting initial navigation translations...")
                 
                 initial_translations = [
-                    ("navigation.brand", "en", "HaqNow.com", "navigation"),
+                    ("navigation.brand", "en", "HaqNow", "navigation"),
                     ("navigation.search", "en", "Search", "navigation"),
                     ("navigation.upload", "en", "Upload", "navigation"),
                     ("navigation.privacy", "en", "Privacy Guaranteed", "navigation"),
                     ("navigation.admin", "en", "Admin", "navigation"),
                     ("homepage.title", "en", "Expose Corruption Documents Worldwide", "homepage"),
-                    ("homepage.subtitle", "en", "HaqNow.com is a platform dedicated to collecting, organizing, and providing access to documents that expose corruption from around the globe. Upload anonymously, search freely, and contribute to a growing repository of truth and transparency.", "homepage"),
+                    ("homepage.subtitle", "en", "HaqNow is a platform dedicated to collecting, organizing, and providing access to documents that expose corruption from around the globe. Upload anonymously, search freely, and contribute to a growing repository of truth and transparency.", "homepage"),
                     ("general.loading", "en", "Loading...", "general"),
                     ("general.error", "en", "Error", "general"),
                     ("general.success", "en", "Success", "general")

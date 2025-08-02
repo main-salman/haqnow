@@ -166,7 +166,7 @@
 
 ## 📊 **Supported Languages**
 
-HaqNow.com supports document upload and processing in **60+ languages**:
+HaqNow supports document upload and processing in **60+ languages**:
 
 | **Region** | **Languages** |
 |------------|---------------|
@@ -353,7 +353,7 @@ See `.env.example` for complete configuration template.
 
 ## 🤝 **Contributing**
 
-HaqNow.com is dedicated to fighting corruption through transparency and global accessibility. All contributions that advance this mission are welcome.
+HaqNow is dedicated to fighting corruption through transparency and global accessibility. All contributions that advance this mission are welcome.
 
 ### **Development Principles**
 
@@ -376,7 +376,7 @@ HaqNow.com is dedicated to fighting corruption through transparency and global a
 
 ## 🌍 **Global Impact**
 
-HaqNow.com serves corruption document whistleblowers in **180+ countries** with:
+HaqNow serves corruption document whistleblowers in **180+ countries** with:
 
 - **📄 1000s of Documents**: Corruption evidence from around the world
 - **🌐 60+ Languages**: Native language support for global users
