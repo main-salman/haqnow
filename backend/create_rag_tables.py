@@ -1,147 +1,116 @@
 #!/usr/bin/env python3
 """
-Create RAG tables for document Q&A functionality
-Adds document_chunks table with vector embeddings
+Create RAG database tables and initialize pgvector extension.
+This script sets up the PostgreSQL database for RAG operations.
 """
 
 import os
 import sys
-import psycopg2
-from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+import asyncio
+from sqlalchemy import text
 
-# Add the parent directory to Python path to import modules
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add the backend directory to the Python path
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from app.env import get_database_url
+from app.database.rag_database import rag_engine, init_rag_db, ensure_pgvector_extension, test_rag_db_connection
+from app.database.rag_models import create_vector_index_sql
 
-def create_rag_tables():
-    """Create tables needed for RAG functionality"""
+def main():
+    """Initialize RAG database and create all necessary tables and indexes."""
     
-    database_url = get_database_url()
+    print("🗄️ RAG Database Setup")
+    print("=====================")
     
-    # Parse database URL for connection
-    if database_url.startswith('postgresql://'):
-        # Extract connection details
-        url_parts = database_url.replace('postgresql://', '').split('@')
-        user_pass = url_parts[0].split(':')
-        host_db = url_parts[1].split('/')
-        host_port = host_db[0].split(':')
-        
-        username = user_pass[0]
-        password = user_pass[1] if len(user_pass) > 1 else ''
-        host = host_port[0]
-        port = host_port[1] if len(host_port) > 1 else '5432'
-        database = host_db[1]
+    # Test database connection
+    print("1. Testing PostgreSQL connection...")
+    if not test_rag_db_connection():
+        print("❌ Failed to connect to PostgreSQL RAG database")
+        print("   Check your POSTGRES_RAG_URI environment variable")
+        print("   Ensure the PostgreSQL database is running and accessible")
+        sys.exit(1)
+    
+    print("✅ PostgreSQL connection successful")
+    
+    # Ensure pgvector extension
+    print("2. Setting up pgvector extension...")
+    if not ensure_pgvector_extension():
+        print("⚠️ pgvector extension not available")
+        print("   Vector operations may not work optimally")
+        print("   Consider installing pgvector on your PostgreSQL server")
     else:
-        print("Error: Unsupported database URL format")
-        return False
+        print("✅ pgvector extension is available")
     
+    # Create all RAG tables
+    print("3. Creating RAG database tables...")
     try:
-        # Connect to database
-        conn = psycopg2.connect(
-            host=host,
-            port=port,
-            database=database,
-            user=username,
-            password=password
-        )
-        conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-        cursor = conn.cursor()
-        
-        print("🔗 Connected to database successfully")
-        
-        # Ensure pgvector extension is enabled
-        cursor.execute("CREATE EXTENSION IF NOT EXISTS vector;")
-        print("✅ pgvector extension enabled")
-        
-        # Create document_chunks table
-        create_chunks_table = """
-        CREATE TABLE IF NOT EXISTS document_chunks (
-            id SERIAL PRIMARY KEY,
-            document_id INTEGER NOT NULL,
-            chunk_index INTEGER NOT NULL,
-            content TEXT NOT NULL,
-            embedding vector(384),  -- all-MiniLM-L6-v2 produces 384-dim embeddings
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            
-            FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
-            UNIQUE(document_id, chunk_index)
-        );
-        """
-        
-        cursor.execute(create_chunks_table)
-        print("✅ document_chunks table created")
-        
-        # Create index for vector similarity search
-        create_embedding_index = """
-        CREATE INDEX IF NOT EXISTS idx_document_chunks_embedding 
-        ON document_chunks USING ivfflat (embedding vector_cosine_ops) 
-        WITH (lists = 100);
-        """
-        
-        cursor.execute(create_embedding_index)
-        print("✅ Vector similarity index created")
-        
-        # Create index for document_id lookups
-        create_doc_index = """
-        CREATE INDEX IF NOT EXISTS idx_document_chunks_document_id 
-        ON document_chunks(document_id);
-        """
-        
-        cursor.execute(create_doc_index)
-        print("✅ Document ID index created")
-        
-        # Create RAG queries log table for monitoring
-        create_rag_queries_table = """
-        CREATE TABLE IF NOT EXISTS rag_queries (
-            id SERIAL PRIMARY KEY,
-            query_text TEXT NOT NULL,
-            answer_text TEXT,
-            confidence_score FLOAT,
-            sources_count INTEGER,
-            response_time_ms INTEGER,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-        """
-        
-        cursor.execute(create_rag_queries_table)
-        print("✅ RAG queries log table created")
-        
-        # Create index for RAG queries timestamp
-        create_rag_queries_index = """
-        CREATE INDEX IF NOT EXISTS idx_rag_queries_created_at 
-        ON rag_queries(created_at);
-        """
-        
-        cursor.execute(create_rag_queries_index)
-        print("✅ RAG queries index created")
-        
-        cursor.close()
-        conn.close()
-        
-        print("\n🎉 RAG database setup completed successfully!")
-        print("📊 Tables created:")
-        print("   • document_chunks - Stores document text chunks with embeddings")
-        print("   • rag_queries - Logs Q&A interactions for monitoring")
-        print("🔍 Indexes created for optimal query performance")
-        
-        return True
-        
+        init_rag_db()
+        print("✅ RAG database tables created successfully")
     except Exception as e:
-        print(f"❌ Error setting up RAG database: {e}")
-        return False
+        print(f"❌ Failed to create RAG tables: {e}")
+        sys.exit(1)
+    
+    # Create vector indexes for better performance
+    print("4. Creating vector indexes...")
+    try:
+        with rag_engine.connect() as conn:
+            index_sql = create_vector_index_sql()
+            if index_sql.strip() and not index_sql.startswith("--"):
+                conn.execute(text(index_sql))
+                conn.commit()
+                print("✅ Vector indexes created successfully")
+            else:
+                print("⚠️ Vector indexes skipped (pgvector not available)")
+    except Exception as e:
+        print(f"⚠️ Failed to create vector indexes: {e}")
+        print("   This is non-critical - vector search will still work")
+    
+    # Verify table creation
+    print("5. Verifying table creation...")
+    try:
+        with rag_engine.connect() as conn:
+            # Check if document_chunks table exists
+            result = conn.execute(text("""
+                SELECT table_name FROM information_schema.tables 
+                WHERE table_schema = 'public' AND table_name = 'document_chunks'
+            """))
+            
+            if result.fetchone():
+                print("✅ document_chunks table verified")
+            else:
+                print("❌ document_chunks table not found")
+                sys.exit(1)
+            
+            # Check if rag_queries table exists
+            result = conn.execute(text("""
+                SELECT table_name FROM information_schema.tables 
+                WHERE table_schema = 'public' AND table_name = 'rag_queries'
+            """))
+            
+            if result.fetchone():
+                print("✅ rag_queries table verified")
+            else:
+                print("❌ rag_queries table not found")
+                sys.exit(1)
+                
+    except Exception as e:
+        print(f"❌ Table verification failed: {e}")
+        sys.exit(1)
+    
+    print("")
+    print("🎉 RAG Database Setup Complete!")
+    print("===============================")
+    print("")
+    print("✅ PostgreSQL connection established")
+    print("✅ pgvector extension configured")
+    print("✅ RAG tables created and verified")
+    print("✅ Vector indexes created (if pgvector available)")
+    print("")
+    print("Next steps:")
+    print("1. Start your application server")
+    print("2. Process existing documents: POST /api/rag/process-all-documents")
+    print("3. Test natural language queries: POST /api/rag/question")
+    print("")
+    print("Monitor RAG status: GET /api/rag/status")
 
 if __name__ == "__main__":
-    print("🚀 Setting up RAG database tables...")
-    success = create_rag_tables()
-    
-    if success:
-        print("\n✅ RAG database setup complete!")
-        print("🔄 Next steps:")
-        print("   1. Install Ollama: curl -fsSL https://ollama.ai/install.sh | sh")
-        print("   2. Pull LLM model: ollama pull llama3")
-        print("   3. Install Python dependencies: pip install -r requirements.txt")
-        print("   4. Process existing documents for RAG")
-    else:
-        print("\n❌ RAG database setup failed!")
-        sys.exit(1)
+    main()

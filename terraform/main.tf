@@ -141,6 +141,7 @@ resource "exoscale_compute_instance" "foi_app" {
     postgres_user      = var.postgres_user
     postgres_password  = var.postgres_password
     postgres_database  = var.postgres_database
+    mysql_root_password = var.mysql_root_password
   }))
   
 
