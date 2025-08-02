@@ -31,7 +31,7 @@ variable "zone" {
 variable "instance_type" {
   description = "Instance type"
   type        = string
-  default     = "standard.medium"
+  default     = "standard.xlarge"
 }
 
 variable "disk_size" {
