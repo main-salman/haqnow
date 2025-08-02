@@ -582,7 +582,7 @@ export default function UploadDocumentPage() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="adminLevel">Administrative Level <span className="text-destructive">*</span></Label>
+                <Label htmlFor="adminLevel">Level <span className="text-destructive">*</span></Label>
                 <div className="space-y-3">
                   {adminLevels.map(level => (
                     <div key={level.id} className="flex items-center space-x-2">
