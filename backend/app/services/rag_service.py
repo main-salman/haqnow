@@ -292,7 +292,7 @@ class RAGService:
             
             # Execute directly through the connection to avoid SQLAlchemy parameter escaping
             connection = rag_db.connection()
-            cursor = connection.execute(sql_query, (embedding_str, embedding_str, limit))
+            cursor = connection.execute(sql_query, [embedding_str, embedding_str, limit])
             results = cursor.fetchall()
             
             chunks = []
