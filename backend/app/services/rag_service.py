@@ -290,19 +290,21 @@ class RAGService:
                 LIMIT %s
             """
             
-            # Execute directly through the connection to avoid SQLAlchemy parameter escaping
-            connection = rag_db.connection()
-            cursor = connection.execute(sql_query, [embedding_str, embedding_str, limit])
+            # Execute using raw psycopg2 connection to avoid SQLAlchemy parameter issues
+            raw_connection = rag_db.connection().connection
+            cursor = raw_connection.cursor()
+            cursor.execute(sql_query, (embedding_str, embedding_str, limit))
             results = cursor.fetchall()
+            cursor.close()
             
             chunks = []
             for row in results:
                 chunks.append(DocumentChunk(
-                    content=row.content,
-                    document_id=row.document_id,
-                    document_title=row.document_title,
-                    document_country=row.document_country,
-                    chunk_index=row.chunk_index
+                    content=row[2],  # content
+                    document_id=row[0],  # document_id
+                    document_title=row[3],  # document_title
+                    document_country=row[4],  # document_country
+                    chunk_index=row[1]  # chunk_index
                 ))
             
             if should_close:
