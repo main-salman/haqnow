@@ -284,14 +284,18 @@ class RAGService:
                     content,
                     document_title,
                     document_country,
-                    (embedding <=> %s::vector) as similarity
+                    (embedding <=> %(param1)s::vector) as similarity
                 FROM document_chunks 
-                ORDER BY embedding <=> %s::vector
-                LIMIT %s
+                ORDER BY embedding <=> %(param2)s::vector
+                LIMIT %(param3)s
             """
             
-            # Execute with proper parameter binding
-            cursor = rag_db.execute(text(sql_query), (embedding_str, embedding_str, limit))
+            # Execute with proper parameter binding for SQLAlchemy
+            cursor = rag_db.execute(text(sql_query), {
+                'param1': embedding_str,
+                'param2': embedding_str, 
+                'param3': limit
+            })
             results = cursor.fetchall()
             
             chunks = []
