@@ -8,18 +8,28 @@ import structlog
 
 logger = structlog.get_logger()
 
-# Database URL from environment
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-if not DATABASE_URL:
-    # Fallback to individual components
-    mysql_host = os.getenv("MYSQL_HOST", "localhost")
-    mysql_port = os.getenv("MYSQL_PORT", "3306")
-    mysql_user = os.getenv("MYSQL_USER", "foi_user")
-    mysql_password = os.getenv("MYSQL_PASSWORD", "password")
-    mysql_database = os.getenv("MYSQL_DATABASE", "foi_archive")
+def get_database_url():
+    """Get database URL with explicit dotenv loading"""
+    from dotenv import load_dotenv
+    load_dotenv()  # Ensure environment variables are loaded
     
-    DATABASE_URL = f"mysql+pymysql://{mysql_user}:{mysql_password}@{mysql_host}:{mysql_port}/{mysql_database}"
+    # Database URL from environment
+    DATABASE_URL = os.getenv("DATABASE_URL")
+    
+    if not DATABASE_URL:
+        # Fallback to individual components
+        mysql_host = os.getenv("MYSQL_HOST", "localhost")
+        mysql_port = os.getenv("MYSQL_PORT", "3306")
+        mysql_user = os.getenv("MYSQL_USER", "foi_user")
+        mysql_password = os.getenv("MYSQL_PASSWORD", "password")
+        mysql_database = os.getenv("MYSQL_DATABASE", "foi_archive")
+        
+        DATABASE_URL = f"mysql+pymysql://{mysql_user}:{mysql_password}@{mysql_host}:{mysql_port}/{mysql_database}"
+    
+    return DATABASE_URL
+
+# Get database URL with explicit dotenv loading
+DATABASE_URL = get_database_url()
 
 # Create engine with SQLite-compatible settings
 if DATABASE_URL.startswith("sqlite"):

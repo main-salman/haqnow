@@ -10,6 +10,9 @@ logger = structlog.get_logger()
 
 def get_rag_database_url():
     """Get PostgreSQL RAG database URL from environment variables."""
+    from dotenv import load_dotenv
+    load_dotenv()  # Ensure environment variables are loaded
+    
     # Try to get the full URI first
     postgres_rag_uri = os.getenv("POSTGRES_RAG_URI")
     
