@@ -18,7 +18,13 @@ from io import BytesIO
 from PIL import Image
 import pdf2image
 import pytesseract
-from googletrans import Translator
+try:
+    from googletrans import Translator
+    GOOGLETRANS_AVAILABLE = True
+except (ImportError, AttributeError) as e:
+    logger.warning(f"googletrans not available due to dependency issue: {e}")
+    GOOGLETRANS_AVAILABLE = False
+    Translator = None
 import structlog
 
 logger = structlog.get_logger()

@@ -29,9 +29,10 @@ logger = structlog.get_logger()
 try:
     from googletrans import Translator
     TRANSLATOR_AVAILABLE = True
-except ImportError:
+except (ImportError, AttributeError) as e:
+    logger.warning(f"googletrans not available due to dependency issue: {e}")
     TRANSLATOR_AVAILABLE = False
-    logger.warning("googletrans not available, translation will be disabled")
+    Translator = None
 
 class ArabicOCRService:
     """Service for Arabic document processing using Tesseract and Google Translate."""
