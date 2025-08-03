@@ -57,7 +57,19 @@ fi
 echo "✅ Changes pushed to repository"
 echo ""
 
-# Step 4: Deploy to production server
+# Step 4: Copy environment configuration to server
+echo "⚙️ Copying .env configuration to server..."
+scp backend/.env root@159.100.250.145:/opt/foi-archive/backend/.env
+
+if [ $? -ne 0 ]; then
+    echo "❌ Failed to copy .env file to server!"
+    exit 1
+fi
+
+echo "✅ Environment configuration copied to server"
+echo ""
+
+# Step 5: Deploy to production server
 echo "🌐 Deploying to production server..."
 ssh root@159.100.250.145 << EOF
 echo "=== Deploying HaqNow v$NEW_VERSION ==="
@@ -187,6 +199,7 @@ fi
 
 echo ""
 echo "🎉 Deployment completed successfully!"
+echo "⚙️ Environment: Local .env configuration synced to server"
 echo "📱 Frontend: http://159.100.250.145"
 echo "📋 Version: $NEW_VERSION displayed in footer"
 echo "🔧 Admin Panel: http://159.100.250.145/admin-login-page"
