@@ -126,6 +126,25 @@ class RAGService:
             logger.error(f"Failed to initialize RAG database: {e}")
             # Don't raise exception as this shouldn't prevent the main app from starting
     
+    async def generate_embedding(self, text: str) -> List[float]:
+        """Generate embedding for a single text string"""
+        if not self.embedding_model:
+            logger.error("Embedding model not available - install sentence-transformers")
+            return None
+        
+        try:
+            # Run in thread pool to avoid blocking
+            loop = asyncio.get_event_loop()
+            embedding = await loop.run_in_executor(
+                None, 
+                self.embedding_model.encode, 
+                text
+            )
+            return embedding.tolist()
+        except Exception as e:
+            logger.error(f"Failed to generate embedding: {e}")
+            return None
+
     async def generate_embeddings(self, texts: List[str]) -> List[List[float]]:
         """Generate embeddings for texts using sentence-transformers"""
         if not self.embedding_model:
@@ -380,8 +399,20 @@ Please provide a detailed and accurate answer based only on the information prov
         try:
             logger.info(f"Processing RAG query: {query}")
             
-            # Step 1: Retrieve relevant document chunks
-            relevant_chunks = await self.retrieve_relevant_chunks(query, db, limit=5)
+            # Step 1: Generate embedding for the query
+            query_embedding = await self.generate_embedding(query)
+            if not query_embedding:
+                logger.error("Failed to generate embedding for query")
+                return RAGResult(
+                    answer="I'm unable to process your question right now. Please try again later.",
+                    sources=[],
+                    confidence=0.0,
+                    query=query,
+                    context_used=""
+                )
+            
+            # Step 2: Retrieve relevant document chunks
+            relevant_chunks = await self.retrieve_relevant_chunks(query_embedding, limit=5, db=None)
             
             if not relevant_chunks:
                 return RAGResult(
