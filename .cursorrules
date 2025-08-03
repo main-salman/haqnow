@@ -6,6 +6,7 @@
 - **NEVER** deploy manually via rsync, scp, or other methods. Commands can be run on the server directly but code changes must be managed via git
 - **ALWAYS** use `./deploy.sh` script for all deployments to exoscale server
 - The deploy.sh script handles frontend build, backend sync, and service restart
+- Make sure .env is copied between local and server upon every time deploy.sh is run
 
 ### 2. CODE CHANGES WORKFLOW
 ```
