@@ -273,23 +273,26 @@ class RAGService:
                 should_close = False
             
             # Search for similar chunks using vector similarity in RAG database
-            search_query = text("""
-                SELECT 
-                    dc.document_id,
-                    dc.chunk_index,
-                    dc.content,
-                    dc.document_title,
-                    dc.document_country,
-                    (dc.embedding <=> :query_embedding::vector) as similarity
-                FROM document_chunks dc
-                ORDER BY dc.embedding <=> :query_embedding::vector
-                LIMIT :limit
-            """)
+            # Convert embedding to PostgreSQL array format
+            embedding_str = '[' + ','.join(map(str, query_embedding)) + ']'
             
-            results = rag_db.execute(search_query, {
-                'query_embedding': str(query_embedding),
-                'limit': limit
-            })
+            # Use raw SQL that works with PostgreSQL and pgvector
+            sql_query = """
+                SELECT 
+                    document_id,
+                    chunk_index,
+                    content,
+                    document_title,
+                    document_country,
+                    (embedding <=> %s::vector) as similarity
+                FROM document_chunks 
+                ORDER BY embedding <=> %s::vector
+                LIMIT %s
+            """
+            
+            # Execute with proper parameter binding
+            cursor = rag_db.execute(text(sql_query), (embedding_str, embedding_str, limit))
+            results = cursor.fetchall()
             
             chunks = []
             for row in results:
