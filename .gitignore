@@ -279,4 +279,7 @@ settings_local.py
 *.rej
 .sass-cache/
 .connect.lock
-.typings/ 
+.typings/
+
+# Project history file (contains sensitive information)
+history.txt 
