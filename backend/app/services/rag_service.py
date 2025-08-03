@@ -280,10 +280,10 @@ class RAGService:
                     dc.content,
                     dc.document_title,
                     dc.document_country,
-                    (dc.embedding <=> %(query_embedding)s::vector) as similarity
+                    (dc.embedding <=> :query_embedding::vector) as similarity
                 FROM document_chunks dc
-                ORDER BY dc.embedding <=> %(query_embedding)s::vector
-                LIMIT %(limit)s
+                ORDER BY dc.embedding <=> :query_embedding::vector
+                LIMIT :limit
             """)
             
             results = rag_db.execute(search_query, {
