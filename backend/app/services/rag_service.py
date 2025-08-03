@@ -276,7 +276,7 @@ class RAGService:
             # Convert embedding to PostgreSQL array format
             embedding_str = '[' + ','.join(map(str, query_embedding)) + ']'
             
-            # Use raw SQL that works with PostgreSQL and pgvector
+            # Use direct SQL execution without text() wrapper to avoid parameter escaping
             sql_query = """
                 SELECT 
                     document_id,
@@ -284,18 +284,15 @@ class RAGService:
                     content,
                     document_title,
                     document_country,
-                    (embedding <=> %(param1)s::vector) as similarity
+                    (embedding <=> %s::vector) as similarity
                 FROM document_chunks 
-                ORDER BY embedding <=> %(param2)s::vector
-                LIMIT %(param3)s
+                ORDER BY embedding <=> %s::vector
+                LIMIT %s
             """
             
-            # Execute with proper parameter binding for SQLAlchemy
-            cursor = rag_db.execute(text(sql_query), {
-                'param1': embedding_str,
-                'param2': embedding_str, 
-                'param3': limit
-            })
+            # Execute directly through the connection to avoid SQLAlchemy parameter escaping
+            connection = rag_db.connection()
+            cursor = connection.execute(sql_query, (embedding_str, embedding_str, limit))
             results = cursor.fetchall()
             
             chunks = []
