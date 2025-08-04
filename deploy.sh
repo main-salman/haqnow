@@ -59,7 +59,7 @@ echo ""
 
 # Step 4: Copy environment configuration to server
 echo "⚙️ Copying .env configuration to server..."
-scp backend/.env root@159.100.250.145:/opt/foi-archive/backend/.env
+scp .env root@159.100.250.145:/opt/foi-archive/.env
 
 if [ $? -ne 0 ]; then
     echo "❌ Failed to copy .env file to server!"
