@@ -127,7 +127,8 @@ fi
 
 # Start Ollama service
 echo "🔄 Starting Ollama service..."
-nohup ollama serve > /tmp/ollama.log 2>&1 &
+sudo systemctl start ollama || nohup ollama serve > /tmp/ollama.log 2>&1 &
+sudo systemctl enable ollama || echo "⚠️ Ollama service setup failed"
 sleep 5
 
 # Pull required LLM model
@@ -162,14 +163,73 @@ sudo chown -R www-data:www-data /var/www/html
 
 cd ..
 
-# Restart services
+# Restart and verify services
+echo "🔄 Starting backend service..."
 sudo systemctl start foi-archive
 sudo systemctl enable foi-archive
-sudo systemctl reload nginx
 
-# Start Ollama service on boot
-echo "🤖 Configuring Ollama for startup..."
-sudo systemctl enable ollama || echo "Ollama service setup complete"
+# Wait for backend to start
+sleep 5
+
+# Verify backend is running
+if sudo systemctl is-active --quiet foi-archive; then
+    echo "✅ Backend service started successfully"
+else
+    echo "⚠️ Backend service failed to start, attempting manual start..."
+    cd /opt/foi-archive/backend
+    source .venv/bin/activate
+    nohup python3 main.py > /tmp/backend.log 2>&1 &
+    echo "✅ Backend started manually"
+    cd ..
+fi
+
+# Restart web server
+echo "🌐 Restarting web server..."
+sudo systemctl reload nginx
+sudo systemctl enable nginx
+
+# Verify local services are running
+echo "🔍 Verifying local service status..."
+for service in foi-archive nginx ollama; do
+    if sudo systemctl is-active --quiet \$service; then
+        echo "  ✅ \$service: running"
+    else
+        echo "  ⚠️  \$service: not running"
+    fi
+done
+
+# Verify external database connectivity
+echo "🔗 Testing external database connectivity..."
+cd /opt/foi-archive/backend
+if source .venv/bin/activate && python3 -c "from app.database.database import get_db; next(get_db()); print('  ✅ MySQL DBaaS: connected')" 2>/dev/null; then
+    echo "  ✅ MySQL DBaaS: connected"
+else
+    echo "  ⚠️  MySQL DBaaS: connection failed"
+fi
+
+if source .venv/bin/activate && python3 -c "from app.database.rag_database import get_rag_db; next(get_rag_db()); print('  ✅ PostgreSQL RAG DBaaS: connected')" 2>/dev/null; then
+    echo "  ✅ PostgreSQL RAG DBaaS: connected"
+else
+    echo "  ⚠️  PostgreSQL RAG DBaaS: connection failed"
+fi
+cd ..
+
+# Health check: Test backend API
+echo "🩺 Testing backend API health..."
+sleep 3
+if curl -s http://localhost:8000/api/health > /dev/null 2>&1; then
+    echo "  ✅ Backend API: responding"
+else
+    echo "  ⚠️  Backend API: not responding"
+fi
+
+# Health check: Test frontend
+echo "🩺 Testing frontend..."
+if curl -s http://localhost:80 > /dev/null 2>&1; then
+    echo "  ✅ Frontend: accessible"
+else
+    echo "  ⚠️  Frontend: not accessible"
+fi
 
 # Process existing documents for RAG (background task)
 echo "📚 Processing existing documents for AI Q&A..."
