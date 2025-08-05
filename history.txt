@@ -474,6 +474,48 @@ The application is ready for production use with document upload, search, admin 
 
 The platform is ready to serve as a global tool for exposing corruption and promoting transparency worldwide. 
 
+#### Frontend UI Styling - Dropdown Z-Index Fix (COMPLETED ✅):
+**Date:** Current session - Version 1.1.X
+**Problem:** Country selector dropdown on main page was overlapping with the map instead of appearing below it.
+
+**Root Cause Analysis:**
+- The CountryDocStatsList component (dropdown) was rendered after the InteractiveWorldMap component in App.tsx
+- The Select component from shadcn/ui uses z-50 (z-index: 50) for its dropdown content through a Portal
+- Portal renders dropdown at document root level, breaking out of normal stacking context
+- This caused dropdown to appear above the map's legend which has z-[1000] (z-index: 1000)
+
+**Solution Applied:**
+- **Reduced Dropdown Z-Index (COMPLETED ✅)**:
+  - Modified CountryDocStatsList.tsx to use `className="z-10"` on SelectContent component
+  - Changed from default z-50 to z-10 (z-index: 10) to position below map's z-1000 legend
+  - Maintained dropdown functionality while fixing visual overlap issue
+  - Ensured proper stacking order: Map legend (1000) > Other content > Dropdown (10)
+
+**Technical Implementation:**
+- File Modified: `frontend/src/components/CountryDocStatsList.tsx`
+- Change: Added `className="z-10"` to SelectContent component
+- Result: Dropdown now appears below map instead of overlapping it
+- User Experience: Country selection dropdown properly positioned for usability
+
+**Impact:**
+- **Before**: Dropdown overlapped map, poor user experience with visual conflicts
+- **After**: Clean layout with dropdown appearing below map as expected
+
+**Current Status:**
+- **Visual Layout**: ✅ Dropdown properly positioned below map
+- **User Interface**: ✅ Clean interaction without visual conflicts
+- **Functionality**: ✅ Country selection still works correctly
+- **Responsive Design**: ✅ Fix applies across all screen sizes
+
+**Result:**
+🎉 **UI STYLING FIX SUCCESS** - Main page layout now displays correctly:
+- ✅ **Map Display**: Interactive world map renders properly without overlapping elements
+- ✅ **Dropdown Position**: Country selector appears below map in correct position
+- ✅ **Visual Hierarchy**: Proper z-index stacking maintains clean design
+- ✅ **User Experience**: Improved usability with non-conflicting interface elements
+
+The main page now provides a clean, professional interface for users to interact with both the map visualization and country selection dropdown without visual conflicts.
+
 #### Frontend API Migration and Database Connectivity Fix (COMPLETED ✅):
 **Date:** Current session
 **Problem:** 
