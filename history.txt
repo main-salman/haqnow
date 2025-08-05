@@ -517,7 +517,36 @@ The platform is ready to serve as a global tool for exposing corruption and prom
 **Next Steps:**
 - User should run `./test_db_performance.sh` to validate current performance
 - Implement optimizations based on test results
-- Prioritize caching implementation first (highest ROI) 
+- Prioritize caching implementation first (highest ROI)
+
+#### RAG Database Configuration Fix (COMPLETED ✅):
+**Date:** Current session - Version 1.1.X
+**Problem:** AI/RAG features completely broken due to incorrect PostgreSQL database hostname configuration.
+
+**Root Cause Analysis:**
+- Performance test revealed complete database connectivity failure
+- Application configured with old/incorrect hostname: `foi-archive-postgres-rag-prod-exoscale-c00b7bb1-b78c-4afe-9f4e-123abcdef987.g.aivencloud.com:13305`
+- Actual running database hostname: `foi-archive-postgres-rag-production-exoscale-050b5851-1766-4ec0-k.aivencloud.com:21699`
+- Database name mismatch: app using `rag_database`, actual DB is `defaultdb`
+
+**Configuration Updates Applied:**
+- Updated `POSTGRES_RAG_HOST` to correct hostname from database console
+- Updated `POSTGRES_RAG_PORT` from `13305` to `21699`
+- Updated `POSTGRES_RAG_DATABASE` from `rag_database` to `defaultdb`
+- Updated `POSTGRES_RAG_URI` with complete correct connection string
+- Maintained existing `rag_user` credentials and SSL requirement
+
+**Expected Results:**
+- AI/RAG features restored to functional state
+- Vector search queries working again
+- AI question answering operational
+- Elimination of database timeout errors
+
+**Files Modified:**
+- `.env` - Updated PostgreSQL RAG database configuration with correct hostname, port, and database name
+
+**Deployment Method:**
+- Following cursor rules: Local changes → `./deploy.sh` → Server update via git sync 
 
 #### Frontend UI Styling - Dropdown Z-Index Fix (COMPLETED ✅):
 **Date:** Current session - Version 1.1.X
