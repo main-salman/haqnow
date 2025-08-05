@@ -1,6 +1,6 @@
 """RAG-specific database models for PostgreSQL with pgvector support."""
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, Float, JSON
+from sqlalchemy import Column, Integer, String, Text, DateTime, Float, JSON, UniqueConstraint
 from sqlalchemy.sql import func
 
 try:
@@ -33,6 +33,9 @@ class DocumentChunk(RagBase):
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Unique constraint to enable ON CONFLICT upserts
+    __table_args__ = (UniqueConstraint('document_id', 'chunk_index', name='uq_document_chunk'),)
     
     def __repr__(self):
         return f"<DocumentChunk(id={self.id}, document_id={self.document_id}, chunk_index={self.chunk_index})>"
