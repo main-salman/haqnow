@@ -257,6 +257,19 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# Health check: Test AI/RAG system
+echo ""
+echo "🤖 Testing AI/RAG system functionality..."
+cd backend
+if source .venv/bin/activate && python3 test_ai_deployment.py; then
+    echo "  ✅ AI/RAG system: operational"
+    AI_STATUS="✅ OPERATIONAL"
+else
+    echo "  ⚠️  AI/RAG system: issues detected"
+    AI_STATUS="⚠️ NEEDS ATTENTION"
+fi
+cd ..
+
 echo ""
 echo "🎉 Deployment completed successfully!"
 echo "⚙️ Environment: Local .env configuration synced to server"
@@ -264,6 +277,7 @@ echo "📱 Frontend: http://159.100.250.145"
 echo "📋 Version: $NEW_VERSION displayed in footer"
 echo "🔧 Admin Panel: http://159.100.250.145/admin-login-page"
 echo "🤖 AI Q&A: Available on Search page with natural language questions"
+echo "🔬 AI Status: $AI_STATUS"
 echo ""
 echo "🧪 Testing RAG system on live site..."
 echo "🔍 To test AI Q&A: Visit /search-page → Click 'AI Q&A' tab → Ask questions!"

@@ -30,6 +30,7 @@ from sqlalchemy import text
 from ..database.database import get_db
 from ..database.rag_database import get_rag_db, init_rag_db, ensure_pgvector_extension
 from ..database.models import Document
+from .cache_service import cache_service
 
 logger = logging.getLogger(__name__)
 
