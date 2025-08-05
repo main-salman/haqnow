@@ -61,7 +61,7 @@ class RAGService:
     def __init__(self):
         self.embedding_model = None
         self.ollama_client = None
-        self.model_name = "phi3:mini"  # Faster, smaller model for better performance
+        self.model_name = "gemma:2b"  # Fastest, smallest model for optimal performance
         self._initialize_models()
         self._initialize_rag_database()
     
