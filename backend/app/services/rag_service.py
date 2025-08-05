@@ -61,7 +61,7 @@ class RAGService:
     def __init__(self):
         self.embedding_model = None
         self.ollama_client = None
-        self.model_name = "llama3"  # Default Ollama model
+        self.model_name = "phi3:mini"  # Faster, smaller model for better performance
         self._initialize_models()
         self._initialize_rag_database()
     
@@ -229,22 +229,25 @@ class RAGService:
             chunk_texts = [chunk.content for chunk in chunks]
             embeddings = await self.generate_embeddings(chunk_texts)
             
-            # Store chunks in RAG database
+            # Store chunks in RAG database (PostgreSQL with pgvector)
             for chunk, embedding in zip(chunks, embeddings):
                 # Store in document_chunks table in RAG database
                 query = text("""
                     INSERT INTO document_chunks 
-                    (document_id, chunk_index, content, embedding)
-                    VALUES (:document_id, :chunk_index, :content, :embedding)
+                    (document_id, chunk_index, content, embedding, document_title, document_country)
+                    VALUES (:document_id, :chunk_index, :content, :embedding, :document_title, :document_country)
                     ON CONFLICT (document_id, chunk_index) 
-                    DO UPDATE SET content = :content, embedding = :embedding
+                    DO UPDATE SET content = EXCLUDED.content, embedding = EXCLUDED.embedding, 
+                                  document_title = EXCLUDED.document_title, document_country = EXCLUDED.document_country
                 """)
                 
                 rag_db.execute(query, {
                     'document_id': chunk.document_id,
                     'chunk_index': chunk.chunk_index,
                     'content': chunk.content,
-                    'embedding': embedding
+                    'embedding': embedding,
+                    'document_title': chunk.document_title,
+                    'document_country': chunk.document_country
                 })
             
             rag_db.commit()
