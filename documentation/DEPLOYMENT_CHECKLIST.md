@@ -27,7 +27,7 @@ This checklist ensures successful deployment of HaqNow with the new AI Q&A (RAG)
 
 ### Step 1: Deploy with Enhanced Script
 ```bash
-./deploy.sh [patch|minor|major]
+./scripts/deploy.sh [patch|minor|major]
 ```
 
 The updated `deploy.sh` now includes:

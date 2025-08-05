@@ -141,3 +141,25 @@ User 5 feedback:
 	- Q2: Can my government track me if I upload documents? - mention public libraries
 	- Get a lawyer to take a look at this page
 Upload page: Remove this: By submitting, you confirm that this document exposes legitimate corruption and that you have the right to share it anonymously.
+
+
+
+
+🤔 10 Questions to Optimize Your Setup
+What information do you find yourself repeatedly explaining? (e.g., "the AI search uses PostgreSQL RAG database at this URL", "deploy with ./deploy.sh", etc.)
+What are your most common conversation starters? (e.g., "fix this bug", "add this feature", "deploy changes", "debug performance issue")
+Which file paths/locations do you reference most often? (e.g., backend/app/services/rag_service.py, .env locations, deployment scripts)
+How detailed should component explanations be? Do you want just "RAG uses PostgreSQL + Ollama" or full architectural flow diagrams in text?
+Do you work on different types of tasks that need different context? (e.g., frontend React work vs backend RAG vs deployment vs debugging)
+What's missing from the current README that you find yourself explaining? The README looks comprehensive - what gaps do you notice?
+How important are the current environment details? (MySQL vs PostgreSQL, Exoscale setup, specific URLs/credentials patterns)
+Do you need workflow-specific guidance? (e.g., "when fixing AI performance, always check X, Y, Z first")
+Should this be just for you, or do you have team members who'd benefit? (affects whether to focus on .cursorrules vs documentation)
+Do you prefer one comprehensive file or multiple focused files? (e.g., ARCHITECTURE.md, DEPLOYMENT.md, DEBUGGING.md vs one CURSOR_CONTEXT.md)
+Based on your answers, I can recommend the optimal combination of:
+Enhanced .cursorrules for Cursor-specific behavior
+Focused context files for different workflows
+README improvements vs separate reference docs
+Cursor workspace configuration optimizations
+What's your biggest pain point right now when starting new chats?
+1. I keep telling cursor to use the env file in the repo root directory - ,keep reminding that we are using exoscale hosted dbaas databases, and I keep seeing it search for the same few things like locations of key app files and functions over and over again 2. add feature followed by fix bug - I want to leave deploying changes to deploy.sh - deploy.sh is supposed to commit the changes to git, then log into the server, pull changes from git, and redeploy services, but, cursor keeps repeating some of the tasks that deploy.sh is supposed to do in addition to that 3. i don't know 4. whatever is sufficient for cursor - so that it's not using too many tokens searching, but, not too little either so that it has to spend tokens figuring things out 5. no 6. locations of key files is missing - but is readme.md even useful? or does cursor need a different type of file? 7. they are all in .env file and they should always be referenced - deploy.sh makes sure that .env file remains in sync between server and local development workstation - .env is not in git, and part of gitingore as it containts all credentials - all credentials should be always stored in .env file 8. always use deploy.sh to deploy new changes - let deploy do the git commands, restart services, etc. if anything like that that's done over and over again, it should be added to deploy.sh 9. I have team members as well 10. different files are okay - may be let's move all the scripts to scripts folder (create it) and move all the documentation to documentation folder - and create the appropriate focused files. Cursor seems to be doing similar debugging commands over and over again.

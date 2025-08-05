@@ -1,131 +1,68 @@
-# FOI Archive Cursor Rules - HaqNow.com Project
+# 🤖 Cursor Rules for HaqNow Development
 
-## 🚀 DEPLOYMENT WORKFLOW (MANDATORY)
+## 📖 ESSENTIAL READING
+- **ALWAYS read CURSOR_CONTEXT.md first** before making assumptions about file locations or workflows
+- **Check documentation/ folder** for detailed guides before extensive codebase searching
 
-### 1. ALWAYS USE DEPLOY.SH FOR DEPLOYMENT
-- **NEVER** deploy manually via rsync, scp, or other methods. Commands can be run on the server directly but code changes must be managed via git
-- **ALWAYS** use `./deploy.sh` script for all deployments to exoscale server
-- The deploy.sh script handles frontend build, backend sync, and service restart
-- Make sure .env is copied between local and server upon every time deploy.sh is run
+## 🗂️ FILE LOCATION SHORTCUTS
+- Environment vars: `.env` (repo root) - contains ALL credentials
+- AI/RAG service: `backend/app/services/rag_service.py`
+- Deployment: `scripts/deploy.sh` (ONLY deployment method)
+- Frontend AI: `frontend/src/components/RAGQuestionAnswering.tsx`
 
-### 2. CODE CHANGES WORKFLOW
-```
-Local Development → GitHub Push → deploy.sh → Exoscale Server
-```
-- **NEVER** edit code directly on the server
-- **ALL** code changes must go through GitHub first
-- Commands can be run on server for debugging/testing only
-- Use `git pull` on server only through deploy.sh script
+## 🚀 DEPLOYMENT RULES (CRITICAL)
+- **NEVER manually deploy** - always use `./scripts/deploy.sh [patch|minor|major]`
+- **NEVER duplicate deploy.sh tasks** - it handles git, SSH, service restarts
+- **deploy.sh includes**: git commit/push, server sync, .env copying, service restarts
+- If suggesting deployment steps, simply say: "Run `./scripts/deploy.sh patch` to deploy these changes"
 
-### 3. ENVIRONMENT FILE MANAGEMENT
-- Local `.env` file is the source of truth
-- Copy `.env` from local to exoscale server when environment changes needed
-- **NEVER** edit `.env` directly on server
-- Command: `scp .env root@159.100.250.145:/opt/foi-archive/backend/.env`
+## 💾 DATABASE CONFIGURATION
+- **Primary DB**: MySQL (Exoscale DBaaS) - connection in .env as DATABASE_URL
+- **RAG DB**: PostgreSQL + pgvector (Exoscale DBaaS) - connection in .env as POSTGRES_RAG_URI
+- **NEVER search for local DB config** - all databases are hosted (Exoscale)
+- **Credentials**: Always reference .env file, never hardcode
 
-## 🔍 TESTING REQUIREMENTS (MANDATORY AFTER EACH DEPLOYMENT)
+## 🔍 DEBUGGING WORKFLOW
+Before extensive debugging, try these standard commands:
+1. `curl -s "https://www.haqnow.com/api/health"` - backend health
+2. `curl -s "https://www.haqnow.com/api/rag/status"` - AI system status  
+3. `ssh root@159.100.250.145 "tail -f /tmp/backend.log"` - server logs
 
-### 1. FRONTEND TESTING CHECKLIST
-```bash
-# Test these URLs after deployment:
-- https://www.haqnow.com/          # Homepage loads
-- https://www.haqnow.com/search   # Search page works
-- Country dropdown appears and functions
-- Document search returns results
-- Document clicking navigates to detail page
-```
+## 🎯 OPTIMIZATION RULES
+- **File searches**: Check CURSOR_CONTEXT.md locations first before using codebase_search
+- **Architecture questions**: Reference documentation/ folder before analyzing code
+- **Environment setup**: Always assume .env (root) contains all required variables
+- **AI/RAG issues**: Check RAG status endpoint before diving into code
 
-### 2. BACKEND API TESTING CHECKLIST  
-```bash
-# Test these endpoints after deployment:
-curl -s "https://www.haqnow.com/api/statistics/country-stats" | jq
-curl -s "https://www.haqnow.com/api/search/search?q=test&per_page=10" | jq
-curl -s -X POST "https://www.haqnow.com/api/rag/question" -H "Content-Type: application/json" -d '{"question": "test"}' | jq
-curl -s -X POST "https://www.haqnow.com/api/rag/process-document" -H "Content-Type: application/json" -d '{"document_id": 33}' | jq
-```
+## 🛠️ DEVELOPMENT WORKFLOW
+- **Local dev**: Use `scripts/run-local.sh`
+- **Changes made**: Test locally, then `scripts/deploy.sh [type]`
+- **Bug fixes**: `scripts/deploy.sh patch`
+- **New features**: `scripts/deploy.sh minor`
+- **Breaking changes**: `scripts/deploy.sh major`
 
-### 3. AI FUNCTIONALITY TESTING
-- Test AI search box with Enter key
-- Verify AI returns real document summaries (not generic responses)  
-- Check that clicking Egyptian documents leads to correct pages
-- Confirm document download functionality works
+## 🔒 SECURITY REMINDERS
+- All credentials in .env file (gitignored)
+- Never commit secrets to git
+- deploy.sh syncs .env between local and server
+- Production domain: https://www.haqnow.com
 
-## 🛠️ DEVELOPMENT STANDARDS
+## 📂 PROJECT ORGANIZATION
+- `scripts/` - All deployment and utility scripts
+- `documentation/` - All markdown documentation  
+- `backend/` - FastAPI Python application
+- `frontend/` - React TypeScript application
+- `.env` - Environment variables (root level)
 
-### 1. GIT WORKFLOW
-- Always commit changes locally first
-- Write descriptive commit messages
-- Handle GitHub secrets/protection issues properly
-- Never force push or bypass security
+## 🤖 AI/RAG SPECIFIC
+- Models: Ollama (Llama3/phi3/gemma) + sentence-transformers
+- Vector DB: PostgreSQL + pgvector extension
+- Processing: Document chunking → embeddings → vector storage
+- Frontend: Search page → AI Q&A tab
+- Performance: ~20-30 second response times expected
 
-### 2. ERROR HANDLING
-- All API endpoints must have proper error handling
-- Database connection issues should be logged and handled gracefully
-- Import errors (like googletrans) must be wrapped in try-catch blocks
-
-### 3. ENVIRONMENT VARIABLES
-- All secrets must be in `.env` file (NEVER hardcoded)
-- Database URLs, API keys, passwords stored securely
-- Use `os.getenv()` with fallback values where appropriate
-
-## 🚨 CRITICAL ISSUES TO PREVENT RECURRING
-
-### 1. BACKEND STARTUP ISSUES
-- Always test backend starts without crashes
-- Check for import errors (googletrans, httpcore compatibility)
-- Verify database connections work with current credentials
-- Ensure all routers are properly mounted in main.py
-
-### 2. RAG/AI FUNCTIONALITY  
-- RAG processing endpoints must be accessible (/rag/process-document)
-- Documents must be properly indexed for AI to provide real summaries
-- Frontend must call correct API endpoints (/api/rag/question)
-
-### 3. DEPLOYMENT CONSISTENCY
-- Use deploy.sh for ALL deployments
-- Always test thoroughly after deployment
-- Verify both frontend and backend functionality
-- Check live domain (haqnow.com) not just localhost
-
-## 📋 PRE-DEPLOYMENT CHECKLIST
-
-Before running `./deploy.sh`:
-- [ ] All changes committed and pushed to GitHub
-- [ ] Local tests pass
-- [ ] .env file updated if needed
-- [ ] No hardcoded secrets in code
-- [ ] All imports properly handled with try-catch
-
-After running `./deploy.sh`:
-- [ ] Frontend loads at https://www.haqnow.com
-- [ ] Backend health check passes
-- [ ] Search functionality works
-- [ ] AI functionality provides real responses
-- [ ] Document downloads work
-- [ ] No console errors in browser
-
-## 🔄 COMMON COMMANDS
-
-### Deploy to Production
-```bash
-./deploy.sh
-```
-
-### Copy Environment File to Server
-```bash
-scp backend/.env root@159.100.250.145:/opt/foi-archive/backend/.env
-```
-
-### Test Backend Health
-```bash
-curl -s "https://www.haqnow.com/api/health" | jq
-```
-
-### Debug Server Issues
-```bash
-ssh root@159.100.250.145 "cd /opt/foi-archive/backend && tail -f /tmp/backend.log"
-```
-
----
-
-**Remember**: Following these rules prevents the recurring deployment and functionality issues. Always test thoroughly after each deployment!
+## 🎭 RESPONSE STYLE
+- Prefer practical solutions over extensive analysis
+- Reference existing files/tools before creating new ones
+- Always suggest using deploy.sh for deployment
+- Focus on .env configuration over searching for hardcoded values

@@ -33,7 +33,7 @@ To deploy the RAG features to the live website:
 
 ```bash
 # Run the enhanced deployment script
-./deploy.sh patch
+./scripts/deploy.sh patch
 
 # This will automatically:
 # 1. Install RAG dependencies
@@ -169,7 +169,7 @@ Relevant Documents → Ollama LLM → AI Answer + Sources
 
 **Current Status**: All RAG components are developed, tested, and ready for production deployment.
 
-**Next Step**: Run `./deploy.sh patch` to deploy the revolutionary AI Q&A system to HaqNow!
+**Next Step**: Run `./scripts/deploy.sh patch` to deploy the revolutionary AI Q&A system to HaqNow!
 
 **Impact**: This will transform HaqNow from simple document search to intelligent AI-powered knowledge discovery while maintaining complete user privacy and open source principles.
 

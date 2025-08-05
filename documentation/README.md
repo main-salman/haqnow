@@ -542,13 +542,13 @@ The `deploy.sh` script uses semantic versioning (`major.minor.patch`) to manage 
 
 ```bash
 # Patch Release (bug fixes, small updates) - increments 1.2.3 → 1.2.4
-./deploy.sh patch
+./scripts/deploy.sh patch
 
 # Minor Release (new features, non-breaking changes) - increments 1.2.3 → 1.3.0  
-./deploy.sh minor
+./scripts/deploy.sh minor
 
 # Major Release (breaking changes, major updates) - increments 1.2.3 → 2.0.0
-./deploy.sh major
+./scripts/deploy.sh major
 ```
 
 #### **When to Deploy**
@@ -558,19 +558,19 @@ The `deploy.sh` script uses semantic versioning (`major.minor.patch`) to manage 
 1. **Bug Fixes & Small Updates** → Use `patch`
    ```bash
    # After fixing search functionality, UI improvements, etc.
-   ./deploy.sh patch
+   ./scripts/deploy.sh patch
    ```
 
 2. **New Features & Enhancements** → Use `minor`
    ```bash
    # After adding new language support, admin features, etc.
-   ./deploy.sh minor
+   ./scripts/deploy.sh minor
    ```
 
 3. **Breaking Changes & Major Overhauls** → Use `major`
    ```bash
    # After database schema changes, API breaking changes, etc.
-   ./deploy.sh major
+   ./scripts/deploy.sh major
    ```
 
 #### **Deployment Process**
@@ -611,19 +611,19 @@ The `deploy.sh` script performs the following automated tasks:
 # Scenario 1: Fixed country search bug
 git add .
 git commit -m "Fix country search functionality for Saudi Arabia/Switzerland"
-./deploy.sh patch
+./scripts/deploy.sh patch
 # → Deploys as version 1.2.4
 
 # Scenario 2: Added new admin translation management
 git add .
 git commit -m "Add comprehensive translation management for About/FOI pages"  
-./deploy.sh minor
+./scripts/deploy.sh minor
 # → Deploys as version 1.3.0
 
 # Scenario 3: Migrated to new database system
 git add .
 git commit -m "Migrate from MySQL to PostgreSQL with new schema"
-./deploy.sh major
+./scripts/deploy.sh major
 # → Deploys as version 2.0.0
 ```
 
