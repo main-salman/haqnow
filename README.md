@@ -441,6 +441,30 @@ WITH (lists = 100);
 ANALYZE document_chunks;
 ```
 
+### **Performance Testing & Optimization**
+
+Before making infrastructure changes, you can test your current database performance:
+
+```bash
+# Quick 30-second performance test
+./test_db_performance.sh
+
+# Detailed performance analysis (2-3 minutes)
+cd backend && python3 test_performance.py
+```
+
+**Performance Metrics Measured:**
+- Network latency to PostgreSQL RAG database
+- Vector search query execution times  
+- Database connection overhead
+- Full RAG pipeline performance (embedding + search + LLM)
+
+**Optimization Decision Matrix:**
+- **Network latency >30ms**: Consider local PostgreSQL migration
+- **Network latency <30ms**: Keep external DBaaS (managed benefits)
+- **Always beneficial**: Redis caching, connection pooling
+- **Query time >3s**: Multiple optimizations needed
+
 ---
 
 ## 🚀 **Recent Major Updates**
