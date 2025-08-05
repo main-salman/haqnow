@@ -2,7 +2,7 @@
 
 **HaqNow** (Arabic "Haq" meaning "truth" or "right") is a privacy-first platform for exposing corruption documents worldwide. Citizens and journalists can anonymously upload evidence of corruption in **60+ languages** with automatic English translation, making documents accessible to global audiences.
 
-## 🤖 **NEW: AI-Powered Q&A System**
+## 🤖 **NEW: AI-Powered Q&A System (RAG)**
 
 **Revolutionary RAG (Retrieval-Augmented Generation) technology now enables intelligent question answering about corruption documents using only open source components:**
 
@@ -14,6 +14,26 @@
 🌍 **Multi-Language**: Works with documents in all 60+ supported languages  
 📈 **Smart Discovery**: Find relevant information across thousands of documents instantly
 
+### **RAG System Architecture**
+
+The AI Q&A system uses a sophisticated Retrieval-Augmented Generation pipeline with two specialized databases and open source AI models:
+
+#### **Dual Database Architecture**
+- **Primary MySQL Database**: Stores document metadata, user data, translations, and search indexes
+- **PostgreSQL RAG Database**: Dedicated vector database with pgvector extension for AI embeddings and similarity search
+
+#### **Open Source AI Stack**
+- **Ollama + Llama3**: Local large language model for answer generation
+- **sentence-transformers**: Open source embedding model (`all-MiniLM-L6-v2`) for document vectorization  
+- **pgvector**: PostgreSQL extension for efficient vector similarity search
+- **FastAPI RAG Service**: Custom Python service orchestrating the AI pipeline
+
+#### **Document Processing Pipeline**
+1. **Document Upload** → Admin approval → OCR text extraction
+2. **RAG Processing** → Document chunking → Embedding generation → Vector storage
+3. **Query Processing** → Question embedding → Similarity search → LLM answer generation
+4. **Response Delivery** → Confidence scoring → Source attribution → User feedback collection
+
 ## 🌍 **Live Platform**
 - **Website**: https://www.haqnow.com *(Complete anonymity guaranteed)*
 ---
@@ -21,53 +41,65 @@
 ## 🏗️ **System Architecture**
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        HAQNOW PLATFORM                     │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                            HAQNOW PLATFORM ARCHITECTURE                        │
+└─────────────────────────────────────────────────────────────────────────────────┘
 
-┌─────────────────────┐    ┌──────────────────────────────────────┐
-│     FRONTEND        │    │              BACKEND                 │
-│                     │    │                                      │
-│  React + TypeScript │◄──►│            FastAPI                   │
-│  Vite + shadcn/ui   │    │         SQLAlchemy ORM               │
-│  Multi-language i18n│    │      JWT Authentication             │
-│  Interactive Maps   │    │       Rate Limiting                  │
-│  Real-time Search   │    │                                      │
-└─────────────────────┘    └──────────────────────────────────────┘
-           │                                    │
-           │               ┌────────────────────┼────────────────────┐
-           │               │                    │                    │
-           ▼               ▼                    ▼                    ▼
-┌─────────────────┐ ┌─────────────┐ ┌──────────────────┐ ┌─────────────────┐
-│    NGINX        │ │  EXOSCALE   │ │   MULTILINGUAL   │ │    STORAGE      │
-│                 │ │   DBaaS     │ │   OCR SERVICE    │ │                 │
-│ ✅ IP Anonymity │ │             │ │                  │ │ Exoscale SOS    │
-│ ✅ SSL/TLS      │ │ MySQL 8.0   │ │ ✅ Tesseract OCR │ │ S3-Compatible   │
-│ ✅ Compression  │ │ Managed DB  │ │ ✅ 60+ Languages │ │ Secure Storage  │
-│ ✅ Static Files │ │ Auto Backup │ │ ✅ Google Trans. │ │ CDN Delivery    │
-└─────────────────┘ └─────────────┘ └──────────────────┘ └─────────────────┘
-           │                                    │
-           │               ┌────────────────────┼────────────────────┐
-           │               │                    │                    │
-           ▼               ▼                    ▼                    ▼
-┌─────────────────┐ ┌─────────────┐ ┌──────────────────┐ ┌─────────────────┐
-│   TERRAFORM     │ │   PRIVACY   │ │    MONITORING    │ │    SECURITY     │
-│                 │ │   LAYER     │ │                  │ │                 │
-│ Infrastructure  │ │             │ │ Structured Logs  │ │ 2FA Admin Auth  │
-│ as Code (IaC)   │ │ ✅ No IP Log│ │ Error Tracking   │ │ Rate Limiting   │
-│ Exoscale Cloud  │ │ ✅ Anonymous│ │ Performance Mon. │ │ CORS Protection │
-│ Auto Deployment │ │ ✅ Zero Track│ │ Health Checks    │ │ Input Validation│
-└─────────────────┘ └─────────────┘ └──────────────────┘ └─────────────────┘
+┌─────────────────────┐    ┌──────────────────────────────────────┐    ┌─────────────────┐
+│     FRONTEND        │    │              BACKEND                 │    │   AI/RAG LAYER  │
+│                     │    │                                      │    │                 │
+│  React + TypeScript │◄──►│            FastAPI                   │◄──►│   Ollama LLM    │
+│  Vite + shadcn/ui   │    │         SQLAlchemy ORM               │    │   (Llama3)      │
+│  Multi-language i18n│    │      JWT Authentication             │    │                 │
+│  Interactive Maps   │    │       Rate Limiting                  │    │ sentence-trans. │
+│  AI Q&A Interface   │    │       RAG Service                    │    │ (Embeddings)    │
+│  Real-time Search   │    │                                      │    │                 │
+└─────────────────────┘    └──────────────────────────────────────┘    └─────────────────┘
+           │                                    │                                 │
+           │               ┌────────────────────┼─────────────────────────────────┼──────────┐
+           │               │                    │                                 │          │
+           ▼               ▼                    ▼                                 ▼          ▼
+┌─────────────────┐ ┌─────────────┐ ┌──────────────────┐ ┌─────────────────┐ ┌──────────────────┐
+│    NGINX        │ │   PRIMARY   │ │   MULTILINGUAL   │ │    STORAGE      │ │  RAG DATABASE    │
+│                 │ │  DATABASE   │ │   OCR SERVICE    │ │                 │ │                  │
+│ ✅ IP Anonymity │ │             │ │                  │ │ Exoscale SOS    │ │ PostgreSQL 15    │
+│ ✅ SSL/TLS      │ │ MySQL 8.0   │ │ ✅ Tesseract OCR │ │ S3-Compatible   │ │ + pgvector ext.  │
+│ ✅ Compression  │ │ Exoscale    │ │ ✅ 60+ Languages │ │ Document Store  │ │ Vector Embeddings│
+│ ✅ Static Files │ │ Main Data   │ │ ✅ Google Trans. │ │ Secure Storage  │ │ Similarity Search│
+│ ✅ RAG Proxy    │ │ User/Admin  │ │ ✅ Metadata Strip│ │ CDN Delivery    │ │ Chunk Storage    │
+└─────────────────┘ └─────────────┘ └──────────────────┘ └─────────────────┘ └──────────────────┘
+           │                                    │                                 │
+           │               ┌────────────────────┼─────────────────────────────────┼──────────┐
+           │               │                    │                                 │          │
+           ▼               ▼                    ▼                                 ▼          ▼
+┌─────────────────┐ ┌─────────────┐ ┌──────────────────┐ ┌─────────────────┐ ┌──────────────────┐
+│   TERRAFORM     │ │   PRIVACY   │ │    MONITORING    │ │    SECURITY     │ │   AI PIPELINE    │
+│                 │ │   LAYER     │ │                  │ │                 │ │                  │
+│ Infrastructure  │ │             │ │ Structured Logs  │ │ 2FA Admin Auth  │ │ 1. Doc Chunking  │
+│ as Code (IaC)   │ │ ✅ No IP Log│ │ Error Tracking   │ │ Rate Limiting   │ │ 2. Embedding Gen │
+│ Exoscale Cloud  │ │ ✅ Anonymous│ │ Performance Mon. │ │ CORS Protection │ │ 3. Vector Store  │
+│ Dual DB Deploy  │ │ ✅ Zero Track│ │ RAG Analytics    │ │ Input Validation│ │ 4. Similarity    │
+│ Auto Setup      │ │ ✅ AI Privacy│ │ Confidence Track │ │ AI Model Sec.   │ │ 5. LLM Response  │
+└─────────────────┘ └─────────────┘ └──────────────────┘ └─────────────────┘ └──────────────────┘
 
-                        ┌─────────────────────────────┐
-                        │       DATA FLOW             │
-                        │                             │
-                        │ 1. Anonymous Upload (PDF)   │
-                        │ 2. Admin Review & Approval  │
-                        │ 3. Multilingual OCR + Trans │
-                        │ 4. Searchable + Downloadable│
-                        │ 5. Global Access (60+ langs)│
-                        └─────────────────────────────┘
+                        ┌─────────────────────────────────────────────┐
+                        │              DATA FLOW                      │
+                        │                                             │
+                        │ 1. Anonymous Upload (PDF/Images/Docs)      │
+                        │ 2. Admin Review & Approval                  │
+                        │ 3. Multilingual OCR + Translation          │
+                        │ 4. Document Chunking + Vector Embedding    │
+                        │ 5. Traditional Search + AI Q&A Available   │
+                        │ 6. Global Access (60+ languages)           │
+                        └─────────────────────────────────────────────┘
+
+                        ┌─────────────────────────────────────────────┐
+                        │            RAG QUERY FLOW                   │
+                        │                                             │
+                        │ Question → Embedding → Vector Search →     │
+                        │ Context Retrieval → LLM Generation →       │
+                        │ Confidence Scoring → Source Attribution    │
+                        └─────────────────────────────────────────────┘
 ```
 
 ---
@@ -117,10 +149,12 @@
 ### **Backend**
 - **API Framework**: FastAPI with automatic OpenAPI documentation
 - **Database**: MySQL 8.0 (Exoscale DBaaS) with SQLAlchemy ORM
+- **RAG Database**: PostgreSQL 15 with pgvector extension for vector operations
 - **Authentication**: JWT-based with bcrypt password hashing
 - **File Storage**: Exoscale S3-compatible object storage (SOS)
 - **OCR Engine**: Tesseract 5.x with 60+ language packs
 - **Translation**: Google Translate API for automatic translations
+- **AI/RAG Stack**: Ollama + Llama3 LLM + sentence-transformers embeddings
 
 ### **Infrastructure**
 - **Cloud Provider**: Exoscale (Swiss-based, privacy-focused)
@@ -135,6 +169,277 @@
 - **SSL/TLS**: Automatic HTTPS with secure headers
 - **Input Validation**: Comprehensive request validation
 - **File Security**: Virus scanning and type validation
+
+---
+
+## 🤖 **RAG System Setup & Deployment**
+
+The AI Q&A system requires additional setup beyond the standard platform deployment. This section covers the complete RAG infrastructure configuration.
+
+### **RAG Infrastructure Components**
+
+#### **1. Dual Database Architecture**
+```bash
+# Primary MySQL Database (Exoscale DBaaS)
+- Document metadata and content
+- User accounts and translations
+- Search indexes and statistics
+- Admin management data
+
+# Secondary PostgreSQL Database (Exoscale DBaaS)  
+- Vector embeddings (384-dimensional)
+- Document chunks for RAG retrieval
+- Query logs and analytics
+- pgvector extension for similarity search
+```
+
+#### **2. Open Source AI Stack**
+```bash
+# Local AI Models (No external API calls)
+- Ollama: Local LLM server (runs Llama3 model)
+- sentence-transformers: Embedding generation (all-MiniLM-L6-v2)
+- pgvector: PostgreSQL extension for vector operations
+- FastAPI RAG Service: Custom orchestration layer
+```
+
+### **RAG Setup Process**
+
+#### **Step 1: Infrastructure Deployment**
+```bash
+# Deploy with RAG infrastructure enabled
+terraform apply -var-file="terraform.tfvars"
+# This creates both MySQL and PostgreSQL databases automatically
+```
+
+#### **Step 2: RAG System Installation**
+```bash
+# SSH into production server
+ssh root@your-server-ip
+
+# Navigate to application directory
+cd /opt/foi-archive/backend
+
+# Run automated RAG setup
+./setup_rag.sh
+```
+
+The `setup_rag.sh` script performs:
+- ✅ Python RAG dependencies installation (`requirements-rag.txt`)
+- ✅ PostgreSQL RAG database table creation
+- ✅ Ollama LLM server installation and startup
+- ✅ Llama3 model download (8B parameter version)
+- ✅ pgvector extension enabling
+- ✅ RAG service connectivity testing
+
+#### **Step 3: Document Processing for AI**
+```bash
+# Process existing documents for RAG (one-time setup)
+curl -X POST "https://your-domain.com/api/rag/process-all-documents"
+
+# Or process individual documents
+curl -X POST "https://your-domain.com/api/rag/process-document" \
+  -H "Content-Type: application/json" \
+  -d '{"document_id": 123}'
+```
+
+#### **Step 4: RAG System Verification**
+```bash
+# Check RAG system status
+curl "https://your-domain.com/api/rag/status" | jq
+
+# Expected response:
+{
+  "status": "operational",
+  "ollama_available": true,
+  "embedding_model_loaded": true,
+  "total_chunks": 1500,
+  "latest_query_time": "2024-12-18T10:30:00Z"
+}
+
+# Test AI Q&A functionality
+curl -X POST "https://your-domain.com/api/rag/question" \
+  -H "Content-Type: application/json" \
+  -d '{"question": "What corruption cases mention Brazil?"}'
+```
+
+### **RAG Database Schema**
+
+#### **PostgreSQL RAG Tables**
+```sql
+-- Document chunks with vector embeddings
+CREATE TABLE document_chunks (
+    id SERIAL PRIMARY KEY,
+    document_id INTEGER NOT NULL,
+    chunk_index INTEGER NOT NULL,
+    content TEXT NOT NULL,
+    document_title VARCHAR(500),
+    document_country VARCHAR(100),
+    embedding vector(384),  -- pgvector type
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Query analytics and feedback
+CREATE TABLE rag_queries (
+    id SERIAL PRIMARY KEY,
+    query_text TEXT NOT NULL,
+    answer_text TEXT,
+    confidence_score FLOAT,
+    sources_count INTEGER DEFAULT 0,
+    response_time_ms INTEGER,
+    user_feedback VARCHAR(20),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Vector similarity index for performance
+CREATE INDEX idx_document_chunks_embedding 
+ON document_chunks USING ivfflat (embedding vector_cosine_ops) 
+WITH (lists = 100);
+```
+
+### **RAG API Endpoints**
+
+#### **Public Endpoints**
+```bash
+# Ask AI questions about documents
+POST /api/rag/question
+Content-Type: application/json
+{
+  "question": "What corruption cases involve government contracts?",
+  "language": "en"
+}
+
+# Check system status
+GET /api/rag/status
+
+# Submit feedback on answers
+POST /api/rag/feedback
+{
+  "query_id": 123,
+  "feedback": "helpful"
+}
+```
+
+#### **Admin Endpoints**
+```bash
+# Process specific document for RAG
+POST /api/rag/process-document
+{
+  "document_id": 456
+}
+
+# Process all approved documents
+POST /api/rag/process-all-documents
+
+# View RAG analytics
+GET /api/rag/analytics
+```
+
+### **RAG Performance Optimization**
+
+#### **Vector Database Tuning**
+```sql
+-- Optimize pgvector for your data size
+ALTER SYSTEM SET shared_preload_libraries = 'vector';
+ALTER SYSTEM SET max_connections = 200;
+
+-- Adjust vector index parameters
+DROP INDEX IF EXISTS idx_document_chunks_embedding;
+CREATE INDEX idx_document_chunks_embedding 
+ON document_chunks USING ivfflat (embedding vector_cosine_ops) 
+WITH (lists = CEIL(SQRT(total_rows)));
+```
+
+#### **Ollama Configuration**
+```bash
+# Ollama model optimization
+export OLLAMA_NUM_PARALLEL=4
+export OLLAMA_MAX_LOADED_MODELS=1
+export OLLAMA_MAX_QUEUE=512
+
+# Resource allocation for production
+systemctl edit ollama
+# Add: Environment="OLLAMA_HOST=0.0.0.0:11434"
+# Add: Environment="OLLAMA_ORIGINS=*"
+```
+
+### **RAG Monitoring & Analytics**
+
+#### **System Health Monitoring**
+- **Embedding Model Status**: Tracks sentence-transformer model loading
+- **Ollama Connectivity**: Monitors LLM server availability  
+- **Database Performance**: PostgreSQL query response times
+- **Vector Index Health**: pgvector similarity search performance
+
+#### **Usage Analytics**
+- **Query Volume**: Total questions asked per day/month
+- **Confidence Scoring**: Average confidence levels and distribution
+- **Response Times**: LLM generation and vector search latency
+- **User Feedback**: Answer quality ratings and improvement areas
+- **Source Attribution**: Most referenced documents and countries
+
+#### **Performance Metrics**
+```bash
+# Monitor RAG performance
+curl "https://your-domain.com/api/rag/analytics" | jq
+
+# Key metrics tracked:
+{
+  "total_queries": 1500,
+  "average_confidence": 0.78,
+  "average_response_time_ms": 2500,
+  "feedback_summary": {
+    "helpful": 856,
+    "not_helpful": 123
+  }
+}
+```
+
+### **RAG Troubleshooting**
+
+#### **Common Issues & Solutions**
+
+**1. Ollama Service Issues**
+```bash
+# Check Ollama status
+sudo systemctl status ollama
+
+# Restart Ollama service
+sudo systemctl restart ollama
+
+# View Ollama logs
+journalctl -u ollama -f
+```
+
+**2. PostgreSQL Connection Issues**
+```bash
+# Test RAG database connectivity
+python3 -c "from app.database.rag_database import test_rag_db_connection; print(test_rag_db_connection())"
+
+# Check pgvector extension
+psql $POSTGRES_RAG_URI -c "SELECT * FROM pg_extension WHERE extname = 'vector';"
+```
+
+**3. Embedding Model Loading Issues**
+```bash
+# Test sentence-transformers
+python3 -c "from sentence_transformers import SentenceTransformer; model = SentenceTransformer('all-MiniLM-L6-v2'); print('Model loaded successfully')"
+
+# Clear model cache if corrupted
+rm -rf ~/.cache/torch/sentence_transformers/
+```
+
+**4. Vector Search Performance**
+```sql
+-- Rebuild vector index if search is slow
+DROP INDEX idx_document_chunks_embedding;
+CREATE INDEX idx_document_chunks_embedding 
+ON document_chunks USING ivfflat (embedding vector_cosine_ops) 
+WITH (lists = 100);
+
+-- Update table statistics
+ANALYZE document_chunks;
+```
 
 ---
 
@@ -325,8 +630,16 @@ make test-frontend
 ### **Required Environment Variables**
 
 ```bash
-# Database Configuration
+# Primary Database Configuration (MySQL)
 DATABASE_URL=mysql://user:password@host:port/database
+
+# RAG Database Configuration (PostgreSQL)
+POSTGRES_RAG_URI=postgresql://user:password@host:port/rag_database
+POSTGRES_RAG_HOST=localhost
+POSTGRES_RAG_PORT=5432
+POSTGRES_RAG_USER=rag_user
+POSTGRES_RAG_PASSWORD=secure_rag_password
+POSTGRES_RAG_DATABASE=rag_vectors
 
 # S3 Storage (Exoscale SOS)
 EXOSCALE_S3_ACCESS_KEY=your_access_key
@@ -345,6 +658,13 @@ SENDGRID_API_KEY=your_sendgrid_api_key
 
 # OCR Configuration
 TESSDATA_PREFIX=/usr/share/tesseract-ocr/5/tessdata
+
+# RAG/AI Configuration
+OLLAMA_HOST=localhost:11434
+OLLAMA_MODEL=llama3
+EMBEDDING_MODEL=all-MiniLM-L6-v2
+RAG_CHUNK_SIZE=500
+RAG_CHUNK_OVERLAP=50
 ```
 
 See `.env.example` for complete configuration template.
