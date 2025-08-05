@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Menu, X, Upload } from "lucide-react";
+import { Search, Upload } from "lucide-react";
 import CountryDocStatsList from '../components/CountryDocStatsList';
 import InteractiveWorldMap from '../components/InteractiveWorldMap';
 import Version from '../components/Version';
-import { LanguageSwitcher } from '../components/LanguageSwitcher';
+import Navigation from '../components/Navigation';
 import ProminentLanguageBar from '../components/ProminentLanguageBar';
 
 interface CountryStats {
@@ -28,7 +28,6 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState(""); // Added state for search term
   const [mapData, setMapData] = useState<CountryStats[]>([]);
   const [loadingMapData, setLoadingMapData] = useState(true);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Mobile menu state
   const hasFetchedMapData = useRef(false); // Track if we've already fetched to prevent duplicates
   const navigate = useNavigate(); // Added navigation hook
   const { t } = useTranslation(); // Added translation hook
@@ -266,117 +265,12 @@ export default function App() {
     }
   };
 
-  // Handle mobile menu navigation
-  const handleMobileNavigation = (path: string) => {
-    navigate(path);
-    setIsMobileMenuOpen(false); // Close mobile menu after navigation
-  };
+
 
   return (
     <div className="min-h-screen bg-white">
       <ProminentLanguageBar />
-      <header className="py-6 px-4 md:px-8 border-b border-border">
-        <div className="container mx-auto">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="h-8 w-8 rounded-md flex items-center justify-center">
-                <img src="/favicon.svg" alt="HaqNow.com" className="h-8 w-8" />
-              </div>
-              <h1 className="text-xl md:text-2xl font-bold tracking-tight text-green-600">
-                {t('navigation.brand')}
-              </h1>
-            </div>
-            
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-4">
-              <nav className="flex space-x-6">
-                <Button variant="ghost" onClick={() => navigate('/about')}>
-                  {t('navigation.about')}
-                </Button>
-                <Button variant="ghost" onClick={() => navigate('/search-page')}>
-                  {t('navigation.search')}
-                </Button>
-                <Button variant="ghost" onClick={() => navigate('/upload-document-page')}>
-                  {t('navigation.upload')}
-                </Button>
-                <Button variant="ghost" onClick={() => navigate('/foi')}>
-                  {t('navigation.foi')}
-                </Button>
-                <Button variant="ghost" onClick={() => navigate('/privacy-guaranteed-page')}>
-                  {t('navigation.privacy')}
-                </Button>
-                <Button variant="ghost" onClick={() => navigate('/disclaimer')}>
-                  {t('disclaimer.title')}
-                </Button>
-              </nav>
-              <LanguageSwitcher />
-            </div>
-
-            {/* Mobile Navigation */}
-            <div className="md:hidden flex items-center space-x-2">
-              <LanguageSwitcher className="mr-2" />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                aria-label="Toggle mobile menu"
-              >
-                {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </Button>
-            </div>
-          </div>
-
-          {/* Mobile Menu Dropdown */}
-          {isMobileMenuOpen && (
-            <div className="md:hidden mt-4 py-4 border-t border-border">
-              <nav className="flex flex-col space-y-2">
-                <Button 
-                  variant="ghost" 
-                  className="justify-start" 
-                  onClick={() => handleMobileNavigation('/about')}
-                >
-                  {t('navigation.about')}
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  className="justify-start" 
-                  onClick={() => handleMobileNavigation('/search-page')}
-                >
-                  {t('navigation.search')}
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  className="justify-start" 
-                  onClick={() => handleMobileNavigation('/upload-document-page')}
-                >
-                  {t('navigation.upload')}
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  className="justify-start" 
-                  onClick={() => handleMobileNavigation('/foi')}
-                >
-                  {t('navigation.foi')}
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  className="justify-start" 
-                  onClick={() => handleMobileNavigation('/privacy-guaranteed-page')}
-                >
-                  {t('navigation.privacy')}
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  className="justify-start" 
-                  onClick={() => handleMobileNavigation('/disclaimer')}
-                >
-                  {t('disclaimer.title')}
-                </Button>
-              </nav>
-            </div>
-          )}
-        </div>
-      </header>
+      <Navigation />
 
       <main className="flex-grow container mx-auto px-4 py-8 md:py-12">
         <div className="space-y-10 md:space-y-16">
