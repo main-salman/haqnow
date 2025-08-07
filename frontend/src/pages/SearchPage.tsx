@@ -64,12 +64,12 @@ export default function SearchPage() {
       // Different endpoints based on format
       let endpoint;
       if (format === "original") {
-        endpoint = `/api/search/document/${docId}`;
+        endpoint = `/api/search/download/${docId}`;
       } else if (format === "english") {
-        endpoint = `/api/search/document/${docId}/english-text`;
+        endpoint = `/api/search/download/${docId}?language=english`;
       } else {
         // For specific language downloads
-        endpoint = `/api/search/document/${docId}/${format}-text`;
+        endpoint = `/api/search/download/${docId}?language=${format}`;
       }
       
       const response = await fetch(endpoint);
