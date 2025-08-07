@@ -228,8 +228,8 @@ class MultilingualOCRService:
             
         language_info = self.get_language_info(source_language)
         if not language_info:
-            logger.warning("Language not supported for translation", language=source_language)
-            return None
+            logger.warning("Language not supported for translation, returning original text", language=source_language)
+            return text  # Return original text instead of None
             
         google_lang_code = language_info['google']
         
@@ -305,14 +305,14 @@ class MultilingualOCRService:
                            success_rate=f"{len(translated_chunks)}/{len(chunks)}")
                 return combined_translation
             else:
-                logger.error("All translation chunks failed")
-                return None
+                logger.error("All translation chunks failed, returning original text")
+                return text  # Return original text instead of None
                 
         except Exception as e:
-            logger.error("Failed to translate text", 
+            logger.error("Failed to translate text, returning original text", 
                         source_language=source_language,
                         error=str(e))
-            return None
+            return text  # Return original text instead of None
     
     async def process_multilingual_document(self, document_content: bytes, language: str) -> Tuple[Optional[str], Optional[str]]:
         """
@@ -353,10 +353,15 @@ class MultilingualOCRService:
             
             # Step 3: Translate to English
             english_translation = await self._translate_to_english(original_text, language)
-            if not english_translation:
-                logger.warning("Text extracted but translation failed")
-                # Return original text even if translation fails
-                return original_text, None
+            
+            # If translation returns the same as original text, that's fine
+            # It means either translation failed gracefully or the text was already in English
+            logger.info("Translation process completed",
+                       language=language,
+                       translation_available=bool(english_translation and english_translation != original_text))
+            
+            # Always return both texts, even if translation is the same as original
+            return original_text, english_translation
             
             logger.info("Multilingual document processing completed successfully",
                        language=language,
