@@ -114,7 +114,10 @@ class MultilingualOCRService:
     
     def __init__(self):
         """Initialize the multilingual OCR service."""
-        self.translator = Translator()
+        if GOOGLETRANS_AVAILABLE and Translator is not None:
+            self.translator = Translator()
+        else:
+            self.translator = None
         
         # Test Tesseract availability
         try:
