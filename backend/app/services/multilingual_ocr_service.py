@@ -18,6 +18,10 @@ from io import BytesIO
 from PIL import Image
 import pdf2image
 import pytesseract
+import structlog
+
+logger = structlog.get_logger()
+
 try:
     from googletrans import Translator
     GOOGLETRANS_AVAILABLE = True
@@ -25,9 +29,6 @@ except (ImportError, AttributeError) as e:
     logger.warning(f"googletrans not available due to dependency issue: {e}")
     GOOGLETRANS_AVAILABLE = False
     Translator = None
-import structlog
-
-logger = structlog.get_logger()
 
 # Comprehensive language mapping for OCR to Google Translate codes
 LANGUAGE_MAPPING = {
