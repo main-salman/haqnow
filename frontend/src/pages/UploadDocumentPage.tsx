@@ -207,57 +207,97 @@ export default function UploadDocumentPage() {
     }
   }, []);
 
-  // Function to combine multiple photos into a single ZIP file or handle individually
+  // Function to combine multiple photos into a single image
   const combinePhotosIntoPDF = async (photos: File[]): Promise<File> => {
     if (photos.length === 1) {
       return photos[0];
     }
     
-    // For multiple photos, we'll combine them into a single large image
-    // This is a simple approach that works better than fake PDFs
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    
-    if (!ctx) {
-      throw new Error('Canvas not supported');
+    try {
+      console.log(`Combining ${photos.length} photos into single image`);
+      
+      // For multiple photos, we'll combine them into a single large image
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        throw new Error('Canvas context not available');
+      }
+      
+      // Load all images with better error handling
+      const images = await Promise.all(
+        photos.map((photo, index) => {
+          return new Promise<HTMLImageElement>((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+              console.log(`Image ${index + 1} loaded: ${img.width}x${img.height}`);
+              resolve(img);
+            };
+            img.onerror = (error) => {
+              console.error(`Failed to load image ${index + 1}:`, error);
+              reject(new Error(`Failed to load image ${index + 1}`));
+            };
+            img.src = URL.createObjectURL(photo);
+          });
+        })
+      );
+      
+      // Calculate dimensions - normalize width and stack vertically
+      const targetWidth = 800; // Standard width for consistency
+      let totalHeight = 0;
+      
+      // Calculate total height based on aspect ratios
+      images.forEach((img, index) => {
+        const aspectRatio = img.height / img.width;
+        const scaledHeight = targetWidth * aspectRatio;
+        totalHeight += scaledHeight;
+        console.log(`Image ${index + 1}: Original ${img.width}x${img.height}, scaled to ${targetWidth}x${scaledHeight}`);
+      });
+      
+      console.log(`Final canvas size: ${targetWidth}x${totalHeight}`);
+      
+      // Set canvas size
+      canvas.width = targetWidth;
+      canvas.height = totalHeight;
+      
+      // Fill with white background
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, targetWidth, totalHeight);
+      
+      // Draw all images vertically with proper scaling
+      let currentY = 0;
+      images.forEach((img, index) => {
+        const aspectRatio = img.height / img.width;
+        const scaledHeight = targetWidth * aspectRatio;
+        
+        console.log(`Drawing image ${index + 1} at y=${currentY}, height=${scaledHeight}`);
+        ctx.drawImage(img, 0, currentY, targetWidth, scaledHeight);
+        currentY += scaledHeight;
+        
+        // Clean up object URL
+        URL.revokeObjectURL(img.src);
+      });
+      
+      // Convert to blob with higher quality and better error handling
+      return new Promise<File>((resolve, reject) => {
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const combinedName = `combined-document-${photos.length}pages-${Date.now()}.jpg`;
+            console.log(`Successfully created combined image: ${combinedName}, size: ${blob.size} bytes`);
+            resolve(new File([blob], combinedName, { type: 'image/jpeg' }));
+          } else {
+            console.error('Failed to create blob from canvas');
+            reject(new Error('Failed to create combined image blob'));
+          }
+        }, 'image/jpeg', 0.9); // Higher quality
+      });
+      
+    } catch (error) {
+      console.error('Error combining photos:', error);
+      toast.error('Failed to combine photos. Using first photo only.');
+      // Fallback: return first photo if combination fails
+      return photos[0];
     }
-    
-    // Load all images and calculate total height
-    const images = await Promise.all(
-      photos.map(photo => {
-        return new Promise<HTMLImageElement>((resolve, reject) => {
-          const img = new Image();
-          img.onload = () => resolve(img);
-          img.onerror = reject;
-          img.src = URL.createObjectURL(photo);
-        });
-      })
-    );
-    
-    // Calculate dimensions - use the width of the first image, stack vertically
-    const maxWidth = Math.max(...images.map(img => img.width));
-    const totalHeight = images.reduce((sum, img) => sum + img.height, 0);
-    
-    canvas.width = maxWidth;
-    canvas.height = totalHeight;
-    
-    // Draw all images vertically
-    let currentY = 0;
-    for (const img of images) {
-      const x = (maxWidth - img.width) / 2; // Center horizontally
-      ctx.drawImage(img, x, currentY);
-      currentY += img.height;
-    }
-    
-    // Convert to blob and create file
-    return new Promise((resolve) => {
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const combinedName = `document-${photos.length}pages-${Date.now()}.jpg`;
-          resolve(new File([blob], combinedName, { type: 'image/jpeg' }));
-        }
-      }, 'image/jpeg', 0.8);
-    });
   };
 
   // Camera capture functionality
