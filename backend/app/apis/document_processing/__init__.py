@@ -21,6 +21,14 @@ from app.services.arabic_ocr_service import arabic_ocr_service  # Add Arabic OCR
 from app.services.semantic_search_service import semantic_search_service
 from app.database import get_db, Document, BannedTag
 
+# Optional RAG service import
+try:
+    from app.services.rag_service import rag_service
+    RAG_AVAILABLE = True
+except ImportError:
+    rag_service = None
+    RAG_AVAILABLE = False
+
 logger = structlog.get_logger()
 
 router = APIRouter()
