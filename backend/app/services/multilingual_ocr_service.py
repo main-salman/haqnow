@@ -24,9 +24,17 @@ logger = structlog.get_logger()
 
 try:
     from googletrans import Translator
-    GOOGLETRANS_AVAILABLE = True
-except (ImportError, AttributeError) as e:
-    logger.warning(f"googletrans not available due to dependency issue: {e}")
+    # Test if Translator actually works
+    test_translator = Translator()
+    # Simple test translation to verify functionality
+    test_result = test_translator.translate("test", src='en', dest='fr')
+    if test_result and test_result.text:
+        GOOGLETRANS_AVAILABLE = True
+        logger.info("Google Translate service verified and working")
+    else:
+        raise Exception("Translator test failed")
+except Exception as e:
+    logger.warning(f"googletrans not available or not working: {e}")
     GOOGLETRANS_AVAILABLE = False
     Translator = None
 
