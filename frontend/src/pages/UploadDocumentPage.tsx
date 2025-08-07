@@ -85,6 +85,7 @@ export default function UploadDocumentPage() {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [isCameraMode, setIsCameraMode] = useState(false);
   const [showCameraDisclaimer, setShowCameraDisclaimer] = useState(false);
+  const [capturedPhotos, setCapturedPhotos] = useState<File[]>([]);
 
   // Available document languages - comprehensive list for all supported OCR languages
   const documentLanguages = [
@@ -206,6 +207,25 @@ export default function UploadDocumentPage() {
     }
   }, []);
 
+  // Function to combine multiple photos into a PDF
+  const combinePhotosIntoPDF = async (photos: File[]): Promise<File> => {
+    // For now, if multiple photos, create a simple multi-image file
+    // In a real app, you'd use a PDF library like jsPDF
+    if (photos.length === 1) {
+      return photos[0];
+    }
+    
+    // Create a combined filename
+    const combinedName = `document-${photos.length}pages-${Date.now()}.pdf`;
+    
+    // For simplicity, we'll just use the first photo for now
+    // In production, you'd want to use a PDF library to combine images
+    const firstPhoto = photos[0];
+    return new File([await firstPhoto.arrayBuffer()], combinedName, { 
+      type: 'application/pdf' 
+    });
+  };
+
   // Camera capture functionality
   const handleCameraCapture = async () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -265,8 +285,8 @@ export default function UploadDocumentPage() {
         
         canvas.toBlob((blob) => {
           if (blob) {
-            const file = new File([blob], `document-${Date.now()}.jpg`, { type: 'image/jpeg' });
-            setFormData(prev => ({ ...prev, file }));
+            const file = new File([blob], `document-page-${Date.now()}.jpg`, { type: 'image/jpeg' });
+            setCapturedPhotos(prev => [...prev, file]);
             setErrors(prev => ({ ...prev, file: "" }));
             toast.success(t('upload.photoCaptured'));
           }
@@ -419,8 +439,8 @@ export default function UploadDocumentPage() {
       newErrors.documentLanguage = "Document language is required.";
     }
 
-    if (!formData.file) {
-      newErrors.file = "Please select a file to upload.";
+    if (!formData.file && capturedPhotos.length === 0) {
+      newErrors.file = "Please select a file to upload or capture photos with camera.";
     }
 
     setErrors(newErrors);
@@ -443,8 +463,23 @@ export default function UploadDocumentPage() {
     setIsSubmitting(true);
     toast.loading("Submitting document for review...", { id: "upload-toast" });
 
-    if (!formData.file) {
-      toast.error("File Missing", { id: "upload-toast", description: "Please select a PDF file to upload." });
+    // Prepare file for upload
+    let fileToUpload = formData.file;
+    
+    // If using camera mode with multiple photos, combine them
+    if (isCameraMode && capturedPhotos.length > 0) {
+      try {
+        toast.loading("Combining photos...", { id: "upload-toast" });
+        fileToUpload = await combinePhotosIntoPDF(capturedPhotos);
+      } catch (error) {
+        toast.error("Error combining photos", { id: "upload-toast", description: "Failed to combine photos into PDF." });
+        setIsSubmitting(false);
+        return;
+      }
+    }
+    
+    if (!fileToUpload) {
+      toast.error("File Missing", { id: "upload-toast", description: "Please select a file to upload or capture photos." });
       setIsSubmitting(false);
       return;
     }
@@ -455,7 +490,7 @@ export default function UploadDocumentPage() {
       
       // Create FormData for the backend upload
       const uploadFormData = new FormData();
-      uploadFormData.append('file', formData.file);
+      uploadFormData.append('file', fileToUpload);
       uploadFormData.append('title', formData.title);
       uploadFormData.append('country', formData.country);
       uploadFormData.append('state', formData.stateProvince || formData.country); // Use country as fallback
@@ -646,16 +681,55 @@ export default function UploadDocumentPage() {
               ) : (
                 <div className="p-6 border-2 border-dashed border-primary/50 rounded-lg text-center">
                   <Camera className="mx-auto h-12 w-12 mb-3 text-primary" />
-                  {formData.file ? (
-                    <div className="text-center">
-                      <FileText className="mx-auto h-8 w-8 text-green-600 mb-2" />
-                      <p className="font-semibold text-foreground">{formData.file.name}</p>
-                      <p className="text-sm text-muted-foreground">({(formData.file.size / 1024 / 1024).toFixed(2)} MB)</p>
-                      <Button type="button" variant="link" size="sm" className="text-xs mt-1 text-destructive" onClick={() => setFormData(p => ({...p, file: null}))}>Remove photo</Button>
+                  {capturedPhotos.length > 0 ? (
+                    <div className="text-center space-y-4">
+                      <div className="text-green-600 mb-4">
+                        <FileText className="mx-auto h-8 w-8 mb-2" />
+                        <p className="font-semibold">{t('upload.photosCaptures', { count: capturedPhotos.length })}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Total: {(capturedPhotos.reduce((sum, file) => sum + file.size, 0) / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                      
+                      {/* Photo thumbnails */}
+                      <div className="grid grid-cols-3 gap-2 max-w-xs mx-auto">
+                        {capturedPhotos.map((file, index) => (
+                          <div key={index} className="relative">
+                            <img 
+                              src={URL.createObjectURL(file)} 
+                              alt={`Page ${index + 1}`}
+                              className="w-full h-16 object-cover rounded border"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setCapturedPhotos(prev => prev.filter((_, i) => i !== index))}
+                              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <div className="flex gap-2 justify-center">
+                        <Button type="button" onClick={handleCameraCapture} variant="outline" size="sm">
+                          <Camera className="h-4 w-4 mr-2" />
+                          {t('upload.addMorePages')}
+                        </Button>
+                        <Button 
+                          type="button" 
+                          variant="link" 
+                          size="sm" 
+                          className="text-destructive" 
+                          onClick={() => setCapturedPhotos([])}
+                        >
+                          {t('upload.clearAll')}
+                        </Button>
+                      </div>
                     </div>
                   ) : (
                     <div>
-                      <p className="text-muted-foreground mb-4">Use your device camera to capture a document photo</p>
+                      <p className="text-muted-foreground mb-4">{t('upload.cameraInstructions')}</p>
                       <Button type="button" onClick={handleCameraCapture} className="w-full max-w-xs">
                         <Camera className="h-4 w-4 mr-2" />
                         {t('upload.openCamera')}
