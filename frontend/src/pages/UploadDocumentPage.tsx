@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { UploadCloud, FileText, AlertCircle, CheckCircle, Loader2, Shield, ArrowLeft } from "lucide-react";
+import { UploadCloud, FileText, AlertCircle, CheckCircle, Loader2, Shield, ArrowLeft, Camera, Smartphone, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { countriesData, Country, State } from "utils/countriesData"; // Added
 import HCaptcha from '@hcaptcha/react-hcaptcha';
@@ -83,6 +83,8 @@ export default function UploadDocumentPage() {
   const [errors, setErrors] = useState<Partial<Record<keyof FormData | 'captcha', string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [isCameraMode, setIsCameraMode] = useState(false);
+  const [showCameraDisclaimer, setShowCameraDisclaimer] = useState(false);
 
   // Available document languages - comprehensive list for all supported OCR languages
   const documentLanguages = [
@@ -203,6 +205,83 @@ export default function UploadDocumentPage() {
       }
     }
   }, []);
+
+  // Camera capture functionality
+  const handleCameraCapture = async () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      toast.error(t('upload.cameraNotSupported'));
+      return;
+    }
+
+    try {
+      setShowCameraDisclaimer(true);
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } // Use back camera on mobile
+      });
+      
+      const video = document.createElement('video');
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      
+      video.srcObject = stream;
+      video.play();
+      
+      // Create camera modal
+      const modal = document.createElement('div');
+      modal.className = 'fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4';
+      modal.innerHTML = `
+        <div class="bg-white rounded-lg p-6 max-w-md w-full">
+          <h3 class="text-lg font-semibold mb-4">${t('upload.captureDocument')}</h3>
+          <div class="relative">
+            <video id="camera-preview" autoplay class="w-full rounded border"></video>
+            <div class="mt-4 flex gap-2 justify-center">
+              <button id="capture-btn" class="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90">
+                ${t('upload.capturePhoto')}
+              </button>
+              <button id="cancel-btn" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">
+                ${t('upload.cancel')}
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      const videoElement = modal.querySelector('#camera-preview') as HTMLVideoElement;
+      videoElement.srcObject = stream;
+      
+      const captureBtn = modal.querySelector('#capture-btn');
+      const cancelBtn = modal.querySelector('#cancel-btn');
+      
+      const cleanup = () => {
+        stream.getTracks().forEach(track => track.stop());
+        document.body.removeChild(modal);
+      };
+      
+      captureBtn?.addEventListener('click', () => {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context?.drawImage(video, 0, 0);
+        
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const file = new File([blob], `document-${Date.now()}.jpg`, { type: 'image/jpeg' });
+            setFormData(prev => ({ ...prev, file }));
+            setErrors(prev => ({ ...prev, file: "" }));
+            toast.success(t('upload.photoCaptured'));
+          }
+        }, 'image/jpeg', 0.8);
+        
+        cleanup();
+      });
+      
+      cancelBtn?.addEventListener('click', cleanup);
+      
+    } catch (error) {
+      console.error('Camera access error:', error);
+      toast.error(t('upload.cameraAccessError'));
+    }
+  };
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
@@ -488,25 +567,102 @@ export default function UploadDocumentPage() {
           </CardHeader>
           <CardContent className="space-y-6">
             {/* File Upload Section */}
-            <div {...getRootProps()} className={`p-6 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors 
-              ${isDragActive ? "border-primary bg-primary/10" : "border-muted-foreground/30 hover:border-primary/70"}
-              ${errors.file ? "border-destructive bg-destructive/10" : ""}
-            `}>
-              <input {...getInputProps()} id="file-upload" name="file"/>
-              <UploadCloud className={`mx-auto h-12 w-12 mb-3 ${errors.file ? "text-destructive" : "text-muted-foreground"}`} />
-              {formData.file ? (
-                <div className="text-center">
-                  <FileText className="mx-auto h-8 w-8 text-green-600 mb-2" />
-                  <p className="font-semibold text-foreground">{formData.file.name}</p>
-                  <p className="text-sm text-muted-foreground">({(formData.file.size / 1024 / 1024).toFixed(2)} MB)</p>
-                  <Button type="button" variant="link" size="sm" className="text-xs mt-1 text-destructive" onClick={(e) => { e.stopPropagation(); setFormData(p => ({...p, file: null})); }}>Remove file</Button>
+            <div className="space-y-4">
+              {/* Upload Options */}
+              <div className="flex gap-2 justify-center">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsCameraMode(false)}
+                  className={!isCameraMode ? "bg-primary text-primary-foreground" : ""}
+                >
+                  <UploadCloud className="h-4 w-4 mr-2" />
+                  {t('upload.uploadFile')}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsCameraMode(true);
+                    setShowCameraDisclaimer(true);
+                  }}
+                  className={isCameraMode ? "bg-primary text-primary-foreground" : ""}
+                >
+                  <Camera className="h-4 w-4 mr-2" />
+                  {t('upload.useCamera')}
+                </Button>
+              </div>
+
+              {/* Camera Disclaimer */}
+              {showCameraDisclaimer && isCameraMode && (
+                <Card className="border-amber-200 bg-amber-50">
+                  <CardContent className="pt-6">
+                    <div className="flex items-start space-x-3">
+                      <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                      <div className="space-y-2">
+                        <h4 className="font-semibold text-amber-800">{t('upload.cameraDisclaimerTitle')}</h4>
+                        <div className="text-sm text-amber-700 space-y-2">
+                          <p>{t('upload.cameraDisclaimerP1')}</p>
+                          <p>{t('upload.cameraDisclaimerP2')}</p>
+                          <div className="mt-3 p-3 bg-amber-100 rounded border-l-4 border-amber-400">
+                            <div className="flex items-start space-x-2">
+                              <Smartphone className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                              <div>
+                                <p className="font-medium text-amber-800">{t('upload.phoneWarningTitle')}</p>
+                                <p className="text-xs text-amber-700 mt-1">{t('upload.phoneWarningText')}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* File Upload or Camera Interface */}
+              {!isCameraMode ? (
+                <div {...getRootProps()} className={`p-6 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors 
+                  ${isDragActive ? "border-primary bg-primary/10" : "border-muted-foreground/30 hover:border-primary/70"}
+                  ${errors.file ? "border-destructive bg-destructive/10" : ""}
+                `}>
+                  <input {...getInputProps()} id="file-upload" name="file"/>
+                  <UploadCloud className={`mx-auto h-12 w-12 mb-3 ${errors.file ? "text-destructive" : "text-muted-foreground"}`} />
+                  {formData.file ? (
+                    <div className="text-center">
+                      <FileText className="mx-auto h-8 w-8 text-green-600 mb-2" />
+                      <p className="font-semibold text-foreground">{formData.file.name}</p>
+                      <p className="text-sm text-muted-foreground">({(formData.file.size / 1024 / 1024).toFixed(2)} MB)</p>
+                      <Button type="button" variant="link" size="sm" className="text-xs mt-1 text-destructive" onClick={(e) => { e.stopPropagation(); setFormData(p => ({...p, file: null})); }}>Remove file</Button>
+                    </div>
+                  ) : isDragActive ? (
+                    <p className="text-primary font-semibold">Drop the file here ...</p>
+                  ) : (
+                    <p className="text-muted-foreground">
+                      Drag & drop any document or image file here, or <Button type="button" variant="link" className="p-0 h-auto" onClick={open}>click to select</Button>
+                    </p>
+                  )}
                 </div>
-              ) : isDragActive ? (
-                <p className="text-primary font-semibold">Drop the file here ...</p>
               ) : (
-                <p className="text-muted-foreground">
-                  Drag & drop any document or image file here, or <Button type="button" variant="link" className="p-0 h-auto" onClick={open}>click to select</Button>
-                </p>
+                <div className="p-6 border-2 border-dashed border-primary/50 rounded-lg text-center">
+                  <Camera className="mx-auto h-12 w-12 mb-3 text-primary" />
+                  {formData.file ? (
+                    <div className="text-center">
+                      <FileText className="mx-auto h-8 w-8 text-green-600 mb-2" />
+                      <p className="font-semibold text-foreground">{formData.file.name}</p>
+                      <p className="text-sm text-muted-foreground">({(formData.file.size / 1024 / 1024).toFixed(2)} MB)</p>
+                      <Button type="button" variant="link" size="sm" className="text-xs mt-1 text-destructive" onClick={() => setFormData(p => ({...p, file: null}))}>Remove photo</Button>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="text-muted-foreground mb-4">Use your device camera to capture a document photo</p>
+                      <Button type="button" onClick={handleCameraCapture} className="w-full max-w-xs">
+                        <Camera className="h-4 w-4 mr-2" />
+                        {t('upload.openCamera')}
+                      </Button>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
             {errors.file && <p className="text-sm text-destructive mt-1 flex items-center"><AlertCircle className="h-4 w-4 mr-1" />{errors.file}</p>}

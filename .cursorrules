@@ -35,8 +35,7 @@ Before extensive debugging, try these standard commands:
 - **AI/RAG issues**: Check RAG status endpoint before diving into code
 
 ## 🛠️ DEVELOPMENT WORKFLOW
-- **Local dev**: Use `scripts/run-local.sh`
-- **Changes made**: Test locally, then `scripts/deploy.sh [type]`
+- **Changes made**: Deploy using `scripts/deploy.sh [type]`
 - **Bug fixes**: `scripts/deploy.sh patch`
 - **New features**: `scripts/deploy.sh minor`
 - **Breaking changes**: `scripts/deploy.sh major`

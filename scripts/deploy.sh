@@ -13,7 +13,7 @@ echo ""
 
 # Step 1: Update version
 echo "📦 Updating version ($VERSION_TYPE)..."
-./update-version.sh $VERSION_TYPE
+scripts/update-version.sh $VERSION_TYPE
 
 if [ $? -ne 0 ]; then
     echo "❌ Version update failed!"
