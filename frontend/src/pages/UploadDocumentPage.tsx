@@ -207,22 +207,56 @@ export default function UploadDocumentPage() {
     }
   }, []);
 
-  // Function to combine multiple photos into a PDF
+  // Function to combine multiple photos into a single ZIP file or handle individually
   const combinePhotosIntoPDF = async (photos: File[]): Promise<File> => {
-    // For now, if multiple photos, create a simple multi-image file
-    // In a real app, you'd use a PDF library like jsPDF
     if (photos.length === 1) {
       return photos[0];
     }
     
-    // Create a combined filename
-    const combinedName = `document-${photos.length}pages-${Date.now()}.pdf`;
+    // For multiple photos, we'll combine them into a single large image
+    // This is a simple approach that works better than fake PDFs
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
     
-    // For simplicity, we'll just use the first photo for now
-    // In production, you'd want to use a PDF library to combine images
-    const firstPhoto = photos[0];
-    return new File([await firstPhoto.arrayBuffer()], combinedName, { 
-      type: 'application/pdf' 
+    if (!ctx) {
+      throw new Error('Canvas not supported');
+    }
+    
+    // Load all images and calculate total height
+    const images = await Promise.all(
+      photos.map(photo => {
+        return new Promise<HTMLImageElement>((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = reject;
+          img.src = URL.createObjectURL(photo);
+        });
+      })
+    );
+    
+    // Calculate dimensions - use the width of the first image, stack vertically
+    const maxWidth = Math.max(...images.map(img => img.width));
+    const totalHeight = images.reduce((sum, img) => sum + img.height, 0);
+    
+    canvas.width = maxWidth;
+    canvas.height = totalHeight;
+    
+    // Draw all images vertically
+    let currentY = 0;
+    for (const img of images) {
+      const x = (maxWidth - img.width) / 2; // Center horizontally
+      ctx.drawImage(img, x, currentY);
+      currentY += img.height;
+    }
+    
+    // Convert to blob and create file
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const combinedName = `document-${photos.length}pages-${Date.now()}.jpg`;
+          resolve(new File([blob], combinedName, { type: 'image/jpeg' }));
+        }
+      }, 'image/jpeg', 0.8);
     });
   };
 
@@ -469,10 +503,13 @@ export default function UploadDocumentPage() {
     // If using camera mode with multiple photos, combine them
     if (isCameraMode && capturedPhotos.length > 0) {
       try {
-        toast.loading("Combining photos...", { id: "upload-toast" });
+        if (capturedPhotos.length > 1) {
+          toast.loading("Combining photos into single image...", { id: "upload-toast" });
+        }
         fileToUpload = await combinePhotosIntoPDF(capturedPhotos);
       } catch (error) {
-        toast.error("Error combining photos", { id: "upload-toast", description: "Failed to combine photos into PDF." });
+        console.error("Error combining photos:", error);
+        toast.error("Error combining photos", { id: "upload-toast", description: "Failed to combine photos. Please try again." });
         setIsSubmitting(false);
         return;
       }

@@ -64,7 +64,7 @@
     "cameraDisclaimerP2": "This approach helps avoid creating digital trails on work computers by using your personal device to photograph documents instead of scanning or copying files digitally.",
     "phoneWarningTitle": "Important: Phone Storage Warning",
     "phoneWarningText": "iPhone and Android phones may save copies of pictures on your device. Make sure to immediately delete such pictures after uploading and also delete pictures synced to cloud services like Google Photos, Amazon Photos, Dropbox, Box.com, etc.",
-    "cameraInstructions": "Use your device camera to capture document photos. You can take multiple pages for multi-page documents.",
+    "cameraInstructions": "Use your device camera to capture document photos. Multiple pages will be combined into a single image.",
     "photosCaptures": "{{count}} photo(s) captured",
     "addMorePages": "Add More Pages",
     "clearAll": "Clear All",
