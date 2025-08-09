@@ -424,8 +424,13 @@ async def download_document(
     Rate limited to prevent abuse.
     """
     
-    # Check rate limit
-    check_download_rate_limit(request)
+    # Apply rate limit only for original PDF downloads to avoid blocking text downloads
+    try:
+        if language in (None, "original"):
+            check_download_rate_limit(request)
+    except Exception:
+        # Bubble up HTTPException from rate limiter as-is
+        raise
     
     try:
         # Get document from database
@@ -496,9 +501,10 @@ async def download_document(
         if not download_url:
             raise HTTPException(status_code=500, detail="Failed to generate download URL")
         
-        # Record download for rate limiting
-        record_download(request)
-        
+        # Record download only for original PDFs
+        if language in (None, "original"):
+            record_download(request)
+
         # Fetch file from S3 and stream it to user
         try:
             # Get file from S3

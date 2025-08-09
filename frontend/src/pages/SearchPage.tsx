@@ -75,7 +75,19 @@ export default function SearchPage() {
       const response = await fetch(endpoint);
       
       if (!response.ok) {
-        throw new Error(`Failed to download: ${response.statusText}`);
+        try {
+          const data = await response.json();
+          if (response.status === 429 && data?.detail) {
+            toast.error(data.detail);
+          } else if (data?.detail) {
+            toast.error(`Failed to download: ${data.detail}`);
+          } else {
+            toast.error(`Failed to download: ${response.statusText}`);
+          }
+        } catch (_) {
+          toast.error(`Failed to download: ${response.statusText}`);
+        }
+        return;
       }
       
       // Get the filename from response headers or create a default one
