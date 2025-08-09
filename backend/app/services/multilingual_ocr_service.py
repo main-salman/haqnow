@@ -222,12 +222,46 @@ class MultilingualOCRService:
         return combined_text
     
     async def _translate_to_english(self, text: str, source_language: str) -> Optional[str]:
-        """Internal wrapper used by other services to translate any text to English."""
-        try:
-            result = await self._translate_to_english(text, source_language)
-            return result
-        except Exception:
-            return None
+        """Translate any text to English using Google Translate with chunking.
+
+        Falls back gracefully to the original text if translation is unavailable.
+        """
+        if not text or not text.strip():
+            return ""
+
+        if not (GOOGLETRANS_AVAILABLE and self.translator):
+            # Translator not available; return original text to avoid blocking
+            return text
+
+        # Resolve Google language code
+        lang_info = self.get_language_info(source_language) or {}
+        src_code = lang_info.get('google', 'auto')
+
+        # Chunk long text to avoid API limits (~4k chars safe)
+        MAX_CHUNK = 4000
+        chunks: List[str] = []
+        remaining = text
+        while remaining:
+            chunks.append(remaining[:MAX_CHUNK])
+            remaining = remaining[MAX_CHUNK:]
+
+        loop = asyncio.get_event_loop()
+
+        translated_parts: List[str] = []
+        for part in chunks:
+            try:
+                # Offload blocking call
+                result = await loop.run_in_executor(
+                    None,
+                    lambda p=part: self.translator.translate(p, src=src_code, dest='en')
+                )
+                translated_parts.append(getattr(result, 'text', '') or '')
+            except Exception:
+                # Append original part if translation fails for this chunk
+                translated_parts.append(part)
+
+        combined = "\n".join(translated_parts).strip()
+        return combined or text
     
     async def process_multilingual_document(self, document_content: bytes, language: str) -> Tuple[Optional[str], Optional[str]]:
         """
