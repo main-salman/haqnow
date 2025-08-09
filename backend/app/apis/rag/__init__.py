@@ -45,6 +45,13 @@ class QuestionResponse(BaseModel):
     response_time_ms: int
     query_id: int
 
+class DocQuestionRequest(BaseModel):
+     """Request model for asking questions about a specific document"""
+     model_config = ConfigDict(extra='allow')
+     question: str = Field(..., min_length=3, max_length=1000)
+     document_id: int = Field(..., description="Target document ID")
+     language: Optional[str] = Field("en")
+
 class ProcessDocumentRequest(BaseModel):
     """Request model for processing documents"""
     document_id: int = Field(..., description="ID of document to process for RAG")
@@ -137,6 +144,69 @@ async def ask_question(
         raise HTTPException(
             status_code=500,
             detail="An error occurred while processing your question. Please try again."
+        )
+
+@router.post("/document-question", response_model=QuestionResponse)
+async def ask_document_question(
+    request: DocQuestionRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Ask a question strictly about a specific document using RAG.
+    """
+    try:
+        start_time = time.time()
+
+        logger.info(
+            f"RAG document question received: doc_id={request.document_id} q={request.question}"
+        )
+
+        # Validate document exists and is approved
+        from ...database.models import Document
+        doc = db.query(Document).filter(Document.id == request.document_id).first()
+        if not doc or doc.status != 'approved':
+            raise HTTPException(status_code=404, detail="Document not found or not accessible")
+
+        # Process question through doc-scoped RAG pipeline
+        result: RAGResult = await rag_service.answer_question_for_document(
+            request.question, request.document_id, db
+        )
+
+        # Calculate response time
+        response_time_ms = int((time.time() - start_time) * 1000)
+
+        # Log the query for monitoring
+        rag_query = RAGQuery(
+            query_text=f"[doc:{request.document_id}] {request.question}",
+            answer_text=result.answer,
+            confidence_score=result.confidence,
+            sources_count=len(result.sources),
+            response_time_ms=response_time_ms
+        )
+        db.add(rag_query)
+        db.commit()
+        db.refresh(rag_query)
+
+        # Filter sources to only this document (safety)
+        filtered_sources = [
+            s for s in result.sources if s.get('document_id') == request.document_id
+        ]
+
+        return QuestionResponse(
+            question=result.query,
+            answer=result.answer,
+            confidence=result.confidence,
+            sources=filtered_sources,
+            response_time_ms=response_time_ms,
+            query_id=rag_query.id
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error processing document-scoped question: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while processing your question for this document."
         )
 
 @router.post("/process-document")

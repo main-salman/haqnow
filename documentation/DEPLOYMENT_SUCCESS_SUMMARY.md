@@ -55,12 +55,11 @@ Frontend UI: ⚠️ Q&A interface deployed but testing needed
 
 ## 🎯 **USER EXPERIENCE**
 
-### **How to Access RAG Q&A:**
+### **How to Access RAG Q&A (Updated):**
 1. Visit: https://www.haqnow.com/search-page
-2. Look for two tabs: "Document Search" and "AI Q&A"
-3. Click "AI Q&A" tab
-4. Type natural language questions
-5. Get AI-powered answers with source citations
+2. Open any document result
+3. Click the "Ask AI about this document" button above the document
+4. Type your question. Answers use only the opened document as context
 
 ### **Sample Questions to Try:**
 - "What types of corruption are mentioned in the documents?"

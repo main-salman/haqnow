@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import Navigation from "@/components/Navigation";
-import RAGQuestionAnswering from "@/components/RAGQuestionAnswering";
+// Removed global AI Q&A per design change
 
 // Define the document result interface
 interface SearchDocumentResult {
@@ -245,20 +245,16 @@ export default function SearchPage() {
           </h1>
           <div className="w-24 h-1 bg-green-600 mx-auto mb-6"></div>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Find corruption documents using keyword search or ask AI questions in natural language
+            Find corruption documents using keyword search. For AI questions, open a document and use the AI button on its page.
           </p>
         </div>
 
         {/* Search Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-1">
             <TabsTrigger value="search" className="flex items-center space-x-2">
               <SearchIcon className="w-4 h-4" />
               <span>Document Search</span>
-            </TabsTrigger>
-            <TabsTrigger value="qa" className="flex items-center space-x-2">
-              <Brain className="w-4 h-4" />
-              <span>AI Q&A</span>
             </TabsTrigger>
           </TabsList>
 
@@ -461,10 +457,7 @@ export default function SearchPage() {
             )}
           </TabsContent>
 
-          {/* AI Q&A Tab */}
-          <TabsContent value="qa" className="space-y-6 mt-6">
-            <RAGQuestionAnswering />
-          </TabsContent>
+          {/* AI Q&A Tab removed */}
         </Tabs>
       </div>
     </div>

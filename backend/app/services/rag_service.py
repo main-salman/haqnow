@@ -330,6 +330,64 @@ class RAGService:
                 rag_db.close()
             raise
 
+    async def retrieve_relevant_chunks_for_document(
+        self,
+        query_embedding: List[float],
+        document_id: int,
+        limit: int = 8,
+    ) -> List[DocumentChunk]:
+        """Retrieve most relevant chunks but limited to a single document_id."""
+        try:
+            rag_db = next(get_rag_db())
+            should_close = True
+
+            embedding_str = '[' + ','.join(map(str, query_embedding)) + ']'
+            sql_query = """
+                SELECT 
+                    document_id,
+                    chunk_index,
+                    content,
+                    document_title,
+                    document_country,
+                    (embedding <=> %s::vector) as similarity
+                FROM document_chunks 
+                WHERE document_id = %s
+                ORDER BY embedding <=> %s::vector
+                LIMIT %s
+            """
+
+            raw_connection = rag_db.connection().connection
+            cursor = raw_connection.cursor()
+            cursor.execute(sql_query, (embedding_str, document_id, embedding_str, limit))
+            results = cursor.fetchall()
+            cursor.close()
+
+            chunks: List[DocumentChunk] = []
+            for row in results:
+                chunks.append(DocumentChunk(
+                    content=row[2],
+                    document_id=row[0],
+                    document_title=row[3],
+                    document_country=row[4],
+                    chunk_index=row[1]
+                ))
+
+            if should_close:
+                rag_db.close()
+
+            logger.info(
+                f"Retrieved {len(chunks)} relevant chunks for document {document_id} from RAG database"
+            )
+            return chunks
+        except Exception as e:
+            logger.error(f"Failed to retrieve relevant chunks for document {document_id}: {e}")
+            try:
+                if 'rag_db' in locals() and should_close:
+                    rag_db.close()
+            except Exception:
+                pass
+            raise
+
     async def retrieve_chunks_by_keywords(self, query_text: str, limit: int = 5) -> List[DocumentChunk]:
         """Fallback retrieval using simple keyword matching when semantic search yields nothing."""
         try:
@@ -508,6 +566,52 @@ Please provide a detailed and accurate answer based only on the information prov
             logger.error(f"RAG pipeline failed: {e}")
             return RAGResult(
                 answer="I encountered an error while processing your question. Please try again later.",
+                sources=[],
+                confidence=0.0,
+                query=query,
+                context_used=""
+            )
+
+    async def answer_question_for_document(self, query: str, document_id: int, db: Session) -> RAGResult:
+        """
+        RAG pipeline scoped strictly to a single document.
+        """
+        try:
+            logger.info(f"Processing RAG doc-scoped query: doc_id={document_id} query={query}")
+
+            query_embedding = await self.generate_embedding(query)
+            if not query_embedding:
+                logger.error("Failed to generate embedding for query")
+                return RAGResult(
+                    answer="I'm unable to process your question right now. Please try again later.",
+                    sources=[],
+                    confidence=0.0,
+                    query=query,
+                    context_used=""
+                )
+
+            relevant_chunks = await self.retrieve_relevant_chunks_for_document(
+                query_embedding=query_embedding,
+                document_id=document_id,
+                limit=10,
+            )
+
+            if not relevant_chunks:
+                return RAGResult(
+                    answer="I couldn't find relevant content in this document for your question.",
+                    sources=[],
+                    confidence=0.0,
+                    query=query,
+                    context_used=""
+                )
+
+            result = await self.generate_answer(query, relevant_chunks)
+            logger.info("RAG doc-scoped query completed successfully")
+            return result
+        except Exception as e:
+            logger.error(f"RAG doc-scoped pipeline failed: {e}")
+            return RAGResult(
+                answer="I encountered an error while processing your question for this document.",
                 sources=[],
                 confidence=0.0,
                 query=query,

@@ -2,7 +2,17 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Download, Tag, PlusCircle, ArrowLeft } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Download, Tag, PlusCircle, ArrowLeft, Brain, Loader2 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AlertCircle } from "lucide-react";
 
@@ -31,6 +41,14 @@ export default function DocumentDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [newTag, setNewTag] = useState("");
+
+  // AI Q&A state
+  const [isAIOpen, setIsAIOpen] = useState(false);
+  const [aiQuestion, setAiQuestion] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [aiAnswer, setAiAnswer] = useState<string | null>(null);
+  const [aiConfidence, setAiConfidence] = useState<number | null>(null);
 
   const handleAddTag = () => {
     // Placeholder: real implementation would call backend to add a tag
@@ -122,12 +140,96 @@ export default function DocumentDetailPage() {
           <p className="text-foreground/80 mb-6 leading-relaxed">
             {document.description}
           </p>
-          <Button asChild>
-            <a href={document.file_url} download target="_blank" rel="noopener noreferrer">
-              <Download className="mr-2 h-4 w-4" />
-              Download PDF
-            </a>
-          </Button>
+          <div className="flex flex-wrap gap-3">
+            <Button asChild>
+              <a href={document.file_url} download target="_blank" rel="noopener noreferrer">
+                <Download className="mr-2 h-4 w-4" />
+                Download PDF
+              </a>
+            </Button>
+
+            {/* AI Q&A Button */}
+            <Dialog open={isAIOpen} onOpenChange={setIsAIOpen}>
+              <DialogTrigger asChild>
+                <Button variant="secondary">
+                  <Brain className="mr-2 h-4 w-4" />
+                  Ask AI about this document
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[700px]">
+                <DialogHeader>
+                  <DialogTitle>Ask AI about this document</DialogTitle>
+                  <DialogDescription>
+                    Your question will be answered using only the content of this document.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <Textarea
+                    placeholder="Ask a question about this document..."
+                    value={aiQuestion}
+                    onChange={(e) => setAiQuestion(e.target.value)}
+                    rows={3}
+                    maxLength={1000}
+                    className="resize-none"
+                  />
+                  {aiError && (
+                    <div className="text-sm text-red-600">{aiError}</div>
+                  )}
+                  {aiAnswer && (
+                    <div className="rounded border p-3 bg-muted/30">
+                      <div className="text-sm text-muted-foreground mb-1">
+                        Confidence: {aiConfidence !== null ? Math.round(aiConfidence * 100) + '%' : '—'}
+                      </div>
+                      <div className="whitespace-pre-wrap leading-relaxed">{aiAnswer}</div>
+                    </div>
+                  )}
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant="default"
+                    onClick={async () => {
+                      if (!document) return;
+                      if (!aiQuestion.trim()) {
+                        setAiError("Please enter a question.");
+                        return;
+                      }
+                      setAiError(null);
+                      setAiAnswer(null);
+                      setAiLoading(true);
+                      try {
+                        const resp = await fetch('/api/rag/document-question', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ question: aiQuestion.trim(), document_id: document.id }),
+                        });
+                        if (!resp.ok) {
+                          const data = await resp.json().catch(() => ({}));
+                          throw new Error(data?.detail || 'Failed to get AI answer');
+                        }
+                        const data = await resp.json();
+                        setAiAnswer(data.answer || '');
+                        setAiConfidence(typeof data.confidence === 'number' ? data.confidence : null);
+                      } catch (e: any) {
+                        setAiError(e?.message || 'An error occurred');
+                      } finally {
+                        setAiLoading(false);
+                      }
+                    }}
+                    disabled={aiLoading || !aiQuestion.trim()}
+                  >
+                    {aiLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      'Ask'
+                    )}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </section>
 
         {/* PDF Preview Section */}

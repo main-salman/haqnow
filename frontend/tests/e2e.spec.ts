@@ -31,15 +31,19 @@ test('admin login page loads', async ({ page }) => {
 // Search results smoke
 test('search page loads and returns documents', async ({ page }) => {
   await page.goto(`${BASE}/search-page`);
-  await page.getByPlaceholder('Search corruption documents').fill('health');
+  await page.getByPlaceholder('Enter keywords like: corruption, bribery, fraud, contracts...').fill('health');
   await page.keyboard.press('Enter');
-  await expect(page.getByText('documents found')).toBeVisible();
+  await expect(page.getByText(/results? found/i)).toBeVisible();
 });
 
 // Document detail smoke
-test('document detail shows download buttons', async ({ page }) => {
+test('document detail shows download buttons and AI button', async ({ page }) => {
   await page.goto(`${BASE}/search-page?q=health`);
   await page.waitForTimeout(1000);
   const first = page.locator('button:has-text("Original PDF")').first();
   await expect(first).toBeVisible();
+  // Navigate to a document detail page by opening first result link if present
+  // If there isn't a link, assume a direct navigation path exists with id param
+  await page.goto(`${BASE}/document-detail-page?id=73`);
+  await expect(page.getByRole('button', { name: /Ask AI about this document/i })).toBeVisible();
 });

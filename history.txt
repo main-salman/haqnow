@@ -9057,3 +9057,4 @@ User Question → Embedding → Vector Search → Context Retrieval → LLM Gene
 
 
 [2025-08-09T04:14:29Z] Fix: RAG /api/rag/question now accepts both 'question' and 'query' in request body for backward compatibility. Deployed via scripts/deploy.sh patch.
+2025-08-09T18:37:12Z - Overhauled AI search: removed global AI Q&A, added per-document AI with new backend endpoint /api/rag/document-question and frontend modal on DocumentDetailPage. Updated tests and docs.
