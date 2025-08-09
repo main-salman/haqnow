@@ -62,6 +62,23 @@ class RAGStatusResponse(BaseModel):
     total_chunks: int
     latest_query_time: Optional[str]
 
+# Debug models
+class RAGDocChunkCount(BaseModel):
+    document_id: int
+    chunks: int
+
+class RAGDebugResponse(BaseModel):
+    total_chunks: int
+    by_document: List[RAGDocChunkCount]
+
+class RAGDocChunkCount(BaseModel):
+    document_id: int
+    chunks: int
+
+class RAGDebugResponse(BaseModel):
+    total_chunks: int
+    by_document: List[RAGDocChunkCount]
+
 @router.post("/question", response_model=QuestionResponse)
 async def ask_question(
     request: QuestionRequest,
@@ -335,3 +352,23 @@ async def get_rag_analytics(db: Session = Depends(get_db)):
             status_code=500,
             detail="An error occurred while retrieving analytics."
         )
+
+@router.get("/debug-doc-chunks/{document_id}")
+async def debug_doc_chunks(document_id: int):
+    """Debug helper: count chunks by document in RAG DB."""
+    try:
+        from sqlalchemy import text
+        from ...database.rag_database import rag_engine
+        with rag_engine.connect() as conn:
+            total = conn.execute(text("SELECT COUNT(*) FROM document_chunks")).scalar() or 0
+            doc_count = conn.execute(
+                text("SELECT COUNT(*) FROM document_chunks WHERE document_id = :id"),
+                {"id": document_id}
+            ).scalar() or 0
+        return {
+            "total_chunks": int(total),
+            "by_document": [{"document_id": document_id, "chunks": int(doc_count)}],
+        }
+    except Exception as e:
+        logger.error(f"Error in debug_doc_chunks: {e}")
+        raise HTTPException(status_code=500, detail="Debug query failed")
