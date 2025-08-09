@@ -473,8 +473,18 @@ Please provide a detailed and accurate answer based only on the information prov
                     context_used=""
                 )
             
-            # Step 2: Retrieve relevant document chunks
+            # Step 2: Retrieve relevant document chunks (semantic)
             relevant_chunks = await self.retrieve_relevant_chunks(query_embedding, limit=20, db=None)
+            
+            # Heuristic: if question references a specific document id (e.g., "id 73"), load that document's chunks directly
+            if not relevant_chunks:
+                import re
+                id_match = re.search(r"id\s*(\d+)", query, re.IGNORECASE)
+                if id_match:
+                    target_id = int(id_match.group(1))
+                    direct_chunks = await self.retrieve_chunks_by_keywords(str(target_id), limit=10)
+                    if direct_chunks:
+                        relevant_chunks = direct_chunks
             # Fallback: keyword-based retrieval if semantic search finds nothing
             if not relevant_chunks:
                 relevant_chunks = await self.retrieve_chunks_by_keywords(query, limit=10)
