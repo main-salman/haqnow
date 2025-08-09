@@ -443,6 +443,30 @@ async def download_document(
         
         # Determine which content to serve based on language parameter and document language
         document_language = getattr(document, 'document_language', 'english')
+
+        # Fast path for text requests: honor explicit language selection even when
+        # english_text == original_text (previously this fell back to PDF).
+        if language and language.lower() != "original":
+            requested = language.lower()
+            # Prefer English translation if requested
+            if requested == "english":
+                english_text = getattr(document, 'ocr_text_english', None)
+                # Fallback to original text if no separate English translation stored
+                text_payload = english_text or getattr(document, 'ocr_text_original', None) or getattr(document, 'ocr_text', None)
+                if not text_payload:
+                    raise HTTPException(status_code=404, detail="Text not available for this document")
+                return create_text_download_response(text_payload, f"{document.title}_english.txt", document_id)
+
+            # Handle specific original-language text requests (e.g., french)
+            original_text = getattr(document, 'ocr_text_original', None) or getattr(document, 'ocr_text', None)
+            if not original_text:
+                raise HTTPException(status_code=404, detail=f"{document_language} text not available for this document")
+            return create_text_download_response(original_text, f"{document.title}_{document_language.lower()}.txt", document_id)
+        
+        # Import multilingual service to check supported languages (kept for future use)
+        from app.services.multilingual_ocr_service import multilingual_ocr_service
+        supported_languages = multilingual_ocr_service.get_supported_languages()
+        # Default to serving original PDF below
         
         # Import multilingual service to check supported languages
         from app.services.multilingual_ocr_service import multilingual_ocr_service

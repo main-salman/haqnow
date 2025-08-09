@@ -304,7 +304,7 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
   }
 
   return (
-    <div className="w-full h-[500px] rounded-lg overflow-hidden shadow-lg relative">
+    <div className="w-full h-[500px] rounded-lg overflow-hidden shadow-lg relative z-[0]">
       <MapContainer
         center={[20, 0]}
         zoom={2}

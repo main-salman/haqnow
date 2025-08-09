@@ -122,7 +122,8 @@ const CountryDocStatsList: React.FC<Props> = () => {
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose a country to view documents..." />
               </SelectTrigger>
-              <SelectContent className="z-10">
+              {/* Raise z-index so it appears above the map */}
+              <SelectContent className="z-[2000]">
                 {stats.map((stat) => (
                   <SelectItem key={stat.country} value={stat.country}>
                     <div className="flex justify-between items-center w-full">
