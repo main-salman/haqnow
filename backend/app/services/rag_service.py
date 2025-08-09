@@ -233,51 +233,35 @@ class RAGService:
             chunk_texts = [chunk.content for chunk in chunks]
             embeddings = await self.generate_embeddings(chunk_texts)
             
-            # Store chunks in RAG database (PostgreSQL with pgvector)
+            # Store chunks in RAG database (PostgreSQL with pgvector) using upsert via raw cursor
+            raw_connection = rag_db.connection().connection
+            cursor = raw_connection.cursor()
+            upsert_sql = """
+                INSERT INTO document_chunks 
+                    (document_id, chunk_index, content, embedding, document_title, document_country)
+                VALUES 
+                    (%s, %s, %s, %s::vector, %s, %s)
+                ON CONFLICT (document_id, chunk_index) DO UPDATE SET
+                    content = EXCLUDED.content,
+                    embedding = EXCLUDED.embedding,
+                    document_title = EXCLUDED.document_title,
+                    document_country = EXCLUDED.document_country
+            """
             for chunk, embedding in zip(chunks, embeddings):
-                # Check if the chunk already exists
-                check_query = text("""
-                    SELECT id FROM document_chunks 
-                    WHERE document_id = :document_id AND chunk_index = :chunk_index
-                """)
-                existing = rag_db.execute(check_query, {
-                    'document_id': chunk.document_id,
-                    'chunk_index': chunk.chunk_index
-                }).fetchone()
-                
-                if existing:
-                    # Update existing chunk
-                    update_query = text("""
-                        UPDATE document_chunks 
-                        SET content = :content, embedding = :embedding::vector, 
-                            document_title = :document_title, document_country = :document_country
-                        WHERE document_id = :document_id AND chunk_index = :chunk_index
-                    """)
-                    rag_db.execute(update_query, {
-                        'document_id': chunk.document_id,
-                        'chunk_index': chunk.chunk_index,
-                        'content': chunk.content,
-                        'embedding': '[' + ','.join(map(str, embedding)) + ']',
-                        'document_title': chunk.document_title,
-                        'document_country': chunk.document_country
-                    })
-                else:
-                    # Insert new chunk
-                    insert_query = text("""
-                        INSERT INTO document_chunks 
-                        (document_id, chunk_index, content, embedding, document_title, document_country)
-                        VALUES (:document_id, :chunk_index, :content, :embedding::vector, :document_title, :document_country)
-                    """)
-                    rag_db.execute(insert_query, {
-                        'document_id': chunk.document_id,
-                        'chunk_index': chunk.chunk_index,
-                        'content': chunk.content,
-                        'embedding': '[' + ','.join(map(str, embedding)) + ']',
-                        'document_title': chunk.document_title,
-                        'document_country': chunk.document_country
-                    })
-            
-            rag_db.commit()
+                embedding_literal = '[' + ','.join(map(str, embedding)) + ']'
+                cursor.execute(
+                    upsert_sql,
+                    (
+                        chunk.document_id,
+                        chunk.chunk_index,
+                        chunk.content,
+                        embedding_literal,
+                        chunk.document_title,
+                        chunk.document_country,
+                    ),
+                )
+            raw_connection.commit()
+            cursor.close()
             logger.info(f"Stored {len(chunks)} chunks for document {chunks[0].document_id} in RAG database")
             
             if should_close:
@@ -440,7 +424,7 @@ Please provide a detailed and accurate answer based only on the information prov
                 )
             
             # Step 2: Retrieve relevant document chunks
-            relevant_chunks = await self.retrieve_relevant_chunks(query_embedding, limit=5, db=None)
+            relevant_chunks = await self.retrieve_relevant_chunks(query_embedding, limit=10, db=None)
             
             if not relevant_chunks:
                 return RAGResult(
