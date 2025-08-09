@@ -79,10 +79,10 @@ class RAGService:
                 logger.warning("sentence-transformers not available - RAG embeddings disabled")
                 self.embedding_model = None
             else:
-                # Initialize sentence-transformers for embeddings
-                logger.info("Loading sentence-transformers embedding model (BAAI/bge-large-en-v1.5)...")
-                self.embedding_model = SentenceTransformer('BAAI/bge-large-en-v1.5')
-                logger.info("✅ Embedding model loaded successfully")
+                # Initialize sentence-transformers for embeddings (384-dim to match DB)
+                logger.info("Loading sentence-transformers embedding model (all-MiniLM-L6-v2, 384-dim)...")
+                self.embedding_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+                logger.info("✅ Embedding model loaded successfully (384-dim)")
             
             # Use Ollama only (requested)
             self.gpt_oss_base = None
@@ -223,18 +223,10 @@ class RAGService:
     async def store_document_chunks(self, chunks: List[DocumentChunk], db: Session = None):
         """Store document chunks with embeddings in RAG database"""
         try:
-            # Use RAG database if no db session provided
-            if db is None:
-                rag_db = next(get_rag_db())
-                should_close = True
-                # Debug: Log the database connection being used
-                logger.info(f"Using RAG database connection: {rag_db.bind.url}")
-            else:
-                rag_db = db
-                should_close = False
-                # Debug: Log if external db session is passed
-                logger.warning(f"Using external database session: {rag_db.bind.url}")
-                logger.warning("This should only be PostgreSQL for RAG operations!")
+            # Always use the dedicated RAG database; ignore any external session to avoid MySQL misuse
+            rag_db = next(get_rag_db())
+            should_close = True
+            logger.info(f"Using RAG database connection: {rag_db.bind.url}")
                 
             # Generate embeddings for all chunks
             chunk_texts = [chunk.content for chunk in chunks]
@@ -302,18 +294,14 @@ class RAGService:
                                      limit: int = 5, db: Session = None) -> List[DocumentChunk]:
         """Retrieve most relevant document chunks for query"""
         try:
-            # Use RAG database if no db session provided
-            if db is None:
-                rag_db = next(get_rag_db())
-                should_close = True
-            else:
-                rag_db = db
-                should_close = False
+            # Always use the dedicated RAG database to ensure pgvector operations
+            rag_db = next(get_rag_db())
+            should_close = True
             
             # Search for similar chunks using vector similarity in RAG database
-            # Convert embedding to PostgreSQL array format
+            # Convert embedding to PostgreSQL vector literal with dimension 384
             embedding_str = '[' + ','.join(map(str, query_embedding)) + ']'
-            
+
             # Use direct SQL execution without text() wrapper to avoid parameter escaping
             sql_query = """
                 SELECT 
@@ -327,7 +315,7 @@ class RAGService:
                 ORDER BY embedding <=> %s::vector
                 LIMIT %s
             """
-            
+
             # Execute using raw psycopg2 connection to avoid SQLAlchemy parameter issues
             raw_connection = rag_db.connection().connection
             cursor = raw_connection.cursor()
