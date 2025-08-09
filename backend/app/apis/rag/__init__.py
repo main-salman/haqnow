@@ -7,7 +7,7 @@ import logging
 from typing import Dict, Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator, ConfigDict
 
 from ...database.database import get_db
 from ...database.models import RAGQuery
@@ -21,8 +21,20 @@ router = APIRouter()
 
 class QuestionRequest(BaseModel):
     """Request model for asking questions"""
+    # Allow extra field "query" and map it to "question" for backward compatibility
+    model_config = ConfigDict(extra='allow')
+
     question: str = Field(..., min_length=5, max_length=1000, description="Question about the documents")
     language: Optional[str] = Field("en", description="Response language preference")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_payload(cls, data):
+        # Accept payloads that provide "query" instead of "question"
+        if isinstance(data, dict) and not data.get("question"):
+            if data.get("query"):
+                data["question"] = data["query"]
+        return data
 
 class QuestionResponse(BaseModel):
     """Response model for Q&A"""

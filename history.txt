@@ -9055,3 +9055,5 @@ User Question → Embedding → Vector Search → Context Retrieval → LLM Gene
 - **Files Modified**: `frontend/src/pages/App.tsx`
 - **Testing**: No linter errors, navigation functionality preserved
 
+
+[2025-08-09T04:14:29Z] Fix: RAG /api/rag/question now accepts both 'question' and 'query' in request body for backward compatibility. Deployed via scripts/deploy.sh patch.
