@@ -1,3 +1,4 @@
+2025-08-09: Frontend deps cleanup for CI: bumped TypeScript to 5.6.3, removed unused GrapesJS packages and vanilla-extract plugin, removed react-diff-viewer and react-firebaseui to resolve peer conflicts; ensured Playwright workflow runs without Slack.
 2025-08-09: Removed Slack notifications from .github/workflows/playwright.yml and made E2E step fail the job directly; kept Playwright report uploaded on always.
 FOI Document App Migration History
 =====================================
