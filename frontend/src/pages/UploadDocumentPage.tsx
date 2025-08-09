@@ -243,7 +243,8 @@ export default function UploadDocumentPage() {
       );
       
       // Calculate dimensions - normalize width and stack vertically
-      const targetWidth = 800; // Standard width for consistency
+      // Use wider base width to preserve details from high-res cameras
+      const targetWidth = Math.min(2000, Math.max(...images.map(img => img.width))); 
       let totalHeight = 0;
       
       // Calculate total height based on aspect ratios
@@ -289,7 +290,7 @@ export default function UploadDocumentPage() {
             console.error('Failed to create blob from canvas');
             reject(new Error('Failed to create combined image blob'));
           }
-        }, 'image/jpeg', 0.9); // Higher quality
+        }, 'image/jpeg', 0.95); // Higher quality
       });
       
     } catch (error) {
@@ -310,7 +311,11 @@ export default function UploadDocumentPage() {
     try {
       setShowCameraDisclaimer(true);
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } // Use back camera on mobile
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 2560 },
+          height: { ideal: 1440 }
+        } // Prefer high-res back camera
       });
       
       const video = document.createElement('video');
@@ -357,14 +362,15 @@ export default function UploadDocumentPage() {
         canvas.height = video.videoHeight;
         context?.drawImage(video, 0, 0);
         
+        // Use PNG for lossless capture from canvas, then we may recompress later during PDF processing
         canvas.toBlob((blob) => {
           if (blob) {
-            const file = new File([blob], `document-page-${Date.now()}.jpg`, { type: 'image/jpeg' });
+            const file = new File([blob], `document-page-${Date.now()}.png`, { type: 'image/png' });
             setCapturedPhotos(prev => [...prev, file]);
             setErrors(prev => ({ ...prev, file: "" }));
             toast.success(t('upload.photoCaptured'));
           }
-        }, 'image/jpeg', 0.8);
+        }, 'image/png');
         
         cleanup();
       });

@@ -140,37 +140,38 @@ class MetadataStrippingService:
             # Create PDF with clean image
             pdf_buffer = io.BytesIO()
             
-            # Use A4 page size
+            # Use A4 page size (points)
             page_width, page_height = A4
-            margin = 50
+            # Small margin around the image
+            margin = 20
             
-            # Calculate image size to fit on page
-            img_width, img_height = clean_image.size
-            max_width = page_width - 2 * margin
-            max_height = page_height - 2 * margin
-            
-            # Scale image to fit
-            scale = min(max_width / img_width, max_height / img_height, 1.0)
-            new_width = int(img_width * scale)
-            new_height = int(img_height * scale)
-            
-            # Resize image
-            clean_image = clean_image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+            # Compute draw size (in points) to fit the page while preserving aspect ratio
+            img_width_px, img_height_px = clean_image.size
+            max_draw_width = page_width - 2 * margin
+            max_draw_height = page_height - 2 * margin
+            scale = min(
+                max_draw_width / max(img_width_px, 1),
+                max_draw_height / max(img_height_px, 1),
+                1.0
+            )
+            draw_width = img_width_px * scale
+            draw_height = img_height_px * scale
             
             # Create PDF
             c = canvas.Canvas(pdf_buffer, pagesize=A4)
             
             # Save image to temporary buffer
             img_buffer = io.BytesIO()
-            clean_image.save(img_buffer, format='PNG')
+            # Save as high-quality JPEG to keep size reasonable while preserving detail
+            clean_image.save(img_buffer, format='JPEG', quality=92, optimize=True)
             img_buffer.seek(0)
             
             # Calculate position to center image
-            x = (page_width - new_width) / 2
-            y = (page_height - new_height) / 2
+            x = (page_width - draw_width) / 2
+            y = (page_height - draw_height) / 2
             
             # Add image to PDF
-            c.drawImage(ImageReader(img_buffer), x, y, width=new_width, height=new_height)
+            c.drawImage(ImageReader(img_buffer), x, y, width=draw_width, height=draw_height)
             c.save()
             
             pdf_buffer.seek(0)
