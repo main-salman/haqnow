@@ -423,9 +423,17 @@ async def process_document_internal(document_id: int, db: Session) -> dict | Non
                         except Exception as _force_trans_err:
                             logger.warning("Forced translation attempt failed", error=str(_force_trans_err))
 
+                    # Ensure English translation is present; if not, keep trying with fallback HTTP translator
+                    if not english_translation or not english_translation.strip():
+                        try:
+                            from app.services.multilingual_ocr_service import multilingual_ocr_service as _svc2
+                            english_translation = await _svc2._translate_to_english(original_text, language_key)
+                        except Exception:
+                            english_translation = english_translation or ""
+
                     document.ocr_text_english = english_translation or ""
 
-                    # Prefer English for search when available; otherwise fallback to original
+                    # Prefer English for search and for tag generation
                     extracted_text = (english_translation or original_text)
                     
                     logger.info("Multilingual document processed successfully",

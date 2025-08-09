@@ -14,6 +14,8 @@ import os
 import tempfile
 import logging
 from typing import Optional, Tuple, Dict, List
+import requests
+from urllib.parse import quote_plus
 from io import BytesIO
 from PIL import Image
 import pdf2image
@@ -261,6 +263,41 @@ class MultilingualOCRService:
                 translated_parts.append(part)
 
         combined = "\n".join(translated_parts).strip()
+
+        def _is_probably_english(s: str) -> bool:
+            if not s:
+                return False
+            letters = sum(c.isalpha() for c in s)
+            ascii_letters = sum((('a' <= c <= 'z') or ('A' <= c <= 'Z')) for c in s)
+            # Consider it English if majority of letters are ASCII latin
+            return ascii_letters >= 0.6 * max(1, letters)
+
+        # If result looks identical or still non-English, try a lightweight HTTP fallback
+        if not combined or combined.strip() == text.strip() or not _is_probably_english(combined):
+            try:
+                def _http_translate(chunk: str) -> str:
+                    q = quote_plus(chunk)
+                    url = f"https://translate.googleapis.com/translate_a/single?client=gtx&sl={src_code}&tl=en&dt=t&q={q}"
+                    resp = requests.get(url, timeout=10)
+                    resp.raise_for_status()
+                    data = resp.json()
+                    # data structure: [[ [translated, original, ...], ... ], ... ]
+                    pieces = [seg[0] for seg in data[0] if seg and seg[0]]
+                    return "".join(pieces)
+
+                fallback_parts = []
+                for part in chunks:
+                    try:
+                        t = await loop.run_in_executor(None, _http_translate, part)
+                        fallback_parts.append(t)
+                    except Exception:
+                        fallback_parts.append(part)
+                combined_fb = "\n".join(fallback_parts).strip()
+                if combined_fb and _is_probably_english(combined_fb):
+                    combined = combined_fb
+            except Exception:
+                pass
+
         return combined or text
     
     async def process_multilingual_document(self, document_content: bytes, language: str) -> Tuple[Optional[str], Optional[str]]:
