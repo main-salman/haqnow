@@ -115,7 +115,7 @@ source .venv/bin/activate && pip install -r requirements.txt
 echo "🤖 Installing RAG (AI Q&A) dependencies..."
 source .venv/bin/activate && pip install -r requirements-rag.txt || echo "RAG dependencies installation completed"
 
-# Setup Ollama for local LLM processing
+# Setup Ollama for local LLM processing (confirmed fallback/provider)
 echo "🧠 Setting up Ollama for AI Q&A..."
 if ! command -v ollama &> /dev/null; then
     echo "📥 Installing Ollama..."
@@ -132,8 +132,9 @@ sudo systemctl enable ollama || echo "⚠️ Ollama service setup failed"
 sleep 5
 
 # Pull required LLM model
-echo "📦 Downloading Llama3 model for AI Q&A..."
-ollama pull llama3 || ollama pull llama3:8b || echo "⚠️ LLM model download failed - RAG Q&A may not work"
+MODEL_NAME="llama3:8b"
+echo "📦 Ensuring Ollama model ($MODEL_NAME) is available..."
+ollama pull "$MODEL_NAME" || ollama pull llama3 || echo "⚠️ LLM model download failed - RAG Q&A may not work"
 
 # Create RAG database tables
 echo "🗄️ Setting up RAG database tables..."

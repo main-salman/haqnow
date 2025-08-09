@@ -84,18 +84,15 @@ class RAGService:
                 self.embedding_model = SentenceTransformer('BAAI/bge-large-en-v1.5')
                 logger.info("✅ Embedding model loaded successfully")
             
-            # Prefer GPT-OSS if configured
-            if self.gpt_oss_base and self.gpt_oss_key:
-                logger.info("GPT-OSS configured; will use it for answer generation")
+            # Use Ollama only (requested)
+            self.gpt_oss_base = None
+            self.gpt_oss_key = None
+            if not OLLAMA_AVAILABLE:
+                logger.warning("ollama not available - RAG text generation disabled")
                 self.ollama_client = None
             else:
-                if not OLLAMA_AVAILABLE:
-                    logger.warning("ollama not available - RAG text generation disabled")
-                    self.ollama_client = None
-                else:
-                    # Initialize Ollama client
-                    logger.info("Connecting to Ollama...")
-                    self.ollama_client = ollama.Client()
+                logger.info("Connecting to Ollama...")
+                self.ollama_client = ollama.Client()
             
             # Check if model is available, pull if needed
             if self.ollama_client:
@@ -382,43 +379,23 @@ User Question: {query}
 Please provide a detailed and accurate answer based only on the information provided in the context documents. Include references to the specific documents when possible."""
 
             answer = ""
-            if self.gpt_oss_base and self.gpt_oss_key:
-                # Use GPT-OSS HTTP Chat Completions
-                url = f"{self.gpt_oss_base.rstrip('/')}/v1/chat/completions"
-                headers = {
-                    "Authorization": f"Bearer {self.gpt_oss_key}",
-                    "Content-Type": "application/json",
-                }
-                payload = {
-                    "model": self.gpt_oss_model,
-                    "messages": [
-                        {"role": "system", "content": "You are a helpful assistant that answers questions based only on provided document context and cites sources."},
-                        {"role": "user", "content": prompt},
-                    ],
-                    "temperature": 0.3,
-                }
-                resp = requests.post(url, headers=headers, json=payload, timeout=60)
-                resp.raise_for_status()
-                data = resp.json()
-                answer = data.get("choices", [{}])[0].get("message", {}).get("content", "")
-            else:
-                if not self.ollama_client:
-                    return RAGResult(
-                        answer="AI text generation is not available.",
-                        sources=[],
-                        confidence=0.0,
-                        query=query,
-                        context_used=context_text[:1000] + "..." if len(context_text) > 1000 else context_text
-                    )
-                response = self.ollama_client.chat(
-                    model=self.model_name,
-                    messages=[
-                        {"role": "system", "content": "You are a helpful assistant that answers questions based only on provided document context and cites sources."},
-                        {"role": "user", "content": prompt},
-                    ],
-                    stream=False,
+            if not self.ollama_client:
+                return RAGResult(
+                    answer="AI text generation is not available.",
+                    sources=[],
+                    confidence=0.0,
+                    query=query,
+                    context_used=context_text[:1000] + "..." if len(context_text) > 1000 else context_text
                 )
-                answer = response['message']['content']
+            response = self.ollama_client.chat(
+                model=self.model_name,
+                messages=[
+                    {"role": "system", "content": "You are a helpful assistant that answers questions based only on provided document context and cites sources."},
+                    {"role": "user", "content": prompt},
+                ],
+                stream=False,
+            )
+            answer = response['message']['content']
             
             # Prepare sources information
             sources = []
