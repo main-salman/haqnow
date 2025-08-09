@@ -242,10 +242,15 @@ async def get_rag_status(db: Session = Depends(get_db)):
         # Check embedding model
         embedding_model_loaded = rag_service.embedding_model is not None
         
-        # Get chunk statistics
-        from sqlalchemy import text
-        chunk_count_result = db.execute(text("SELECT COUNT(*) FROM document_chunks")).scalar()
-        total_chunks = chunk_count_result or 0
+        # Get chunk statistics from the RAG PostgreSQL database
+        try:
+            from sqlalchemy import text
+            from ...database.rag_database import rag_engine
+            with rag_engine.connect() as rag_conn:
+                chunk_count_result = rag_conn.execute(text("SELECT COUNT(*) FROM document_chunks")).scalar()
+                total_chunks = int(chunk_count_result or 0)
+        except Exception:
+            total_chunks = 0
         
         # Get latest query time
         latest_query = db.query(RAGQuery).order_by(RAGQuery.created_at.desc()).first()

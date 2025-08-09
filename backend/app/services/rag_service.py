@@ -80,9 +80,10 @@ class RAGService:
                 self.embedding_model = None
             else:
                 # Initialize sentence-transformers for embeddings (384-dim to match DB)
-                logger.info("Loading sentence-transformers embedding model (all-MiniLM-L6-v2, 384-dim)...")
-                self.embedding_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
-                logger.info("✅ Embedding model loaded successfully (384-dim)")
+                # Use a multilingual model to support Russian and other languages while keeping 384-dim
+                logger.info("Loading sentence-transformers embedding model (paraphrase-multilingual-MiniLM-L12-v2, 384-dim)...")
+                self.embedding_model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
+                logger.info("✅ Embedding model loaded successfully (multilingual 384-dim)")
             
             # Use Ollama only (requested)
             self.gpt_oss_base = None

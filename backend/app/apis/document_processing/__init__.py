@@ -978,6 +978,16 @@ async def reject_document(
         except Exception as e:
             logger.warning("Failed to send rejection notification", error=str(e))
         
+        # Clean any existing RAG chunks so rejected docs don't appear in AI search
+        try:
+            from ...database.rag_database import rag_engine
+            from sqlalchemy import text
+            with rag_engine.begin() as rag_conn:
+                rag_conn.execute(text("DELETE FROM document_chunks WHERE document_id = :document_id"), {"document_id": document_id})
+            logger.info("Removed RAG chunks for rejected document", document_id=document_id)
+        except Exception as rag_err:
+            logger.warning("Failed to remove RAG chunks for rejected document", document_id=document_id, error=str(rag_err))
+
         logger.info("Document rejected successfully", 
                    document_id=document_id,
                    rejected_by=admin_user.email,
