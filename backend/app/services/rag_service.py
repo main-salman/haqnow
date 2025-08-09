@@ -329,6 +329,56 @@ class RAGService:
             if 'rag_db' in locals() and should_close:
                 rag_db.close()
             raise
+
+    async def retrieve_chunks_by_keywords(self, query_text: str, limit: int = 5) -> List[DocumentChunk]:
+        """Fallback retrieval using simple keyword matching when semantic search yields nothing."""
+        try:
+            rag_db = next(get_rag_db())
+            should_close = True
+            # Extract simple keywords (length >= 4)
+            tokens = [t.strip('.,!?"\'()').lower() for t in query_text.split()]
+            keywords = [t for t in tokens if len(t) >= 4]
+            if not keywords:
+                return []
+            # Build a dynamic ILIKE filter
+            conditions = " OR ".join([f"content ILIKE %s OR document_title ILIKE %s" for _ in keywords])
+            sql_query = f"""
+                SELECT document_id, chunk_index, content, document_title, document_country
+                FROM document_chunks
+                WHERE {conditions}
+                ORDER BY document_id DESC, chunk_index ASC
+                LIMIT %s
+            """
+            params: List[str | int] = []
+            for k in keywords:
+                pattern = f"%{k}%"
+                params.extend([pattern, pattern])
+            params.append(limit)
+            raw_connection = rag_db.connection().connection
+            cursor = raw_connection.cursor()
+            cursor.execute(sql_query, tuple(params))
+            results = cursor.fetchall()
+            cursor.close()
+            chunks: List[DocumentChunk] = []
+            for row in results:
+                chunks.append(DocumentChunk(
+                    content=row[2],
+                    document_id=row[0],
+                    document_title=row[3],
+                    document_country=row[4],
+                    chunk_index=row[1]
+                ))
+            if should_close:
+                rag_db.close()
+            return chunks
+        except Exception as e:
+            logger.error(f"Keyword fallback retrieval failed: {e}")
+            try:
+                if 'rag_db' in locals() and should_close:
+                    rag_db.close()
+            except Exception:
+                pass
+            return []
     
     async def generate_answer(self, query: str, context_chunks: List[DocumentChunk]) -> RAGResult:
         """Generate answer using GPT-OSS if configured, otherwise Ollama."""
@@ -424,7 +474,10 @@ Please provide a detailed and accurate answer based only on the information prov
                 )
             
             # Step 2: Retrieve relevant document chunks
-            relevant_chunks = await self.retrieve_relevant_chunks(query_embedding, limit=10, db=None)
+            relevant_chunks = await self.retrieve_relevant_chunks(query_embedding, limit=20, db=None)
+            # Fallback: keyword-based retrieval if semantic search finds nothing
+            if not relevant_chunks:
+                relevant_chunks = await self.retrieve_chunks_by_keywords(query, limit=10)
             
             if not relevant_chunks:
                 return RAGResult(
