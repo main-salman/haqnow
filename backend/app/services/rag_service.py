@@ -6,6 +6,8 @@ Uses open source components: Ollama + sentence-transformers + PostgreSQL
 import asyncio
 import logging
 from typing import List, Dict, Any, Optional, Tuple
+import os
+import requests
 from dataclasses import dataclass
 import json
 
@@ -61,7 +63,11 @@ class RAGService:
     def __init__(self):
         self.embedding_model = None
         self.ollama_client = None
-        self.model_name = "gemma:2b"  # Fastest, smallest model for optimal performance
+        self.model_name = "gemma:2b"  # default local model
+        # GPT-OSS settings (preferred if configured)
+        self.gpt_oss_base = os.getenv("GPT_OSS_BASE_URL")
+        self.gpt_oss_key = os.getenv("GPT_OSS_API_KEY")
+        self.gpt_oss_model = os.getenv("GPT_OSS_MODEL", "gpt-oss-20b")
         self._initialize_models()
         self._initialize_rag_database()
     
@@ -78,31 +84,34 @@ class RAGService:
                 self.embedding_model = SentenceTransformer('BAAI/bge-large-en-v1.5')
                 logger.info("✅ Embedding model loaded successfully")
             
-            if not OLLAMA_AVAILABLE:
-                logger.warning("ollama not available - RAG text generation disabled")
+            # Prefer GPT-OSS if configured
+            if self.gpt_oss_base and self.gpt_oss_key:
+                logger.info("GPT-OSS configured; will use it for answer generation")
                 self.ollama_client = None
             else:
-                # Initialize Ollama client
-                logger.info("Connecting to Ollama...")
-                self.ollama_client = ollama.Client()
+                if not OLLAMA_AVAILABLE:
+                    logger.warning("ollama not available - RAG text generation disabled")
+                    self.ollama_client = None
+                else:
+                    # Initialize Ollama client
+                    logger.info("Connecting to Ollama...")
+                    self.ollama_client = ollama.Client()
             
             # Check if model is available, pull if needed
-            try:
-                models = self.ollama_client.list()
-                available_models = [m['name'] for m in models['models']]
-                
-                if self.model_name not in available_models:
-                    logger.info(f"Pulling {self.model_name} model from Ollama...")
-                    self.ollama_client.pull(self.model_name)
-                    logger.info(f"✅ {self.model_name} model pulled successfully")
-                else:
-                    logger.info(f"✅ {self.model_name} model already available")
-                    
-            except Exception as e:
-                logger.warning(f"Could not verify Ollama model: {e}")
-                # Try with smaller model as fallback
-                self.model_name = "llama3:8b"
-                logger.info(f"Falling back to {self.model_name}")
+            if self.ollama_client:
+                try:
+                    models = self.ollama_client.list()
+                    available_models = [m['name'] for m in models['models']]
+                    if self.model_name not in available_models:
+                        logger.info(f"Pulling {self.model_name} model from Ollama...")
+                        self.ollama_client.pull(self.model_name)
+                        logger.info(f"✅ {self.model_name} model pulled successfully")
+                    else:
+                        logger.info(f"✅ {self.model_name} model already available")
+                except Exception as e:
+                    logger.warning(f"Could not verify Ollama model: {e}")
+                    self.model_name = "llama3:8b"
+                    logger.info(f"Falling back to {self.model_name}")
             
         except Exception as e:
             logger.error(f"Failed to initialize RAG models: {e}")
@@ -352,15 +361,7 @@ class RAGService:
             raise
     
     async def generate_answer(self, query: str, context_chunks: List[DocumentChunk]) -> RAGResult:
-        """Generate answer using Ollama LLM with retrieved context"""
-        if not self.ollama_client:
-            return RAGResult(
-                answer="AI text generation is not available. Please install Ollama and required dependencies.",
-                sources=[],
-                confidence=0.0,
-                query=query,
-                context_used=""
-            )
+        """Generate answer using GPT-OSS if configured, otherwise Ollama."""
         
         try:
             # Prepare context from chunks
@@ -380,23 +381,44 @@ User Question: {query}
 
 Please provide a detailed and accurate answer based only on the information provided in the context documents. Include references to the specific documents when possible."""
 
-            # Generate response using Ollama
-            response = self.ollama_client.chat(
-                model=self.model_name,
-                messages=[
-                    {
-                        'role': 'system',
-                        'content': 'You are a helpful assistant that answers questions about documents related to corruption, transparency, and government accountability. Always base your answers on the provided context and cite sources when possible.'
-                    },
-                    {
-                        'role': 'user',
-                        'content': prompt
-                    }
-                ],
-                stream=False
-            )
-            
-            answer = response['message']['content']
+            answer = ""
+            if self.gpt_oss_base and self.gpt_oss_key:
+                # Use GPT-OSS HTTP Chat Completions
+                url = f"{self.gpt_oss_base.rstrip('/')}/v1/chat/completions"
+                headers = {
+                    "Authorization": f"Bearer {self.gpt_oss_key}",
+                    "Content-Type": "application/json",
+                }
+                payload = {
+                    "model": self.gpt_oss_model,
+                    "messages": [
+                        {"role": "system", "content": "You are a helpful assistant that answers questions based only on provided document context and cites sources."},
+                        {"role": "user", "content": prompt},
+                    ],
+                    "temperature": 0.3,
+                }
+                resp = requests.post(url, headers=headers, json=payload, timeout=60)
+                resp.raise_for_status()
+                data = resp.json()
+                answer = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+            else:
+                if not self.ollama_client:
+                    return RAGResult(
+                        answer="AI text generation is not available.",
+                        sources=[],
+                        confidence=0.0,
+                        query=query,
+                        context_used=context_text[:1000] + "..." if len(context_text) > 1000 else context_text
+                    )
+                response = self.ollama_client.chat(
+                    model=self.model_name,
+                    messages=[
+                        {"role": "system", "content": "You are a helpful assistant that answers questions based only on provided document context and cites sources."},
+                        {"role": "user", "content": prompt},
+                    ],
+                    stream=False,
+                )
+                answer = response['message']['content']
             
             # Prepare sources information
             sources = []
