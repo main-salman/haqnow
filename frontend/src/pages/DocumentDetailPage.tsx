@@ -1,22 +1,22 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Download, Tag, PlusCircle, ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { AlertCircle } from "lucide-react";
 
-// Mock data for the document - replace with actual data fetching later
-const mockDocument = {
-  id: "doc123",
-  title: "Municipal Contracts: Corruption in Public Works Bidding",
-  description:
-    "This document exposes a pattern of corruption in municipal public works contracts, showing evidence of bid rigging, kickbacks, and favoritism in contractor selection. The leaked documents include email communications, financial records, and meeting minutes that reveal systematic corruption.",
-  country: "United States",
-  stateProvince: "California",
-  uploadDate: "2024-01-15",
-  pdfUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", // Placeholder PDF
-  tags: ["Corruption", "Municipal", "Contracts", "Bid Rigging", "Kickbacks"],
-};
+interface ApiDocument {
+  id: number;
+  title: string;
+  description?: string;
+  country: string;
+  state?: string;
+  file_url: string;
+  original_filename: string;
+  created_at?: string;
+  generated_tags?: string[];
+}
 
 interface DocumentTag {
   id: string;
@@ -25,22 +25,49 @@ interface DocumentTag {
 
 export default function DocumentDetailPage() {
   const navigate = useNavigate();
-  const [document, setDocument] = useState(mockDocument);
+  const [searchParams] = useSearchParams();
+  const documentId = useMemo(() => Number(searchParams.get("id")), [searchParams]);
+  const [document, setDocument] = useState<ApiDocument | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [newTag, setNewTag] = useState("");
 
   const handleAddTag = () => {
-    if (newTag.trim() !== "" && !document.tags.includes(newTag.trim())) {
-      // In a real app, this would call an API to add the tag
-      setDocument((prevDoc) => ({
-        ...prevDoc,
-        tags: [...prevDoc.tags, newTag.trim()],
-      }));
-      setNewTag("");
-      console.log(`Tag "${newTag.trim()}" added (mock).`);
-    } else {
-      console.log("Tag already exists or is empty.");
-    }
+    // Placeholder: real implementation would call backend to add a tag
+    console.log("Add tag requested:", newTag);
+    setNewTag("");
   };
+
+  useEffect(() => {
+    const fetchDoc = async () => {
+      if (!documentId || Number.isNaN(documentId)) {
+        setError("Invalid document ID");
+        setLoading(false);
+        return;
+      }
+      try {
+        setLoading(true);
+        setError(null);
+        const resp = await fetch(`/api/search/document/${documentId}`);
+        if (!resp.ok) {
+          if (resp.status === 404) {
+            setError("Document not found or has been deleted.");
+          } else {
+            setError(`Failed to load document (HTTP ${resp.status})`);
+          }
+          setLoading(false);
+          return;
+        }
+        const data: ApiDocument = await resp.json();
+        setDocument(data);
+      } catch (e) {
+        setError("Network error while loading document.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDoc();
+  }, [documentId]);
 
   return (
     <div className="min-h-screen bg-background text-foreground p-4 md:p-8">
@@ -56,6 +83,28 @@ export default function DocumentDetailPage() {
           </Button>
         </div>
 
+        {loading && (
+          <section className="bg-card p-6 rounded-lg shadow">
+            <p>Loading document...</p>
+          </section>
+        )}
+
+        {error && (
+          <section className="bg-card p-6 rounded-lg shadow border border-red-200">
+            <div className="flex items-center text-red-600 space-x-2">
+              <AlertCircle className="h-5 w-5" />
+              <span>{error}</span>
+            </div>
+            <div className="mt-4">
+              <Button variant="outline" onClick={() => navigate(-1)}>
+                Back to Search
+              </Button>
+            </div>
+          </section>
+        )}
+
+        {!loading && !error && document && (
+        <>
         {/* Document Metadata Section */}
         <section className="bg-card p-6 rounded-lg shadow">
           <h1 className="text-3xl font-bold mb-2 text-primary font-serif">
@@ -63,16 +112,18 @@ export default function DocumentDetailPage() {
           </h1>
           <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground mb-4">
             <span>Country: {document.country}</span>
-            {document.stateProvince && (
-              <span>State/Province: {document.stateProvince}</span>
+            {document.state && (
+              <span>State/Province: {document.state}</span>
             )}
-            <span>Uploaded: {new Date(document.uploadDate).toLocaleDateString()}</span>
+            {document.created_at && (
+              <span>Uploaded: {new Date(document.created_at).toLocaleDateString()}</span>
+            )}
           </div>
           <p className="text-foreground/80 mb-6 leading-relaxed">
             {document.description}
           </p>
           <Button asChild>
-            <a href={document.pdfUrl} download target="_blank" rel="noopener noreferrer">
+            <a href={document.file_url} download target="_blank" rel="noopener noreferrer">
               <Download className="mr-2 h-4 w-4" />
               Download PDF
             </a>
@@ -84,7 +135,7 @@ export default function DocumentDetailPage() {
           <h2 className="text-2xl font-semibold mb-4 font-serif">Document Preview</h2>
           <div className="aspect-[8.5/11] border border-border rounded overflow-hidden">
             <iframe
-              src={document.pdfUrl}
+              src={document.file_url}
               title={document.title}
               width="100%"
               height="100%"
@@ -98,7 +149,7 @@ export default function DocumentDetailPage() {
         <section className="bg-card p-6 rounded-lg shadow">
           <h2 className="text-2xl font-semibold mb-4 font-serif">Tags</h2>
           <div className="flex flex-wrap gap-2 mb-4">
-            {document.tags.map((tag, index) => (
+            {(document.generated_tags || []).map((tag, index) => (
               <Badge key={index} variant="secondary" className="text-sm">
                 {tag}
               </Badge>
@@ -119,6 +170,8 @@ export default function DocumentDetailPage() {
             </Button>
           </div>
         </section>
+        </>
+        )}
       </div>
     </div>
   );

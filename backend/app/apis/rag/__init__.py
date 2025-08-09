@@ -95,11 +95,22 @@ async def ask_question(
         
         logger.info(f"RAG question answered successfully in {response_time_ms}ms")
         
+        # Filter out sources that no longer exist (approved-only)
+        filtered_sources = []
+        try:
+            from ...database.models import Document
+            for s in result.sources:
+                doc = db.query(Document).filter(Document.id == s.get('document_id')).first()
+                if doc and doc.status == 'approved':
+                    filtered_sources.append(s)
+        except Exception:
+            filtered_sources = result.sources
+
         return QuestionResponse(
             question=result.query,
             answer=result.answer,
             confidence=result.confidence,
-            sources=result.sources,
+            sources=filtered_sources,
             response_time_ms=response_time_ms,
             query_id=rag_query.id
         )

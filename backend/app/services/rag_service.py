@@ -385,15 +385,17 @@ Please provide a detailed and accurate answer based only on the information prov
             )
             answer = response['message']['content']
             
-            # Prepare sources information
-            sources = []
+            # Prepare sources information (deduplicate by document_id)
+            sources_by_doc: Dict[int, Dict[str, Any]] = {}
             for chunk in context_chunks:
-                sources.append({
-                    'document_id': chunk.document_id,
-                    'document_title': chunk.document_title,
-                    'country': chunk.document_country,
-                    'chunk_preview': chunk.content[:200] + "..." if len(chunk.content) > 200 else chunk.content
-                })
+                if chunk.document_id not in sources_by_doc:
+                    sources_by_doc[chunk.document_id] = {
+                        'document_id': chunk.document_id,
+                        'document_title': chunk.document_title,
+                        'country': chunk.document_country,
+                        'chunk_preview': chunk.content[:200] + "..." if len(chunk.content) > 200 else chunk.content
+                    }
+            sources = list(sources_by_doc.values())
             
             # Calculate confidence (simple heuristic)
             confidence = min(0.9, 0.3 + 0.1 * len(context_chunks))

@@ -47,6 +47,20 @@ async def reembed_all() -> None:
 
             print(f"Re-embedding document {d.id} ...")
             await rag_service.process_document_for_rag(d.id, content, d.title or "Untitled", d.country or "Unknown")
+        # After re-embedding, remove any RAG chunks for documents that are no longer approved/exist
+        try:
+            from app.database.rag_database import rag_engine
+            from sqlalchemy import text
+            with rag_engine.begin() as conn:
+                conn.execute(text("""
+                    DELETE FROM document_chunks dc
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM documents d WHERE d.id = dc.document_id AND d.status = 'approved'
+                    )
+                """))
+            print("Pruned RAG chunks for non-approved/deleted documents")
+        except Exception as cleanup_err:
+            print("Warning: failed to prune obsolete RAG chunks:", cleanup_err)
         print("Done.")
     finally:
         db.close()

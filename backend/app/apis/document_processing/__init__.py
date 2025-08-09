@@ -1030,11 +1030,22 @@ async def delete_document(
         # First delete dependent rows to avoid FK NULL updates on MySQL
         try:
             db.query(DocumentChunk).filter(DocumentChunk.document_id == document_id).delete(synchronize_session=False)
-            logger.info("Deleted dependent document chunks", document_id=document_id)
+            logger.info("Deleted dependent document chunks (primary DB)", document_id=document_id)
         except Exception as dep_err:
             db.rollback()
-            logger.error("Failed to delete dependent chunks", error=str(dep_err))
-            raise HTTPException(status_code=500, detail="Failed to delete dependent data")
+            logger.error("Failed to delete dependent chunks in primary DB", error=str(dep_err))
+            raise HTTPException(status_code=500, detail="Failed to delete dependent data from primary DB")
+
+        # Also delete RAG vector chunks from the PostgreSQL RAG database
+        try:
+            from ...database.rag_database import rag_engine
+            from sqlalchemy import text
+            with rag_engine.begin() as rag_conn:
+                rag_conn.execute(text("DELETE FROM document_chunks WHERE document_id = :document_id"), {"document_id": document_id})
+            logger.info("Deleted document chunks from RAG DB", document_id=document_id)
+        except Exception as rag_err:
+            # Do not fail hard on RAG cleanup, but log clearly for follow-up
+            logger.error("Failed to delete document chunks from RAG DB", document_id=document_id, error=str(rag_err))
 
         # Delete document from database
         try:
