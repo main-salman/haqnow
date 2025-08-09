@@ -74,8 +74,8 @@ class RAGService:
                 self.embedding_model = None
             else:
                 # Initialize sentence-transformers for embeddings
-                logger.info("Loading sentence-transformers embedding model...")
-                self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+                logger.info("Loading sentence-transformers embedding model (BAAI/bge-large-en-v1.5)...")
+                self.embedding_model = SentenceTransformer('BAAI/bge-large-en-v1.5')
                 logger.info("✅ Embedding model loaded successfully")
             
             if not OLLAMA_AVAILABLE:

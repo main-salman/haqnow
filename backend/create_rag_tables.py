@@ -50,7 +50,7 @@ def main():
         sys.exit(1)
     
     # Create vector indexes for better performance
-    print("4. Creating vector indexes...")
+    print("4. Creating vector indexes (1024-dim)...")
     try:
         with rag_engine.connect() as conn:
             index_sql = create_vector_index_sql()

@@ -27,7 +27,8 @@ class DocumentChunk(RagBase):
     
     # Vector embedding - use pgvector if available, otherwise ARRAY
     if PGVECTOR_AVAILABLE and Vector:
-        embedding = Column(Vector(384))  # Default embedding dimension for all-MiniLM-L6-v2
+        # Updated to 1024 dimensions to match BAAI/bge-large-en-v1.5
+        embedding = Column(Vector(1024))
     else:
         embedding = Column(ARRAY(Float))  # Fallback to array
     
