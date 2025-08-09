@@ -249,7 +249,7 @@ class RAGService:
                     # Update existing chunk
                     update_query = text("""
                         UPDATE document_chunks 
-                        SET content = :content, embedding = :embedding, 
+                        SET content = :content, embedding = :embedding::vector, 
                             document_title = :document_title, document_country = :document_country
                         WHERE document_id = :document_id AND chunk_index = :chunk_index
                     """)
@@ -257,7 +257,7 @@ class RAGService:
                         'document_id': chunk.document_id,
                         'chunk_index': chunk.chunk_index,
                         'content': chunk.content,
-                        'embedding': embedding,
+                        'embedding': '[' + ','.join(map(str, embedding)) + ']',
                         'document_title': chunk.document_title,
                         'document_country': chunk.document_country
                     })
@@ -266,13 +266,13 @@ class RAGService:
                     insert_query = text("""
                         INSERT INTO document_chunks 
                         (document_id, chunk_index, content, embedding, document_title, document_country)
-                        VALUES (:document_id, :chunk_index, :content, :embedding, :document_title, :document_country)
+                        VALUES (:document_id, :chunk_index, :content, :embedding::vector, :document_title, :document_country)
                     """)
                     rag_db.execute(insert_query, {
                         'document_id': chunk.document_id,
                         'chunk_index': chunk.chunk_index,
                         'content': chunk.content,
-                        'embedding': embedding,
+                        'embedding': '[' + ','.join(map(str, embedding)) + ']',
                         'document_title': chunk.document_title,
                         'document_country': chunk.document_country
                     })
@@ -300,7 +300,7 @@ class RAGService:
             should_close = True
             
             # Search for similar chunks using vector similarity in RAG database
-            # Convert embedding to PostgreSQL vector literal with dimension 384
+            # Convert embedding to PostgreSQL vector literal
             embedding_str = '[' + ','.join(map(str, query_embedding)) + ']'
 
             # Use direct SQL execution without text() wrapper to avoid parameter escaping
