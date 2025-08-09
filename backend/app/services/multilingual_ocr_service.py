@@ -231,9 +231,35 @@ class MultilingualOCRService:
         if not text or not text.strip():
             return ""
 
+        # Helper HTTP fallback translator using public Google endpoint
+        def _http_translate_chunk(chunk: str, src: str) -> str:
+            q = quote_plus(chunk)
+            url = f"https://translate.googleapis.com/translate_a/single?client=gtx&sl={src}&tl=en&dt=t&q={q}"
+            resp = requests.get(url, timeout=10)
+            resp.raise_for_status()
+            data = resp.json()
+            pieces = [seg[0] for seg in data[0] if seg and seg[0]]
+            return "".join(pieces)
+
         if not (GOOGLETRANS_AVAILABLE and self.translator):
-            # Translator not available; return original text to avoid blocking
-            return text
+            # Translator lib not available; use HTTP fallback directly
+            try:
+                lang_info = self.get_language_info(source_language) or {}
+                src_code = lang_info.get('google', 'auto')
+                MAX_CHUNK = 4000
+                chunks = [text[i:i+MAX_CHUNK] for i in range(0, len(text), MAX_CHUNK)]
+                loop = asyncio.get_event_loop()
+                parts: List[str] = []
+                for c in chunks:
+                    try:
+                        t = await loop.run_in_executor(None, _http_translate_chunk, c, src_code)
+                        parts.append(t)
+                    except Exception:
+                        parts.append(c)
+                combined = "\n".join(parts).strip()
+                return combined or text
+            except Exception:
+                return text
 
         # Resolve Google language code
         lang_info = self.get_language_info(source_language) or {}
@@ -275,20 +301,10 @@ class MultilingualOCRService:
         # If result looks identical or still non-English, try a lightweight HTTP fallback
         if not combined or combined.strip() == text.strip() or not _is_probably_english(combined):
             try:
-                def _http_translate(chunk: str) -> str:
-                    q = quote_plus(chunk)
-                    url = f"https://translate.googleapis.com/translate_a/single?client=gtx&sl={src_code}&tl=en&dt=t&q={q}"
-                    resp = requests.get(url, timeout=10)
-                    resp.raise_for_status()
-                    data = resp.json()
-                    # data structure: [[ [translated, original, ...], ... ], ... ]
-                    pieces = [seg[0] for seg in data[0] if seg and seg[0]]
-                    return "".join(pieces)
-
                 fallback_parts = []
                 for part in chunks:
                     try:
-                        t = await loop.run_in_executor(None, _http_translate, part)
+                        t = await loop.run_in_executor(None, _http_translate_chunk, part, src_code)
                         fallback_parts.append(t)
                     except Exception:
                         fallback_parts.append(part)

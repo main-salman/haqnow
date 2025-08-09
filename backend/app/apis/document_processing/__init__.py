@@ -433,8 +433,10 @@ async def process_document_internal(document_id: int, db: Session) -> dict | Non
 
                     document.ocr_text_english = english_translation or ""
 
-                    # Prefer English for search and for tag generation
+                    # Prefer English for search and for tag generation. Persist both fields.
                     extracted_text = (english_translation or original_text)
+                    document.ocr_text_original = original_text
+                    document.ocr_text_english = english_translation or ""
                     
                     logger.info("Multilingual document processed successfully",
                                document_id=document_id,
