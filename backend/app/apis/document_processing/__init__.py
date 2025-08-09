@@ -409,12 +409,23 @@ async def process_document_internal(document_id: int, db: Session) -> dict | Non
                 )
                 
                 if original_text:
-                    # Store both original language and English text
+                    # Store original text now; ensure we always attempt English translation
                     document.ocr_text_original = original_text
+
+                    # If translation is missing, force a translation attempt now so that
+                    # we always have English available for search and tags.
+                    if not english_translation or not english_translation.strip():
+                        try:
+                            english_translation = await multilingual_ocr_service._translate_to_english(
+                                original_text, language_key
+                            )
+                        except Exception as _force_trans_err:
+                            logger.warning("Forced translation attempt failed", error=str(_force_trans_err))
+
                     document.ocr_text_english = english_translation or ""
-                    
-                    # Use English translation for search if available, otherwise original text
-                    extracted_text = english_translation if english_translation else original_text
+
+                    # Prefer English for search when available; otherwise fallback to original
+                    extracted_text = (english_translation or original_text)
                     
                     logger.info("Multilingual document processed successfully",
                                document_id=document_id,
@@ -469,8 +480,14 @@ async def process_document_internal(document_id: int, db: Session) -> dict | Non
                    original_words=original_word_count,
                    searchable_words=searchable_word_count)
         
-        # Generate tags from extracted text
-        generated_tags = extract_tags_from_text(extracted_text, db=db)
+        # Generate tags from English text whenever possible to keep search English-first
+        english_for_tags = None
+        try:
+            english_for_tags = getattr(document, 'ocr_text_english', None)
+        except Exception:
+            english_for_tags = None
+        tags_source_text = english_for_tags if (english_for_tags and english_for_tags.strip()) else extracted_text
+        generated_tags = extract_tags_from_text(tags_source_text, db=db)
         
         # Update document in database with searchable text (top 1000 words)
         document.ocr_text = searchable_text
@@ -478,7 +495,7 @@ async def process_document_internal(document_id: int, db: Session) -> dict | Non
         document.processed_at = func.now()
         document.status = "processed"
         
-        # Update combined search_text for full-text search optimization
+        # Update combined search_text for full-text search optimization (English-first)
         search_text_parts = []
         if document.title:
             search_text_parts.append(document.title)
@@ -493,16 +510,40 @@ async def process_document_internal(document_id: int, db: Session) -> dict | Non
         if generated_tags:
             search_text_parts.extend(generated_tags)
         
-        # For Arabic documents, include both original Arabic and English translation in search
-        if document_language == "arabic":
-            if hasattr(document, 'ocr_text_original') and document.ocr_text_original:
-                # Include original Arabic text for search
-                search_text_parts.append(document.ocr_text_original)
-            if hasattr(document, 'ocr_text_english') and document.ocr_text_english:
-                # Include English translation for search
-                search_text_parts.append(document.ocr_text_english)
+        # Include English translation first if available, then original language for recall
+        if hasattr(document, 'ocr_text_english') and document.ocr_text_english:
+            search_text_parts.append(document.ocr_text_english)
+        if hasattr(document, 'ocr_text_original') and document.ocr_text_original:
+            search_text_parts.append(document.ocr_text_original)
         
         document.search_text = ' '.join(search_text_parts)
+        
+        # Generate semantic search embedding
+        try:
+            if semantic_search_service.is_available():
+                document_dict = {
+                    'id': document.id,
+                    'title': document.title,
+                    'description': document.description,
+                    'search_text': document.search_text,
+                    'generated_tags': generated_tags
+                }
+                
+                embedding = semantic_search_service.generate_document_embedding(document_dict)
+                if embedding:
+                    import json
+                    document.embedding = json.dumps(embedding)
+                    logger.info("Generated semantic embedding", 
+                               document_id=document.id,
+                               embedding_dimensions=len(embedding))
+                else:
+                    logger.warning("Failed to generate embedding", document_id=document.id)
+            else:
+                logger.info("Semantic search service not available, skipping embedding generation")
+        except Exception as embedding_error:
+            logger.warning("Error generating embedding", 
+                          document_id=document.id, 
+                          error=str(embedding_error))
         
         try:
             db.commit()
@@ -602,12 +643,23 @@ async def process_document(
                 )
                 
                 if original_text:
-                    # Store both original language and English text
+                    # Store original text now; ensure we always attempt English translation
                     document.ocr_text_original = original_text
+
+                    # If translation is missing, force a translation attempt now so that
+                    # we always have English available for search and tags.
+                    if not english_translation or not english_translation.strip():
+                        try:
+                            english_translation = await multilingual_ocr_service._translate_to_english(
+                                original_text, language_key
+                            )
+                        except Exception as _force_trans_err:
+                            logger.warning("Forced translation attempt failed", error=str(_force_trans_err))
+
                     document.ocr_text_english = english_translation or ""
-                    
-                    # Use English translation for search if available, otherwise original text
-                    extracted_text = english_translation if english_translation else original_text
+
+                    # Prefer English for search when available; otherwise fallback to original
+                    extracted_text = (english_translation or original_text)
                     
                     logger.info("Multilingual document processed successfully",
                                document_id=request.document_id,
@@ -638,7 +690,31 @@ async def process_document(
                        service_available=multilingual_ocr_service.is_available())
             extracted_text = extract_text_from_document(file_content, content_type)
             document.ocr_text_original = extracted_text
-            document.ocr_text_english = extracted_text  # Same as original for unsupported languages
+            document.ocr_text_english = extracted_text  # Temporary; below we will try to translate when possible
+
+            # Best-effort translation to English for non-English documents
+            if document_language.lower() != "english" and extracted_text:
+                try:
+                    from app.services.multilingual_ocr_service import multilingual_ocr_service as _svc
+                    lang_info = _svc.get_language_info(language_key) or {}
+                    google_lang_code = lang_info.get('google', None)
+                    if google_lang_code:
+                        try:
+                            from googletrans import Translator  # type: ignore
+                            _translator = Translator()
+                            result = _translator.translate(extracted_text, src=google_lang_code, dest='en')
+                            if result and getattr(result, 'text', None):
+                                document.ocr_text_english = result.text
+                                extracted_text = result.text
+                                logger.info("Translated unsupported-language document to English",
+                                            document_id=request.document_id,
+                                            source_language=document_language)
+                        except Exception as trans_error:
+                            logger.warning("Translation for unsupported language failed",
+                                           document_id=request.document_id,
+                                           error=str(trans_error))
+                except Exception:
+                    pass
         
         if not extracted_text:
             logger.warning("No text extracted from document", document_id=request.document_id)
@@ -662,8 +738,14 @@ async def process_document(
                    original_words=original_word_count,
                    searchable_words=searchable_word_count)
         
-        # Generate tags from extracted text
-        generated_tags = extract_tags_from_text(extracted_text, db=db)
+        # Generate tags from English text whenever possible to keep search English-first
+        english_for_tags = None
+        try:
+            english_for_tags = getattr(document, 'ocr_text_english', None)
+        except Exception:
+            english_for_tags = None
+        tags_source_text = english_for_tags if (english_for_tags and english_for_tags.strip()) else extracted_text
+        generated_tags = extract_tags_from_text(tags_source_text, db=db)
         
         # Update document in database with searchable text (top 1000 words)
         document.ocr_text = searchable_text
@@ -671,7 +753,7 @@ async def process_document(
         document.processed_at = func.now()
         document.status = "processed"
         
-        # Update combined search_text for full-text search optimization
+        # Update combined search_text for full-text search optimization (English-first)
         search_text_parts = []
         if document.title:
             search_text_parts.append(document.title)
@@ -686,13 +768,11 @@ async def process_document(
         if generated_tags:
             search_text_parts.extend(generated_tags)
         
-        # For multilingual documents, include both original language and English translation in search
-        if hasattr(document, 'ocr_text_original') and document.ocr_text_original:
-            # Include original language text for search
-            search_text_parts.append(document.ocr_text_original)
+        # Include English translation first if available, then original language for recall
         if hasattr(document, 'ocr_text_english') and document.ocr_text_english:
-            # Include English translation for search
             search_text_parts.append(document.ocr_text_english)
+        if hasattr(document, 'ocr_text_original') and document.ocr_text_original:
+            search_text_parts.append(document.ocr_text_original)
         
         document.search_text = ' '.join(search_text_parts)
         

@@ -29,7 +29,9 @@ class SemanticSearchService:
     def __init__(self):
         """Initialize the semantic search service."""
         self.model = None
-        self.model_name = "paraphrase-multilingual-MiniLM-L12-v2"  # 384 dimensions, multilingual
+        # English-only, high-quality OSS model (top MTEB): 1024 dims
+        # Source: BAAI/bge-large-en-v1.5
+        self.model_name = "BAAI/bge-large-en-v1.5"
         self._model_loaded = False
         
     def _load_model(self):
@@ -54,7 +56,7 @@ class SemanticSearchService:
         except:
             return False
     
-    def generate_embedding(self, text: str) -> Optional[List[float]]:
+    def generate_embedding(self, text: str, *, is_query: bool = False) -> Optional[List[float]]:
         """
         Generate embedding for a text string.
         
@@ -75,7 +77,13 @@ class SemanticSearchService:
             if len(clean_text) > 5000:  # Truncate very long texts for efficiency
                 clean_text = clean_text[:5000]
             
-            # Generate embedding
+            # Best practice prefixes for BGE models
+            if is_query:
+                clean_text = f"query: {clean_text}"
+            else:
+                clean_text = f"passage: {clean_text}"
+
+            # Generate embedding (L2 normalized)
             embedding = self.model.encode(clean_text, convert_to_tensor=False, normalize_embeddings=True)
             embedding_list = embedding.tolist()
             
@@ -138,7 +146,7 @@ class SemanticSearchService:
         """
         try:
             # Generate query embedding
-            query_embedding = self.generate_embedding(query_text)
+            query_embedding = self.generate_embedding(query_text, is_query=True)
             if not query_embedding:
                 logger.warning("Failed to generate query embedding", query=query_text)
                 return []
@@ -246,7 +254,7 @@ class SemanticSearchService:
             combined_text = ' '.join(text_parts)
             
             # Generate embedding
-            embedding = self.generate_embedding(combined_text)
+            embedding = self.generate_embedding(combined_text, is_query=False)
             
             if embedding:
                 logger.debug("Generated document embedding", 

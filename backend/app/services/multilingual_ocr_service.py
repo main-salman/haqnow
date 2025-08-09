@@ -222,97 +222,12 @@ class MultilingualOCRService:
         return combined_text
     
     async def _translate_to_english(self, text: str, source_language: str) -> Optional[str]:
-        """Translate text to English using Google Translate."""
-        if not text.strip():
-            return None
-            
-        language_info = self.get_language_info(source_language)
-        if not language_info:
-            logger.warning("Language not supported for translation, returning original text", language=source_language)
-            return text  # Return original text instead of None
-            
-        google_lang_code = language_info['google']
-        
-        # Skip translation if already English
-        if google_lang_code in ['en', 'en-us', 'en-gb']:
-            logger.info("Text is already in English, skipping translation")
-            return text
-            
+        """Internal wrapper used by other services to translate any text to English."""
         try:
-            # Split text into chunks to handle Google Translate limits
-            max_chunk_size = 4500  # Conservative limit for Google Translate
-            chunks = []
-            
-            # Split by paragraphs first, then by sentences if needed
-            paragraphs = text.split('\n\n')
-            current_chunk = ""
-            
-            for paragraph in paragraphs:
-                if len(current_chunk) + len(paragraph) + 2 <= max_chunk_size:
-                    if current_chunk:
-                        current_chunk += '\n\n' + paragraph
-                    else:
-                        current_chunk = paragraph
-                else:
-                    if current_chunk:
-                        chunks.append(current_chunk)
-                    current_chunk = paragraph
-                    
-                    # If single paragraph is too long, split by sentences
-                    if len(current_chunk) > max_chunk_size:
-                        sentences = current_chunk.split('. ')
-                        chunks.append('. '.join(sentences[:len(sentences)//2]) + '.')
-                        current_chunk = '. '.join(sentences[len(sentences)//2:])
-            
-            if current_chunk:
-                chunks.append(current_chunk)
-            
-            logger.info("Translating text to English", 
-                       source_language=source_language,
-                       google_lang_code=google_lang_code,
-                       total_chunks=len(chunks),
-                       total_characters=len(text))
-            
-            translated_chunks = []
-            
-            for i, chunk in enumerate(chunks):
-                try:
-                    # Add small delay between requests to be respectful
-                    if i > 0:
-                        await asyncio.sleep(0.5)
-                    
-                    result = self.translator.translate(chunk, src=google_lang_code, dest='en')
-                    if result and result.text:
-                        translated_chunks.append(result.text)
-                        logger.debug("Chunk translated successfully", 
-                                   chunk_num=i+1, 
-                                   source_length=len(chunk),
-                                   translated_length=len(result.text))
-                    else:
-                        logger.warning("Translation returned empty result", chunk_num=i+1)
-                        
-                except Exception as e:
-                    logger.warning("Failed to translate chunk", chunk_num=i+1, error=str(e))
-                    # Continue with other chunks even if one fails
-                    continue
-            
-            if translated_chunks:
-                combined_translation = '\n\n'.join(translated_chunks)
-                logger.info("Translation completed successfully", 
-                           source_language=source_language,
-                           original_length=len(text),
-                           translated_length=len(combined_translation),
-                           success_rate=f"{len(translated_chunks)}/{len(chunks)}")
-                return combined_translation
-            else:
-                logger.error("All translation chunks failed, returning original text")
-                return text  # Return original text instead of None
-                
-        except Exception as e:
-            logger.error("Failed to translate text, returning original text", 
-                        source_language=source_language,
-                        error=str(e))
-            return text  # Return original text instead of None
+            result = await self._translate_to_english(text, source_language)
+            return result
+        except Exception:
+            return None
     
     async def process_multilingual_document(self, document_content: bytes, language: str) -> Tuple[Optional[str], Optional[str]]:
         """

@@ -1,13 +1,14 @@
 {
   "name": "foi-archive",
   "private": true,
-  "version": "4.3.10",
+  "version": "4.3.11",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@11labs/react": "0.0.4",
@@ -378,7 +379,8 @@
     "typescript": "5.2.2",
     "typescript-language-server": "4.3.2",
     "vite": "4.4.5",
-    "vite-tsconfig-paths": "4.2.2"
+    "vite-tsconfig-paths": "4.2.2",
+    "@playwright/test": "^1.46.0"
   },
   "packageManager": "yarn@4.0.2",
   "nodeLinker": "pnpm"
