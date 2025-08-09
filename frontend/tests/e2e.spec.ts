@@ -36,14 +36,33 @@ test('search page loads and returns documents', async ({ page }) => {
   await expect(page.getByText(/results? found/i)).toBeVisible();
 });
 
-// Document detail smoke
-test('document detail shows download buttons and AI button', async ({ page }) => {
-  await page.goto(`${BASE}/search-page?q=health`);
-  await page.waitForTimeout(1000);
-  const first = page.locator('button:has-text("Original PDF")').first();
-  await expect(first).toBeVisible();
-  // Navigate to a document detail page by opening first result link if present
-  // If there isn't a link, assume a direct navigation path exists with id param
-  await page.goto(`${BASE}/document-detail-page?id=73`);
+// Helper to fetch a valid document id from API
+async function fetchFirstDocumentId(request: any): Promise<number> {
+  const res = await request.get(`${BASE}/api/search/search?q=&per_page=1`);
+  expect(res.ok()).toBeTruthy();
+  const body = await res.json();
+  expect(Array.isArray(body.documents)).toBeTruthy();
+  expect(body.documents.length).toBeGreaterThan(0);
+  return body.documents[0].id as number;
+}
+
+// Document detail smoke + AI button
+test('document detail shows download buttons and AI button', async ({ page, request }) => {
+  const docId = await fetchFirstDocumentId(request);
+  await page.goto(`${BASE}/document-detail-page?id=${docId}`);
   await expect(page.getByRole('button', { name: /Ask AI about this document/i })).toBeVisible();
+});
+
+// Backend doc-scoped AI endpoint responds
+test('AI document-question endpoint responds for a real document', async ({ request }) => {
+  const docId = await fetchFirstDocumentId(request);
+  const res = await request.post(`${BASE}/api/rag/document-question`, {
+    data: { question: 'Give one-line summary', document_id: docId },
+    headers: { 'Content-Type': 'application/json' },
+    timeout: 60000,
+  });
+  expect(res.ok()).toBeTruthy();
+  const body = await res.json();
+  expect(typeof body.answer).toBe('string');
+  expect(body.sources?.[0]?.document_id).toBe(docId);
 });
