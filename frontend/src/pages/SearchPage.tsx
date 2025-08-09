@@ -354,6 +354,15 @@ export default function SearchPage() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
+                      {/* Open Document action */}
+                      <div className="mb-4">
+                        <Button asChild size="sm" variant="secondary">
+                          <Link to={`/document-detail-page?id=${doc.id}`}>
+                            Open Document
+                          </Link>
+                        </Button>
+                      </div>
+
                       {doc.description && (
                         <div className="mb-4">
                           <p className="text-sm text-muted-foreground leading-relaxed">
