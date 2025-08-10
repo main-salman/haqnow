@@ -691,7 +691,7 @@ export default function UploadDocumentPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setIsCameraMode(false)}
+                  onClick={() => { setIsCameraMode(false); open(); }}
                   className={!isCameraMode ? "bg-primary text-primary-foreground" : ""}
                 >
                   <UploadCloud className="h-4 w-4 mr-2" />

@@ -169,6 +169,7 @@ const DisclaimerPage: React.FC = () => {
                   <li>{t('disclaimer.bestPracticesItem3')}</li>
                   <li>{t('disclaimer.bestPracticesItem4')}</li>
                   <li>{t('disclaimer.bestPracticesItem5')}</li>
+                  <li>{t('upload.phoneUploadTip')}</li>
                 </ul>
               </div>
 

@@ -62,6 +62,7 @@
     "cameraDisclaimerTitle": "Privacy Notice - Camera Usage",
     "cameraDisclaimerP1": "Using this camera method will reduce the risk of detection of leaks for most people leaking documents from corporate or government computers, but no method of leaking is 100% guaranteed to not be detectable.",
     "cameraDisclaimerP2": "This approach helps avoid creating digital trails on work computers by using your personal device to photograph documents instead of scanning or copying files digitally.",
+    "phoneUploadTip": "You can also use your personal phone to take photos of documents and upload them here to reduce DLP-triggered digital trails. However, no method is 100% guaranteed.",
     "phoneWarningTitle": "Important: Phone Storage Warning",
     "phoneWarningText": "iPhone and Android phones may save copies of pictures on your device. Make sure to immediately delete such pictures after uploading and also delete pictures synced to cloud services like Google Photos, Amazon Photos, Dropbox, Box.com, etc.",
     "cameraInstructions": "Use your device camera to capture document photos. Multiple pages will be combined into a single image.",
