@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Download, Tag, PlusCircle, ArrowLeft, Brain, Loader2 } from "lucide-react";
+import { Download, Tag, PlusCircle, ArrowLeft, Brain, Loader2, FileText } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AlertCircle } from "lucide-react";
 
@@ -26,6 +26,8 @@ interface ApiDocument {
   original_filename: string;
   created_at?: string;
   generated_tags?: string[];
+  document_language?: string;
+  has_english_translation?: boolean;
 }
 
 interface DocumentTag {
@@ -41,6 +43,7 @@ export default function DocumentDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [newTag, setNewTag] = useState("");
+  const [downloadingDocId, setDownloadingDocId] = useState<number | null>(null);
 
   // AI Q&A state
   const [isAIOpen, setIsAIOpen] = useState(false);
@@ -86,6 +89,48 @@ export default function DocumentDetailPage() {
     };
     fetchDoc();
   }, [documentId]);
+
+  const handleDocumentClick = async (
+    docId: number,
+    format: "original" | "english" | string
+  ) => {
+    try {
+      setDownloadingDocId(docId);
+      let endpoint: string;
+      if (format === "original") {
+        endpoint = `/api/search/download/${docId}`;
+      } else if (format === "english") {
+        endpoint = `/api/search/download/${docId}?language=english`;
+      } else {
+        endpoint = `/api/search/download/${docId}?language=${format}`;
+      }
+      const response = await fetch(endpoint);
+      if (!response.ok) {
+        return;
+      }
+      const contentDisposition = response.headers.get("content-disposition");
+      let filename = `document_${docId}`;
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      } else {
+        filename += format === "original" ? ".pdf" : ".txt";
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } finally {
+      setDownloadingDocId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground p-4 md:p-8">
@@ -230,6 +275,68 @@ export default function DocumentDetailPage() {
               </DialogContent>
             </Dialog>
           </div>
+        </section>
+
+        {/* Download Options Section (consistent with SearchPage) */}
+        <section className="bg-card p-6 rounded-lg shadow">
+          <h3 className="text-xl font-semibold mb-3 font-serif">Download Options:</h3>
+          <div className="flex flex-wrap gap-2">
+            {/* Original File Download */}
+            <Button
+              onClick={() => handleDocumentClick(document.id, "original")}
+              disabled={downloadingDocId === document.id}
+              size="sm"
+              variant="default"
+              className="flex items-center gap-2"
+            >
+              {downloadingDocId === document.id && (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              )}
+              <FileText className="h-3 w-3" />
+              Original PDF
+            </Button>
+
+            {/* English Translation Download (for multilingual documents) */}
+            {document.document_language !== "english" && document.has_english_translation && (
+              <Button
+                onClick={() => handleDocumentClick(document.id, "english")}
+                disabled={downloadingDocId === document.id}
+                size="sm"
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                {downloadingDocId === document.id && (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                )}
+                <FileText className="h-3 w-3" />
+                English Translation
+              </Button>
+            )}
+
+            {/* Original Language Text Download (for multilingual documents) */}
+            {document.document_language !== "english" && document.has_english_translation && (
+              <Button
+                onClick={() => handleDocumentClick(document.id, (document.document_language || '').toLowerCase())}
+                disabled={downloadingDocId === document.id}
+                size="sm"
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                {downloadingDocId === document.id && (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                )}
+                <FileText className="h-3 w-3" />
+                {document.document_language ? (document.document_language.charAt(0).toUpperCase() + document.document_language.slice(1)) : 'Original'} Text
+              </Button>
+            )}
+          </div>
+
+          {/* Info message for multilingual documents without translation */}
+          {document.document_language !== "english" && !document.has_english_translation && (
+            <div className="text-sm text-muted-foreground italic mt-2">
+              English translation processing... (may take a few minutes for new uploads)
+            </div>
+          )}
         </section>
 
         {/* PDF Preview Section */}
