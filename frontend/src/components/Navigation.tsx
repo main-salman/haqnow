@@ -41,13 +41,13 @@ export default function Navigation() {
                 {t('navigation.upload')}
               </Button>
               <Button variant="ghost" onClick={() => navigate('/foi')}>
-                Freedom of Information
+                {t('navigation.foi')}
               </Button>
               <Button variant="ghost" onClick={() => navigate('/privacy-guaranteed-page')}>
-                Privacy Features
+                {t('navigation.privacy')}
               </Button>
               <Button variant="ghost" onClick={() => navigate('/disclaimer')}>
-                Disclaimer and FAQ
+                {t('navigation.disclaimer')}
               </Button>
             </nav>
             <LanguageSwitcher />
@@ -97,21 +97,21 @@ export default function Navigation() {
                 className="justify-start" 
                 onClick={() => handleMobileNavigation('/foi')}
               >
-                Freedom of Information
+                {t('navigation.foi')}
               </Button>
               <Button 
                 variant="ghost"
                 className="justify-start" 
                 onClick={() => handleMobileNavigation('/privacy-guaranteed-page')}
               >
-                Privacy Features
+                {t('navigation.privacy')}
               </Button>
               <Button 
                 variant="ghost" 
                 className="justify-start" 
                 onClick={() => handleMobileNavigation('/disclaimer')}
               >
-                Disclaimer and FAQ
+                {t('navigation.disclaimer')}
               </Button>
             </nav>
           </div>
