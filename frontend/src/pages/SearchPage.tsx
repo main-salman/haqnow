@@ -354,15 +354,6 @@ export default function SearchPage() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      {/* Open Document action */}
-                      <div className="mb-4">
-                        <Button asChild size="sm" variant="secondary">
-                          <Link to={`/document-detail-page?id=${doc.id}`}>
-                            Open Document
-                          </Link>
-                        </Button>
-                      </div>
-
                       {doc.description && (
                         <div className="mb-4">
                           <p className="text-sm text-muted-foreground leading-relaxed">
@@ -425,6 +416,14 @@ export default function SearchPage() {
                               {doc.document_language.charAt(0).toUpperCase() + doc.document_language.slice(1)} Text
                             </Button>
                           )}
+
+                          {/* Ask AI about this document */}
+                          <Button asChild size="sm" variant="outline" className="flex items-center gap-2">
+                            <Link to={`/document-detail-page?id=${doc.id}`}>
+                              <Brain className="h-3 w-3" />
+                              Ask Questions About this Document
+                            </Link>
+                          </Button>
                           
                           {/* Info message for multilingual documents without translation */}
                           {doc.document_language !== 'english' && !doc.has_english_translation && (
