@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Toaster } from "sonner"; // <--- ADD THIS IMPORT
+import SiteAnnouncementBanner from "./SiteAnnouncementBanner";
 
 interface Props {
   children: ReactNode;
@@ -15,9 +16,10 @@ interface Props {
  */
 export const AppProvider = ({ children }: Props) => {
   return (
-    <> {/* <--- ADD FRAGMENT */}
+    <>
+      <SiteAnnouncementBanner />
       {children}
-      <Toaster richColors position="top-right" /> {/* <--- ADD THIS COMPONENT */}
+      <Toaster richColors position="top-right" />
     </>
   );
 };

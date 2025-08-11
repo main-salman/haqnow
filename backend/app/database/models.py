@@ -264,3 +264,31 @@ class RAGQuery(Base):
             "user_feedback": self.user_feedback,
             "created_at": self.created_at.isoformat() if self.created_at else None
         }
+
+class SiteSetting(Base):
+    """Model for storing simple site-wide settings as key/value pairs.
+
+    Used for global features like the announcement banner.
+    """
+
+    __tablename__ = "site_settings"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    key = Column(String(100), nullable=False, unique=True, index=True)
+    value = Column(Text, nullable=False)  # JSON or plain text string
+    updated_by = Column(String(255), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    def __repr__(self):
+        return f"<SiteSetting(key='{self.key}')>"
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "key": self.key,
+            "value": self.value,
+            "updated_by": self.updated_by,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }

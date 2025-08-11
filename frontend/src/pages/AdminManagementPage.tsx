@@ -26,7 +26,8 @@ import {
   Eye, 
   EyeOff,
   Key,
-  Download
+  Download,
+  Megaphone
 } from "lucide-react";
 
 interface Admin {
@@ -71,6 +72,11 @@ export default function AdminManagementPage() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  // Announcement banner state
+  const [announcementEnabled, setAnnouncementEnabled] = useState(false);
+  const [announcementContent, setAnnouncementContent] = useState("");
+  const [isSavingAnnouncement, setIsSavingAnnouncement] = useState(false);
 
   // Check if current user is super admin
   const isCurrentUserSuperAdmin = () => {
@@ -172,6 +178,16 @@ export default function AdminManagementPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const fetchAnnouncement = async () => {
+    try {
+      const res = await fetch('/api/site-settings/announcement');
+      if (!res.ok) return;
+      const data = await res.json();
+      setAnnouncementEnabled(!!data.enabled);
+      setAnnouncementContent(data.content || "");
+    } catch {}
   };
 
   // Add new admin
@@ -442,6 +458,7 @@ export default function AdminManagementPage() {
 
   useEffect(() => {
     fetchAdmins();
+    fetchAnnouncement();
   }, []);
 
   if (isLoading) {
@@ -454,6 +471,71 @@ export default function AdminManagementPage() {
 
   return (
     <div className="space-y-6">
+      {/* Announcement Banner Management */}
+      {isCurrentUserSuperAdmin() && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Megaphone className="h-5 w-5" />
+              Site Announcement Banner
+            </CardTitle>
+            <CardDescription>
+              Show a global announcement banner on all pages
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={announcementEnabled}
+                  onChange={(e) => setAnnouncementEnabled(e.target.checked)}
+                />
+                Enable banner
+              </label>
+            </div>
+            <div>
+              <Label htmlFor="announcementContent">Banner Content (HTML allowed)</Label>
+              <textarea
+                id="announcementContent"
+                className="mt-1 w-full min-h-[120px] rounded-md border border-input bg-background px-3 py-2 text-sm"
+                placeholder="e.g., <strong>Maintenance:</strong> Site will be read-only on Friday 10:00–12:00 UTC."
+                value={announcementContent}
+                onChange={(e) => setAnnouncementContent(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground mt-1">You can use simple HTML for formatting. Avoid scripts.</p>
+            </div>
+            <div>
+              <Button
+                onClick={async () => {
+                  setIsSavingAnnouncement(true);
+                  try {
+                    const token = localStorage.getItem('jwt_token');
+                    const res = await fetch('/api/site-settings/announcement', {
+                      method: 'PUT',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                      },
+                      body: JSON.stringify({ enabled: announcementEnabled, content: announcementContent }),
+                    });
+                    if (!res.ok) throw new Error('Failed to save');
+                    alert('Announcement updated');
+                  } catch (e: any) {
+                    alert(e.message || 'Failed to save announcement');
+                  } finally {
+                    setIsSavingAnnouncement(false);
+                  }
+                }}
+                disabled={isSavingAnnouncement}
+              >
+                {isSavingAnnouncement ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                Save Banner
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-primary font-serif">Admin Management</h1>

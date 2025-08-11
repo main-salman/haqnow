@@ -1,3 +1,24 @@
+2025-08-11: Added site-wide announcement banner feature.
+
+- Backend:
+  - Introduced `SiteSetting` model in `backend/app/database/models.py` for key/value settings.
+  - Added `site_settings` API (`backend/app/apis/site_settings/__init__.py`) with:
+    - GET `/api/site-settings/announcement` to fetch banner state/content
+    - PUT `/api/site-settings/announcement` (admin-only) to update banner
+  - Registered the router in `backend/main.py` under `/site-settings`.
+
+- Frontend:
+  - Created `frontend/src/components/SiteAnnouncementBanner.tsx` that fetches and renders the banner on all pages.
+  - Injected banner globally via `frontend/src/components/AppProvider.tsx` above all routes.
+  - Added admin controls in `frontend/src/pages/AdminManagementPage.tsx` to enable/disable and edit banner content.
+
+- Notes:
+  - Banner content allows simple HTML. It is displayed via `dangerouslySetInnerHTML`; inputs are trusted (admins only).
+  - New DB table auto-creates via `init_db()` on startup.
+
+2025-08-11: Set default announcement to enabled with initial content.
+- Default GET `/api/site-settings/announcement` will return `{ enabled: true, content: "Launching September 2025" }` when no setting exists yet.
+
 2025-08-09: Frontend deps cleanup for CI: bumped TypeScript to 5.6.3, removed unused GrapesJS packages and vanilla-extract plugin, removed react-diff-viewer and react-firebaseui to resolve peer conflicts; ensured Playwright workflow runs without Slack.
 2025-08-09: Removed Slack notifications from .github/workflows/playwright.yml and made E2E step fail the job directly; kept Playwright report uploaded on always.
 FOI Document App Migration History
