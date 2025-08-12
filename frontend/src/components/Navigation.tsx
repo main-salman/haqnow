@@ -49,6 +49,24 @@ export default function Navigation() {
               <Button variant="ghost" onClick={() => navigate('/disclaimer')}>
                 {t('navigation.disclaimer')}
               </Button>
+              <Button variant="ghost" asChild>
+                <a
+                  href="https://haqnow.wordpress.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {t('navigation.blog')}
+                </a>
+              </Button>
+              <Button asChild>
+                <a
+                  href="https://www.nonviolenceinternational.net/dignity_for_palestinians"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {t('navigation.donate')}
+                </a>
+              </Button>
             </nav>
             <LanguageSwitcher />
           </div>
@@ -113,6 +131,24 @@ export default function Navigation() {
               >
                 {t('navigation.disclaimer')}
               </Button>
+                <Button variant="ghost" className="justify-start" asChild>
+                  <a
+                    href="https://haqnow.wordpress.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {t('navigation.blog')}
+                  </a>
+                </Button>
+                <Button className="justify-start" asChild>
+                  <a
+                    href="https://www.nonviolenceinternational.net/dignity_for_palestinians"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {t('navigation.donate')}
+                  </a>
+                </Button>
             </nav>
           </div>
         )}

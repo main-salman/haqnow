@@ -3,11 +3,13 @@
     "brand": "HaqNow",
     "search": "Rechercher",
     "upload": "Télécharger",
-    "privacy": "Confidentialité Garantie",
+    "privacy": "Confidentialité",
     "admin": "Admin",
     "about": "À Propos",
     "foi": "Liberté d'information",
-    "disclaimer": "Avertissement et FAQ"
+    "disclaimer": "Avertissement et FAQ",
+    "donate": "Faire un don",
+    "blog": "Blog"
   },
   "footer": {
     "rights": "Tous Droits Réservés"
@@ -61,9 +63,9 @@
     "cameraNotSupported": "Camera not supported on this device",
     "cameraAccessError": "Unable to access camera. Please check permissions.",
     "cameraDisclaimerTitle": "Privacy Notice - Camera Usage",
-    "cameraDisclaimerP1": "Using this camera method will reduce the risk of detection of leaks for most people leaking documents from corporate or government computers, but no method of leaking is 100% guaranteed to not be detectable.",
+    "cameraDisclaimerP1": "Cette méthode peut réduire le risque de détection des fuites dans la plupart des cas, mais aucune méthode n’est 100% sans risque ni parfaitement indétectable.",
     "cameraDisclaimerP2": "This approach helps avoid creating digital trails on work computers by using your personal device to photograph documents instead of scanning or copying files digitally.",
-    "phoneUploadTip": "You can also use your personal phone to take photos of documents and upload them here to reduce DLP-triggered digital trails. However, no method is 100% guaranteed.",
+    "phoneUploadTip": "Vous pouvez aussi utiliser votre téléphone personnel pour photographier des documents et les téléverser ici afin de réduire les traces numériques dues au DLP. Cependant, aucune méthode n’est 100% sans risque.",
     "phoneWarningTitle": "Important: Phone Storage Warning",
     "phoneWarningText": "iPhone and Android phones may save copies of pictures on your device. Make sure to immediately delete such pictures after uploading and also delete pictures synced to cloud services like Google Photos, Amazon Photos, Dropbox, Box.com, etc.",
     "cameraInstructions": "Use your device camera to capture document photos. Multiple pages will be combined into a single image.",
@@ -79,7 +81,7 @@
     "backToHome": "Retour à l'Accueil"
   },
   "privacy": {
-    "title": "Confidentialité Garantie",
+    "title": "Fonctionnalités de Confidentialité",
     "subtitle": "HaqNow fournit un ANONYMAT COMPLET pour les lanceurs d'alerte de documents de corruption. Chaque niveau de notre infrastructure a été conçu et vérifié pour assurer zéro suivi ou identification des utilisateurs.",
     "backToHome": "Retour à l'Accueil",
     "sectionPrivacyImplementation": "Présentation de l'Implémentation de la Confidentialité",
@@ -117,7 +119,8 @@
     "taskNginxLogs": "Journalisation Nginx conforme à la confidentialité",
     "taskSystemLogs": "Configuration de confidentialité des journaux système",
     "completedStatus": "✅ Complété",
-    "sectionPrivacyGuarantees": "Nos Garanties de Confidentialité",
+    "sectionPrivacyGuarantees": "Nos Engagements de Confidentialité",
+    "commitmentsIntro": "HaqNow s’engage à :",
     "guaranteeNeverLog": "JAMAIS enregistrer les adresses IP",
     "guaranteeNeverStore": "JAMAIS stocker d'informations personnelles",
     "guaranteeNeverTrack": "JAMAIS suivre le comportement des utilisateurs",
@@ -173,8 +176,8 @@
     "featureOcrDesc": "Extraction automatique de texte et traduction de plus de 60 langues",
     "featureSearch": "Recherche Mondiale",
     "featureSearchDesc": "Recherche puissante dans les documents de tous les pays et régions",
-    "featureSecure": "Confidentialité Garantie",
-    "featureSecureDesc": "Sécurité de niveau militaire sans enregistrement d'IP ni suivi d'utilisateur",
+    "featureSecure": "Confidentialité",
+    "featureSecureDesc": "Conception axée sur la confidentialité sans journalisation d’IP ni suivi d’utilisateur",
     "whyMatters": "Pourquoi C'est Important",
     "whyMattersDesc": "La corruption coûte des milliards de dollars à l'économie mondiale chaque année et affecte des milliards de personnes. En fournissant une plateforme sécurisée pour la divulgation de documents, nous permettons aux journalistes, chercheurs et citoyens de tenir les institutions puissantes responsables.",
     "getInvolved": "S'Impliquer",
@@ -192,7 +195,19 @@
     "featureOpenArchive": "Archive Ouverte",
     "featureOpenArchiveDesc": "Base de données consultable de documents de corruption accessible aux journalistes et chercheurs.",
     "featureFOI": "Liberté d'Information",
-    "featureFOIDesc": "Ressources complètes de liberté d'information pour aider les citoyens à exiger la transparence de leurs gouvernements."
+    "featureFOIDesc": "Ressources complètes de liberté d'information pour aider les citoyens à exiger la transparence de leurs gouvernements.",
+    "fundingTitle": "Financement",
+    "fundingBody": "",
+    "hostingTitle": "Hébergement & Infrastructure",
+    "hostingBody": "HaqNow est hébergé sur Exoscale, une plateforme cloud européenne basée en Suisse. Nos services s'exécutent sur le calcul Exoscale, des bases de données (MySQL et PostgreSQL + pgvector) et le stockage d'objets SOS, avec des configurations axées sur la confidentialité à tous les niveaux.",
+    "learnMoreDocs": "En savoir plus dans notre README GitHub"
+  },
+  "about_extra": {
+    "fundingTitle": "Financement",
+    "fundingBody": "",
+    "hostingTitle": "Hébergement & Infrastructure",
+    "hostingBody": "HaqNow est hébergé sur Exoscale, une plateforme cloud européenne basée en Suisse. Nos services s'exécutent sur le calcul Exoscale, des bases de données (MySQL et PostgreSQL + pgvector) et le stockage d'objets SOS, avec des configurations axées sur la confidentialité à tous les niveaux.",
+    "learnMoreDocs": "En savoir plus dans notre README GitHub"
   },
   "foi": {
     "title": "Info CADA - Lois sur la Liberté d'Information",

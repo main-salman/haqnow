@@ -44,6 +44,12 @@ export default function AboutPage() {
             <a href="#technical" className="block text-blue-600 hover:text-blue-800 hover:underline transition-colors">
               • Platform Features & Technical Details
             </a>
+            <a href="#funding" className="block text-blue-600 hover:text-blue-800 hover:underline transition-colors">
+              • {t('about.fundingTitle')}
+            </a>
+            <a href="#hosting" className="block text-blue-600 hover:text-blue-800 hover:underline transition-colors">
+              • {t('about.hostingTitle')}
+            </a>
           </nav>
         </div>
 
@@ -203,6 +209,32 @@ export default function AboutPage() {
                 {t('about.featureFOIDesc')}
               </p>
             </div>
+          </div>
+        </div>
+
+        {/* Funding (blank, admin-editable via translations) */}
+        <div id="funding" className="bg-white text-gray-800 rounded-lg shadow-lg p-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('about.fundingTitle')}</h2>
+          <div className="prose prose-lg text-gray-700 space-y-4">
+            <p>{t('about.fundingBody')}</p>
+          </div>
+        </div>
+
+        {/* Hosting on Exoscale */}
+        <div id="hosting" className="bg-white text-gray-800 rounded-lg shadow-lg p-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('about.hostingTitle')}</h2>
+          <div className="prose prose-lg text-gray-700 space-y-4">
+            <p>{t('about.hostingBody')}</p>
+            <p>
+              <a
+                className="text-indigo-600 hover:text-indigo-800 underline"
+                href="https://github.com/main-salman/haqnow/blob/main/README.md"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {t('about.learnMoreDocs')}
+              </a>
+            </p>
           </div>
         </div>
         </div>

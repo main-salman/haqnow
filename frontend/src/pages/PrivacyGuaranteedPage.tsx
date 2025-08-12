@@ -135,10 +135,10 @@ export default function PrivacyGuaranteedPage() {
               <CardHeader className="text-center">
                 <CardTitle className="text-2xl font-serif flex items-center justify-center space-x-2">
                   <Lock className="h-6 w-6" />
-                  <span>Our Privacy Guarantees</span>
+                  <span>{t('privacy.sectionPrivacyGuarantees')}</span>
                 </CardTitle>
                 <CardDescription className="text-lg">
-                  We guarantee that HaqNow:
+                  {t('privacy.commitmentsIntro')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -197,7 +197,7 @@ export default function PrivacyGuaranteedPage() {
                   <span>Document Privacy Protection Process</span>
                 </CardTitle>
                 <CardDescription className="text-lg">
-                  How we ensure complete metadata removal from all uploaded documents
+                  How we remove metadata from all uploaded documents
                 </CardDescription>
               </CardHeader>
               <CardContent>

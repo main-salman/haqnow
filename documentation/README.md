@@ -35,7 +35,7 @@ The AI Q&A system uses a sophisticated Retrieval-Augmented Generation pipeline w
 4. **Response Delivery** → Confidence scoring → Source attribution → User feedback collection
 
 ## 🌍 **Live Platform**
-- **Website**: https://www.haqnow.com *(Complete anonymity guaranteed)*
+- **Website**: https://www.haqnow.com *(Designed for strong anonymity; no system is 100% guaranteed)*
 ---
 
 ## 🏗️ **System Architecture**

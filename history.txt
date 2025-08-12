@@ -1,3 +1,4 @@
+2025-08-12: Added Funding (blank) and Hosting sections to `frontend/src/pages/AboutPage.tsx` with translatable keys. Introduced Donate and Blog buttons (external links) in `frontend/src/components/Navigation.tsx` for desktop and mobile. Updated i18n across locales (en, ar, fr, de, pl, ru, tr): added `navigation.donate`, `navigation.blog`; softened "guarantee" language to "privacy"/"commitments"; adjusted camera disclaimers and privacy texts to avoid absolute guarantees; added about-page keys for funding/hosting with Exoscale description and README link. Tweaked `documentation/README.md` live platform line to avoid absolute guarantee phrasing. Ensured no linter errors.
 2025-08-11: Added site-wide announcement banner feature.
 
 - Backend:
