@@ -19,6 +19,12 @@
 2025-08-11: Set default announcement to enabled with initial content.
 - Default GET `/api/site-settings/announcement` will return `{ enabled: true, content: "Launching September 2025" }` when no setting exists yet.
 
+2025-08-11: Updated documentation to reflect new site settings & announcement banner.
+- Edited `documentation/README.md`:
+  - Added "Site Settings & Announcement Banner" section
+  - Included `SiteSetting` table mention and API endpoints for announcement
+  - Updated features and backend sections
+
 2025-08-09: Frontend deps cleanup for CI: bumped TypeScript to 5.6.3, removed unused GrapesJS packages and vanilla-extract plugin, removed react-diff-viewer and react-firebaseui to resolve peer conflicts; ensured Playwright workflow runs without Slack.
 2025-08-09: Removed Slack notifications from .github/workflows/playwright.yml and made E2E step fail the job directly; kept Playwright report uploaded on always.
 FOI Document App Migration History
@@ -9080,3 +9086,4 @@ User Question → Embedding → Vector Search → Context Retrieval → LLM Gene
 
 [2025-08-09T04:14:29Z] Fix: RAG /api/rag/question now accepts both 'question' and 'query' in request body for backward compatibility. Deployed via scripts/deploy.sh patch.
 2025-08-09T18:37:12Z - Overhauled AI search: removed global AI Q&A, added per-document AI with new backend endpoint /api/rag/document-question and frontend modal on DocumentDetailPage. Updated tests and docs.
+2025-08-12T00:00:00Z - Fix: Document detail page now shows correct translation buttons. Added `has_english_translation` and `has_arabic_text` flags to `/api/search/document/{id}` response to match search results, preventing false "English translation processing..." when translations exist. File updated: `backend/app/apis/search/__init__.py`.

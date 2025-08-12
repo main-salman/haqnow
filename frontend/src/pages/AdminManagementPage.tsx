@@ -27,7 +27,11 @@ import {
   EyeOff,
   Key,
   Download,
-  Megaphone
+  Megaphone,
+  Plus,
+  ToggleLeft,
+  ToggleRight,
+  Copy
 } from "lucide-react";
 
 interface Admin {
@@ -77,6 +81,26 @@ export default function AdminManagementPage() {
   const [announcementEnabled, setAnnouncementEnabled] = useState(false);
   const [announcementContent, setAnnouncementContent] = useState("");
   const [isSavingAnnouncement, setIsSavingAnnouncement] = useState(false);
+  
+  // API Keys state (Super Admin only)
+  interface ApiKey {
+    id: number;
+    name: string;
+    key_prefix: string;
+    scopes: string[];
+    is_active: boolean;
+    created_by: string | null;
+    created_at: string;
+    last_used_at: string | null;
+    usage_count: number;
+    plaintext_key?: string | null; // only returned at creation time
+  }
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [isLoadingApiKeys, setIsLoadingApiKeys] = useState(false);
+  const [newApiKeyName, setNewApiKeyName] = useState("");
+  const [newApiKeyScopes, setNewApiKeyScopes] = useState<string[]>(["upload", "download"]);
+  const [isCreatingApiKey, setIsCreatingApiKey] = useState(false);
+  const [justCreatedKey, setJustCreatedKey] = useState<ApiKey | null>(null);
 
   // Check if current user is super admin
   const isCurrentUserSuperAdmin = () => {
@@ -187,6 +211,97 @@ export default function AdminManagementPage() {
       const data = await res.json();
       setAnnouncementEnabled(!!data.enabled);
       setAnnouncementContent(data.content || "");
+    } catch {}
+  };
+
+  const fetchApiKeys = async () => {
+    if (!isCurrentUserSuperAdmin()) return;
+    setIsLoadingApiKeys(true);
+    try {
+      const token = localStorage.getItem('jwt_token');
+      if (!token) return;
+      const res = await fetch('/api/admin-management/api-keys', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Failed to load API keys');
+      const data = await res.json();
+      setApiKeys(data || []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoadingApiKeys(false);
+    }
+  };
+
+  const handleCreateApiKey = async () => {
+    if (!newApiKeyName.trim()) {
+      alert('Enter a name for the API key (e.g., developer/team/application)');
+      return;
+    }
+    setIsCreatingApiKey(true);
+    try {
+      const token = localStorage.getItem('jwt_token');
+      const res = await fetch('/api/admin-management/api-keys', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ name: newApiKeyName.trim(), scopes: newApiKeyScopes })
+      });
+      if (!res.ok) throw new Error('Failed to create API key');
+      const created = await res.json();
+      setJustCreatedKey(created);
+      setNewApiKeyName("");
+      await fetchApiKeys();
+    } catch (e: any) {
+      alert(e.message || 'Failed to create API key');
+    } finally {
+      setIsCreatingApiKey(false);
+    }
+  };
+
+  const handleToggleScope = (scope: string) => {
+    setNewApiKeyScopes(prev => prev.includes(scope) ? prev.filter(s => s !== scope) : [...prev, scope]);
+  };
+
+  const handleToggleActive = async (keyId: number, makeActive: boolean) => {
+    try {
+      const token = localStorage.getItem('jwt_token');
+      const res = await fetch(`/api/admin-management/api-keys/${keyId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ is_active: makeActive })
+      });
+      if (!res.ok) throw new Error('Failed to update API key');
+      await fetchApiKeys();
+    } catch (e: any) {
+      alert(e.message || 'Failed to update API key');
+    }
+  };
+
+  const handleDeleteApiKey = async (keyId: number) => {
+    if (!confirm('Delete this API key? This cannot be undone.')) return;
+    try {
+      const token = localStorage.getItem('jwt_token');
+      const res = await fetch(`/api/admin-management/api-keys/${keyId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Failed to delete API key');
+      await fetchApiKeys();
+    } catch (e: any) {
+      alert(e.message || 'Failed to delete API key');
+    }
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      alert('Copied to clipboard');
     } catch {}
   };
 
@@ -459,6 +574,7 @@ export default function AdminManagementPage() {
   useEffect(() => {
     fetchAdmins();
     fetchAnnouncement();
+    fetchApiKeys();
   }, []);
 
   if (isLoading) {

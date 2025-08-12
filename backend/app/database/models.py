@@ -292,3 +292,36 @@ class SiteSetting(Base):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
+
+class APIKey(Base):
+    """Model for API keys used to authenticate programmatic access.
+
+    We store only a secure hash of the key and never the plaintext.
+    """
+
+    __tablename__ = "api_keys"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    name = Column(String(255), nullable=False, index=True)
+    key_hash = Column(String(128), nullable=False, unique=True, index=True)
+    key_prefix = Column(String(16), nullable=False, index=True)  # first N chars of plaintext for display
+    scopes = Column(JSON, nullable=False, default=list)  # e.g., ["upload", "download"]
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_by = Column(String(255), nullable=True)  # admin email
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    last_used_at = Column(DateTime(timezone=True), nullable=True)
+    usage_count = Column(Integer, nullable=False, default=0)
+
+    def to_safe_dict(self):
+        """Return non-sensitive representation of the API key (without key hash)."""
+        return {
+            "id": self.id,
+            "name": self.name,
+            "key_prefix": self.key_prefix,
+            "scopes": self.scopes or [],
+            "is_active": self.is_active,
+            "created_by": self.created_by,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "last_used_at": self.last_used_at.isoformat() if self.last_used_at else None,
+            "usage_count": self.usage_count,
+        }

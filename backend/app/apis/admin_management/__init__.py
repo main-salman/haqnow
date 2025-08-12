@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List, Optional
 from ...database.database import get_db
-from ...database.models import Admin
+from ...database.models import Admin, APIKey
 from ...auth.jwt_auth import get_current_user, User, get_password_hash, verify_password
 from passlib.context import CryptContext
 import secrets
@@ -53,6 +53,23 @@ class TwoFactorVerifyRequest(BaseModel):
 class PasswordChangeRequest(BaseModel):
     current_password: str
     new_password: str
+
+class APIKeyCreateRequest(BaseModel):
+    name: str
+    scopes: list[str] = ["upload", "download"]
+
+class APIKeyResponse(BaseModel):
+    id: int
+    name: str
+    key_prefix: str
+    scopes: list[str]
+    is_active: bool
+    created_by: str | None
+    created_at: str
+    last_used_at: str | None
+    usage_count: int
+    # When creating, we optionally return the plaintext key once
+    plaintext_key: str | None = None
 
 def require_super_admin(current_user: User = Depends(get_current_user)):
     """Dependency to ensure user is a super admin."""
@@ -408,7 +425,6 @@ async def change_password(
         db.commit()
         
         return {"message": "Password changed successfully"}
-        
     except HTTPException:
         raise
     except Exception as e:
@@ -417,6 +433,82 @@ async def change_password(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to change password: {str(e)}"
         )
+
+# -------------- API Keys Management (Admin) --------------
+
+import secrets
+import hashlib
+
+def _hash_api_key(plaintext_key: str) -> str:
+    return hashlib.sha256(plaintext_key.encode("utf-8")).hexdigest()
+
+@router.get("/api-keys", response_model=List[APIKeyResponse])
+async def list_api_keys(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_super_admin)
+):
+    keys = db.query(APIKey).order_by(APIKey.created_at.desc()).all()
+    return [APIKeyResponse(**k.to_safe_dict()) for k in keys]
+
+@router.post("/api-keys", response_model=APIKeyResponse)
+async def create_api_key(
+    payload: APIKeyCreateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_super_admin)
+):
+    # Generate key: prefix + random
+    prefix = secrets.token_urlsafe(6)[:10]
+    secret_part = secrets.token_urlsafe(32)
+    plaintext_key = f"hn_{prefix}_{secret_part}"
+    key_hash = _hash_api_key(plaintext_key)
+    record = APIKey(
+        name=payload.name,
+        key_hash=key_hash,
+        key_prefix=prefix,
+        scopes=list(set(payload.scopes or [])),
+        is_active=True,
+        created_by=current_user.email
+    )
+    db.add(record)
+    db.commit()
+    db.refresh(record)
+    data = record.to_safe_dict()
+    return APIKeyResponse(**data, plaintext_key=plaintext_key)
+
+@router.put("/api-keys/{key_id}", response_model=APIKeyResponse)
+async def update_api_key(
+    key_id: int,
+    is_active: Optional[bool] = None,
+    scopes: Optional[list[str]] = None,
+    name: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_super_admin)
+):
+    record = db.query(APIKey).filter(APIKey.id == key_id).first()
+    if not record:
+        raise HTTPException(status_code=404, detail="API key not found")
+    if is_active is not None:
+        record.is_active = bool(is_active)
+    if scopes is not None:
+        record.scopes = list(set(scopes))
+    if name is not None:
+        record.name = name
+    db.commit()
+    db.refresh(record)
+    return APIKeyResponse(**record.to_safe_dict())
+
+@router.delete("/api-keys/{key_id}")
+async def delete_api_key(
+    key_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_super_admin)
+):
+    record = db.query(APIKey).filter(APIKey.id == key_id).first()
+    if not record:
+        raise HTTPException(status_code=404, detail="API key not found")
+    db.delete(record)
+    db.commit()
+    return {"message": "API key deleted"}
 
 @router.get("/profile", response_model=AdminResponse)
 async def get_admin_profile(

@@ -23,6 +23,7 @@ except ImportError:
     RAG_AVAILABLE = False
 from app.middleware.rate_limit import check_upload_rate_limit, record_upload
 from app.database import get_db, Document
+from app.auth.jwt_auth import validate_api_key, require_api_scope, APIConsumer
 
 logger = structlog.get_logger()
 
@@ -49,7 +50,8 @@ async def upload_file(
     state: str = Form(...),
     document_language: str = Form(default="english"),  # Added document language parameter
     description: Optional[str] = Form(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    api_consumer: Optional[APIConsumer] = Depends(validate_api_key)
 ):
     """
     Upload a document file to S3 and create a database entry.
@@ -57,8 +59,11 @@ async def upload_file(
     Supports multiple languages including Arabic with Mistral API processing.
     """
     
-    # Check rate limit
-    check_upload_rate_limit(request)
+    # Check rate limit only for anonymous or web clients.
+    # If a valid API key is provided with 'upload' scope, skip rate limit.
+    is_api_allowed = api_consumer is not None and (api_consumer.scopes and "upload" in api_consumer.scopes)
+    if not is_api_allowed:
+        check_upload_rate_limit(request)
     
     try:
         # Validate file size (100MB limit)
@@ -179,8 +184,9 @@ async def upload_file(
         except Exception as e:
             logger.warning("Failed to send email notification", error=str(e))
         
-        # Record upload for rate limiting
-        record_upload(request)
+        # Record upload for rate limiting when anonymous/web client
+        if not is_api_allowed:
+            record_upload(request)
         
         logger.info("Document uploaded successfully", 
                    document_id=document_id,

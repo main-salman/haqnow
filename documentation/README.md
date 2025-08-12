@@ -134,6 +134,7 @@ The AI Q&A system uses a sophisticated Retrieval-Augmented Generation pipeline w
 - **Content Moderation**: Banned word filtering and tag management
 - **User Management**: Secure admin authentication with 2FA
 - **Analytics Dashboard**: Document statistics and system monitoring
+- **Site-wide Announcement Banner**: Toggle on/off and edit the global banner shown on all pages
 
 ---
 
@@ -155,6 +156,7 @@ The AI Q&A system uses a sophisticated Retrieval-Augmented Generation pipeline w
 - **OCR Engine**: Tesseract 5.x with 60+ language packs
 - **Translation**: Google Translate API for automatic translations
 - **AI/RAG Stack**: Ollama + Llama3 LLM + sentence-transformers embeddings
+ - **Site Settings**: Lightweight key/value settings (`SiteSetting` table) for global controls like announcements
 
 ### **Infrastructure**
 - **Cloud Provider**: Exoscale (Swiss-based, privacy-focused)
@@ -467,7 +469,51 @@ cd backend && python3 test_performance.py
 
 ---
 
+## 📣 **Site Settings & Announcement Banner**
+
+### Overview
+- A lightweight site settings system allows admins to control global features.
+- Current setting: a site-wide announcement banner displayed on all pages.
+
+### Data Model
+- Table: `site_settings` (MySQL)
+  - `key` (unique), `value` (JSON string), `updated_by`, timestamps
+- Setting key used for announcement: `announcement_banner`
+  - JSON shape: `{ "enabled": boolean, "content": string }`
+
+### API Endpoints
+```
+# Get current announcement (public)
+GET /api/site-settings/announcement
+
+# Update announcement (admin-only)
+PUT /api/site-settings/announcement
+Content-Type: application/json
+{
+  "enabled": true,
+  "content": "Launching September 2025"
+}
+```
+
+### Frontend Integration
+- Global component: `frontend/src/components/SiteAnnouncementBanner.tsx`
+- Injected in `frontend/src/components/AppProvider.tsx` so it renders on every page.
+- Admin controls live in `frontend/src/pages/AdminManagementPage.tsx` under “Site Announcement Banner”.
+
+### Defaults
+- If no record exists, the API returns an enabled default: `Launching September 2025`.
+
+### Security Note
+- Banner supports simple HTML and is admin-managed; do not include scripts.
+
+---
+
 ## 🚀 **Recent Major Updates**
+
+### **Version 4.5.0 - Global Announcement Banner**
+- ✅ Added `SiteSetting` table and `/api/site-settings/announcement` endpoints
+- ✅ Global banner rendered across all pages via `AppProvider`
+- ✅ Admin UI to enable/disable and edit banner content
 
 ### **Version 2.2.x - Multilingual Revolution** 
 - ✅ **60+ Language Support**: Complete Tesseract language pack installation

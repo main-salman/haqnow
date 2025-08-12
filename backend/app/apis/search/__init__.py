@@ -13,6 +13,7 @@ from urllib.parse import urlparse
 
 # Import rate limiting, auth, and database
 from app.middleware.rate_limit import check_download_rate_limit, record_download
+from app.auth.jwt_auth import validate_api_key, APIConsumer
 from app.auth.user import AdminUser
 from app.database import get_db, Document, BannedTag
 from app.services.semantic_search_service import semantic_search_service
@@ -398,7 +399,16 @@ async def get_document(document_id: int, db: Session = Depends(get_db)):
         
         logger.info("Document retrieved successfully", document_id=document_id)
         
+        # Keep response fields consistent with search results
         doc_dict = document.to_dict()
+        document_language = doc_dict.get('document_language', 'english')
+        has_english_translation = bool(doc_dict.get('ocr_text_english'))
+        has_arabic_text = bool(doc_dict.get('ocr_text_original')) if document_language == 'arabic' else False
+
+        # Inject availability flags expected by the frontend
+        doc_dict['has_english_translation'] = has_english_translation
+        doc_dict['has_arabic_text'] = has_arabic_text
+
         return SearchDocumentResult(**doc_dict)
         
     except HTTPException:
@@ -415,7 +425,8 @@ async def download_document(
     document_id: int, 
     request: Request,
     language: str = Query(default="original", description="Language version: 'original', 'english', or the document's original language code"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    api_consumer: Optional[APIConsumer] = Depends(validate_api_key)
 ):
     """
     Download a document file directly through the server.
@@ -424,12 +435,12 @@ async def download_document(
     Rate limited to prevent abuse.
     """
     
-    # Apply rate limit only for original PDF downloads to avoid blocking text downloads
+    # Apply rate limit for anonymous/web clients only. If a valid API key with 'download' scope is present, skip.
+    is_api_allowed = api_consumer is not None and (api_consumer.scopes and "download" in api_consumer.scopes)
     try:
-        if language in (None, "original"):
+        if not is_api_allowed and language in (None, "original"):
             check_download_rate_limit(request)
     except Exception:
-        # Bubble up HTTPException from rate limiter as-is
         raise
     
     try:
@@ -525,8 +536,8 @@ async def download_document(
         if not download_url:
             raise HTTPException(status_code=500, detail="Failed to generate download URL")
         
-        # Record download only for original PDFs
-        if language in (None, "original"):
+        # Record download for rate limiting only for anonymous/web clients
+        if not is_api_allowed and language in (None, "original"):
             record_download(request)
 
         # Fetch file from S3 and stream it to user
