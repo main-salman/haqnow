@@ -1,0 +1,55 @@
+# Page snapshot
+
+```yaml
+- text: "WE ARE IN TESTING MODE - WE ARE LAUNCHING SEPTEMBER 2025! 🌍 Select Language:"
+- button "Switch to English": 🇺🇸 EN
+- button "Switch to العربية": 🇸🇦 AR
+- button "Switch to Français": 🇫🇷 FR
+- button "Switch to Deutsch": 🇩🇪 DE
+- button "Switch to Русский": 🇷🇺 RU
+- button "Switch to Polski": 🇵🇱 PL
+- button "Switch to Türkçe": 🇹🇷 TR
+- banner:
+  - img "HaqNow"
+  - heading "HaqNow" [level=1]
+  - navigation:
+    - button "About"
+    - button "Search"
+    - button "Upload"
+    - button "Freedom of Information"
+    - button "Privacy Guaranteed"
+    - button "Disclaimer and FAQ"
+  - button "English":
+    - img
+    - text: English
+- main:
+  - heading "Expose Corruption Documents Worldwide" [level=2]
+  - paragraph: HaqNow is a platform dedicated to collecting, organizing, and providing access to documents that expose corruption from around the globe. Our advanced system automatically translates documents from over 60 languages, making both original documents and translations accessible to users worldwide. Upload anonymously, search freely, and contribute to a growing repository of truth and transparency.
+  - searchbox "Search documents"
+  - button "Submit search":
+    - img
+    - text: Search
+  - button "Upload":
+    - img
+    - text: Upload
+  - heading "Global Corruption Document Distribution" [level=3]
+  - img
+  - button "Zoom in"
+  - button "Zoom out"
+  - link "Leaflet":
+    - /url: https://leafletjs.com
+  - text: ©
+  - link "OpenStreetMap":
+    - /url: https://www.openstreetmap.org/copyright
+  - text: contributors
+  - heading "Documents by Country" [level=4]
+  - text: 50+ docs 20-49 docs 10-19 docs 5-9 docs 1-4 docs Circle size = document count
+  - heading "Documents by Country" [level=3]
+  - text: "Select a Country:"
+  - combobox: Choose a country to view documents...
+  - text: "Total countries with documents: 2"
+- contentinfo:
+  - paragraph: © 2025 HaqNow. All Rights Reserved
+  - text: v4.5.2
+- region "Notifications alt+T"
+```
