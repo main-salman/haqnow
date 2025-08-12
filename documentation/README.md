@@ -152,6 +152,7 @@ The AI Q&A system uses a sophisticated Retrieval-Augmented Generation pipeline w
 - **Database**: MySQL 8.0 (Exoscale DBaaS) with SQLAlchemy ORM
 - **RAG Database**: PostgreSQL 15 with pgvector extension for vector operations
 - **Authentication**: JWT-based with bcrypt password hashing
+ - **API Keys**: Admin-managed API keys for programmatic uploads/downloads
 - **File Storage**: Exoscale S3-compatible object storage (SOS)
 - **OCR Engine**: Tesseract 5.x with 60+ language packs
 - **Translation**: Google Translate API for automatic translations
@@ -508,7 +509,55 @@ Content-Type: application/json
 
 ---
 
+## 🔑 Programmatic API Access (API Keys)
+
+### Overview
+- Administrators can generate API keys to enable server-to-server or app-to-server access for uploads and downloads.
+- Keys can be scoped to specific permissions and disabled at any time.
+
+### Scopes
+- `upload`: Allows using the document upload endpoint
+- `download`: Allows using the document download endpoint
+
+### Endpoints
+```
+# Upload a document (multipart/form-data)
+POST /api/file-uploader/upload
+Headers: X-API-Key: <your_api_key>
+Form fields:
+  - file: binary file
+  - title: string
+  - country: string (e.g., "BR")
+  - state: string (e.g., "SP")
+  - document_language: string (default "english")
+  - description: string (optional)
+
+# Download a document
+GET /api/search/download/{document_id}
+Optional: ?language=original|english|<lang>
+Headers: X-API-Key: <your_api_key>
+```
+
+Notes:
+- API keys bypass anonymous rate limits when the appropriate scope is present.
+- API keys are passed via the `X-API-Key` header. Do not include them in URLs.
+
+### Admin UI
+- Navigate to `Admin Management` → `API Keys` to create, list, enable/disable, and delete keys.
+- Newly created keys are shown only once; copy and store them securely.
+
+### Security
+- Keys are stored hashed; only the prefix and metadata are visible to admins.
+- Rotate keys regularly and disable compromised keys immediately.
+
+---
+
 ## 🚀 **Recent Major Updates**
+
+### **Version 4.6.0 - API Keys for Programmatic Access**
+- ✅ API key model and admin UI for key management
+- ✅ `X-API-Key` support on upload/download endpoints with scope checks
+- ✅ Bypass anonymous rate limits for authorized keys
 
 ### **Version 4.5.0 - Global Announcement Banner**
 - ✅ Added `SiteSetting` table and `/api/site-settings/announcement` endpoints

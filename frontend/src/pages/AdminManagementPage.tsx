@@ -587,6 +587,106 @@ export default function AdminManagementPage() {
 
   return (
     <div className="space-y-6">
+      {isCurrentUserSuperAdmin() && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Key className="h-5 w-5" />
+              API Keys (Programmatic Access)
+            </CardTitle>
+            <CardDescription>
+              Generate and manage API keys for developers. Keys can be scoped and disabled at any time.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="md:col-span-2 space-y-2">
+                <Label htmlFor="apiKeyName">Key Name</Label>
+                <Input id="apiKeyName" value={newApiKeyName} onChange={e => setNewApiKeyName(e.target.value)} placeholder="e.g., Investigations Team" />
+                <div className="mt-2">
+                  <Label>Scopes</Label>
+                  <div className="flex gap-3 mt-2 text-sm">
+                    <button type="button" className={`px-3 py-1 rounded border ${newApiKeyScopes.includes('upload') ? 'bg-green-100 border-green-400' : 'bg-background'}`} onClick={() => handleToggleScope('upload')}>upload</button>
+                    <button type="button" className={`px-3 py-1 rounded border ${newApiKeyScopes.includes('download') ? 'bg-green-100 border-green-400' : 'bg-background'}`} onClick={() => handleToggleScope('download')}>download</button>
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <Button onClick={handleCreateApiKey} disabled={isCreatingApiKey}>
+                    {isCreatingApiKey ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}
+                    Create API Key
+                  </Button>
+                </div>
+                {justCreatedKey?.plaintext_key && (
+                  <div className="p-3 mt-3 rounded border bg-muted">
+                    <div className="text-sm font-medium">New API Key (shown once)</div>
+                    <div className="mt-1 font-mono text-sm break-all">{justCreatedKey.plaintext_key}</div>
+                    <div className="mt-2 flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => copyToClipboard(justCreatedKey.plaintext_key!)}>
+                        <Copy className="h-4 w-4 mr-2" /> Copy
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="md:col-span-1 text-sm text-muted-foreground">
+                <div className="font-medium">Usage</div>
+                <pre className="mt-2 p-2 rounded bg-muted text-xs whitespace-pre-wrap">{`# Upload (multipart)
+curl -X POST \
+  -H "X-API-Key: <your_key>" \
+  -F file=@/path/doc.pdf \
+  -F title="Title" -F country="BR" -F state="SP" \
+  https://www.haqnow.com/api/file-uploader/upload
+
+# Download PDF
+curl -H "X-API-Key: <your_key>" \
+  https://www.haqnow.com/api/search/download/123`}</pre>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <div className="flex items-center justify-between mb-2">
+                <div className="font-medium">Existing Keys</div>
+                {isLoadingApiKeys && <Loader2 className="h-4 w-4 animate-spin" />}
+              </div>
+              <div className="space-y-2">
+                {apiKeys.map(k => (
+                  <div key={k.id} className="flex items-center justify-between p-3 border rounded">
+                    <div className="min-w-0">
+                      <div className="font-medium truncate">{k.name} <span className="text-xs text-muted-foreground">(prefix: {k.key_prefix})</span></div>
+                      <div className="text-xs text-muted-foreground mt-1">scopes: {k.scopes.join(', ') || '—'} • created {new Date(k.created_at).toLocaleString()} • used {k.usage_count}×</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="outline" onClick={() => handleToggleActive(k.id, !k.is_active)} title={k.is_active ? 'Disable' : 'Enable'}>
+                        {k.is_active ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="outline" title="Delete">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete API Key</AlertDialogTitle>
+                            <AlertDialogDescription>This cannot be undone. Applications using this key will stop working.</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteApiKey(k.id)}>Delete</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                ))}
+                {apiKeys.length === 0 && !isLoadingApiKeys && (
+                  <div className="text-sm text-muted-foreground">No API keys yet.</div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       {/* Announcement Banner Management */}
       {isCurrentUserSuperAdmin() && (
         <Card>

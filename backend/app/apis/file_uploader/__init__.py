@@ -23,7 +23,7 @@ except ImportError:
     RAG_AVAILABLE = False
 from app.middleware.rate_limit import check_upload_rate_limit, record_upload
 from app.database import get_db, Document
-from app.auth.jwt_auth import validate_api_key, require_api_scope, APIConsumer
+from app.auth.jwt_auth import validate_api_key, APIConsumer
 
 logger = structlog.get_logger()
 

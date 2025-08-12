@@ -39,7 +39,7 @@ export default function DocumentDetailPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const documentId = useMemo(() => Number(searchParams.get("id")), [searchParams]);
-  const [document, setDocument] = useState<ApiDocument | null>(null);
+  const [doc, setDoc] = useState<ApiDocument | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [newTag, setNewTag] = useState("");
@@ -80,7 +80,7 @@ export default function DocumentDetailPage() {
           return;
         }
         const data: ApiDocument = await resp.json();
-        setDocument(data);
+        setDoc(data);
       } catch (e) {
         setError("Network error while loading document.");
       } finally {
@@ -120,12 +120,12 @@ export default function DocumentDetailPage() {
       }
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      const anchor = window.document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename;
+      window.document.body.appendChild(anchor);
+      anchor.click();
+      window.document.body.removeChild(anchor);
       URL.revokeObjectURL(url);
     } finally {
       setDownloadingDocId(null);
@@ -166,28 +166,28 @@ export default function DocumentDetailPage() {
           </section>
         )}
 
-        {!loading && !error && document && (
+        {!loading && !error && doc && (
         <>
         {/* Document Metadata Section */}
         <section className="bg-card p-6 rounded-lg shadow">
           <h1 className="text-3xl font-bold mb-2 text-primary font-serif">
-            {document.title}
+            {doc.title}
           </h1>
           <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground mb-4">
-            <span>Country: {document.country}</span>
-            {document.state && (
-              <span>State/Province: {document.state}</span>
+            <span>Country: {doc.country}</span>
+            {doc.state && (
+              <span>State/Province: {doc.state}</span>
             )}
-            {document.created_at && (
-              <span>Uploaded: {new Date(document.created_at).toLocaleDateString()}</span>
+            {doc.created_at && (
+              <span>Uploaded: {new Date(doc.created_at).toLocaleDateString()}</span>
             )}
           </div>
           <p className="text-foreground/80 mb-6 leading-relaxed">
-            {document.description}
+            {doc.description}
           </p>
           <div className="flex flex-wrap gap-3">
             <Button asChild>
-              <a href={document.file_url} download target="_blank" rel="noopener noreferrer">
+              <a href={doc.file_url} download target="_blank" rel="noopener noreferrer">
                 <Download className="mr-2 h-4 w-4" />
                 Download PDF
               </a>
@@ -233,7 +233,7 @@ export default function DocumentDetailPage() {
                   <Button
                     variant="default"
                     onClick={async () => {
-                      if (!document) return;
+                      if (!doc) return;
                       if (!aiQuestion.trim()) {
                         setAiError("Please enter a question.");
                         return;
@@ -242,10 +242,10 @@ export default function DocumentDetailPage() {
                       setAiAnswer(null);
                       setAiLoading(true);
                       try {
-                        const resp = await fetch('/api/rag/document-question', {
+                         const resp = await fetch('/api/rag/document-question', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ question: aiQuestion.trim(), document_id: document.id }),
+                           body: JSON.stringify({ question: aiQuestion.trim(), document_id: doc.id }),
                         });
                         if (!resp.ok) {
                           const data = await resp.json().catch(() => ({}));
@@ -280,16 +280,16 @@ export default function DocumentDetailPage() {
         {/* Download Options Section (consistent with SearchPage) */}
         <section className="bg-card p-6 rounded-lg shadow">
           <h3 className="text-xl font-semibold mb-3 font-serif">Download Options:</h3>
-          <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2">
             {/* Original File Download */}
             <Button
-              onClick={() => handleDocumentClick(document.id, "original")}
-              disabled={downloadingDocId === document.id}
+              onClick={() => handleDocumentClick(doc.id, "original")}
+              disabled={downloadingDocId === doc.id}
               size="sm"
               variant="default"
               className="flex items-center gap-2"
             >
-              {downloadingDocId === document.id && (
+              {downloadingDocId === doc.id && (
                 <Loader2 className="h-3 w-3 animate-spin" />
               )}
               <FileText className="h-3 w-3" />
@@ -297,15 +297,15 @@ export default function DocumentDetailPage() {
             </Button>
 
             {/* English Translation Download (for multilingual documents) */}
-            {document.document_language !== "english" && document.has_english_translation && (
+              {doc.document_language !== "english" && doc.has_english_translation && (
               <Button
-                onClick={() => handleDocumentClick(document.id, "english")}
-                disabled={downloadingDocId === document.id}
+                onClick={() => handleDocumentClick(doc.id, "english")}
+                disabled={downloadingDocId === doc.id}
                 size="sm"
                 variant="outline"
                 className="flex items-center gap-2"
               >
-                {downloadingDocId === document.id && (
+                {downloadingDocId === doc.id && (
                   <Loader2 className="h-3 w-3 animate-spin" />
                 )}
                 <FileText className="h-3 w-3" />
@@ -314,25 +314,25 @@ export default function DocumentDetailPage() {
             )}
 
             {/* Original Language Text Download (for multilingual documents) */}
-            {document.document_language !== "english" && document.has_english_translation && (
+              {doc.document_language !== "english" && doc.has_english_translation && (
               <Button
-                onClick={() => handleDocumentClick(document.id, (document.document_language || '').toLowerCase())}
-                disabled={downloadingDocId === document.id}
+                onClick={() => handleDocumentClick(doc.id, (doc.document_language || '').toLowerCase())}
+                disabled={downloadingDocId === doc.id}
                 size="sm"
                 variant="outline"
                 className="flex items-center gap-2"
               >
-                {downloadingDocId === document.id && (
+                {downloadingDocId === doc.id && (
                   <Loader2 className="h-3 w-3 animate-spin" />
                 )}
                 <FileText className="h-3 w-3" />
-                {document.document_language ? (document.document_language.charAt(0).toUpperCase() + document.document_language.slice(1)) : 'Original'} Text
+                {doc.document_language ? (doc.document_language.charAt(0).toUpperCase() + doc.document_language.slice(1)) : 'Original'} Text
               </Button>
             )}
           </div>
 
           {/* Info message for multilingual documents without translation */}
-          {document.document_language !== "english" && !document.has_english_translation && (
+            {doc.document_language !== "english" && !doc.has_english_translation && (
             <div className="text-sm text-muted-foreground italic mt-2">
               English translation processing... (may take a few minutes for new uploads)
             </div>
@@ -344,8 +344,8 @@ export default function DocumentDetailPage() {
           <h2 className="text-2xl font-semibold mb-4 font-serif">Document Preview</h2>
           <div className="aspect-[8.5/11] border border-border rounded overflow-hidden">
             <iframe
-              src={document.file_url}
-              title={document.title}
+              src={doc.file_url}
+              title={doc.title}
               width="100%"
               height="100%"
               className="w-full h-full"
@@ -357,8 +357,8 @@ export default function DocumentDetailPage() {
         {/* Tags Section */}
         <section className="bg-card p-6 rounded-lg shadow">
           <h2 className="text-2xl font-semibold mb-4 font-serif">Tags</h2>
-          <div className="flex flex-wrap gap-2 mb-4">
-            {(document.generated_tags || []).map((tag, index) => (
+            <div className="flex flex-wrap gap-2 mb-4">
+            {(doc.generated_tags || []).map((tag, index) => (
               <Badge key={index} variant="secondary" className="text-sm">
                 {tag}
               </Badge>

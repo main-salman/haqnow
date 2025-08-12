@@ -29451,14 +29451,6 @@ react-webcam@7.2.0:
   resolved "https://registry.npmjs.org/react-webcam/-/react-webcam-7.2.0.tgz"
   integrity sha512-xkrzYPqa1ag2DP+2Q/kLKBmCIfEx49bVdgCCCcZf88oF+0NPEbkwYk3/s/C7Zy0mhM8k+hpdNkBLzxg8H0aWcg==
 
-react-wheel-of-prizes@^1.1.0:
-  version "1.1.0"
-  resolved "https://registry.npmjs.org/react-wheel-of-prizes/-/react-wheel-of-prizes-1.1.0.tgz"
-  integrity sha512-ev72lZQNPmToqeiXaQlH7d9EIxzJJqj0VzDTk8wVl3UOEnORs1uyC2supZmVaNxE3aZwh+wXTyyT422F3IYmQA==
-  dependencies:
-    "@babel/runtime" "^7.15.4"
-    typescript "^3.2.1"
-
 react-window@1.8.11:
   version "1.8.11"
   resolved "https://registry.npmjs.org/react-window/-/react-window-1.8.11.tgz"

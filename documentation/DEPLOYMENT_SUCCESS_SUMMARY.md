@@ -179,6 +179,18 @@ Frontend UI: ⚠️ Q&A interface deployed but testing needed
 
 ---
 
+## 🔑 Addendum: API Keys for Programmatic Access
+
+- Added API Key authentication for upload and download endpoints
+- New Admin UI section to create, enable/disable, and delete API keys
+- Documentation updated with usage examples and scopes
+
+Endpoints that accept `X-API-Key` header:
+- `POST /api/file-uploader/upload`
+- `GET /api/search/download/{document_id}` (optional `?language=`)
+
+---
+
 ## 🎯 **FINAL STATUS: SUCCESSFUL DEPLOYMENT**
 
 **The RAG Q&A system has been successfully deployed to HaqNow.com!**
