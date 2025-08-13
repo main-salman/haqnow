@@ -109,11 +109,17 @@ sudo systemctl stop foi-archive || true
 
 # Install/update backend dependencies
 cd backend
-source .venv/bin/activate && pip install -r requirements.txt
+# Ensure venv exists and is activated safely
+if [ ! -d ".venv" ]; then
+  python3 -m venv .venv
+fi
+source .venv/bin/activate || { echo "❌ Failed to activate venv"; exit 1; }
+pip install --upgrade pip setuptools wheel || true
+pip install -r requirements.txt
 
 # Install RAG-specific dependencies
 echo "🤖 Installing RAG (AI Q&A) dependencies..."
-source .venv/bin/activate && pip install -r requirements-rag.txt || echo "RAG dependencies installation completed"
+pip install -r requirements-rag.txt || echo "RAG dependencies installation completed"
 
 # Setup Ollama for local LLM processing (confirmed fallback/provider)
 echo "🧠 Setting up Ollama for AI Q&A..."
@@ -132,25 +138,25 @@ sudo systemctl enable ollama || echo "⚠️ Ollama service setup failed"
 sleep 5
 
 # Pull required LLM model
-MODEL_NAME="llama3:8b"
+MODEL_NAME="llama3:latest"
 echo "📦 Ensuring Ollama model ($MODEL_NAME) is available..."
-ollama pull "$MODEL_NAME" || ollama pull llama3 || echo "⚠️ LLM model download failed - RAG Q&A may not work"
+ollama pull "$MODEL_NAME" || echo "⚠️ LLM model download failed - RAG Q&A may not work"
 
 # Create RAG database tables
 echo "🗄️ Setting up RAG database tables..."
-source .venv/bin/activate && python create_rag_tables.py || echo "RAG tables already exist or creation failed"
+python create_rag_tables.py || echo "RAG tables already exist or creation failed"
 
 # Run privacy migration if needed
 echo "🔒 Running privacy migration (IP address removal)..."
-source .venv/bin/activate && python run_migration.py || echo "Migration already applied or not needed"
+python run_migration.py || echo "Migration already applied or not needed"
 
 # Populate translations with about and foi sections
 echo "🌍 Populating translations with updated sections..."
-source .venv/bin/activate && python populate_translations.py || echo "Translation population completed or already up to date"
+python populate_translations.py || echo "Translation population completed or already up to date"
 
 # Test RAG system
 echo "🧪 Testing RAG system components..."
-source .venv/bin/activate && python test_rag_system.py || echo "⚠️ RAG system test failed - check logs"
+python test_rag_system.py || echo "⚠️ RAG system test failed - check logs"
 
 cd ..
 
@@ -170,7 +176,7 @@ sudo systemctl start foi-archive
 sudo systemctl enable foi-archive
 
 # Wait for backend to start
-sleep 5
+sleep 8
 
 # Verify backend is running
 if sudo systemctl is-active --quiet foi-archive; then

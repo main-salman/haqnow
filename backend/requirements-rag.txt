@@ -2,11 +2,13 @@
 # Open source alternatives to replace proprietary AI services
 
 # Core RAG dependencies  
-sentence-transformers==2.2.2  # Open source embeddings (replaces Mistral embeddings)
-ollama==0.1.7                 # Open source LLM interface
-langchain==0.1.0              # RAG framework
-langchain-community==0.0.12   # Community LangChain extensions
-langchain-text-splitters==0.0.1  # Text chunking for RAG
+sentence-transformers==2.2.2    # Open source embeddings (replaces Mistral embeddings)
+ollama==0.1.7                   # Open source LLM interface
+langchain==0.1.0                # RAG framework
+langchain-community==0.0.12     # Community LangChain extensions
+langchain-core==0.1.27          # Pin core to match langsmith constraint
+langsmith==0.0.92               # Satisfy older langchain versions
+langchain-text-splitters==0.0.1 # Text chunking for RAG
 
 # Document processing
 pypdf==3.17.4                 # PDF text extraction
@@ -15,7 +17,7 @@ pypdf==3.17.4                 # PDF text extraction
 pgvector==0.2.4               # PostgreSQL vector extension for Python
 
 # Database connectivity (ensure compatibility)
-psycopg2-binary==2.9.9        # PostgreSQL adapter
+psycopg2-binary==2.9.9          # PostgreSQL adapter
 
 # HTTP client for Ollama communication
 requests==2.31.0              # Already in main requirements but ensure version compatibility
