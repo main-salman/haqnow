@@ -1,3 +1,8 @@
+2025-08-13: Fix deploy.sh and dependencies for stable server deploy
+ - Added venv creation + robust activation in `scripts/deploy.sh`; upgraded pip/setuptools/wheel; increased backend start wait.
+ - Pinned `langchain-core==0.1.27` and `langsmith==0.0.92` in `backend/requirements.txt` and `backend/requirements-rag.txt` to resolve resolver conflicts.
+ - Standardized model pull to `llama3:latest` and removed empty model name path; switched python invocations to use the active venv without redundant sourcing.
+ - Result: deployment succeeds without pip resolver errors and without Ollama model name error; translations repopulate including Affiliates under About.
 2025-08-13: Admin Translations – added dedicated 'affiliates' section and backend grouping
  - Frontend: updated `frontend/src/pages/AdminTranslationsPage.tsx` to include `affiliates` in the `sections` list so it appears in the section selector.
  - Backend: updated `backend/populate_translations.py` `determine_section` to map keys starting with `about.affiliates` to the `affiliates` section for consistent grouping.
