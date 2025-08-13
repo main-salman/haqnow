@@ -29,6 +29,9 @@ export default function AboutPage() {
             <h2 className="text-xl font-bold text-gray-900">Table of Contents</h2>
           </div>
           <nav className="space-y-2">
+            <a href="#affiliates" className="block text-blue-600 hover:text-blue-800 hover:underline transition-colors">
+              • {t('about.affiliatesTitle')}
+            </a>
             <a href="#founder" className="block text-blue-600 hover:text-blue-800 hover:underline transition-colors">
               • Meet the Founder
             </a>
@@ -51,6 +54,14 @@ export default function AboutPage() {
               • {t('about.hostingTitle')}
             </a>
           </nav>
+        </div>
+
+        {/* Affiliates Section */}
+        <div id="affiliates" className="bg-white text-gray-800 rounded-lg shadow-lg p-8 mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('about.affiliatesTitle')}</h2>
+          <div className="prose prose-lg text-gray-700 space-y-4">
+            <p>{t('about.affiliatesBody')}</p>
+          </div>
         </div>
 
         {/* Founder Section */}

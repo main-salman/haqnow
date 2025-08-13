@@ -1,3 +1,60 @@
+2025-01-13: Added Affiliates section to About page with editable translations
+
+**Enhancement:** Created new "Affiliates & Partners" section as the topmost item in the About page, fully integrated with the admin translations management system.
+
+**Changes Made:**
+
+1. **Database Population Script (COMPLETED ✅)**:
+   - Created `backend/populate_affiliates_translations.py` to populate new translation keys
+   - Added `about.affiliatesTitle` and `about.affiliatesBody` keys for all 7 supported languages
+   - Default content in English, Arabic, French, German, Russian, Polish, and Turkish
+   - Script includes comprehensive multilingual support with fallbacks
+
+2. **About Page Updates (COMPLETED ✅)**:
+   - Updated `frontend/src/pages/AboutPage.tsx` to include new Affiliates section at the top
+   - Added Affiliates link to Table of Contents as the first item
+   - Section appears before "Meet the Founder" section as requested
+   - Uses translation keys `{t('about.affiliatesTitle')}` and `{t('about.affiliatesBody')}`
+   - Consistent styling with existing About page sections
+
+3. **Admin Translation Integration (COMPLETED ✅)**:
+   - New translation keys automatically appear in admin translations page
+   - Affiliates section is part of the existing "about" section in the admin interface
+   - Admins can edit both title and content through standard translation management
+   - Changes apply immediately without requiring code deployment
+
+4. **Multilingual Support (COMPLETED ✅)**:
+   - Default translations provided for all 7 supported languages:
+     - English: "Our Affiliates & Partners"
+     - Arabic: "الشركاء والمؤسسات التابعة" 
+     - French: "Nos Affiliés et Partenaires"
+     - German: "Unsere Partner und Affiliates"
+     - Russian: "Наши Партнеры и Аффилиаты"
+     - Polish: "Nasi Partnerzy i Afilianci"
+     - Turkish: "Ortaklarımız ve Bağlı Kuruluşlarımız"
+
+**Technical Implementation:**
+- Database population script with duplicate checking and error handling
+- Frontend changes use existing translation system infrastructure
+- No additional API endpoints needed - integrates with existing translation APIs
+- Script ready for production deployment via `./deploy.sh` command
+
+**User Experience:**
+- Affiliates section prominently displayed at top of About page
+- Fully integrated with Table of Contents for easy navigation
+- Content editable by admins through familiar translation management interface
+- Maintains consistent styling and responsive design with rest of About page
+
+**Result:** 
+✅ **AFFILIATES SECTION SUCCESS** - About page now features editable Affiliates section:
+- ✅ **Prominent Placement**: First section on About page as requested
+- ✅ **TOC Integration**: Appears as top item in Table of Contents  
+- ✅ **Admin Editable**: Fully integrated with translation management system
+- ✅ **Multilingual**: Default content in all 7 supported languages
+- ✅ **Privacy Compliant**: No additional user tracking or data collection
+
+The Affiliates section provides a dedicated space for showcasing trusted partners and affiliates, easily manageable through the existing admin translation interface without requiring technical deployments for content updates.
+
 2025-08-12: Added Funding (blank) and Hosting sections to `frontend/src/pages/AboutPage.tsx` with translatable keys. Introduced Donate and Blog buttons (external links) in `frontend/src/components/Navigation.tsx` for desktop and mobile. Updated i18n across locales (en, ar, fr, de, pl, ru, tr): added `navigation.donate`, `navigation.blog`; softened "guarantee" language to "privacy"/"commitments"; adjusted camera disclaimers and privacy texts to avoid absolute guarantees; added about-page keys for funding/hosting with Exoscale description and README link. Tweaked `documentation/README.md` live platform line to avoid absolute guarantee phrasing. Ensured no linter errors.
 2025-08-11: Added site-wide announcement banner feature.
 
