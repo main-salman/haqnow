@@ -71,6 +71,9 @@ def determine_section(key):
         return 'search'
     elif key.startswith('upload.'):
         return 'upload'
+    # Special-case: group Affiliates items under their own section in admin UI
+    elif key.startswith('about.affiliates'):
+        return 'affiliates'
     elif key.startswith('about.'):
         return 'about'
     elif key.startswith('foi.'):
