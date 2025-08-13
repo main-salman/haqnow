@@ -198,6 +198,8 @@
     "featureFOIDesc": "Umfassende FOI-Ressourcen, um Bürgern zu helfen, Transparenz von ihren Regierungen zu fordern.",
     "fundingTitle": "Finanzierung",
     "fundingBody": "",
+    "affiliatesTitle": "Unsere Partner und Affiliates",
+    "affiliatesBody": "Informationen über unsere vertrauenswürdigen Partner und Affiliates werden hier angezeigt. Dieser Bereich wird von Administratoren verwaltet.",
     "hostingTitle": "Hosting & Infrastruktur",
     "hostingBody": "HaqNow wird auf Exoscale betrieben, einer europäischen Cloud‑Plattform mit Sitz in der Schweiz. Unsere Services laufen auf Exoscale Compute, Datenbanken (MySQL sowie PostgreSQL + pgvector) und SOS‑Objektspeicher – mit datenschutzorientierter Konfiguration auf allen Ebenen.",
     "learnMoreDocs": "Mehr in unserem GitHub‑README"

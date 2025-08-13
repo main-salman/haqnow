@@ -225,6 +225,8 @@
     "featureFOIDesc": "Vatandaşların hükümetlerinden şeffaflık talep etmelerine yardımcı olacak kapsamlı FOI kaynakları.",
     "fundingTitle": "Finansman",
     "fundingBody": "",
+    "affiliatesTitle": "Ortaklarımız ve Bağlı Kuruluşlarımız",
+    "affiliatesBody": "Güvenilir ortaklarımız ve bağlı kuruluşlarımız hakkında bilgiler burada görüntülenecektir. Bu bölüm yöneticiler tarafından yönetilir.",
     "hostingTitle": "Barındırma ve Altyapı",
     "hostingBody": "HaqNow, İsviçre merkezli Avrupa bulut platformu Exoscale üzerinde barındırılmaktadır. Hizmetlerimiz Exoscale Compute, veritabanları (MySQL ve PostgreSQL + pgvector) ve SOS nesne depolamada çalışır; tüm katmanlarda gizlilik odaklı yapılandırmalarla.",
     "learnMoreDocs": "GitHub README'mizde daha fazlası",
