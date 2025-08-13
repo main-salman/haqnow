@@ -82,12 +82,12 @@ def populate_affiliates_translations():
         for language in SUPPORTED_LANGUAGES:
             lang_translations = default_translations.get(language, default_translations['en'])
             
-            # Add title translation
+            # Add title translation (kept under 'about' section because Affiliates is part of About page)
             title_translation = Translation(
                 key='about.affiliatesTitle',
                 language=language,
                 value=lang_translations['affiliatesTitle'],
-                section='affiliates',
+                section='about',
                 updated_by='system_populate_affiliates'
             )
             translations_to_add.append(title_translation)
@@ -97,7 +97,7 @@ def populate_affiliates_translations():
                 key='about.affiliatesBody', 
                 language=language,
                 value=lang_translations['affiliatesBody'],
-                section='affiliates',
+                section='about',
                 updated_by='system_populate_affiliates'
             )
             translations_to_add.append(body_translation)
@@ -115,11 +115,11 @@ def populate_affiliates_translations():
                 added_count += 1
                 print(f"✓ Adding translation: {translation.key} ({translation.language})")
             else:
-                # Ensure existing rows are tagged with the 'affiliates' section for admin grouping
-                if existing.section != 'affiliates':
-                    existing.section = 'affiliates'
+                # Ensure existing rows are tagged with the 'about' section
+                if existing.section != 'about':
+                    existing.section = 'about'
                     db.add(existing)
-                    print(f"↻ Updated section to 'affiliates' for: {translation.key} ({translation.language})")
+                    print(f"↻ Updated section to 'about' for: {translation.key} ({translation.language})")
                 else:
                     print(f"⚠ Translation already exists: {translation.key} ({translation.language})")
         
