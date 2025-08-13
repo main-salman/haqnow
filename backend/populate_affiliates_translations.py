@@ -87,7 +87,7 @@ def populate_affiliates_translations():
                 key='about.affiliatesTitle',
                 language=language,
                 value=lang_translations['affiliatesTitle'],
-                section='about',
+                section='affiliates',
                 updated_by='system_populate_affiliates'
             )
             translations_to_add.append(title_translation)
@@ -97,7 +97,7 @@ def populate_affiliates_translations():
                 key='about.affiliatesBody', 
                 language=language,
                 value=lang_translations['affiliatesBody'],
-                section='about',
+                section='affiliates',
                 updated_by='system_populate_affiliates'
             )
             translations_to_add.append(body_translation)
@@ -115,7 +115,13 @@ def populate_affiliates_translations():
                 added_count += 1
                 print(f"✓ Adding translation: {translation.key} ({translation.language})")
             else:
-                print(f"⚠ Translation already exists: {translation.key} ({translation.language})")
+                # Ensure existing rows are tagged with the 'affiliates' section for admin grouping
+                if existing.section != 'affiliates':
+                    existing.section = 'affiliates'
+                    db.add(existing)
+                    print(f"↻ Updated section to 'affiliates' for: {translation.key} ({translation.language})")
+                else:
+                    print(f"⚠ Translation already exists: {translation.key} ({translation.language})")
         
         # Commit all changes
         db.commit()

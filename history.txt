@@ -1,4 +1,9 @@
-2025-01-13: Added Affiliates section to About page with editable translations
+2025-08-13: Admin Translations – added dedicated 'affiliates' section and backend grouping
+ - Frontend: updated `frontend/src/pages/AdminTranslationsPage.tsx` to include `affiliates` in the `sections` list so it appears in the section selector.
+ - Backend: updated `backend/populate_translations.py` `determine_section` to map keys starting with `about.affiliates` to the `affiliates` section for consistent grouping.
+ - Backend: adjusted `backend/populate_affiliates_translations.py` so created/existing rows are tagged with `section='affiliates'` and will migrate any existing rows previously inserted as `about` to `affiliates`.
+ - Result: The Affiliates translations (`about.affiliatesTitle`, `about.affiliatesBody`) now show under the Affiliates section on the Admin Translations page.
+ - Deployment: Run `./scripts/deploy.sh patch` to ship.
 
 **Enhancement:** Created new "Affiliates & Partners" section as the topmost item in the About page, fully integrated with the admin translations management system.
 

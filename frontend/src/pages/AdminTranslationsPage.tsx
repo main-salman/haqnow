@@ -43,6 +43,7 @@ const sections = [
   'search',
   'upload',
   'about',
+  'affiliates',
   'foi',
   'privacy',
   'disclaimer',
