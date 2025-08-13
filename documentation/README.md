@@ -833,6 +833,77 @@ This project is open source and available under the MIT License for fighting cor
 
 ---
 
+## 📚 Open Source Acknowledgments & Licenses
+
+HaqNow is built on the shoulders of open source. We gratefully acknowledge these projects (among many transitive dependencies) and their licenses:
+
+### Core Platform
+- React (MIT) — https://react.dev
+- Vite (MIT) — https://vitejs.dev
+- TypeScript (Apache-2.0) — https://www.typescriptlang.org
+- Tailwind CSS (MIT) — https://tailwindcss.com
+- Radix UI (MIT) — https://www.radix-ui.com
+- shadcn/ui (MIT) — https://ui.shadcn.com
+- lucide-react (ISC) — https://lucide.dev
+- react-router-dom (MIT) — https://reactrouter.com
+- Zustand (MIT) — https://zustand-demo.pmnd.rs
+- Zod (MIT) — https://zod.dev
+- i18next + react-i18next (MIT) — https://www.i18next.com
+
+### Mapping & Visualization
+- Leaflet (BSD-2-Clause) — https://leafletjs.com
+- React Leaflet (MIT) — https://react-leaflet.js.org
+- MapLibre GL JS (BSD-3-Clause) — https://maplibre.org
+- mapbox-gl v3 (Mapbox Terms of Service) — https://docs.mapbox.com/mapbox-gl-js
+- Chart.js (MIT) — https://www.chartjs.org
+- Plotly.js (MIT) — https://plotly.com/javascript
+- three.js (MIT) — https://threejs.org
+
+### Documents, PDF, OCR
+- pdf.js / pdfjs-dist (Apache-2.0) — https://github.com/mozilla/pdf.js
+- jsPDF (MIT) — https://github.com/parallax/jsPDF
+- react-pdf/renderer (MIT) — https://react-pdf.org
+- Mammoth (MIT) — https://github.com/mwilliamson/mammoth.js
+- Tesseract OCR engine (Apache-2.0) — https://github.com/tesseract-ocr/tesseract
+- tesseract.js (Apache-2.0) — https://github.com/naptha/tesseract.js
+
+### Backend & APIs
+- FastAPI (MIT) — https://fastapi.tiangolo.com
+- Uvicorn (BSD-3-Clause) — https://www.uvicorn.org
+- SQLAlchemy (MIT) — https://www.sqlalchemy.org
+- Pydantic (MIT) — https://docs.pydantic.dev
+- Requests (Apache-2.0) — https://requests.readthedocs.io
+- psycopg2 (LGPL-3.0) — https://www.psycopg.org
+- NumPy (BSD-3-Clause) — https://numpy.org
+- OpenCV (Apache-2.0) — https://opencv.org
+- Pillow (HPND) — https://python-pillow.org
+- PyPDF2 / pypdf (BSD-3-Clause) — https://pypdf.readthedocs.io
+- passlib (BSD) — https://passlib.readthedocs.io
+- python-jose (MIT) — https://github.com/mpdavis/python-jose
+- pyotp (MIT) — https://pyauth.github.io/pyotp
+- qrcode (MIT) — https://github.com/lincolnloop/python-qrcode
+- ExifTool (Artistic-2.0) — https://exiftool.org
+
+### AI/RAG Stack
+- sentence-transformers (Apache-2.0) — https://www.sbert.net
+- LangChain (MIT) — https://langchain.com
+- Ollama (MIT; model licenses vary) — https://ollama.com
+- pgvector (PostgreSQL License) — https://github.com/pgvector/pgvector
+
+### Databases, Infra, Server
+- MySQL (GPL-2.0 with FOSS exception) — https://www.mysql.com
+- PostgreSQL (PostgreSQL License) — https://www.postgresql.org
+- Nginx (BSD-2-Clause) — https://nginx.org
+- Terraform (MPL-2.0) — https://www.terraform.io
+
+Notes:
+- Many packages bring transitive dependencies under their respective licenses. For a full machine-readable report:
+  - Frontend (Node): `npx license-checker --production --json > THIRD_PARTY_LICENSES.frontend.json`
+  - Backend (Python): `pip install pip-licenses && pip-licenses --with-urls --format=markdown > THIRD_PARTY_LICENSES.backend.md`
+- Trademark names are owned by their respective holders. Links above point to official project sites or repositories.
+
+---
+
 ## 🆘 **Support**
 
 For technical support, feature requests, or security reporting:
