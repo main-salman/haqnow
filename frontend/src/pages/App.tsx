@@ -34,6 +34,7 @@ export default function App() {
 
   // Country code mapping for converting country names to ISO codes
   const countryCodeMapping: Record<string, string> = {
+    'US': 'US',
     'United States': 'US',
     'Canada': 'CA',
     'United Kingdom': 'GB',

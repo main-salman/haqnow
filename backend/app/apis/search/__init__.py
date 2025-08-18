@@ -1,7 +1,7 @@
 import json
 import re
 from fastapi import APIRouter, HTTPException, Query, Request, Depends
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, RedirectResponse
 from pydantic import BaseModel
 from typing import List, Optional
 from sqlalchemy.orm import Session
@@ -529,73 +529,25 @@ async def download_document(
         
         # Get S3 service
         from app.services.s3_service import s3_service
-        
-        # Generate download URL (used internally to fetch file)
-        download_url = s3_service.get_download_url(file_path)
-        
-        if not download_url:
-            raise HTTPException(status_code=500, detail="Failed to generate download URL")
-        
+
+        # Generate download URL (used for redirect)
+        presigned_url = s3_service.get_download_url(file_path)
+
         # Record download for rate limiting only for anonymous/web clients
         if not is_api_allowed and language in (None, "original"):
             record_download(request)
 
-        # Fetch file from S3 and stream it to user
-        try:
-            # Get file from S3
-            response = requests.get(download_url, stream=True)
-            response.raise_for_status()
-            
-            # Extract filename from file_path
-            filename = os.path.basename(file_path)
-            
-            # Determine content type based on file extension
-            content_type = "application/octet-stream"  # Default
-            if filename.lower().endswith('.pdf'):
-                content_type = "application/pdf"
-            elif filename.lower().endswith(('.jpg', '.jpeg')):
-                content_type = "image/jpeg"
-            elif filename.lower().endswith('.png'):
-                content_type = "image/png"
-            elif filename.lower().endswith('.gif'):
-                content_type = "image/gif"
-            elif filename.lower().endswith('.doc'):
-                content_type = "application/msword"
-            elif filename.lower().endswith('.docx'):
-                content_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            elif filename.lower().endswith('.xls'):
-                content_type = "application/vnd.ms-excel"
-            elif filename.lower().endswith('.xlsx'):
-                content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            elif filename.lower().endswith('.txt'):
-                content_type = "text/plain"
-            elif filename.lower().endswith('.csv'):
-                content_type = "text/csv"
-            
-            # Create streaming response
-            def generate():
-                for chunk in response.iter_content(chunk_size=8192):
-                    if chunk:
-                        yield chunk
-            
-            logger.info("Document download proxied successfully", 
-                   document_id=document_id,
-                   filename=filename,
-                   language=language)
-            
-            return StreamingResponse(
-                generate(),
-                media_type=content_type,
-                headers={
-                    "Content-Disposition": f"attachment; filename=\"{filename}\"",
-                    "Content-Length": str(response.headers.get("content-length", "")),
-                    "Cache-Control": "private, max-age=0, no-cache, no-store, must-revalidate"
-                }
-            )
-            
-        except requests.RequestException as req_error:
-            logger.error("Error fetching file from S3", document_id=document_id, error=str(req_error))
-            raise HTTPException(status_code=500, detail="Failed to fetch document file")
+        # Prefer a direct 302 redirect to the presigned URL to avoid proxying large files
+        if presigned_url:
+            return RedirectResponse(url=presigned_url, status_code=302)
+
+        # Fallback: redirect to public URL if presigned URL could not be generated
+        public_url = s3_service.get_file_url(file_path)
+        if public_url:
+            return RedirectResponse(url=public_url, status_code=302)
+
+        # If neither URL could be generated, return an error
+        raise HTTPException(status_code=500, detail="Failed to generate download URL")
         
     except HTTPException:
         raise
