@@ -60,66 +60,25 @@ export default function SearchPage() {
   const handleDocumentClick = async (docId: number, format: "original" | "english" | string) => {
     try {
       setDownloadingDocId(docId);
-      
-      // Different endpoints based on format
-      let endpoint;
+
+      let endpoint: string;
       if (format === "original") {
         endpoint = `/api/search/download/${docId}`;
       } else if (format === "english") {
         endpoint = `/api/search/download/${docId}?language=english`;
       } else {
-        // For specific language downloads
         endpoint = `/api/search/download/${docId}?language=${format}`;
       }
-      
-      const response = await fetch(endpoint);
-      
-      if (!response.ok) {
-        try {
-          const data = await response.json();
-          if (response.status === 429 && data?.detail) {
-            toast.error(data.detail);
-          } else if (data?.detail) {
-            toast.error(`Failed to download: ${data.detail}`);
-          } else {
-            toast.error(`Failed to download: ${response.statusText}`);
-          }
-        } catch (_) {
-          toast.error(`Failed to download: ${response.statusText}`);
-        }
-        return;
-      }
-      
-      // Get the filename from response headers or create a default one
-      const contentDisposition = response.headers.get('content-disposition');
-      let filename = `document_${docId}`;
-      
-      if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
-        if (filenameMatch) {
-          filename = filenameMatch[1];
-        }
-      } else {
-        // Add appropriate extension based on format
-        if (format === "original") {
-          filename += ".pdf";
-        } else {
-          filename += ".txt";
-        }
-      }
-      
-      // Create blob and download
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      toast.success(`Downloaded: ${filename}`);
+
+      // Trigger a browser navigation to avoid CORS on S3 redirects
+      const link = document.createElement('a');
+      link.href = endpoint;
+      link.rel = 'noopener';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success('Download started');
     } catch (error) {
       console.error('Download failed:', error);
       toast.error('Failed to download document');
