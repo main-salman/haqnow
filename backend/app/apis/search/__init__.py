@@ -530,24 +530,74 @@ async def download_document(
         # Get S3 service
         from app.services.s3_service import s3_service
 
-        # Generate download URL (used for redirect)
+        # Generate presigned URL to fetch the object server-side
         presigned_url = s3_service.get_download_url(file_path)
+
+        if not presigned_url:
+            # As a last resort, try the public URL for server-side fetch
+            presigned_url = s3_service.get_file_url(file_path)
+            if not presigned_url:
+                raise HTTPException(status_code=500, detail="Failed to generate download URL")
 
         # Record download for rate limiting only for anonymous/web clients
         if not is_api_allowed and language in (None, "original"):
             record_download(request)
 
-        # Prefer a direct 302 redirect to the presigned URL to avoid proxying large files
-        if presigned_url:
-            return RedirectResponse(url=presigned_url, status_code=302)
+        # Fetch from S3 and proxy-stream the content to the client to keep URL obfuscated
+        try:
+            s3_response = requests.get(presigned_url, stream=True, timeout=30)
+            s3_response.raise_for_status()
 
-        # Fallback: redirect to public URL if presigned URL could not be generated
-        public_url = s3_service.get_file_url(file_path)
-        if public_url:
-            return RedirectResponse(url=public_url, status_code=302)
+            filename = os.path.basename(file_path)
 
-        # If neither URL could be generated, return an error
-        raise HTTPException(status_code=500, detail="Failed to generate download URL")
+            # Prefer content-type from S3, fallback to extension
+            content_type = s3_response.headers.get("content-type", "application/octet-stream")
+            if content_type == "application/octet-stream":
+                if filename.lower().endswith('.pdf'):
+                    content_type = "application/pdf"
+                elif filename.lower().endswith(('.jpg', '.jpeg')):
+                    content_type = "image/jpeg"
+                elif filename.lower().endswith('.png'):
+                    content_type = "image/png"
+                elif filename.lower().endswith('.gif'):
+                    content_type = "image/gif"
+                elif filename.lower().endswith('.doc'):
+                    content_type = "application/msword"
+                elif filename.lower().endswith('.docx'):
+                    content_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                elif filename.lower().endswith('.xls'):
+                    content_type = "application/vnd.ms-excel"
+                elif filename.lower().endswith('.xlsx'):
+                    content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                elif filename.lower().endswith('.txt'):
+                    content_type = "text/plain"
+                elif filename.lower().endswith('.csv'):
+                    content_type = "text/csv"
+
+            def generate():
+                for chunk in s3_response.iter_content(chunk_size=8192):
+                    if chunk:
+                        yield chunk
+
+            logger.info("Document download proxied successfully",
+                        document_id=document_id,
+                        filename=filename,
+                        language=language)
+
+            headers = {
+                "Content-Disposition": f"attachment; filename=\"{filename}\"",
+                "Cache-Control": "private, max-age=0, no-cache, no-store, must-revalidate"
+            }
+            # Forward content length if available
+            s3_len = s3_response.headers.get("content-length")
+            if s3_len:
+                headers["Content-Length"] = str(s3_len)
+
+            return StreamingResponse(generate(), media_type=content_type, headers=headers)
+
+        except requests.RequestException as req_error:
+            logger.error("Error fetching file from S3", document_id=document_id, error=str(req_error))
+            raise HTTPException(status_code=500, detail="Failed to fetch document file")
         
     except HTTPException:
         raise
