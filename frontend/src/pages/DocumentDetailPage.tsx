@@ -104,29 +104,14 @@ export default function DocumentDetailPage() {
       } else {
         endpoint = `/api/search/download/${docId}?language=${format}`;
       }
-      const response = await fetch(endpoint);
-      if (!response.ok) {
-        return;
-      }
-      const contentDisposition = response.headers.get("content-disposition");
-      let filename = `document_${docId}`;
-      if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
-        if (filenameMatch) {
-          filename = filenameMatch[1];
-        }
-      } else {
-        filename += format === "original" ? ".pdf" : ".txt";
-      }
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
+
+      // Trigger a browser navigation so it follows redirects and avoids CORS
       const anchor = window.document.createElement("a");
-      anchor.href = url;
-      anchor.download = filename;
+      anchor.href = endpoint;
+      anchor.rel = "noopener";
       window.document.body.appendChild(anchor);
       anchor.click();
       window.document.body.removeChild(anchor);
-      URL.revokeObjectURL(url);
     } finally {
       setDownloadingDocId(null);
     }
