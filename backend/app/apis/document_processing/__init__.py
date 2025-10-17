@@ -20,7 +20,6 @@ from app.services.email_service import email_service
 from app.services.arabic_ocr_service import arabic_ocr_service  # Add Arabic OCR service import
 from app.services.semantic_search_service import semantic_search_service
 from app.database import get_db, Document, BannedTag
-from app.database.models import DocumentChunk
 
 # Optional RAG service import
 try:
@@ -1037,15 +1036,6 @@ async def delete_document(
                 logger.warning("Failed to delete file from S3", file_path=file_path, error=str(e))
                 # Continue with database deletion even if S3 deletion fails
         
-        # First delete dependent rows to avoid FK NULL updates on MySQL
-        try:
-            db.query(DocumentChunk).filter(DocumentChunk.document_id == document_id).delete(synchronize_session=False)
-            logger.info("Deleted dependent document chunks (primary DB)", document_id=document_id)
-        except Exception as dep_err:
-            db.rollback()
-            logger.error("Failed to delete dependent chunks in primary DB", error=str(dep_err))
-            raise HTTPException(status_code=500, detail="Failed to delete dependent data from primary DB")
-
         # Also delete RAG vector chunks from the PostgreSQL RAG database
         try:
             from ...database.rag_database import rag_engine
