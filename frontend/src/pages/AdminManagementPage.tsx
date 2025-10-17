@@ -82,6 +82,10 @@ export default function AdminManagementPage() {
   const [announcementContent, setAnnouncementContent] = useState("");
   const [isSavingAnnouncement, setIsSavingAnnouncement] = useState(false);
   
+  // Upload notification recipients
+  const [notificationEmails, setNotificationEmails] = useState<string[]>([]);
+  const [newNotificationEmail, setNewNotificationEmail] = useState("");
+  
   // API Keys state (Super Admin only)
   interface ApiKey {
     id: number;
@@ -211,6 +215,15 @@ export default function AdminManagementPage() {
       const data = await res.json();
       setAnnouncementEnabled(!!data.enabled);
       setAnnouncementContent(data.content || "");
+    } catch {}
+  };
+
+  const fetchNotificationEmails = async () => {
+    try {
+      const res = await fetch('/api/site-settings/upload-notification-emails');
+      if (!res.ok) return;
+      const data = await res.json();
+      setNotificationEmails(Array.isArray(data.emails) ? data.emails : []);
     } catch {}
   };
 
@@ -574,6 +587,7 @@ export default function AdminManagementPage() {
   useEffect(() => {
     fetchAdmins();
     fetchAnnouncement();
+    fetchNotificationEmails();
     fetchApiKeys();
   }, []);
 
@@ -683,6 +697,69 @@ curl -H "X-API-Key: <your_key>" \
                   <div className="text-sm text-muted-foreground">No API keys yet.</div>
                 )}
               </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      {isCurrentUserSuperAdmin() && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Megaphone className="h-5 w-5" />
+              Upload Notification Emails
+            </CardTitle>
+            <CardDescription>
+              Configure recipients who are emailed whenever a new document is uploaded
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex gap-2">
+              <Input
+                placeholder="user@example.com"
+                value={newNotificationEmail}
+                onChange={(e) => setNewNotificationEmail(e.target.value)}
+              />
+              <Button
+                onClick={() => {
+                  const email = newNotificationEmail.trim();
+                  if (!email) return;
+                  if (notificationEmails.includes(email)) return;
+                  setNotificationEmails(prev => [...prev, email]);
+                  setNewNotificationEmail("");
+                }}
+              >Add</Button>
+            </div>
+            <div className="space-y-2">
+              {notificationEmails.length === 0 && (
+                <div className="text-sm text-muted-foreground">No recipients configured.</div>
+              )}
+              {notificationEmails.map((e) => (
+                <div key={e} className="flex items-center justify-between p-2 border rounded">
+                  <div className="text-sm">{e}</div>
+                  <Button size="sm" variant="outline" onClick={() => setNotificationEmails(prev => prev.filter(x => x !== e))}>Remove</Button>
+                </div>
+              ))}
+            </div>
+            <div>
+              <Button
+                onClick={async () => {
+                  try {
+                    const token = localStorage.getItem('jwt_token');
+                    const res = await fetch('/api/site-settings/upload-notification-emails', {
+                      method: 'PUT',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                      },
+                      body: JSON.stringify({ emails: notificationEmails }),
+                    });
+                    if (!res.ok) throw new Error('Failed to save');
+                    alert('Notification recipients saved');
+                  } catch (e: any) {
+                    alert(e.message || 'Failed to save recipients');
+                  }
+                }}
+              >Save Recipients</Button>
             </div>
           </CardContent>
         </Card>

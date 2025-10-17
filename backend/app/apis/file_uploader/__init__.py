@@ -13,6 +13,8 @@ from sqlalchemy import func
 from app.services.s3_service import s3_service
 from app.services.email_service import email_service
 from app.services.metadata_service import metadata_service
+from app.database import SiteSetting
+import json
 
 # Optional RAG service import
 try:
@@ -172,14 +174,27 @@ async def upload_file(
                 detail="Failed to create database entry"
             )
         
-        # Send email notification to admin
+        # Send email notification to configured recipients
         try:
+            # Fetch configured notification recipients from site settings
+            recipients: list[str] = []
+            try:
+                setting = db.query(SiteSetting).filter(SiteSetting.key == "upload_notification_emails").first()
+                if setting and setting.value:
+                    data = json.loads(setting.value)
+                    emails = data.get("emails") if isinstance(data, dict) else data
+                    if isinstance(emails, list):
+                        recipients = [e.strip() for e in emails if isinstance(e, str) and e and e.strip()]
+            except Exception:
+                recipients = []
+
             email_service.notify_admin_new_document(
                 document_id=str(document_id),
                 title=title,
                 country=country,
                 state=state,
-                uploader_ip=None  # No IP tracking for privacy
+                uploader_ip=None,
+                extra_recipients=recipients
             )
         except Exception as e:
             logger.warning("Failed to send email notification", error=str(e))

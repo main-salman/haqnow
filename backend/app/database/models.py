@@ -5,12 +5,11 @@ from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from .database import Base
 
-# Import pgvector for vector operations
+# Import pgvector for vector operations (used only in RAG/Postgres)
 try:
-    from pgvector.sqlalchemy import Vector
+    from pgvector.sqlalchemy import Vector  # type: ignore
 except ImportError:
-    # Fallback if pgvector not available
-    Vector = Text
+    Vector = Text  # Fallback
 
 class Document(Base):
     """Document model for storing FOI documents."""
@@ -202,38 +201,10 @@ class Admin(Base):
         
         return data
 
-class DocumentChunk(Base):
-    """Model for storing document chunks with embeddings for RAG."""
-    
-    __tablename__ = "document_chunks"
-    
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    document_id = Column(Integer, ForeignKey("documents.id", ondelete="CASCADE"), nullable=False, index=True)
-    chunk_index = Column(Integer, nullable=False)
-    content = Column(Text, nullable=False)
-    embedding = Column(Vector(384), nullable=True)  # all-MiniLM-L6-v2 produces 384-dim embeddings
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    
-    # Relationships
-    document = relationship("Document", backref="chunks")
-    
-    # Unique constraint on document_id + chunk_index
-    __table_args__ = (
-        UniqueConstraint('document_id', 'chunk_index', name='uq_document_chunk'),
-    )
-    
-    def __repr__(self):
-        return f"<DocumentChunk(id={self.id}, doc_id={self.document_id}, chunk={self.chunk_index})>"
-    
-    def to_dict(self):
-        """Convert model to dictionary."""
-        return {
-            "id": self.id,
-            "document_id": self.document_id,
-            "chunk_index": self.chunk_index,
-            "content": self.content,
-            "created_at": self.created_at.isoformat() if self.created_at else None
-        }
+# IMPORTANT: RAG chunk storage belongs in PostgreSQL (app.database.rag_models).
+# Do not define the `document_chunks` table in the main MySQL metadata to avoid
+# unsupported types like VECTOR(384) on MySQL. The authoritative model lives in
+# `app/database/rag_models.py` and is managed separately.
 
 class RAGQuery(Base):
     """Model for logging RAG Q&A interactions for monitoring and improvement."""
