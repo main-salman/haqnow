@@ -1,3 +1,4 @@
+[2025-10-17T00:00:00Z] UX: Added required lawful-consent checkbox to upload page. Users must confirm: "This document was obtained through lawful means, and I have the necessary authorization to share it." Submission is blocked and button disabled until checked; inline error shown if unchecked. File edited: `frontend/src/pages/UploadDocumentPage.tsx`. Deploy with `./scripts/deploy.sh patch`.
 2025-10-17: Added upload notification feature
 - Backend: Added site settings endpoints to store `upload_notification_emails` in `SiteSetting` (key: upload_notification_emails) under `backend/app/apis/site_settings/__init__.py`.
 - Backend: Extended `EmailService` with `send_bulk` and enhanced `notify_admin_new_document` to accept `extra_recipients`.
