@@ -80,12 +80,13 @@ export default function UploadDocumentPage() {
     file: null,
   });
   const [currentStates, setCurrentStates] = useState<State[]>([]); // Changed type to State[]
-  const [errors, setErrors] = useState<Partial<Record<keyof FormData | 'captcha', string>>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof FormData | 'captcha' | 'consent', string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [isCameraMode, setIsCameraMode] = useState(false);
   const [showCameraDisclaimer, setShowCameraDisclaimer] = useState(false);
   const [capturedPhotos, setCapturedPhotos] = useState<File[]>([]);
+  const [consentChecked, setConsentChecked] = useState(false);
 
   // Available document languages - comprehensive list for all supported OCR languages
   const documentLanguages = [
@@ -501,7 +502,7 @@ export default function UploadDocumentPage() {
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<Record<keyof FormData | 'captcha', string>> = {};
+    const newErrors: Partial<Record<keyof FormData | 'captcha' | 'consent', string>> = {};
 
     if (!formData.title.trim()) {
       newErrors.title = "Document title is required.";
@@ -521,6 +522,10 @@ export default function UploadDocumentPage() {
 
     if (!formData.file && capturedPhotos.length === 0) {
       newErrors.file = "Please select a file to upload or capture photos with camera.";
+    }
+
+    if (!consentChecked) {
+      newErrors.consent = "You must confirm authorization to share this document.";
     }
 
     setErrors(newErrors);
@@ -922,6 +927,32 @@ export default function UploadDocumentPage() {
 
 
 
+            {/* Consent Confirmation */}
+            <div className="space-y-2">
+              <div className="flex items-start space-x-2">
+                <input
+                  id="lawful-consent"
+                  type="checkbox"
+                  checked={consentChecked}
+                  onChange={(e) => {
+                    setConsentChecked(e.target.checked);
+                    setErrors(prev => ({ ...prev, consent: undefined }));
+                  }}
+                  className="mt-1 h-4 w-4 text-primary focus:ring-primary border-gray-300"
+                  aria-invalid={!!errors.consent}
+                  aria-describedby={errors.consent ? 'consent-error' : undefined}
+                />
+                <Label htmlFor="lawful-consent" className="text-sm font-normal cursor-pointer">
+                  This document was obtained through lawful means, and I have the necessary authorization to share it.
+                </Label>
+              </div>
+              {errors.consent && (
+                <p id="consent-error" className="text-sm text-destructive flex items-center">
+                  <AlertCircle className="h-4 w-4 mr-1" />{errors.consent}
+                </p>
+              )}
+            </div>
+
             {/* CAPTCHA Section */}
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
@@ -941,7 +972,7 @@ export default function UploadDocumentPage() {
 
           </CardContent>
           <CardFooter className="flex flex-col items-center space-y-3">
-            <Button type="submit" className="w-full md:w-1/2 py-3 text-base" disabled={isSubmitting}>
+            <Button type="submit" className="w-full md:w-1/2 py-3 text-base" disabled={isSubmitting || !consentChecked}>
               {isSubmitting ? (
                 <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> {t('upload.uploading')}</>
               ) : (
