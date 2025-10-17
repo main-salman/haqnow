@@ -121,6 +121,10 @@ resource "exoscale_compute_instance" "foi_app" {
   ssh_keys           = [exoscale_ssh_key.foi_key.name]
   security_group_ids = [exoscale_security_group.foi_web.id]
 
+  lifecycle {
+    ignore_changes = [user_data]
+  }
+
   user_data = base64encode(templatefile("${path.module}/cloud-init.yml", {
     project_name       = var.project_name
     environment        = var.environment

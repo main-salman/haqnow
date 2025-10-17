@@ -1,3 +1,9 @@
+2025-10-17: Added upload notification feature
+- Backend: Added site settings endpoints to store `upload_notification_emails` in `SiteSetting` (key: upload_notification_emails) under `backend/app/apis/site_settings/__init__.py`.
+- Backend: Extended `EmailService` with `send_bulk` and enhanced `notify_admin_new_document` to accept `extra_recipients`.
+- Backend: On successful upload in `backend/app/apis/file_uploader/__init__.py`, reads configured recipients and sends notifications.
+- Frontend: Added Admin UI section in `frontend/src/pages/AdminManagementPage.tsx` for managing the recipient list (add/remove/save), gated to super admins.
+- Notes: Uses SendGrid via existing `SENDGRID_API_KEY` and `FROM_EMAIL`. The list lives in MySQL `site_settings` table.
 2025-08-13: Fix deploy.sh and dependencies for stable server deploy
  - Added venv creation + robust activation in `scripts/deploy.sh`; upgraded pip/setuptools/wheel; increased backend start wait.
  - Pinned `langchain-core==0.1.27` and `langsmith==0.0.92` in `backend/requirements.txt` and `backend/requirements-rag.txt` to resolve resolver conflicts.

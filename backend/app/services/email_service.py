@@ -1,7 +1,7 @@
 """Email notification service for admin notifications."""
 
 import os
-from typing import Optional
+from typing import Optional, Iterable
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 import structlog
@@ -27,6 +27,19 @@ class EmailService:
         if not self.client:
             logger.warning("Email service not configured, skipping email send")
             return False
+
+    def send_bulk(self, to_emails: Iterable[str], subject: str, content: str) -> int:
+        """Send an email to multiple recipients. Returns number of attempted sends.
+        This performs simple per-recipient sends to keep code minimal and robust.
+        """
+        count = 0
+        if not to_emails:
+            return 0
+        for addr in {e.strip() for e in to_emails if isinstance(e, str) and e.strip()}:
+            ok = self.send_email(addr, subject, content)
+            if ok:
+                count += 1
+        return count
         
         try:
             message = Mail(
@@ -49,11 +62,8 @@ class EmailService:
             return False
     
     def notify_admin_new_document(self, document_id: str, title: str, country: str, 
-                                 state: str, uploader_ip: str = None) -> bool:
-        """Notify admin about a new document upload."""
-        if not self.admin_email:
-            logger.warning("Admin email not configured, skipping notification")
-            return False
+                                 state: str, uploader_ip: str = None, extra_recipients: Optional[Iterable[str]] = None) -> bool:
+        """Notify admin about a new document upload. Can include extra recipients."""
         
         subject = f"New Corruption Document Uploaded - {title}"
         content = f"""
@@ -77,7 +87,13 @@ class EmailService:
         </body>
         </html>
         """
-        
+        # If explicit recipients provided, send to them; otherwise fallback to single admin_email
+        if extra_recipients:
+            sent = self.send_bulk(extra_recipients, subject, content)
+            return sent > 0
+        if not self.admin_email:
+            logger.warning("Admin email not configured and no extra recipients provided, skipping notification")
+            return False
         return self.send_email(self.admin_email, subject, content)
     
     def notify_admin_document_approved(self, document_id: str, title: str) -> bool:
