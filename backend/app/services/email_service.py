@@ -4,6 +4,8 @@ import os
 from typing import Optional, Iterable
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
+import smtplib
+from email.mime.text import MIMEText
 import structlog
 
 logger = structlog.get_logger()
@@ -16,17 +18,67 @@ class EmailService:
         self.from_email = os.getenv("FROM_EMAIL", "noreply@fadih.org")
         self.admin_email = os.getenv("admin_email")
         self.client = None
+        # SMTP relay defaults for SendGrid
+        self.smtp_host = os.getenv("SENDGRID_SMTP_HOST", "smtp.sendgrid.net")
+        try:
+            self.smtp_port = int(os.getenv("SENDGRID_SMTP_PORT", "587"))
+        except ValueError:
+            self.smtp_port = 587
+        self.smtp_username = os.getenv("SENDGRID_SMTP_USERNAME", "apikey")
         
         if self.sendgrid_api_key:
             self.client = SendGridAPIClient(api_key=self.sendgrid_api_key)
         else:
             logger.warning("SendGrid API key not configured, email notifications disabled")
     
-    def send_email(self, to_email: str, subject: str, content: str) -> bool:
-        """Send an email using SendGrid."""
+    def _send_via_api(self, to_email: str, subject: str, content: str) -> bool:
         if not self.client:
-            logger.warning("Email service not configured, skipping email send")
             return False
+        try:
+            message = Mail(
+                from_email=self.from_email,
+                to_emails=to_email,
+                subject=subject,
+                html_content=content
+            )
+            response = self.client.send(message)
+            status = getattr(response, "status_code", None)
+            if status and 200 <= int(status) < 300:
+                logger.info("Email sent via SendGrid API", to_email=to_email, status_code=status)
+                return True
+            logger.warning("SendGrid API returned non-success status", to_email=to_email, status_code=status)
+            return False
+        except Exception as e:
+            logger.error("SendGrid API send failed", to_email=to_email, error=str(e))
+            return False
+
+    def _send_via_smtp(self, to_email: str, subject: str, content: str) -> bool:
+        if not self.sendgrid_api_key:
+            return False
+        msg = MIMEText(content, "html")
+        msg["Subject"] = subject
+        msg["From"] = self.from_email
+        msg["To"] = to_email
+        try:
+            with smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=20) as server:
+                server.ehlo()
+                if self.smtp_port == 587:
+                    server.starttls()
+                    server.ehlo()
+                server.login(self.smtp_username, self.sendgrid_api_key)
+                server.sendmail(self.from_email, [to_email], msg.as_string())
+            logger.info("Email sent via SendGrid SMTP", to_email=to_email, host=self.smtp_host, port=self.smtp_port)
+            return True
+        except Exception as e:
+            logger.error("SendGrid SMTP send failed", to_email=to_email, error=str(e), host=self.smtp_host, port=self.smtp_port)
+            return False
+
+    def send_email(self, to_email: str, subject: str, content: str) -> bool:
+        """Send an email using SendGrid API with SMTP fallback."""
+        # Try API first; if it fails (e.g., 401), fallback to SMTP relay.
+        if self._send_via_api(to_email, subject, content):
+            return True
+        return self._send_via_smtp(to_email, subject, content)
 
     def send_bulk(self, to_emails: Iterable[str], subject: str, content: str) -> int:
         """Send an email to multiple recipients. Returns number of attempted sends.
@@ -41,25 +93,8 @@ class EmailService:
                 count += 1
         return count
         
-        try:
-            message = Mail(
-                from_email=self.from_email,
-                to_emails=to_email,
-                subject=subject,
-                html_content=content
-            )
-            
-            response = self.client.send(message)
-            logger.info("Email sent successfully", 
-                       to_email=to_email, 
-                       status_code=response.status_code)
-            return True
-            
-        except Exception as e:
-            logger.error("Failed to send email", 
-                        to_email=to_email, 
-                        error=str(e))
-            return False
+        # Unreachable now; kept to preserve structure
+        return 0
     
     def notify_admin_new_document(self, document_id: str, title: str, country: str, 
                                  state: str, uploader_ip: str = None, extra_recipients: Optional[Iterable[str]] = None) -> bool:
