@@ -60,9 +60,14 @@ class EmailService:
         msg["From"] = self.from_email
         msg["To"] = to_email
         try:
-            with smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=20) as server:
+            # Try STARTTLS on 587 by default
+            if self.smtp_port == 465:
+                smtp_client = smtplib.SMTP_SSL(self.smtp_host, 465, timeout=20)
+            else:
+                smtp_client = smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=20)
+            with smtp_client as server:
                 server.ehlo()
-                if self.smtp_port == 587:
+                if isinstance(server, smtplib.SMTP) and self.smtp_port == 587:
                     server.starttls()
                     server.ehlo()
                 server.login(self.smtp_username, self.sendgrid_api_key)
@@ -70,8 +75,18 @@ class EmailService:
             logger.info("Email sent via SendGrid SMTP", to_email=to_email, host=self.smtp_host, port=self.smtp_port)
             return True
         except Exception as e:
-            logger.error("SendGrid SMTP send failed", to_email=to_email, error=str(e), host=self.smtp_host, port=self.smtp_port)
-            return False
+            logger.warning("Primary SMTP attempt failed, trying SSL:465", error=str(e))
+            # Fallback to SMTPS 465 explicitly
+            try:
+                with smtplib.SMTP_SSL(self.smtp_host, 465, timeout=20) as server:
+                    server.ehlo()
+                    server.login(self.smtp_username, self.sendgrid_api_key)
+                    server.sendmail(self.from_email, [to_email], msg.as_string())
+                logger.info("Email sent via SendGrid SMTP SSL", to_email=to_email, host=self.smtp_host, port=465)
+                return True
+            except Exception as e2:
+                logger.error("SendGrid SMTP send failed", to_email=to_email, error=str(e2), host=self.smtp_host, port=465)
+                return False
 
     def send_email(self, to_email: str, subject: str, content: str) -> bool:
         """Send an email using SendGrid API with SMTP fallback."""
