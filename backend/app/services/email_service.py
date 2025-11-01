@@ -18,13 +18,19 @@ class EmailService:
         self.from_email = os.getenv("FROM_EMAIL", "noreply@fadih.org")
         self.admin_email = os.getenv("admin_email")
         self.client = None
-        # SMTP relay defaults for SendGrid
-        self.smtp_host = os.getenv("SENDGRID_SMTP_HOST", "smtp.sendgrid.net")
+        # Generic SMTP configuration (provider-agnostic). Falls back to SendGrid-compatible defaults
+        # if generic env vars are not provided.
+        self.smtp_host = os.getenv("SMTP_HOST") or os.getenv("SENDGRID_SMTP_HOST", "smtp.sendgrid.net")
         try:
-            self.smtp_port = int(os.getenv("SENDGRID_SMTP_PORT", "587"))
+            self.smtp_port = int(os.getenv("SMTP_PORT") or os.getenv("SENDGRID_SMTP_PORT", "587"))
         except ValueError:
             self.smtp_port = 587
-        self.smtp_username = os.getenv("SENDGRID_SMTP_USERNAME", "apikey")
+        self.smtp_username = os.getenv("SMTP_USERNAME") or os.getenv("SENDGRID_SMTP_USERNAME", "apikey")
+        # Password/token for SMTP authentication. When using SendGrid, this is typically the API key.
+        self.smtp_password = os.getenv("SMTP_PASSWORD") or self.sendgrid_api_key
+        # TLS/SSL toggles (sane defaults)
+        self.smtp_use_ssl = (os.getenv("SMTP_USE_SSL", "false").lower() == "true")
+        self.smtp_use_tls = (os.getenv("SMTP_USE_TLS", "true").lower() == "true")
         
         if self.sendgrid_api_key:
             self.client = SendGridAPIClient(api_key=self.sendgrid_api_key)
@@ -53,47 +59,45 @@ class EmailService:
             return False
 
     def _send_via_smtp(self, to_email: str, subject: str, content: str) -> bool:
-        if not self.sendgrid_api_key:
+        # Require at minimum host and password/token
+        if not self.smtp_host or not self.smtp_password:
             return False
         msg = MIMEText(content, "html")
         msg["Subject"] = subject
         msg["From"] = self.from_email
         msg["To"] = to_email
         try:
-            # Try STARTTLS on 587 by default
-            if self.smtp_port == 465:
-                smtp_client = smtplib.SMTP_SSL(self.smtp_host, 465, timeout=20)
+            # Choose connection strategy
+            if self.smtp_use_ssl or self.smtp_port == 465:
+                smtp_client = smtplib.SMTP_SSL(self.smtp_host, self.smtp_port, timeout=20)
             else:
                 smtp_client = smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=20)
             with smtp_client as server:
                 server.ehlo()
-                if isinstance(server, smtplib.SMTP) and self.smtp_port == 587:
-                    server.starttls()
-                    server.ehlo()
-                server.login(self.smtp_username, self.sendgrid_api_key)
+                if isinstance(server, smtplib.SMTP) and self.smtp_use_tls and not isinstance(server, smtplib.SMTP_SSL):
+                    try:
+                        server.starttls()
+                        server.ehlo()
+                    except Exception:
+                        # Some providers may not advertise STARTTLS on alternative ports
+                        pass
+                server.login(self.smtp_username, self.smtp_password)
                 server.sendmail(self.from_email, [to_email], msg.as_string())
-            logger.info("Email sent via SendGrid SMTP", to_email=to_email, host=self.smtp_host, port=self.smtp_port)
+            logger.info("Email sent via SMTP", to_email=to_email, host=self.smtp_host, port=self.smtp_port)
             return True
         except Exception as e:
-            logger.warning("Primary SMTP attempt failed, trying SSL:465", error=str(e))
-            # Fallback to SMTPS 465 explicitly
-            try:
-                with smtplib.SMTP_SSL(self.smtp_host, 465, timeout=20) as server:
-                    server.ehlo()
-                    server.login(self.smtp_username, self.sendgrid_api_key)
-                    server.sendmail(self.from_email, [to_email], msg.as_string())
-                logger.info("Email sent via SendGrid SMTP SSL", to_email=to_email, host=self.smtp_host, port=465)
-                return True
-            except Exception as e2:
-                logger.error("SendGrid SMTP send failed", to_email=to_email, error=str(e2), host=self.smtp_host, port=465)
-                return False
+            logger.error("SMTP send failed", to_email=to_email, error=str(e), host=self.smtp_host, port=self.smtp_port)
+            return False
 
     def send_email(self, to_email: str, subject: str, content: str) -> bool:
-        """Send an email using SendGrid API with SMTP fallback."""
-        # Try API first; if it fails (e.g., 401), fallback to SMTP relay.
+        """Send an email preferring configured SMTP; fallback to SendGrid API if present."""
+        # Prefer explicit SMTP configuration if provided (e.g., Maileroo)
+        if self._send_via_smtp(to_email, subject, content):
+            return True
+        # Fallback to SendGrid API if available
         if self._send_via_api(to_email, subject, content):
             return True
-        return self._send_via_smtp(to_email, subject, content)
+        return False
 
     def send_bulk(self, to_emails: Iterable[str], subject: str, content: str) -> int:
         """Send an email to multiple recipients. Returns number of attempted sends.

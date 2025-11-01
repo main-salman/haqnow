@@ -9165,3 +9165,5 @@ User Question → Embedding → Vector Search → Context Retrieval → LLM Gene
 2025-08-12T10:45:00Z - Feature: API Keys for programmatic access. Added `APIKey` model; admin endpoints to create/list/update/delete under `/api/admin-management/api-keys`; backend support for `X-API-Key` on `POST /api/file-uploader/upload` and `GET /api/search/download/{id}` with scope checks and rate-limit bypass for authorized keys; admin UI section in `frontend/src/pages/AdminManagementPage.tsx` to manage keys; docs updated in `documentation/README.md` and deployment addendum added to `documentation/DEPLOYMENT_SUCCESS_SUMMARY.md`. Deployment: use `./scripts/deploy.sh minor`.
 
 [2025-08-12] E2E: stabilized selectors; added backend health retries; removed react-wheel-of-prizes to fix npm peer deps; added frontend/.npmrc legacy-peer-deps; regenerated package-lock.json; all tests pass locally.
+
+[2025-11-01] SendGrid SMTP debug: server returned '451 Authentication failed: Maximum credits exceeded' on AUTH for both SSL:465 and STARTTLS:587. API tests also failing previously. Root cause: SendGrid account credits exhausted; mail sending blocked until credits increased/reset.
