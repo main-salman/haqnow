@@ -17,6 +17,8 @@
   "homepage": {
     "title": "Разоблачение Документов о Коррупции по Всему Миру",
     "subtitle": "HaqNow - это платформа, посвященная сбору, организации и предоставлению доступа к документам, которые разоблачают коррупцию со всего мира. Наша передовая система автоматически переводит документы с более чем 60 языков, делая как оригинальные документы, так и переводы доступными для пользователей по всему миру. Загружайте анонимно, ищите свободно и вносите вклад в растущий репозиторий правды и прозрачности.",
+    "newsletterHtml": "<a href=\"https://subscribepage.io/haqnow\" target=\"_blank\" rel=\"noopener noreferrer\">Join our newsletter</a> and receive a monthly digest that highlights the most popular and valuable documents available on HaqNow.",
+    "feedbackHtml": "We value your input and always <a href=\"https://subscribepage.io/haqnow\" target=\"_blank\" rel=\"noopener noreferrer\">welcome questions or feedback</a>. As we are DMCA and GDPR compliant, we take document concerns seriously and act quickly. For the fastest resolution, please submit your issue using the <a href=\"https://subscribepage.io/haqnow\" target=\"_blank\" rel=\"noopener noreferrer\">contact form</a>, making sure to include the document's URL.",
     "searchPlaceholder": "Поиск документов о коррупции по ключевому слову, стране, организации...",
     "searchButton": "Поиск",
     "mapTitle": "Глобальное Распределение Документов о Коррупции",

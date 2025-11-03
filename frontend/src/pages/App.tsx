@@ -31,6 +31,9 @@ export default function App() {
   const hasFetchedMapData = useRef(false); // Track if we've already fetched to prevent duplicates
   const navigate = useNavigate(); // Added navigation hook
   const { t } = useTranslation(); // Added translation hook
+  const renderHtml = (html: string) => {
+    return <span dangerouslySetInnerHTML={{ __html: html }} />;
+  };
 
   // Country code mapping for converting country names to ISO codes
   const countryCodeMapping: Record<string, string> = {
@@ -282,6 +285,12 @@ export default function App() {
             <p className="text-muted-foreground max-w-2xl mx-auto">
               {t('homepage.subtitle')}
             </p>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            {renderHtml(t('homepage.newsletterHtml'))}
+          </p>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            {renderHtml(t('homepage.feedbackHtml'))}
+          </p>
           </section>
 
           <section className="max-w-xl mx-auto">
