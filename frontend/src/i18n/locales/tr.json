@@ -17,8 +17,8 @@
   "homepage": {
     "title": "Dünya Çapında Yolsuzluk Belgelerini İfşa Edin",
     "subtitle": "HaqNow, dünyanın dört bir yanından yolsuzluğu ifşa eden belgeleri toplama, organize etme ve bunlara erişim sağlama konusunda özel bir platformdur. Gelişmiş sistemimiz 60'tan fazla dilden belgeleri otomatik olarak çevirerek hem orijinal belgeleri hem de çevirileri dünya çapındaki kullanıcılara erişilebilir hale getirir. Anonim olarak yükleyin, özgürce arayın ve büyüyen gerçek ve şeffaflık deposuna katkıda bulunun.",
-    "newsletterHtml": "<a href=\"https://subscribepage.io/haqnow\" target=\"_blank\" rel=\"noopener noreferrer\">Join our newsletter</a> and receive a monthly digest that highlights the most popular and valuable documents available on HaqNow.",
-    "feedbackHtml": "We value your input and always <a href=\"https://subscribepage.io/haqnow\" target=\"_blank\" rel=\"noopener noreferrer\">welcome questions or feedback</a>. As we are DMCA and GDPR compliant, we take document concerns seriously and act quickly. For the fastest resolution, please submit your issue using the <a href=\"https://subscribepage.io/haqnow\" target=\"_blank\" rel=\"noopener noreferrer\">contact form</a>, making sure to include the document's URL.",
+    "newsletterHtml": "<a href=\"https://subscribepage.io/haqnow\" target=\"_blank\" rel=\"noopener noreferrer\">Bültenimize abone olun</a> ve HaqNow’da yer alan en popüler ve değerli belgeleri öne çıkaran aylık bir özet alın.",
+    "feedbackHtml": "Görüşlerinize değer veriyoruz ve <a href=\"https://subscribepage.io/haqnow\" target=\"_blank\" rel=\"noopener noreferrer\">sorularınızı ya da geri bildirimlerinizi her zaman memnuniyetle karşılıyoruz</a>. DMCA ve GDPR ile uyumlu olduğumuz için belgeyle ilgili endişeleri ciddiyetle ve hızlıca ele alıyoruz. En hızlı çözüm için lütfen <a href=\"https://subscribepage.io/haqnow\" target=\"_blank\" rel=\"noopener noreferrer\">iletişim formu</a> üzerinden, belgenin URL’sini ekleyerek bize iletin.",
     "searchPlaceholder": "Yolsuzluk belgelerini arayın...",
     "searchButton": "Search",
     "mapTitle": "Ülkelere Göre Belgeler",

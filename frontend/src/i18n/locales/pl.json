@@ -17,8 +17,8 @@
   "homepage": {
     "title": "Ujawnij Dokumenty Korupcji na Całym Świecie",
     "subtitle": "HaqNow to platforma dedykowana zbieraniu, organizowaniu i zapewnianiu dostępu do dokumentów ujawniających korupcję z całego świata. Nasz zaawansowany system automatycznie tłumaczy dokumenty z ponad 60 języków, udostępniając zarówno oryginalne dokumenty, jak i tłumaczenia użytkownikom na całym świecie. Przesyłaj anonimowo, przeszukuj swobodnie i przyczyniaj się do rosnącego repozytorium prawdy i przejrzystości.",
-    "newsletterHtml": "<a href=\"https://subscribepage.io/haqnow\" target=\"_blank\" rel=\"noopener noreferrer\">Join our newsletter</a> and receive a monthly digest that highlights the most popular and valuable documents available on HaqNow.",
-    "feedbackHtml": "We value your input and always <a href=\"https://subscribepage.io/haqnow\" target=\"_blank\" rel=\"noopener noreferrer\">welcome questions or feedback</a>. As we are DMCA and GDPR compliant, we take document concerns seriously and act quickly. For the fastest resolution, please submit your issue using the <a href=\"https://subscribepage.io/haqnow\" target=\"_blank\" rel=\"noopener noreferrer\">contact form</a>, making sure to include the document's URL.",
+    "newsletterHtml": "<a href=\"https://subscribepage.io/haqnow\" target=\"_blank\" rel=\"noopener noreferrer\">Zapisz się do newslettera</a>, aby otrzymywać comiesięczne podsumowanie najpopularniejszych i najcenniejszych dokumentów dostępnych w HaqNow.",
+    "feedbackHtml": "Cenimy Twoją opinię i <a href=\"https://subscribepage.io/haqnow\" target=\"_blank\" rel=\"noopener noreferrer\">zawsze chętnie przyjmujemy pytania lub uwagi</a>. Jesteśmy zgodni z DMCA i RODO, dlatego zgłoszenia dotyczące dokumentów traktujemy poważnie i reagujemy szybko. Aby najszybciej rozwiązać problem, prześlij zgłoszenie przez <a href=\"https://subscribepage.io/haqnow\" target=\"_blank\" rel=\"noopener noreferrer\">formularz kontaktowy</a>, pamiętając o dołączeniu adresu URL dokumentu.",
     "searchPlaceholder": "Wyszukaj dokumenty korupcji...",
     "searchButton": "Search",
     "mapTitle": "Dokumenty według Krajów",
