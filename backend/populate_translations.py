@@ -86,8 +86,14 @@ def determine_section(key):
         return 'general'  # default section
 
 def populate_translations():
-    """Populate database with translations from JSON files."""
-    print("🌍 Starting translation database population...")
+    """Populate database with translations from JSON files (safe mode).
+
+    - No deletions
+    - Insert missing keys
+    - Update only rows previously written by scripts (populate_script/system_migration)
+    - Never overwrite admin-edited rows
+    """
+    print("🌍 Starting translation database population (safe, non-destructive)...")
     
     try:
         # Create database engine
@@ -98,14 +104,7 @@ def populate_translations():
             trans = conn.begin()
             
             try:
-                # Clear existing translations except system ones
-                print("🗑️  Clearing existing translations...")
-                conn.execute(text("""
-                    DELETE FROM translations 
-                    WHERE updated_by != 'system_migration'
-                """))
-                
-                total_inserted = 0
+                total_processed = 0
                 
                 # Process each language
                 for language_code, file_path in TRANSLATION_FILES.items():
@@ -124,15 +123,15 @@ def populate_translations():
                         if isinstance(value, str) and value.strip():
                             section = determine_section(key)
                             
-                            # Insert or update translation
+                            # Insert or update translation (only update if previously script/system-created)
                             conn.execute(text("""
                                 INSERT INTO translations (`key`, language, value, section, updated_by, created_at, updated_at)
                                 VALUES (:key, :language, :value, :section, :updated_by, NOW(), NOW())
                                 ON DUPLICATE KEY UPDATE
-                                value = VALUES(value),
-                                section = VALUES(section),
-                                updated_by = VALUES(updated_by),
-                                updated_at = NOW()
+                                value = IF(updated_by IN ('populate_script','system_migration') OR updated_by IS NULL, VALUES(value), value),
+                                section = IF(updated_by IN ('populate_script','system_migration') OR updated_by IS NULL, VALUES(section), section),
+                                updated_by = IF(updated_by IN ('populate_script','system_migration') OR updated_by IS NULL, VALUES(updated_by), updated_by),
+                                updated_at = IF(updated_by IN ('populate_script','system_migration') OR updated_by IS NULL, NOW(), updated_at)
                             """), {
                                 'key': key,
                                 'language': language_code,
@@ -142,13 +141,13 @@ def populate_translations():
                             })
                             
                             language_count += 1
-                            total_inserted += 1
+                            total_processed += 1
                     
-                    print(f"✅ Inserted {language_count} translations for {language_code.upper()}")
+                    print(f"✅ Processed {language_count} translations for {language_code.upper()} (inserted/updated if safe)")
                 
                 # Commit transaction
                 trans.commit()
-                print(f"\n🎉 Successfully populated {total_inserted} total translations!")
+                print(f"\n🎉 Successfully processed {total_processed} total translations (safe mode)!")
                 
                 # Show summary
                 print("\n📊 Translation Summary:")
