@@ -463,7 +463,7 @@ export default function PrivacyGuaranteedPage() {
                 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                   <Button asChild className="min-w-[200px]">
-                    <a href="https://ministryofwoke.com/contact/" target="_blank" rel="noopener noreferrer">
+                    <a href="https://freedom-advocacy.net/contact" target="_blank" rel="noopener noreferrer">
                       <Users className="h-4 w-4 mr-2" />
                       Connect with Us
                       <ExternalLink className="h-3 w-3 ml-1" />
