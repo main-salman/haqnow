@@ -285,10 +285,10 @@ export default function App() {
             <p className="text-muted-foreground max-w-2xl mx-auto">
               {t('homepage.subtitle')}
             </p>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-muted-foreground max-w-2xl mx-auto [&_a]:text-green-600 [&_a]:underline [&_a:hover]:text-green-800">
             {renderHtml(t('homepage.newsletterHtml'))}
           </p>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-muted-foreground max-w-2xl mx-auto [&_a]:text-green-600 [&_a]:underline [&_a:hover]:text-green-800">
             {renderHtml(t('homepage.feedbackHtml'))}
           </p>
           </section>
