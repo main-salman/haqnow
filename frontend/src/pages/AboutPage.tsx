@@ -110,7 +110,7 @@ export default function AboutPage() {
             <h3 className="text-xl font-semibold text-gray-900 mb-4">{t('about.connectedProjects')}</h3>
             <div className="grid md:grid-cols-2 gap-4">
               <a 
-                href="https://www.ministryofwoke.com" 
+                href="https://freedom-advocacy.net/" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="p-4 border border-gray-200 rounded-lg hover:border-indigo-300 hover:shadow-md transition-all"
@@ -155,7 +155,7 @@ export default function AboutPage() {
               </a>
               
               <a 
-                href="https://ministryofwoke.com/contact/" 
+                href="https://freedom-advocacy.net/contact" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="p-4 border border-gray-200 rounded-lg hover:border-indigo-300 hover:shadow-md transition-all"
