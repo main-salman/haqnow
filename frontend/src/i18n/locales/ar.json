@@ -17,8 +17,8 @@
   "homepage": {
     "title": "كشف وثائق الفساد في جميع أنحاء العالم",
     "subtitle": "HaqNow هي منصة مخصصة لجمع وتنظيم وتوفير الوصول إلى الوثائق التي تكشف الفساد من جميع أنحاء العالم. نظامنا المتقدم يترجم الوثائق تلقائياً من أكثر من 60 لغة، مما يجعل الوثائق الأصلية والترجمات متاحة للمستخدمين في جميع أنحاء العالم. ارفع بشكل مجهول، ابحث بحرية، وساهم في مستودع متنامٍ من الحقيقة والشفافية.",
-    "newsletterHtml": "<a href=\"https://subscribepage.io/haqnow\" target=\"_blank\" rel=\"noopener noreferrer\">Join our newsletter</a> and receive a monthly digest that highlights the most popular and valuable documents available on HaqNow.",
-    "feedbackHtml": "We value your input and always <a href=\"https://subscribepage.io/haqnow\" target=\"_blank\" rel=\"noopener noreferrer\">welcome questions or feedback</a>. As we are DMCA and GDPR compliant, we take document concerns seriously and act quickly. For the fastest resolution, please submit your issue using the <a href=\"https://subscribepage.io/haqnow\" target=\"_blank\" rel=\"noopener noreferrer\">contact form</a>, making sure to include the document's URL.",
+    "newsletterHtml": "<a href=\"https://subscribepage.io/haqnow\" target=\"_blank\" rel=\"noopener noreferrer\">اشترك في النشرة البريدية</a> لتصلك خلاصة شهرية تُبرز أكثر الوثائق شعبية وقيمة المتاحة على HaqNow.",
+    "feedbackHtml": "نقدّر ملاحظاتك ودائمًا <a href=\"https://subscribepage.io/haqnow\" target=\"_blank\" rel=\"noopener noreferrer\">نرحّب بالأسئلة أو التعليقات</a>. بما أننا متوافقون مع DMCA وGDPR، فإننا نتعامل مع مخاوف الوثائق بجدية ونتصرف بسرعة. لأسرع معالجة، يُرجى إرسال المشكلة عبر <a href=\"https://subscribepage.io/haqnow\" target=\"_blank\" rel=\"noopener noreferrer\">نموذج التواصل</a> مع تضمين رابط الوثيقة.",
     "searchPlaceholder": "ابحث في وثائق الفساد بالكلمة المفتاحية، البلد، المنظمة...",
     "searchButton": "بحث",
     "mapTitle": "توزيع وثائق الفساد العالمية",
