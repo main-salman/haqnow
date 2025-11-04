@@ -6,8 +6,9 @@ sentence-transformers==2.2.2    # Open source embeddings (replaces Mistral embed
 ollama==0.1.7                   # Open source LLM interface
 langchain==0.1.0                # RAG framework
 langchain-community==0.0.12     # Community LangChain extensions
-langchain-core==0.1.27          # Pin core to match langsmith constraint
-langsmith==0.0.92               # Satisfy older langchain versions
+# langchain-core provided by langchain; explicit pin removed to avoid conflicts
+# langchain-core==0.1.27
+langsmith==0.0.92               # Match langchain 0.1.0 constraint (<0.1.0)
 langchain-text-splitters==0.0.1 # Text chunking for RAG
 
 # Document processing
