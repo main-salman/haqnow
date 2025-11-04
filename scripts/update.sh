@@ -16,6 +16,8 @@ NC='\033[0m' # No Color
 SERVER_HOST="${SERVER_HOST:-www.haqnow.com}"
 SERVER_USER="root"
 SERVER_DIR="/opt/foi-archive"
+SSH_KEY_PATH="${SSH_KEY_PATH:-$HOME/.ssh/id_rsa}"
+SSH_OPTS="-i ${SSH_KEY_PATH} -o StrictHostKeyChecking=accept-new"
 
 echo -e "${BLUE}🚀 HaqNow - Fast Update${NC}"
 echo "=============================="
@@ -96,7 +98,7 @@ echo -e "${BLUE}📋 Latest commit: ${LATEST_COMMIT}${NC}"
 
 # Test SSH connection
 echo -e "${BLUE}📋 Testing SSH connection to server...${NC}"
-if ! ssh -o ConnectTimeout=10 "$SERVER_USER@$SERVER_HOST" "echo 'SSH connection successful'"; then
+if ! ssh -o ConnectTimeout=10 ${SSH_OPTS} "$SERVER_USER@$SERVER_HOST" "echo 'SSH connection successful'"; then
     echo -e "${RED}❌ SSH connection failed${NC}"
     exit 1
 fi
@@ -205,11 +207,11 @@ EOF
 
 # Copy update script to server and execute
 echo -e "${BLUE}📋 Copying update script to server...${NC}"
-scp update_remote.sh "$SERVER_USER@$SERVER_HOST":/tmp/
+scp ${SSH_OPTS} update_remote.sh "$SERVER_USER@$SERVER_HOST":/tmp/
 rm update_remote.sh
 
 echo -e "${BLUE}📋 Executing fast update on server...${NC}"
-ssh "$SERVER_USER@$SERVER_HOST" "chmod +x /tmp/update_remote.sh && /tmp/update_remote.sh && rm /tmp/update_remote.sh"
+ssh ${SSH_OPTS} "$SERVER_USER@$SERVER_HOST" "chmod +x /tmp/update_remote.sh && /tmp/update_remote.sh && rm /tmp/update_remote.sh"
 
 echo ""
 echo -e "${GREEN}🎉 Fast update completed successfully!${NC}"
