@@ -131,30 +131,50 @@ sudo systemctl stop foi-archive || true
 
 # Install/update backend dependencies
 cd backend
-# Ensure venv exists and is activated safely
+# Ensure venv exists and is activated safely (with robust fallbacks)
+USE_SYSTEM_PIP=0
 if [ ! -d ".venv" ]; then
   echo "🐍 Python version: $(python3 -V 2>/dev/null || echo 'python3 not found')"
-  if ! python3 -m venv .venv; then
-    echo "⚠️  venv creation failed, attempting to install python3-venv explicitly..."
+  python3 -m venv .venv || true
+  if [ ! -d ".venv" ]; then
+    echo "⚠️  python3 -m venv failed; installing helpers and retrying..."
     sudo apt-get update -y || true
     sudo apt-get install -y python3-venv python3.12-venv python3-virtualenv || true
     python3 -m ensurepip --upgrade || true
-    if ! python3 -m venv .venv; then
-      echo "⚠️  python3 venv still failing, trying 'virtualenv' fallback..."
-      if ! command -v virtualenv >/dev/null 2>&1; then
-        sudo apt-get install -y python3-virtualenv || true
-      fi
-      virtualenv -p python3 .venv || { echo "❌ Unable to create virtualenv via virtualenv"; exit 1; }
+    python3 -m venv .venv || true
+  fi
+  if [ ! -d ".venv" ]; then
+    echo "⚠️  Falling back to virtualenv..."
+    if ! command -v virtualenv >/dev/null 2>&1; then
+      sudo apt-get install -y python3-virtualenv || true
     fi
+    virtualenv -p python3 .venv || true
   fi
 fi
-source .venv/bin/activate || { echo "❌ Failed to activate venv"; exit 1; }
-pip install --upgrade pip setuptools wheel || true
-pip install -r requirements.txt
+
+if [ -d ".venv" ]; then
+  echo "✅ Virtualenv prepared"
+  source .venv/bin/activate || { echo "❌ Failed to activate venv"; USE_SYSTEM_PIP=1; }
+else
+  echo "⚠️  .venv not created; using system pip as fallback"
+  USE_SYSTEM_PIP=1
+fi
+
+if [ "$USE_SYSTEM_PIP" -eq 0 ]; then
+  pip install --upgrade pip setuptools wheel || true
+  pip install -r requirements.txt
+else
+  pip3 install --break-system-packages --upgrade pip setuptools wheel || true
+  pip3 install --break-system-packages -r requirements.txt
+fi
 
 # Install RAG-specific dependencies
 echo "🤖 Installing RAG (AI Q&A) dependencies..."
-pip install -r requirements-rag.txt || echo "RAG dependencies installation completed"
+if [ "$USE_SYSTEM_PIP" -eq 0 ]; then
+  pip install -r requirements-rag.txt || echo "RAG dependencies installation completed"
+else
+  pip3 install --break-system-packages -r requirements-rag.txt || echo "RAG dependencies installation completed"
+fi
 
 # Setup Ollama for local LLM processing (confirmed fallback/provider)
 echo "🧠 Setting up Ollama for AI Q&A..."
