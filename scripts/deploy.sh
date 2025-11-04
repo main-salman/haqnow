@@ -82,9 +82,9 @@ ssh ${SSH_OPTS} root@${SERVER_HOST} << EOF
 echo "=== Deploying HaqNow v$NEW_VERSION ==="
 
 # Ensure base dependencies are present on a fresh server
-echo "🛠️  Installing system prerequisites (git, python3-venv, pip, node, npm)..."
+echo "🛠️  Installing system prerequisites (git, python3-venv, python3-virtualenv, pip, node, npm)..."
 sudo apt-get update -y || true
-sudo apt-get install -y git python3-venv python3-pip nodejs npm || true
+sudo apt-get install -y git python3-venv python3-virtualenv python3-pip nodejs npm || true
 
 # Ensure application directory exists and repository is present
 if [ ! -d "/opt/foi-archive/.git" ]; then
@@ -133,12 +133,19 @@ sudo systemctl stop foi-archive || true
 cd backend
 # Ensure venv exists and is activated safely
 if [ ! -d ".venv" ]; then
+  echo "🐍 Python version: $(python3 -V 2>/dev/null || echo 'python3 not found')"
   if ! python3 -m venv .venv; then
     echo "⚠️  venv creation failed, attempting to install python3-venv explicitly..."
     sudo apt-get update -y || true
-    sudo apt-get install -y python3-venv python3.12-venv || true
+    sudo apt-get install -y python3-venv python3.12-venv python3-virtualenv || true
     python3 -m ensurepip --upgrade || true
-    python3 -m venv .venv || { echo "❌ Unable to create virtualenv"; exit 1; }
+    if ! python3 -m venv .venv; then
+      echo "⚠️  python3 venv still failing, trying 'virtualenv' fallback..."
+      if ! command -v virtualenv >/dev/null 2>&1; then
+        sudo apt-get install -y python3-virtualenv || true
+      fi
+      virtualenv -p python3 .venv || { echo "❌ Unable to create virtualenv via virtualenv"; exit 1; }
+    fi
   fi
 fi
 source .venv/bin/activate || { echo "❌ Failed to activate venv"; exit 1; }
