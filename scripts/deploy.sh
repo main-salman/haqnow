@@ -10,6 +10,9 @@ VERSION_TYPE=${1:-patch}
 
 # Preferred host (use domain to avoid IP churn). Override by exporting SERVER_HOST.
 SERVER_HOST=${SERVER_HOST:-www.haqnow.com}
+# SSH identity (override with SSH_KEY_PATH)
+SSH_KEY_PATH=${SSH_KEY_PATH:-$HOME/.ssh/id_rsa}
+SSH_OPTS="-i ${SSH_KEY_PATH} -o StrictHostKeyChecking=accept-new"
 
 echo "🚀 Starting HaqNow deployment process..."
 echo ""
@@ -63,9 +66,9 @@ echo ""
 # Step 4: Copy environment configuration to server
 echo "⚙️ Copying .env configuration to server..."
 # The backend loads .env from its working directory (/opt/foi-archive/backend)
-scp .env root@${SERVER_HOST}:/opt/foi-archive/backend/.env
+scp ${SSH_OPTS} .env root@${SERVER_HOST}:/opt/foi-archive/backend/.env
 # Also keep a copy at repo root for reference/other scripts
-scp .env root@${SERVER_HOST}:/opt/foi-archive/.env || true
+scp ${SSH_OPTS} .env root@${SERVER_HOST}:/opt/foi-archive/.env || true
 
 if [ $? -ne 0 ]; then
     echo "❌ Failed to copy .env file to server!"
@@ -77,7 +80,7 @@ echo ""
 
 # Step 5: Deploy to production server
 echo "🌐 Deploying to production server..."
-ssh root@${SERVER_HOST} << EOF
+ssh ${SSH_OPTS} root@${SERVER_HOST} << EOF
 echo "=== Deploying HaqNow v$NEW_VERSION ==="
 
 cd /opt/foi-archive
