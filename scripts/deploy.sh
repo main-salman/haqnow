@@ -170,11 +170,11 @@ fi
 
 # Prepare temp requirement files:
 # - remove exiftool (not on PyPI)
-# - relax langsmith to resolve langchain-core constraints
+# - keep langsmith compatible with langchain 0.1.0 (<0.1.0)
 REQ_TMP="/tmp/requirements_nox.txt"
 REQ_RAG_TMP="/tmp/requirements_rag_nox.txt"
-sed -e '/^exiftool==/d' -e 's/^langsmith==.*/langsmith>=0.1.0,<0.2.0/' requirements.txt > "$REQ_TMP" || cp requirements.txt "$REQ_TMP"
-sed -e 's/^langsmith==.*/langsmith>=0.1.0,<0.2.0/' requirements-rag.txt > "$REQ_RAG_TMP" || cp requirements-rag.txt "$REQ_RAG_TMP"
+sed -e '/^exiftool==/d' -e 's/^langsmith==.*/langsmith<0.1.0,>=0.0.77/' requirements.txt > "$REQ_TMP" || cp requirements.txt "$REQ_TMP"
+sed -e 's/^langsmith==.*/langsmith<0.1.0,>=0.0.77/' requirements-rag.txt > "$REQ_RAG_TMP" || cp requirements-rag.txt "$REQ_RAG_TMP"
 
 if [ "$USE_SYSTEM_PIP" -eq 0 ]; then
   pip install --upgrade pip setuptools wheel || true
