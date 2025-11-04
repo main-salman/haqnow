@@ -82,7 +82,7 @@ echo ""
 
 # Step 5: Deploy to production server
 echo "🌐 Deploying to production server..."
-ssh ${SSH_OPTS} root@${SERVER_HOST} "NEW_VERSION=$NEW_VERSION SERVER_HOST=$SERVER_HOST" 'bash -s' << 'EOF'
+ssh ${SSH_OPTS} root@${SERVER_HOST} "NEW_VERSION=$NEW_VERSION SERVER_HOST=$SERVER_HOST bash -s" << 'EOF'
 echo "=== Deploying HaqNow v$NEW_VERSION ==="
 
 # Ensure base dependencies are present on a fresh server
@@ -119,11 +119,11 @@ git clean -fd || true
 git fetch origin || { echo "❌ Failed to fetch from remote"; exit 1; }
 git reset --hard origin/main || { echo "❌ Failed to reset to origin/main"; exit 1; }
 
-CURRENT_COMMIT=\$(git rev-parse --short HEAD)
-echo "✅ Repository synced to latest version: \$CURRENT_COMMIT"
+CURRENT_COMMIT=$(git rev-parse --short HEAD)
+echo "✅ Repository synced to latest version: $CURRENT_COMMIT"
 
 # Verify we're on the correct branch and commit
-if [ "\$(git rev-parse --abbrev-ref HEAD)" != "main" ]; then
+if [ "$(git rev-parse --abbrev-ref HEAD)" != "main" ]; then
     echo "⚠️  Warning: Not on main branch"
 fi
 
@@ -287,10 +287,10 @@ sudo systemctl enable nginx
 # Verify local services are running
 echo "🔍 Verifying local service status..."
 for service in foi-archive nginx ollama; do
-    if sudo systemctl is-active --quiet \$service; then
-        echo "  ✅ \$service: running"
+    if sudo systemctl is-active --quiet $service; then
+        echo "  ✅ $service: running"
     else
-        echo "  ⚠️  \$service: not running"
+        echo "  ⚠️  $service: not running"
     fi
 done
 
