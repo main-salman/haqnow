@@ -138,8 +138,7 @@ sudo systemctl stop foi-archive || true
 
 # Install/update backend dependencies
 cd backend
-# Ensure venv exists and is activated safely (with robust fallbacks)
-USE_SYSTEM_PIP=0
+# Ensure venv exists and is ready (avoid reliance on 'source')
 if [ ! -f ".venv/bin/activate" ]; then
   echo "🐍 Python version: $(python3 -V 2>/dev/null || echo 'python3 not found')"
   rm -rf .venv || true
@@ -160,12 +159,16 @@ if [ ! -f ".venv/bin/activate" ]; then
   fi
 fi
 
-if [ -f ".venv/bin/activate" ]; then
-  echo "✅ Virtualenv prepared"
-  source .venv/bin/activate || { echo "❌ Failed to activate venv"; USE_SYSTEM_PIP=1; }
+VENV_PY=".venv/bin/python"
+VENV_PIP=".venv/bin/pip"
+if [ -x "$VENV_PY" ] && [ -x "$VENV_PIP" ]; then
+  echo "✅ Virtualenv prepared at $(pwd)/.venv"
+  PIP_CMD="$VENV_PIP"
+  PY_CMD="$VENV_PY"
 else
-  echo "⚠️  .venv not created; using system pip as fallback"
-  USE_SYSTEM_PIP=1
+  echo "⚠️  .venv not created correctly; falling back to system python/pip"
+  PIP_CMD="pip3"
+  PY_CMD="python3"
 fi
 
 # Prepare temp requirement files:
@@ -176,25 +179,21 @@ REQ_RAG_TMP="/tmp/requirements_rag_nox.txt"
 sed -e '/^exiftool==/d' -e 's/^langsmith==.*/langsmith<0.1.0,>=0.0.77/' requirements.txt > "$REQ_TMP" || cp requirements.txt "$REQ_TMP"
 sed -e 's/^langsmith==.*/langsmith<0.1.0,>=0.0.77/' requirements-rag.txt > "$REQ_RAG_TMP" || cp requirements-rag.txt "$REQ_RAG_TMP"
 
-if [ "$USE_SYSTEM_PIP" -eq 0 ]; then
-  pip install --upgrade pip setuptools wheel || true
-  pip install -r "$REQ_TMP" || true
- else
-   # Avoid upgrading Debian-managed pip/wheel; just install requirements
-   pip3 install --break-system-packages -r "$REQ_TMP" || true
- fi
+if [ "$PIP_CMD" = "$VENV_PIP" ]; then
+  "$PIP_CMD" install --upgrade pip setuptools wheel || true
+  "$PIP_CMD" install -r "$REQ_TMP" || true
+else
+  # Avoid upgrading Debian-managed pip/wheel; just install requirements
+  "$PIP_CMD" install --break-system-packages -r "$REQ_TMP" || true
+fi
  
  # Install RAG-specific dependencies
  echo "🤖 Installing RAG (AI Q&A) dependencies..."
- if [ "$USE_SYSTEM_PIP" -eq 0 ]; then
-   pip install -r "$REQ_RAG_TMP" || echo "RAG dependencies installation completed"
- else
-   pip3 install --break-system-packages -r "$REQ_RAG_TMP" || echo "RAG dependencies installation completed"
- fi
+ "$PIP_CMD" install -r "$REQ_RAG_TMP" || echo "RAG dependencies installation completed"
  
- # Patch conflicting langsmith range if needed (venv only to avoid Debian pip issues)
- if [ "$USE_SYSTEM_PIP" -eq 0 ]; then
-   pip install -U "langsmith>=0.1.0,<0.2.0" || true
+ # Patch conflicting langsmith range if needed (prefer venv when available)
+ if [ "$PIP_CMD" = "$VENV_PIP" ]; then
+   "$PIP_CMD" install -U "langsmith>=0.1.0,<0.2.0" || true
  fi
 
 # Setup Ollama for local LLM processing (confirmed fallback/provider)
@@ -219,19 +218,19 @@ ollama pull "llama3:latest" || echo "⚠️ LLM model download failed - RAG Q&A 
 
 # Create RAG database tables
 echo "🗄️ Setting up RAG database tables..."
-python3 create_rag_tables.py || echo "RAG tables already exist or creation failed"
+"$PY_CMD" create_rag_tables.py || echo "RAG tables already exist or creation failed"
 
 # Run privacy migration if needed
 echo "🔒 Running privacy migration (IP address removal)..."
-python3 run_migration.py || echo "Migration already applied or not needed"
+"$PY_CMD" run_migration.py || echo "Migration already applied or not needed"
 
 # Populate translations with about and foi sections
 echo "🌍 Populating translations with updated sections..."
-python3 populate_translations.py || echo "Translation population completed or already up to date"
+"$PY_CMD" populate_translations.py || echo "Translation population completed or already up to date"
 
 # Test RAG system
 echo "🧪 Testing RAG system components..."
-python3 test_rag_system.py || echo "⚠️ RAG system test failed - check logs"
+"$PY_CMD" test_rag_system.py || echo "⚠️ RAG system test failed - check logs"
 
 cd ..
 
