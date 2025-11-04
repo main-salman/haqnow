@@ -85,6 +85,9 @@ echo "=== Deploying HaqNow v$NEW_VERSION ==="
 echo "🛠️  Installing system prerequisites (git, python3-venv, python3-virtualenv, pip, node, npm)..."
 sudo apt-get update -y || true
 sudo apt-get install -y git python3-venv python3-virtualenv python3-pip nodejs npm || true
+# Ensure nginx and curl (for health checks / ollama) exist
+sudo apt-get install -y nginx curl || true
+sudo mkdir -p /var/www/html || true
 
 # Ensure application directory exists and repository is present
 if [ ! -d "/opt/foi-archive/.git" ]; then
@@ -160,12 +163,16 @@ else
   USE_SYSTEM_PIP=1
 fi
 
+# Filter out problematic packages (e.g., exiftool) that are not available on PyPI
+REQ_TMP="/tmp/requirements_nox.txt"
+grep -v "^exiftool==" requirements.txt > "$REQ_TMP" || cp requirements.txt "$REQ_TMP"
+
 if [ "$USE_SYSTEM_PIP" -eq 0 ]; then
   pip install --upgrade pip setuptools wheel || true
-  pip install -r requirements.txt
+  pip install -r "$REQ_TMP" || true
 else
   pip3 install --break-system-packages --upgrade pip setuptools wheel || true
-  pip3 install --break-system-packages -r requirements.txt
+  pip3 install --break-system-packages -r "$REQ_TMP" || true
 fi
 
 # Install RAG-specific dependencies
@@ -174,6 +181,13 @@ if [ "$USE_SYSTEM_PIP" -eq 0 ]; then
   pip install -r requirements-rag.txt || echo "RAG dependencies installation completed"
 else
   pip3 install --break-system-packages -r requirements-rag.txt || echo "RAG dependencies installation completed"
+fi
+
+# Patch conflicting langsmith range if needed
+if [ "$USE_SYSTEM_PIP" -eq 0 ]; then
+  pip install -U "langsmith>=0.1.0,<0.2.0" || true
+else
+  pip3 install --break-system-packages -U "langsmith>=0.1.0,<0.2.0" || true
 fi
 
 # Setup Ollama for local LLM processing (confirmed fallback/provider)
@@ -193,42 +207,63 @@ sudo systemctl enable ollama || echo "⚠️ Ollama service setup failed"
 sleep 5
 
 # Pull required LLM model
-MODEL_NAME="llama3:latest"
-echo "📦 Ensuring Ollama model ($MODEL_NAME) is available..."
-ollama pull "$MODEL_NAME" || echo "⚠️ LLM model download failed - RAG Q&A may not work"
+echo "📦 Ensuring Ollama model (llama3:latest) is available..."
+ollama pull "llama3:latest" || echo "⚠️ LLM model download failed - RAG Q&A may not work"
 
 # Create RAG database tables
 echo "🗄️ Setting up RAG database tables..."
-python create_rag_tables.py || echo "RAG tables already exist or creation failed"
+python3 create_rag_tables.py || echo "RAG tables already exist or creation failed"
 
 # Run privacy migration if needed
 echo "🔒 Running privacy migration (IP address removal)..."
-python run_migration.py || echo "Migration already applied or not needed"
+python3 run_migration.py || echo "Migration already applied or not needed"
 
 # Populate translations with about and foi sections
 echo "🌍 Populating translations with updated sections..."
-python populate_translations.py || echo "Translation population completed or already up to date"
+python3 populate_translations.py || echo "Translation population completed or already up to date"
 
 # Test RAG system
 echo "🧪 Testing RAG system components..."
-python test_rag_system.py || echo "⚠️ RAG system test failed - check logs"
+python3 test_rag_system.py || echo "⚠️ RAG system test failed - check logs"
 
 cd ..
 
 # Build frontend on server
 cd frontend
+# Install frontend deps if needed then build
+npm ci --prefer-offline --no-audit --fund=false || npm install --legacy-peer-deps
 npm run build
 
 # Deploy to nginx
-sudo cp -r dist/* /var/www/html/
+sudo cp -r dist/* /var/www/html/ || true
 sudo chown -R www-data:www-data /var/www/html
 
 cd ..
 
 # Restart and verify services
 echo "🔄 Starting backend service..."
-sudo systemctl start foi-archive
-sudo systemctl enable foi-archive
+# Create systemd unit if missing
+if ! systemctl list-unit-files | grep -q '^foi-archive.service'; then
+cat >/etc/systemd/system/foi-archive.service << 'UNIT'
+[Unit]
+Description=HaqNow FastAPI Service
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/foi-archive/backend
+EnvironmentFile=/opt/foi-archive/backend/.env
+ExecStart=/usr/bin/env python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2 --proxy-headers
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+  systemctl daemon-reload
+fi
+
+sudo systemctl start foi-archive || true
+sudo systemctl enable foi-archive || true
 
 # Wait for backend to start
 sleep 8
@@ -263,13 +298,13 @@ done
 # Verify external database connectivity
 echo "🔗 Testing external database connectivity..."
 cd /opt/foi-archive/backend
-if source .venv/bin/activate && python3 -c "from app.database.database import get_db; next(get_db()); print('  ✅ MySQL DBaaS: connected')" 2>/dev/null; then
+if python3 -c "from app.database.database import get_db; next(get_db()); print('  ✅ MySQL DBaaS: connected')" 2>/dev/null; then
     echo "  ✅ MySQL DBaaS: connected"
 else
     echo "  ⚠️  MySQL DBaaS: connection failed"
 fi
 
-if source .venv/bin/activate && python3 -c "from app.database.rag_database import get_rag_db; next(get_rag_db()); print('  ✅ PostgreSQL RAG DBaaS: connected')" 2>/dev/null; then
+if python3 -c "from app.database.rag_database import get_rag_db; next(get_rag_db()); print('  ✅ PostgreSQL RAG DBaaS: connected')" 2>/dev/null; then
     echo "  ✅ PostgreSQL RAG DBaaS: connected"
 else
     echo "  ⚠️  PostgreSQL RAG DBaaS: connection failed"
@@ -323,7 +358,7 @@ fi
 echo ""
 echo "🤖 Testing AI/RAG system functionality..."
 cd backend
-if source .venv/bin/activate && python3 test_ai_deployment.py; then
+if python3 test_ai_deployment.py; then
     echo "  ✅ AI/RAG system: operational"
     AI_STATUS="✅ OPERATIONAL"
 else
