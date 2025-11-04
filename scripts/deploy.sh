@@ -190,11 +190,7 @@ fi
  # Install RAG-specific dependencies
  echo "🤖 Installing RAG (AI Q&A) dependencies..."
  "$PIP_CMD" install -r "$REQ_RAG_TMP" || echo "RAG dependencies installation completed"
- 
- # Patch conflicting langsmith range if needed (prefer venv when available)
- if [ "$PIP_CMD" = "$VENV_PIP" ]; then
-   "$PIP_CMD" install -U "langsmith>=0.1.0,<0.2.0" || true
- fi
+
 
 # Setup Ollama for local LLM processing (confirmed fallback/provider)
 echo "🧠 Setting up Ollama for AI Q&A..."
