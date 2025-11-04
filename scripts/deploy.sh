@@ -65,10 +65,8 @@ echo ""
 
 # Step 4: Copy environment configuration to server
 echo "⚙️ Copying .env configuration to server..."
-# The backend loads .env from its working directory (/opt/foi-archive/backend)
-scp ${SSH_OPTS} .env root@${SERVER_HOST}:/opt/foi-archive/backend/.env
-# Also keep a copy at repo root for reference/other scripts
-scp ${SSH_OPTS} .env root@${SERVER_HOST}:/opt/foi-archive/.env || true
+# Copy to /tmp first; move into place after repo exists on server
+scp ${SSH_OPTS} .env root@${SERVER_HOST}:/tmp/.env
 
 if [ $? -ne 0 ]; then
     echo "❌ Failed to copy .env file to server!"
@@ -83,27 +81,31 @@ echo "🌐 Deploying to production server..."
 ssh ${SSH_OPTS} root@${SERVER_HOST} << EOF
 echo "=== Deploying HaqNow v$NEW_VERSION ==="
 
-cd /opt/foi-archive
+# Ensure application directory exists and repository is present
+if [ ! -d "/opt/foi-archive/.git" ]; then
+  echo "📥 Cloning repository..."
+  mkdir -p /opt/foi-archive
+  cd /opt/foi-archive
+  if ! git clone https://github.com/main-salman/haqnow.git .; then
+    echo "❌ Failed to clone repository"
+    exit 1
+  fi
+else
+  cd /opt/foi-archive
+fi
 
 # Force sync with latest changes (handles divergent branches)
 echo "🔄 Force syncing with remote repository..."
 echo "📋 Current repository status:"
-git status --porcelain
+git status --porcelain || true
 
 # Clean up any untracked files that might interfere
 echo "🧹 Cleaning untracked files..."
-git clean -fd
+git clean -fd || true
 
 # Force sync to match remote exactly
-if ! git fetch origin; then
-    echo "❌ Failed to fetch from remote repository"
-    exit 1
-fi
-
-if ! git reset --hard origin/main; then
-    echo "❌ Failed to reset to origin/main"
-    exit 1
-fi
+git fetch origin || { echo "❌ Failed to fetch from remote"; exit 1; }
+git reset --hard origin/main || { echo "❌ Failed to reset to origin/main"; exit 1; }
 
 CURRENT_COMMIT=\$(git rev-parse --short HEAD)
 echo "✅ Repository synced to latest version: \$CURRENT_COMMIT"
@@ -111,6 +113,12 @@ echo "✅ Repository synced to latest version: \$CURRENT_COMMIT"
 # Verify we're on the correct branch and commit
 if [ "\$(git rev-parse --abbrev-ref HEAD)" != "main" ]; then
     echo "⚠️  Warning: Not on main branch"
+fi
+
+# Place .env files now that repo exists
+if [ -f /tmp/.env ]; then
+  cp /tmp/.env /opt/foi-archive/.env || true
+  cp /tmp/.env /opt/foi-archive/backend/.env || true
 fi
 
 # Stop backend service during deployment
