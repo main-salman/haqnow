@@ -37,5 +37,5 @@ variable "postgres_password" {
 variable "server_ip_cidr" {
   description = "Server public IP in CIDR format (e.g., 203.0.113.10/32)"
   type        = string
-  default     = "159.100.250.145/32"
+  default     = "0.0.0.0/0"
 }

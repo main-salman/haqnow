@@ -140,17 +140,18 @@ sudo systemctl stop foi-archive || true
 cd backend
 # Ensure venv exists and is activated safely (with robust fallbacks)
 USE_SYSTEM_PIP=0
-if [ ! -d ".venv" ]; then
+if [ ! -f ".venv/bin/activate" ]; then
   echo "🐍 Python version: $(python3 -V 2>/dev/null || echo 'python3 not found')"
+  rm -rf .venv || true
   python3 -m venv .venv || true
-  if [ ! -d ".venv" ]; then
+  if [ ! -f ".venv/bin/activate" ]; then
     echo "⚠️  python3 -m venv failed; installing helpers and retrying..."
     sudo apt-get update -y || true
     sudo apt-get install -y python3-venv python3.12-venv python3-virtualenv || true
     python3 -m ensurepip --upgrade || true
     python3 -m venv .venv || true
   fi
-  if [ ! -d ".venv" ]; then
+  if [ ! -f ".venv/bin/activate" ]; then
     echo "⚠️  Falling back to virtualenv..."
     if ! command -v virtualenv >/dev/null 2>&1; then
       sudo apt-get install -y python3-virtualenv || true
@@ -159,7 +160,7 @@ if [ ! -d ".venv" ]; then
   fi
 fi
 
-if [ -d ".venv" ]; then
+if [ -f ".venv/bin/activate" ]; then
   echo "✅ Virtualenv prepared"
   source .venv/bin/activate || { echo "❌ Failed to activate venv"; USE_SYSTEM_PIP=1; }
 else
@@ -167,30 +168,34 @@ else
   USE_SYSTEM_PIP=1
 fi
 
-# Filter out problematic packages (e.g., exiftool) that are not available on PyPI
+# Prepare temp requirement files:
+# - remove exiftool (not on PyPI)
+# - relax langsmith to resolve langchain-core constraints
 REQ_TMP="/tmp/requirements_nox.txt"
-grep -v "^exiftool==" requirements.txt > "$REQ_TMP" || cp requirements.txt "$REQ_TMP"
+REQ_RAG_TMP="/tmp/requirements_rag_nox.txt"
+sed -e '/^exiftool==/d' -e 's/^langsmith==.*/langsmith>=0.1.0,<0.2.0/' requirements.txt > "$REQ_TMP" || cp requirements.txt "$REQ_TMP"
+sed -e 's/^langsmith==.*/langsmith>=0.1.0,<0.2.0/' requirements-rag.txt > "$REQ_RAG_TMP" || cp requirements-rag.txt "$REQ_RAG_TMP"
 
 if [ "$USE_SYSTEM_PIP" -eq 0 ]; then
   pip install --upgrade pip setuptools wheel || true
   pip install -r "$REQ_TMP" || true
-else
-  # Avoid upgrading Debian-managed pip/wheel; just install requirements
-  pip3 install --break-system-packages -r "$REQ_TMP" || true
-fi
-
-# Install RAG-specific dependencies
-echo "🤖 Installing RAG (AI Q&A) dependencies..."
-if [ "$USE_SYSTEM_PIP" -eq 0 ]; then
-  pip install -r requirements-rag.txt || echo "RAG dependencies installation completed"
-else
-  pip3 install --break-system-packages -r requirements-rag.txt || echo "RAG dependencies installation completed"
-fi
-
-# Patch conflicting langsmith range if needed (venv only to avoid Debian pip issues)
-if [ "$USE_SYSTEM_PIP" -eq 0 ]; then
-  pip install -U "langsmith>=0.1.0,<0.2.0" || true
-fi
+ else
+   # Avoid upgrading Debian-managed pip/wheel; just install requirements
+   pip3 install --break-system-packages -r "$REQ_TMP" || true
+ fi
+ 
+ # Install RAG-specific dependencies
+ echo "🤖 Installing RAG (AI Q&A) dependencies..."
+ if [ "$USE_SYSTEM_PIP" -eq 0 ]; then
+   pip install -r "$REQ_RAG_TMP" || echo "RAG dependencies installation completed"
+ else
+   pip3 install --break-system-packages -r "$REQ_RAG_TMP" || echo "RAG dependencies installation completed"
+ fi
+ 
+ # Patch conflicting langsmith range if needed (venv only to avoid Debian pip issues)
+ if [ "$USE_SYSTEM_PIP" -eq 0 ]; then
+   pip install -U "langsmith>=0.1.0,<0.2.0" || true
+ fi
 
 # Setup Ollama for local LLM processing (confirmed fallback/provider)
 echo "🧠 Setting up Ollama for AI Q&A..."
@@ -237,6 +242,49 @@ if [ -d /tmp/frontend_dist ]; then
   sudo chown -R www-data:www-data /var/www/html || true
 else
   echo "⚠️  /tmp/frontend_dist not found; skipping frontend deploy"
+fi
+
+# Configure nginx site and Let's Encrypt TLS
+DOMAIN="${SERVER_HOST}"
+if [ -n "$DOMAIN" ]; then
+  cat >/etc/nginx/sites-available/haqnow.conf <<NGINX
+server {
+    listen 80;
+    server_name ${DOMAIN} haqnow.com;
+
+    root /var/www/html;
+    index index.html;
+
+    location /api/ {
+        proxy_pass http://127.0.0.1:8000/api/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_http_version 1.1;
+    }
+
+    location /ws {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+    }
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+NGINX
+  ln -sf /etc/nginx/sites-available/haqnow.conf /etc/nginx/sites-enabled/haqnow.conf
+  if [ -f /etc/nginx/sites-enabled/default ]; then rm -f /etc/nginx/sites-enabled/default; fi
+  sudo systemctl reload nginx || true
+
+  if ! command -v certbot >/dev/null 2>&1; then
+    sudo apt-get install -y certbot python3-certbot-nginx || true
+  fi
+  certbot --nginx --redirect -d "$DOMAIN" -m admin@haqnow.com --agree-tos -n || true
 fi
 
 # Restart and verify services
