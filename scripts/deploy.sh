@@ -350,8 +350,7 @@ fi
 
 # Restart and verify services
 echo "🔄 Starting backend service..."
-# Create systemd unit if missing
-if ! systemctl list-unit-files | grep -q '^foi-archive.service'; then
+# Always write/update systemd unit to ensure correct Python (venv)
 cat >/etc/systemd/system/foi-archive.service << 'UNIT'
 [Unit]
 Description=HaqNow FastAPI Service
@@ -361,14 +360,13 @@ After=network.target
 Type=simple
 WorkingDirectory=/opt/foi-archive/backend
 EnvironmentFile=/opt/foi-archive/backend/.env
-ExecStart=/usr/bin/env python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2 --proxy-headers
+ExecStart=/opt/foi-archive/backend/.venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2 --proxy-headers
 Restart=always
 
 [Install]
 WantedBy=multi-user.target
 UNIT
-  systemctl daemon-reload
-fi
+systemctl daemon-reload
 
 sudo systemctl start foi-archive || true
 sudo systemctl enable foi-archive || true
