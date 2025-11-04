@@ -247,7 +247,7 @@ fi
 # Configure nginx site and Let's Encrypt TLS
 DOMAIN="${SERVER_HOST}"
 if [ -n "$DOMAIN" ]; then
-  cat >/etc/nginx/sites-available/haqnow.conf <<NGINX
+  cat >/etc/nginx/sites-available/haqnow.conf << 'NGINX'
 server {
     listen 80 default_server;
     listen [::]:80 default_server;
@@ -330,14 +330,21 @@ NGINX
     chmod 600 /etc/ssl/private/haqnow-selfsigned.key || true
   fi
 
-  sudo systemctl reload nginx || true
+  # Validate nginx config and reload
+  if nginx -t; then
+    sudo systemctl reload nginx || sudo systemctl restart nginx || true
+  else
+    echo "❌ nginx config test failed; not reloading"
+  fi
 
   # Only attempt real cert for the domain name (Let's Encrypt cannot issue for IP)
-  if [ "$DOMAIN" != "$(echo $DOMAIN | grep -Eo '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')" ]; then
+  if ! echo "$DOMAIN" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'; then
     if ! command -v certbot >/dev/null 2>&1; then
       sudo apt-get install -y certbot python3-certbot-nginx || true
     fi
     certbot --nginx --redirect -d "$DOMAIN" -m admin@haqnow.com --agree-tos -n || true
+  else
+    echo "ℹ️ Skipping certbot for IP address $DOMAIN"
   fi
 fi
 
