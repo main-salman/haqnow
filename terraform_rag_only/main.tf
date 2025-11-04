@@ -26,7 +26,7 @@ resource "exoscale_dbaas" "foi_postgres_rag" {
     admin_password    = var.postgres_password
     version          = "15"
     backup_schedule  = "03:00"
-    ip_filter        = ["159.100.250.145/32"]
+    ip_filter        = [var.server_ip_cidr]
   }
 }
 

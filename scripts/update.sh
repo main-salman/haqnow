@@ -12,8 +12,8 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Server configuration
-SERVER_HOST="159.100.250.145"
+# Server configuration (prefer domain; override by exporting SERVER_HOST)
+SERVER_HOST="${SERVER_HOST:-www.haqnow.com}"
 SERVER_USER="root"
 SERVER_DIR="/opt/foi-archive"
 
@@ -200,7 +200,7 @@ else
 fi
 
 echo -e "${GREEN}🎉 Fast update completed successfully!${NC}"
-echo -e "${BLUE}📋 Application URL: http://159.100.250.145${NC}"
+echo -e "${BLUE}📋 Application URL: http://${SERVER_HOST}${NC}"
 EOF
 
 # Copy update script to server and execute
@@ -213,7 +213,7 @@ ssh "$SERVER_USER@$SERVER_HOST" "chmod +x /tmp/update_remote.sh && /tmp/update_r
 
 echo ""
 echo -e "${GREEN}🎉 Fast update completed successfully!${NC}"
-echo -e "${BLUE}📋 Your application is available at: http://159.100.250.145${NC}"
+echo -e "${BLUE}📋 Your application is available at: http://${SERVER_HOST}${NC}"
 echo -e "${BLUE}📋 Updated to commit: ${LATEST_COMMIT}${NC}"
 echo ""
 echo -e "${YELLOW}💡 Use this script for quick iterations. Use ./deploy.sh for full deployments.${NC}" 

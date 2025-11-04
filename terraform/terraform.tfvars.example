@@ -36,3 +36,7 @@ sendgrid_api_key = "your-sendgrid-api-key"
 
 # SSH Key configuration
 ssh_key_name = "foi-archive-key"  # This will be created automatically 
+
+# Server IP allowlist for databases (set after server is created)
+# Example: "203.0.113.10/32"
+server_ip_cidr = "1.2.3.4/32"
