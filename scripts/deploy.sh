@@ -249,6 +249,12 @@ DOMAIN="${SERVER_HOST}"
 if [ -n "$DOMAIN" ]; then
   cat >/etc/nginx/sites-available/haqnow.conf <<NGINX
 server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    return 301 https://$host$request_uri;
+}
+
+server {
     listen 80;
     server_name ${DOMAIN} haqnow.com;
 
