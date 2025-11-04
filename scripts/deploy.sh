@@ -63,7 +63,7 @@ fi
 echo "✅ Changes pushed to repository"
 echo ""
 
-# Step 4: Copy environment configuration to server
+# Step 4: Copy environment configuration and built frontend to server
 echo "⚙️ Copying .env configuration to server..."
 # Copy to /tmp first; move into place after repo exists on server
 scp ${SSH_OPTS} .env root@${SERVER_HOST}:/tmp/.env
@@ -74,11 +74,15 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "✅ Environment configuration copied to server"
+
+echo "📦 Uploading built frontend assets..."
+scp -r ${SSH_OPTS} frontend/dist root@${SERVER_HOST}:/tmp/frontend_dist
+echo "✅ Frontend assets uploaded"
 echo ""
 
 # Step 5: Deploy to production server
 echo "🌐 Deploying to production server..."
-ssh ${SSH_OPTS} root@${SERVER_HOST} << EOF
+ssh ${SSH_OPTS} root@${SERVER_HOST} "NEW_VERSION=$NEW_VERSION SERVER_HOST=$SERVER_HOST" 'bash -s' << 'EOF'
 echo "=== Deploying HaqNow v$NEW_VERSION ==="
 
 # Ensure base dependencies are present on a fresh server
@@ -171,7 +175,7 @@ if [ "$USE_SYSTEM_PIP" -eq 0 ]; then
   pip install --upgrade pip setuptools wheel || true
   pip install -r "$REQ_TMP" || true
 else
-  pip3 install --break-system-packages --upgrade pip setuptools wheel || true
+  # Avoid upgrading Debian-managed pip/wheel; just install requirements
   pip3 install --break-system-packages -r "$REQ_TMP" || true
 fi
 
@@ -183,11 +187,9 @@ else
   pip3 install --break-system-packages -r requirements-rag.txt || echo "RAG dependencies installation completed"
 fi
 
-# Patch conflicting langsmith range if needed
+# Patch conflicting langsmith range if needed (venv only to avoid Debian pip issues)
 if [ "$USE_SYSTEM_PIP" -eq 0 ]; then
   pip install -U "langsmith>=0.1.0,<0.2.0" || true
-else
-  pip3 install --break-system-packages -U "langsmith>=0.1.0,<0.2.0" || true
 fi
 
 # Setup Ollama for local LLM processing (confirmed fallback/provider)
@@ -228,17 +230,14 @@ python3 test_rag_system.py || echo "⚠️ RAG system test failed - check logs"
 
 cd ..
 
-# Build frontend on server
-cd frontend
-# Install frontend deps if needed then build
-npm ci --prefer-offline --no-audit --fund=false || npm install --legacy-peer-deps
-npm run build
-
-# Deploy to nginx
-sudo cp -r dist/* /var/www/html/ || true
-sudo chown -R www-data:www-data /var/www/html
-
-cd ..
+# Deploy frontend assets uploaded from local build
+if [ -d /tmp/frontend_dist ]; then
+  sudo rm -rf /var/www/html/* || true
+  sudo cp -r /tmp/frontend_dist/* /var/www/html/ || true
+  sudo chown -R www-data:www-data /var/www/html || true
+else
+  echo "⚠️  /tmp/frontend_dist not found; skipping frontend deploy"
+fi
 
 # Restart and verify services
 echo "🔄 Starting backend service..."
@@ -344,8 +343,8 @@ echo ""
 echo "✅ HaqNow v$NEW_VERSION deployed successfully!"
 echo "🔒 Privacy-compliant with complete IP address removal"
 echo "🤖 AI Q&A system with RAG technology enabled"
-echo "🌍 Visit: http://${SERVER_HOST}"
-echo "📊 Admin: http://${SERVER_HOST}/admin-login-page"
+echo "🌍 Visit: http://$SERVER_HOST"
+echo "📊 Admin: http://$SERVER_HOST/admin-login-page"
 echo "🧠 AI Q&A: Go to Search page → AI Q&A tab"
 EOF
 
