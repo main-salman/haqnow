@@ -251,7 +251,7 @@ if [ -n "$DOMAIN" ]; then
 server {
     listen 80 default_server;
     listen [::]:80 default_server;
-    return 301 https://$host$request_uri;
+    return 301 https://www.haqnow.com$request_uri;
 }
 
 server {
@@ -282,15 +282,63 @@ server {
         try_files $uri $uri/ /index.html;
     }
 }
+
+# Fallback self-signed TLS for HTTPS on bare IP/default host
+server {
+    listen 443 ssl default_server;
+    listen [::]:443 ssl default_server;
+    server_name _;
+
+    ssl_certificate /etc/ssl/certs/haqnow-selfsigned.crt;
+    ssl_certificate_key /etc/ssl/private/haqnow-selfsigned.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+    root /var/www/html;
+    index index.html;
+
+    location /api/ {
+        proxy_pass http://127.0.0.1:8000/api/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_http_version 1.1;
+    }
+
+    location /ws {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+    }
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
 NGINX
   ln -sf /etc/nginx/sites-available/haqnow.conf /etc/nginx/sites-enabled/haqnow.conf
   if [ -f /etc/nginx/sites-enabled/default ]; then rm -f /etc/nginx/sites-enabled/default; fi
+
+  # Ensure self-signed cert exists for HTTPS on IP/default host
+  if [ ! -f /etc/ssl/certs/haqnow-selfsigned.crt ] || [ ! -f /etc/ssl/private/haqnow-selfsigned.key ]; then
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+      -keyout /etc/ssl/private/haqnow-selfsigned.key \
+      -out /etc/ssl/certs/haqnow-selfsigned.crt \
+      -subj "/C=US/ST=NA/L=NA/O=HaqNow/OU=IT/CN=www.haqnow.com" >/dev/null 2>&1 || true
+    chmod 600 /etc/ssl/private/haqnow-selfsigned.key || true
+  fi
+
   sudo systemctl reload nginx || true
 
-  if ! command -v certbot >/dev/null 2>&1; then
-    sudo apt-get install -y certbot python3-certbot-nginx || true
+  # Only attempt real cert for the domain name (Let's Encrypt cannot issue for IP)
+  if [ "$DOMAIN" != "$(echo $DOMAIN | grep -Eo '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')" ]; then
+    if ! command -v certbot >/dev/null 2>&1; then
+      sudo apt-get install -y certbot python3-certbot-nginx || true
+    fi
+    certbot --nginx --redirect -d "$DOMAIN" -m admin@haqnow.com --agree-tos -n || true
   fi
-  certbot --nginx --redirect -d "$DOMAIN" -m admin@haqnow.com --agree-tos -n || true
 fi
 
 # Restart and verify services
