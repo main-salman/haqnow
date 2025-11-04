@@ -83,8 +83,8 @@ echo "=== Deploying HaqNow v$NEW_VERSION ==="
 
 # Ensure base dependencies are present on a fresh server
 echo "🛠️  Installing system prerequisites (git, python3-venv, pip, node, npm)..."
-sudo apt-get update -y >/dev/null 2>&1 || true
-sudo apt-get install -y git python3-venv python3-pip nodejs npm >/dev/null 2>&1 || true
+sudo apt-get update -y || true
+sudo apt-get install -y git python3-venv python3-pip nodejs npm || true
 
 # Ensure application directory exists and repository is present
 if [ ! -d "/opt/foi-archive/.git" ]; then
@@ -133,7 +133,13 @@ sudo systemctl stop foi-archive || true
 cd backend
 # Ensure venv exists and is activated safely
 if [ ! -d ".venv" ]; then
-  python3 -m venv .venv
+  if ! python3 -m venv .venv; then
+    echo "⚠️  venv creation failed, attempting to install python3-venv explicitly..."
+    sudo apt-get update -y || true
+    sudo apt-get install -y python3-venv python3.12-venv || true
+    python3 -m ensurepip --upgrade || true
+    python3 -m venv .venv || { echo "❌ Unable to create virtualenv"; exit 1; }
+  fi
 fi
 source .venv/bin/activate || { echo "❌ Failed to activate venv"; exit 1; }
 pip install --upgrade pip setuptools wheel || true
