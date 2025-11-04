@@ -8,6 +8,9 @@ set -e  # Exit on any error
 
 VERSION_TYPE=${1:-patch}
 
+# Preferred host (use domain to avoid IP churn). Override by exporting SERVER_HOST.
+SERVER_HOST=${SERVER_HOST:-www.haqnow.com}
+
 echo "🚀 Starting HaqNow deployment process..."
 echo ""
 
@@ -60,9 +63,9 @@ echo ""
 # Step 4: Copy environment configuration to server
 echo "⚙️ Copying .env configuration to server..."
 # The backend loads .env from its working directory (/opt/foi-archive/backend)
-scp .env root@159.100.250.145:/opt/foi-archive/backend/.env
+scp .env root@${SERVER_HOST}:/opt/foi-archive/backend/.env
 # Also keep a copy at repo root for reference/other scripts
-scp .env root@159.100.250.145:/opt/foi-archive/.env || true
+scp .env root@${SERVER_HOST}:/opt/foi-archive/.env || true
 
 if [ $? -ne 0 ]; then
     echo "❌ Failed to copy .env file to server!"
@@ -74,7 +77,7 @@ echo ""
 
 # Step 5: Deploy to production server
 echo "🌐 Deploying to production server..."
-ssh root@159.100.250.145 << EOF
+ssh root@${SERVER_HOST} << EOF
 echo "=== Deploying HaqNow v$NEW_VERSION ==="
 
 cd /opt/foi-archive
@@ -257,8 +260,8 @@ echo ""
 echo "✅ HaqNow v$NEW_VERSION deployed successfully!"
 echo "🔒 Privacy-compliant with complete IP address removal"
 echo "🤖 AI Q&A system with RAG technology enabled"
-echo "🌍 Visit: http://159.100.250.145"
-echo "📊 Admin: http://159.100.250.145/admin-login-page"
+echo "🌍 Visit: http://${SERVER_HOST}"
+echo "📊 Admin: http://${SERVER_HOST}/admin-login-page"
 echo "🧠 AI Q&A: Go to Search page → AI Q&A tab"
 EOF
 
@@ -283,9 +286,9 @@ cd ..
 echo ""
 echo "🎉 Deployment completed successfully!"
 echo "⚙️ Environment: Local .env configuration synced to server"
-echo "📱 Frontend: http://159.100.250.145"
+echo "📱 Frontend: http://${SERVER_HOST}"
 echo "📋 Version: $NEW_VERSION displayed in footer"
-echo "🔧 Admin Panel: http://159.100.250.145/admin-login-page"
+echo "🔧 Admin Panel: http://${SERVER_HOST}/admin-login-page"
 echo "🤖 AI Q&A: Available on Search page with natural language questions"
 echo "🔬 AI Status: $AI_STATUS"
 echo ""

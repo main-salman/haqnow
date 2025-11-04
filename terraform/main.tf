@@ -24,7 +24,7 @@ resource "exoscale_dbaas" "foi_mysql" {
   mysql {
     admin_username   = var.mysql_user
     admin_password   = var.mysql_password
-    ip_filter        = ["159.100.250.145/32"]  # Allow access from our server
+    ip_filter        = [var.server_ip_cidr]  # Allow access from our server
     backup_schedule  = "02:00"  # Daily backup at 2 AM UTC
   }
 }
@@ -46,7 +46,7 @@ resource "exoscale_dbaas" "foi_postgres_rag" {
   pg {
     admin_username   = var.postgres_user
     admin_password   = var.postgres_password
-    ip_filter        = ["159.100.250.145/32"]  # Allow access from our server
+    ip_filter        = [var.server_ip_cidr]  # Allow access from our server
     backup_schedule  = "03:00"  # Daily backup at 3 AM UTC
     version         = "15"      # PostgreSQL 15 supports pgvector
   }
