@@ -81,6 +81,11 @@ echo "🌐 Deploying to production server..."
 ssh ${SSH_OPTS} root@${SERVER_HOST} << EOF
 echo "=== Deploying HaqNow v$NEW_VERSION ==="
 
+# Ensure base dependencies are present on a fresh server
+echo "🛠️  Installing system prerequisites (git, python3-venv, pip, node, npm)..."
+sudo apt-get update -y >/dev/null 2>&1 || true
+sudo apt-get install -y git python3-venv python3-pip nodejs npm >/dev/null 2>&1 || true
+
 # Ensure application directory exists and repository is present
 if [ ! -d "/opt/foi-archive/.git" ]; then
   echo "📥 Cloning repository..."
