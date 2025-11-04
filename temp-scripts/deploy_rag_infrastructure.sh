@@ -82,23 +82,23 @@ cd ..
 echo "🔧 Deploying application with RAG features..."
 
 # Update the deploy script to restart services
-ssh root@159.100.250.145 'cd /opt/foi-archive && git pull origin main'
+ssh root@www.haqnow.com 'cd /opt/foi-archive && git pull origin main'
 
 # Install RAG dependencies
-ssh root@159.100.250.145 'cd /opt/foi-archive/backend && source .venv/bin/activate && pip install -r requirements-rag.txt' || print_warning "RAG dependencies installation may have issues"
+ssh root@www.haqnow.com 'cd /opt/foi-archive/backend && source .venv/bin/activate && pip install -r requirements-rag.txt' || print_warning "RAG dependencies installation may have issues"
 
 # Install pgvector Python package
-ssh root@159.100.250.145 'cd /opt/foi-archive/backend && source .venv/bin/activate && pip install pgvector psycopg2-binary' || print_warning "pgvector installation may have issues"
+ssh root@www.haqnow.com 'cd /opt/foi-archive/backend && source .venv/bin/activate && pip install pgvector psycopg2-binary' || print_warning "pgvector installation may have issues"
 
 # Restart backend service
-ssh root@159.100.250.145 'systemctl restart foi-archive'
+ssh root@www.haqnow.com 'systemctl restart foi-archive'
 
 # Wait for service to start
 sleep 10
 
 # Step 4: Initialize RAG database
 echo "🗄️ Initializing RAG database..."
-ssh root@159.100.250.145 'cd /opt/foi-archive/backend && source .venv/bin/activate && python3 -c "
+ssh root@www.haqnow.com 'cd /opt/foi-archive/backend && source .venv/bin/activate && python3 -c "
 import asyncio
 from app.database.rag_database import init_rag_db, ensure_pgvector_extension, test_rag_db_connection
 
@@ -127,7 +127,7 @@ except Exception as e:
 
 # Step 5: Process existing documents for RAG
 echo "📚 Processing existing documents for RAG..."
-ssh root@159.100.250.145 'cd /opt/foi-archive/backend && source .venv/bin/activate && python3 -c "
+ssh root@www.haqnow.com 'cd /opt/foi-archive/backend && source .venv/bin/activate && python3 -c "
 import requests
 import time
 
@@ -166,7 +166,7 @@ fi
 
 # Step 7: Frontend rebuild and deployment
 echo "🎨 Rebuilding and deploying frontend..."
-ssh root@159.100.250.145 'cd /opt/foi-archive/frontend && npm run build && cp -r dist/* /var/www/html/ && chown -R www-data:www-data /var/www/html'
+ssh root@www.haqnow.com 'cd /opt/foi-archive/frontend && npm run build && cp -r dist/* /var/www/html/ && chown -R www-data:www-data /var/www/html'
 
 # Final status check
 echo ""
@@ -186,7 +186,7 @@ echo "- Search page: https://www.haqnow.com/search-page"
 echo "- Try the AI Q&A tab for natural language queries!"
 echo ""
 echo "📝 Monitor logs:"
-echo "- Backend logs: ssh root@159.100.250.145 'journalctl -u foi-archive -f'"
+echo "- Backend logs: ssh root@www.haqnow.com 'journalctl -u foi-archive -f'"
 echo "- RAG status: curl https://www.haqnow.com/api/rag/status"
 echo ""
 

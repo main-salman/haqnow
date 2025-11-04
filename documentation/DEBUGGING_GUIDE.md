@@ -24,25 +24,25 @@ curl -s -X POST "https://www.haqnow.com/api/rag/process-all-documents" | jq
 curl -s "https://www.haqnow.com/api/health"
 
 # Check if Python process is running
-ssh root@159.100.250.145 "ps aux | grep python3"
+ssh root@www.haqnow.com "ps aux | grep python3"
 
 # Restart backend service
-ssh root@159.100.250.145 "cd /opt/foi-archive/backend && pkill -f python && nohup python3 main.py > /tmp/backend.log 2>&1 &"
+ssh root@www.haqnow.com "cd /opt/foi-archive/backend && pkill -f python && nohup python3 main.py > /tmp/backend.log 2>&1 &"
 
 # Check logs
-ssh root@159.100.250.145 "tail -f /tmp/backend.log"
+ssh root@www.haqnow.com "tail -f /tmp/backend.log"
 ```
 
 ### **3. Frontend Not Loading**
 ```bash
 # Check nginx status
-ssh root@159.100.250.145 "systemctl status nginx"
+ssh root@www.haqnow.com "systemctl status nginx"
 
 # Restart nginx
-ssh root@159.100.250.145 "systemctl restart nginx"
+ssh root@www.haqnow.com "systemctl restart nginx"
 
 # Check if frontend files deployed
-ssh root@159.100.250.145 "ls -la /opt/foi-archive/frontend/dist/"
+ssh root@www.haqnow.com "ls -la /opt/foi-archive/frontend/dist/"
 ```
 
 ### **4. Database Connection Issues**
@@ -63,13 +63,13 @@ grep POSTGRES_RAG_URI .env
 ### **AI Search Taking Too Long (>30s)**
 ```bash
 # Check Ollama models
-ssh root@159.100.250.145 "ollama list"
+ssh root@www.haqnow.com "ollama list"
 
 # Switch to faster model (gemma:2b is fastest)
 # Edit backend/app/services/rag_service.py: self.model_name = "gemma:2b"
 
 # Check vector database performance
-ssh root@159.100.250.145 "cd /opt/foi-archive/backend && python3 test_performance.py"
+ssh root@www.haqnow.com "cd /opt/foi-archive/backend && python3 test_performance.py"
 ```
 
 ### **Website Slow/Unresponsive During AI Queries**
@@ -99,7 +99,7 @@ curl -s -X POST "https://www.haqnow.com/api/rag/process-document" \
 cd backend && python3 run_migration.py
 
 # Check table structure
-ssh root@159.100.250.145 "mysql -u user -p database -e 'SHOW TABLES;'"
+ssh root@www.haqnow.com "mysql -u user -p database -e 'SHOW TABLES;'"
 ```
 
 ## 🔧 **Service Management**
@@ -107,7 +107,7 @@ ssh root@159.100.250.145 "mysql -u user -p database -e 'SHOW TABLES;'"
 ### **Server Services Status**
 ```bash
 # Check all key services
-ssh root@159.100.250.145 "
+ssh root@www.haqnow.com "
 systemctl status nginx
 systemctl status ollama  
 ps aux | grep python3
@@ -120,7 +120,7 @@ ps aux | grep python3
 ./scripts/deploy.sh patch
 
 # Or manual restart
-ssh root@159.100.250.145 "
+ssh root@www.haqnow.com "
 systemctl restart nginx
 systemctl restart ollama
 cd /opt/foi-archive/backend && pkill -f python && nohup python3 main.py > /tmp/backend.log 2>&1 &
@@ -132,13 +132,13 @@ cd /opt/foi-archive/backend && pkill -f python && nohup python3 main.py > /tmp/b
 ### **Real-time Monitoring**
 ```bash
 # Backend logs
-ssh root@159.100.250.145 "tail -f /tmp/backend.log"
+ssh root@www.haqnow.com "tail -f /tmp/backend.log"
 
 # System resources
-ssh root@159.100.250.145 "htop"
+ssh root@www.haqnow.com "htop"
 
 # Network connections
-ssh root@159.100.250.145 "netstat -tulpn | grep :8000"
+ssh root@www.haqnow.com "netstat -tulpn | grep :8000"
 ```
 
 ### **Health Check Sequence**
@@ -155,13 +155,13 @@ curl -s "https://www.haqnow.com/api/search/search?q=test&per_page=5" | jq
 ### **Complete System Recovery**
 ```bash
 # 1. Ensure .env is synced
-scp .env root@159.100.250.145:/opt/foi-archive/backend/.env
+scp .env root@www.haqnow.com:/opt/foi-archive/backend/.env
 
 # 2. Full redeploy
 ./scripts/deploy.sh patch
 
 # 3. If deploy.sh fails, manual recovery:
-ssh root@159.100.250.145 "
+ssh root@www.haqnow.com "
 cd /opt/foi-archive/backend
 git pull origin main
 pkill -f python
@@ -173,10 +173,10 @@ systemctl restart nginx
 ### **Database Recovery**
 ```bash
 # Backup current state
-ssh root@159.100.250.145 "cd /opt/foi-archive/backend && python3 -c 'from app.database.database import engine; print(engine.execute(\"SELECT COUNT(*) FROM documents\").fetchone())'"
+ssh root@www.haqnow.com "cd /opt/foi-archive/backend && python3 -c 'from app.database.database import engine; print(engine.execute(\"SELECT COUNT(*) FROM documents\").fetchone())'"
 
 # Reset RAG database if corrupted
-ssh root@159.100.250.145 "cd /opt/foi-archive/backend && python3 create_rag_tables.py"
+ssh root@www.haqnow.com "cd /opt/foi-archive/backend && python3 create_rag_tables.py"
 ```
 
 ## 💡 **Pro Tips**

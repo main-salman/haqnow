@@ -48,7 +48,7 @@
 
 3. **Restart Backend Service**:
    ```bash
-   ssh root@159.100.250.145 "systemctl restart foi-archive"
+   ssh root@www.haqnow.com "systemctl restart foi-archive"
    ```
 
 4. **Process Existing Documents**:

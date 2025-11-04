@@ -26,7 +26,7 @@
 Before extensive debugging, try these standard commands:
 1. `curl -s "https://www.haqnow.com/api/health"` - backend health
 2. `curl -s "https://www.haqnow.com/api/rag/status"` - AI system status  
-3. `ssh root@159.100.250.145 "tail -f /tmp/backend.log"` - server logs
+3. `ssh root@www.haqnow.com "tail -f /tmp/backend.log"` - server logs
 
 ## 🎯 OPTIMIZATION RULES
 - **File searches**: Check CURSOR_CONTEXT.md locations first before using codebase_search

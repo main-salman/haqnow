@@ -139,7 +139,7 @@ curl -s -X POST "https://www.haqnow.com/api/rag/question" \
 4. **Testing**: Test locally before deployment
 
 ### **Debugging Issues**
-1. **Check logs**: `ssh root@159.100.250.145 "tail -f /tmp/backend.log"`
+1. **Check logs**: `ssh root@www.haqnow.com "tail -f /tmp/backend.log"`
 2. **Test APIs**: Use curl commands from DEBUGGING_GUIDE.md
 3. **Check services**: Verify backend, nginx, ollama are running
 4. **Environment**: Ensure .env has all required variables
@@ -206,7 +206,7 @@ curl -s "https://www.haqnow.com/api/health" | jq
 curl -s "https://www.haqnow.com/api/rag/status" | jq
 
 # Server resources
-ssh root@159.100.250.145 "htop"
+ssh root@www.haqnow.com "htop"
 ```
 
 ---
