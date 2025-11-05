@@ -8,10 +8,10 @@ passlib[bcrypt]==1.7.4
 python-dotenv==1.0.0
 Pillow==10.1.0
 PyPDF2==3.0.1
-langchain==0.1.0
-langchain-community==0.0.12
-# Do NOT pin langchain-core; it is provided by langchain and should match its constraints
-langsmith==0.0.92
+# Align lc packages with langsmith >=0.1.0 to avoid resolver conflicts
+langchain==0.1.1
+langchain-community==0.0.14
+langsmith>=0.1.0,<0.2.0
 sentence-transformers==2.2.2
 ollama==0.1.7
 chromadb==0.4.22
