@@ -254,6 +254,29 @@ server {
     listen 80;
     server_name ${DOMAIN} haqnow.com;
 
+    # Let's Encrypt challenge location
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+    }
+
+    # Redirect all other HTTP to HTTPS
+    location / {
+        return 301 https://$server_name$request_uri;
+    }
+}
+
+# HTTPS server with self-signed cert (Let's Encrypt will replace)
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name ${DOMAIN} haqnow.com;
+
+    ssl_certificate /etc/ssl/certs/haqnow-selfsigned.crt;
+    ssl_certificate_key /etc/ssl/private/haqnow-selfsigned.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+
     root /var/www/html;
     index index.html;
 
@@ -264,6 +287,8 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_http_version 1.1;
+        proxy_read_timeout 300s;
+        proxy_connect_timeout 75s;
     }
 
     location /ws {
@@ -272,6 +297,7 @@ server {
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
         proxy_set_header Host $host;
+        proxy_read_timeout 300s;
     }
 
     location / {
@@ -279,7 +305,7 @@ server {
     }
 }
 
-# Fallback self-signed TLS for HTTPS on bare IP/default host
+# Fallback HTTPS for bare IP access
 server {
     listen 443 ssl default_server;
     listen [::]:443 ssl default_server;
