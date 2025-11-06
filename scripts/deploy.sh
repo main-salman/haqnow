@@ -176,8 +176,9 @@ fi
 # - keep langsmith compatible with langchain 0.1.0 (<0.1.0)
 REQ_TMP="/tmp/requirements_nox.txt"
 REQ_RAG_TMP="/tmp/requirements_rag_nox.txt"
-sed -e '/^exiftool==/d' -e 's/^langsmith==.*/langsmith<0.1.0,>=0.0.77/' requirements.txt > "$REQ_TMP" || cp requirements.txt "$REQ_TMP"
-sed -e 's/^langsmith==.*/langsmith<0.1.0,>=0.0.77/' requirements-rag.txt > "$REQ_RAG_TMP" || cp requirements-rag.txt "$REQ_RAG_TMP"
+# Remove any unsupported packages (e.g., exiftool) but do NOT override langsmith range
+sed -e '/^exiftool==/d' requirements.txt > "$REQ_TMP" || cp requirements.txt "$REQ_TMP"
+cp requirements-rag.txt "$REQ_RAG_TMP" || true
 
 if [ "$PIP_CMD" = "$VENV_PIP" ]; then
   "$PIP_CMD" install --upgrade pip setuptools wheel || true
