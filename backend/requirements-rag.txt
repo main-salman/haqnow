@@ -2,7 +2,7 @@
 # Open source alternatives to replace proprietary AI services
 
 # Core RAG dependencies  
-sentence-transformers==2.2.2    # Open source embeddings (replaces Mistral embeddings)
+sentence-transformers>=2.2.2,<3.0.0    # Open source embeddings (allow newer versions)
 ollama==0.1.7                   # Open source LLM interface
 langchain==0.1.0                # RAG framework (stable combo)
 langchain-community==0.0.12     # Community LangChain extensions
