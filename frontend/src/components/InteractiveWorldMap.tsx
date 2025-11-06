@@ -284,8 +284,8 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
     
     const country = countryNames[code];
     if (country) {
-      // Show both English and native names
-      return `${country.english} / ${country.native}`;
+      // Show English names only
+      return country.english;
     }
     return code;
   };
