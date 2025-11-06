@@ -34,4 +34,6 @@ pytesseract>=0.3.10
 pdf2image>=1.16.3
 spacy>=3.7.0
 sendgrid>=6.11.0
+reportlab>=4.0.0
+googletrans==4.0.0rc1
 # exiftool removed; not available on PyPI
