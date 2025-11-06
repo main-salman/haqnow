@@ -17,6 +17,7 @@ langchain-community==0.0.12
 langchain-core>=0.1.7,<0.1.28
 langsmith==0.0.92
 sentence-transformers==2.2.2
+huggingface-hub<1.0.0  # sentence-transformers 2.2.2 needs cached_download (removed in 1.0+)
 ollama==0.1.7
 chromadb==0.4.22
 pypdf==3.17.4
