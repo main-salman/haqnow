@@ -91,7 +91,7 @@ Visit `https://www.haqnow.com/search-page` and verify:
 **Solution:**
 ```bash
 # Check if backend is running with RAG endpoints
-curl http://159.100.250.145:8000/api/rag/status
+curl http://localhost:8000/api/rag/status
 
 # If failed, check backend logs
 sudo journalctl -u foi-archive -f
@@ -141,10 +141,10 @@ sudo systemctl reload nginx
 **Solution:**
 ```bash
 # Process more documents for better context
-curl -X POST http://159.100.250.145:8000/api/rag/process-all-documents
+curl -X POST http://localhost:8000/api/rag/process-all-documents
 
 # Check document processing status
-curl http://159.100.250.145:8000/api/rag/analytics
+curl http://localhost:8000/api/rag/analytics
 ```
 
 ## 📊 Success Metrics

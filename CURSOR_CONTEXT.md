@@ -54,7 +54,7 @@
 
 ### **What scripts/deploy.sh Does (Don't Duplicate)**
 - Git add, commit, push
-- SSH to server (root@www.haqnow.com)
+- SSH to server (use domain or SERVER_HOST env var)
 - Git pull on server
 - Copy .env to server
 - Restart Python backend service
@@ -99,8 +99,8 @@ curl -s "https://www.haqnow.com/api/health"
 # Check AI/RAG status
 curl -s "https://www.haqnow.com/api/rag/status" | jq
 
-# Backend logs on server
-ssh root@www.haqnow.com "tail -f /tmp/backend.log"
+# Backend logs on server (use SERVER_HOST or domain)
+ssh root@$SERVER_HOST "tail -f /tmp/backend.log"
 ```
 
 ### **AI/RAG Troubleshooting**
@@ -114,16 +114,16 @@ curl -s -X POST "https://www.haqnow.com/api/rag/question" \
 curl -s -X POST "https://www.haqnow.com/api/rag/process-all-documents"
 
 # Check Ollama on server
-ssh root@www.haqnow.com "ollama list"
+ssh root@$SERVER_HOST "ollama list"
 ```
 
 ### **Server Process Management**
 ```bash
 # Backend service status
-ssh root@www.haqnow.com "ps aux | grep python3"
+ssh root@$SERVER_HOST "ps aux | grep python3"
 
 # Restart backend manually (if scripts/deploy.sh fails)
-ssh root@www.haqnow.com "cd /opt/foi-archive/backend && pkill -f python && nohup python3 main.py > /tmp/backend.log 2>&1 &"
+ssh root@$SERVER_HOST "cd /opt/foi-archive/backend && pkill -f python && nohup python3 main.py > /tmp/backend.log 2>&1 &"
 ```
 
 ## 🚨 **Important Notes**
