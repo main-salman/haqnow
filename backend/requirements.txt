@@ -17,7 +17,7 @@ sentence-transformers==2.2.2
 ollama==0.1.7
 chromadb==0.4.22
 pypdf==3.17.4
-langchain-text-splitters==0.0.1
+# langchain-text-splitters removed: v0.0.1 requires langchain-core>=0.1.28 (conflicts with langsmith<0.1.0)
 pydantic==2.5.2
 requests==2.31.0
 mistralai==0.1.2
