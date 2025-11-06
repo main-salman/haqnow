@@ -108,7 +108,8 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="HaqNow API",
         description="Anonymous Corruption Document Exposure Platform API",
-        version="1.0.0"
+        version="1.0.0",
+        root_path="/api"  # All routes mounted under /api prefix
     )
     
     # Setup middleware
