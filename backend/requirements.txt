@@ -1,39 +1,55 @@
+# Core API and database (ESSENTIAL)
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
 structlog>=23.1.0
 pymysql>=1.1.0
-boto3>=1.35.0
 sqlalchemy==2.0.23
 psycopg2-binary==2.9.9
 python-multipart==0.0.6
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 python-dotenv==1.0.0
+pydantic==2.5.2
+requests==2.31.0
+
+# Storage
+boto3>=1.35.0
+
+# Document processing
 Pillow==10.1.0
 PyPDF2==3.0.1
-# LangChain stack (pin core <0.1.28 to avoid langsmith>=0.1.0 requirement)
+pypdf==3.17.4
+numpy==1.26.4
+
+# OCR and translation
+pytesseract>=0.3.10
+pdf2image>=1.16.3
+easyocr==1.7.0
+opencv-python==4.8.1.78
+reportlab>=4.0.0
+
+# Authentication
+pyotp==2.9.0
+qrcode==7.4.2
+
+# Email
+sendgrid>=6.11.0
+
+# NLP (optional - graceful degradation if fails)
+spacy>=3.7.0
+
+# RAG/AI stack (keep compatible versions)
 langchain==0.1.0
 langchain-community==0.0.12
 langchain-core>=0.1.7,<0.1.28
 langsmith==0.0.92
-sentence-transformers>=2.2.2,<3.0.0  # Allow newer versions compatible with modern huggingface-hub
-huggingface-hub>=0.19.0,<1.0.0  # Compatible with both sentence-transformers and transformers
+sentence-transformers>=2.2.2,<3.0.0
+huggingface-hub>=0.19.0,<1.0.0
 ollama==0.1.7
 chromadb==0.4.22
-pypdf==3.17.4
-# langchain-text-splitters removed: v0.0.1 requires langchain-core>=0.1.28 (conflicts with langsmith<0.1.0)
-pydantic==2.5.2
-requests==2.31.0
-mistralai==0.1.2
-pyotp==2.9.0
-qrcode==7.4.2
-easyocr==1.7.0
-opencv-python==4.8.1.78
-numpy==1.26.4
-pytesseract>=0.3.10
-pdf2image>=1.16.3
-spacy>=3.7.0
-sendgrid>=6.11.0
-reportlab>=4.0.0
-googletrans==4.0.0rc1
-# exiftool removed; not available on PyPI
+
+# Mistral (conflicts with old googletrans so removed for now)
+# mistralai==0.1.2
+
+# Translation (conflicts with httpx so removed - use Google Translate API directly)
+# googletrans==4.0.0rc1
