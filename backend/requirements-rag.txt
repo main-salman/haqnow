@@ -8,7 +8,7 @@ langchain==0.1.0                # RAG framework (stable combo)
 langchain-community==0.0.12     # Community LangChain extensions
 langchain-core>=0.1.7,<0.1.28   # Pin to versions compatible with langsmith<0.1.0
 langsmith==0.0.92               # Matches langchain 0.1.0 constraint (<0.1.0)
-langchain-text-splitters==0.0.1 # Text chunking for RAG
+# langchain-text-splitters removed: v0.0.1 requires core>=0.1.28 (conflicts with langsmith<0.1.0)
 
 # Document processing
 pypdf==3.17.4                 # PDF text extraction
