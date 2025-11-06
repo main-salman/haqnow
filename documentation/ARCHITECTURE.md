@@ -60,7 +60,7 @@ Answer + Sources + Confidence Score → User Response
 
 ### **Production Setup (Exoscale)**
 ```
-Internet → Cloudflare → nginx (159.100.250.145) → FastAPI (8000)
+Internet → Deflect CDN → nginx (production server) → FastAPI (8000)
                                  ↓
                             Static Files (dist/)
                                  ↓
