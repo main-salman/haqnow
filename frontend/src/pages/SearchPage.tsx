@@ -270,12 +270,12 @@ export default function SearchPage() {
                     {isLoading ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        {t('search.searching')}
+                        Searching...
                       </>
                     ) : (
                       <>
                         <SearchIcon className="h-4 w-4 mr-2" />
-                        {t('Search')}
+                        Search
                       </>
                     )}
                   </Button>
