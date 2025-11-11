@@ -1,3 +1,51 @@
+[2025-11-11T20:45:00Z] **HOTFIX: DocumentDetailPage Enter Key & UI Improvements**
+**Critical Issue Found:**
+After v4.12.7 deployment, discovered that DocumentDetailPage.tsx still had old implementation pattern and wasn't updated with the UI/UX fixes from SearchPage.tsx.
+
+**Issues Fixed:**
+1. ✅ Enter key now works in DocumentDetailPage AI dialog
+2. ✅ Improved dialog UI (better layout, larger, more viewable)
+3. ✅ Code refactoring for consistency across both pages
+
+**DocumentDetailPage.tsx Changes:**
+1. **Added `handleAskAI()` function** - Extracted inline async handler to named function
+2. **Fixed Enter Key Submission**:
+   - Changed from `document.querySelector('[data-ask-button="true"]')` pattern
+   - Now directly calls `handleAskAI()` when Enter is pressed
+   - Proper validation: only triggers when not loading and question has content
+
+3. **Improved Dialog UI**:
+   - Width: 600px → 700px
+   - Height: 80vh → 85vh  
+   - Added `flex flex-col` layout for proper content distribution
+   - Answer section: 40vh → 50vh for better readability
+   - Added `border-t pt-4` to DialogFooter for visual separation
+
+4. **Button Updates**:
+   - Changed text from "Ask" → "Ask AI" for consistency
+   - Removed `data-ask-button="true"` attribute (no longer needed)
+   - Cleaner onClick handler using `handleAskAI` function
+
+**Code Quality Improvements:**
+- Removed complex DOM query selector pattern
+- Better separation of concerns (UI vs business logic)
+- Consistent implementation between SearchPage and DocumentDetailPage
+- More maintainable and testable code
+
+**Technical Details:**
+- Both SearchPage and DocumentDetailPage now have identical AI dialog behavior
+- DialogTrigger pattern maintained (still one click to open)
+- No breaking changes to existing functionality
+- Zero linter errors
+
+**User Experience:**
+- ✅ Press Enter to submit AI questions (both pages)
+- ✅ Dialog doesn't overwhelm the page (better balanced)
+- ✅ More space for AI responses (easier to read)
+- ✅ Consistent UX across all document pages
+
+**Deployment:** Ready for v4.12.8
+
 [2025-11-11T16:30:00Z] **UI/UX IMPROVEMENTS: AI Dialog & Search Experience**
 **Issues Addressed:**
 1. ❌ Enter key not submitting AI questions
