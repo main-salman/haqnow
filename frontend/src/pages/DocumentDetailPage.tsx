@@ -59,6 +59,35 @@ export default function DocumentDetailPage() {
     setNewTag("");
   };
 
+  const handleAskAI = async () => {
+    if (!doc) return;
+    if (!aiQuestion.trim()) {
+      setAiError("Please enter a question.");
+      return;
+    }
+    setAiError(null);
+    setAiAnswer(null);
+    setAiLoading(true);
+    try {
+      const resp = await fetch('/api/rag/document-question', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: aiQuestion.trim(), document_id: doc.id }),
+      });
+      if (!resp.ok) {
+        const data = await resp.json().catch(() => ({}));
+        throw new Error(data?.detail || 'Failed to get AI answer');
+      }
+      const data = await resp.json();
+      setAiAnswer(data.answer || '');
+      setAiConfidence(typeof data.confidence === 'number' ? data.confidence : null);
+    } catch (e: any) {
+      setAiError(e?.message || 'An error occurred');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   useEffect(() => {
     const fetchDoc = async () => {
       if (!documentId || Number.isNaN(documentId)) {
@@ -186,14 +215,14 @@ export default function DocumentDetailPage() {
                   Ask AI about this document
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+              <DialogContent className="sm:max-w-[700px] max-h-[85vh] flex flex-col">
                 <DialogHeader>
                   <DialogTitle>Ask AI about this document</DialogTitle>
                   <DialogDescription>
                     Your question will be answered using only the content of this document. Press Enter to submit.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4">
+                <div className="space-y-4 flex-1 overflow-y-auto">
                   <Textarea
                     placeholder="Ask a question about this document... (Press Enter to submit)"
                     value={aiQuestion}
@@ -201,9 +230,8 @@ export default function DocumentDetailPage() {
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
-                        const askButton = document.querySelector('[data-ask-button="true"]') as HTMLButtonElement;
-                        if (askButton && !askButton.disabled) {
-                          askButton.click();
+                        if (!aiLoading && aiQuestion.trim()) {
+                          handleAskAI();
                         }
                       }
                     }}
@@ -215,7 +243,7 @@ export default function DocumentDetailPage() {
                     <div className="text-sm text-red-600">{aiError}</div>
                   )}
                   {aiAnswer && (
-                    <div className="rounded border p-4 bg-muted/30 max-h-[40vh] overflow-y-auto">
+                    <div className="rounded border p-4 bg-muted/30 max-h-[50vh] overflow-y-auto">
                       <div className="flex items-center justify-between mb-2">
                         <div className="text-sm font-medium text-muted-foreground">
                           AI Answer
@@ -228,7 +256,7 @@ export default function DocumentDetailPage() {
                     </div>
                   )}
                 </div>
-                <DialogFooter className="flex-col sm:flex-row gap-2">
+                <DialogFooter className="flex-col sm:flex-row gap-2 border-t pt-4">
                   <Button
                     variant="outline"
                     onClick={() => {
@@ -242,35 +270,7 @@ export default function DocumentDetailPage() {
                   </Button>
                   <Button
                     variant="default"
-                    data-ask-button="true"
-                    onClick={async () => {
-                      if (!doc) return;
-                      if (!aiQuestion.trim()) {
-                        setAiError("Please enter a question.");
-                        return;
-                      }
-                      setAiError(null);
-                      setAiAnswer(null);
-                      setAiLoading(true);
-                      try {
-                         const resp = await fetch('/api/rag/document-question', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                           body: JSON.stringify({ question: aiQuestion.trim(), document_id: doc.id }),
-                        });
-                        if (!resp.ok) {
-                          const data = await resp.json().catch(() => ({}));
-                          throw new Error(data?.detail || 'Failed to get AI answer');
-                        }
-                        const data = await resp.json();
-                        setAiAnswer(data.answer || '');
-                        setAiConfidence(typeof data.confidence === 'number' ? data.confidence : null);
-                      } catch (e: any) {
-                        setAiError(e?.message || 'An error occurred');
-                      } finally {
-                        setAiLoading(false);
-                      }
-                    }}
+                    onClick={handleAskAI}
                     disabled={aiLoading || !aiQuestion.trim()}
                   >
                     {aiLoading ? (
@@ -279,7 +279,7 @@ export default function DocumentDetailPage() {
                         Processing...
                       </>
                     ) : (
-                      'Ask'
+                      'Ask AI'
                     )}
                   </Button>
                 </DialogFooter>
