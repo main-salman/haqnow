@@ -30,6 +30,7 @@
     "subtitle": "Przeszukuj naszą bazę danych ujawnionych dokumentów korupcji z całego świata",
     "placeholder": "Wpisz słowa kluczowe, kraj lub rodzaj dokumentu...",
     "button": "Wyszukaj Dokumenty",
+    "searchButton": "Wyszukaj",
     "searching": "Searching...",
     "errorTitle": "Błąd wyszukiwania",
     "noResults": "Nie znaleziono dokumentów",

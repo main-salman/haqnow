@@ -30,6 +30,7 @@
     "subtitle": "Geben Sie durch Kommas getrennte Tags ein, um relevante Dokumente zu finden.",
     "placeholder": "z.B. Bericht, Budget, Umwelt",
     "button": "Suchen",
+    "searchButton": "Suchen",
     "searching": "Suche läuft...",
     "errorTitle": "Suchfehler",
     "noResults": "Keine Dokumente gefunden, die Ihren Suchkriterien entsprechen.",

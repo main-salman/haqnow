@@ -30,6 +30,7 @@
     "subtitle": "Enter comma-separated tags to find relevant documents.",
     "placeholder": "e.g., report, budget, environment",
     "button": "Search",
+    "searchButton": "Search",
     "searching": "Searching...",
     "errorTitle": "Search Error",
     "noResults": "No documents found matching your search criteria.",

@@ -1,3 +1,68 @@
+[2025-11-11T16:30:00Z] **UI/UX IMPROVEMENTS: AI Dialog & Search Experience**
+**Issues Addressed:**
+1. ❌ Enter key not submitting AI questions
+2. ❌ AI dialog took over entire page
+3. ❌ AI responses too verbose (not respecting 1-2 paragraph limit)
+4. ❌ Missing "searchButton" translation key in all locales
+5. ✅ "Ask AI About this Document" button already one-step (no fix needed)
+
+**Frontend Changes (SearchPage.tsx):**
+1. **Enter Key Submission**: Fixed keyboard submission in AI dialog
+   - Added `handleAskAI()` function to handle AI question submission
+   - Updated `onKeyDown` to directly call `handleAskAI()` on Enter press
+   - Removed complex button selector pattern for simpler direct function call
+   - User can now press Enter to submit questions without clicking button
+
+2. **Improved Dialog UI**: Made AI dialog less intrusive
+   - Changed max-width from 600px → 700px for better readability
+   - Changed max-height from 80vh → 85vh for more content space
+   - Added `flex flex-col` layout for proper content distribution
+   - Increased answer section max-height from 40vh → 50vh
+   - Added border-top and padding to DialogFooter for visual separation
+   - Changed button text from "Ask" → "Ask AI" for clarity
+
+3. **Code Refactoring**: Improved maintainability
+   - Extracted inline async onClick handler to named `handleAskAI` function
+   - Removed data attribute `data-ask-search-button="true"` (no longer needed)
+   - Better separation of concerns between UI and business logic
+
+**Backend Changes (rag_service.py):**
+1. **Strengthened Concise Response Prompt**:
+   - OLD: "provides CONCISE answers (1-2 paragraphs)"
+   - NEW: "provides BRIEF, CONCISE answers. Your answers MUST be 1-2 short paragraphs maximum (3-5 sentences total)"
+   - Added explicit sentence count guidance (3-5 sentences)
+   - Made requirement more emphatic with ALL CAPS on "MUST"
+   - Reduced max_tokens from 512 → 300 to enforce brevity
+   - Kept exception clause: "unless the user explicitly asks for a detailed or longer response"
+
+**Translation Updates:**
+Added `"searchButton"` key to `search` object in all 7 locale files:
+- ✅ en.json: "Search"
+- ✅ ar.json: "بحث"
+- ✅ fr.json: "Rechercher"
+- ✅ de.json: "Suchen"
+- ✅ ru.json: "Поиск"
+- ✅ pl.json: "Wyszukaj"
+- ✅ tr.json: "Ara"
+
+**User Experience Improvements:**
+1. Enter key now works in AI question textarea (natural UX)
+2. Dialog is larger but not overwhelming (better balance)
+3. AI responses will be significantly shorter (faster reading)
+4. Translation infrastructure more complete (better i18n coverage)
+
+**Technical Notes:**
+- No breaking changes to existing functionality
+- All changes backward compatible
+- No new dependencies added
+- Ready for immediate deployment
+
+**Testing Status:**
+- ✅ Code changes implemented
+- ✅ Translation keys added
+- ✅ Linter shows only pre-existing warnings (imports)
+- ⏳ Awaiting deployment and live testing
+
 [2025-11-11T15:50:00Z] **UPGRADE: Intelligent Fuzzy Search with rapidfuzz**
 **Problem**: First-4-character matching failed for: pakestan→pakistan, isreal→israel, salmon→salman
 **Solution**: Implemented proper Levenshtein distance matching using rapidfuzz library (industry standard).
