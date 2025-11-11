@@ -342,6 +342,13 @@ NGINX
     chmod 600 /etc/ssl/private/haqnow-selfsigned.key || true
   fi
 
+  # Ensure 50MB upload limit in main nginx config
+  if ! grep -q 'client_max_body_size.*50m' /etc/nginx/nginx.conf; then
+    echo "🔧 Adding 50MB upload limit to nginx.conf..."
+    sed -i '/http {/a\    client_max_body_size 50m;' /etc/nginx/nginx.conf
+    echo "✅ Upload limit configured"
+  fi
+
   # Validate nginx config and reload
   if nginx -t; then
     sudo systemctl reload nginx || sudo systemctl restart nginx || true
