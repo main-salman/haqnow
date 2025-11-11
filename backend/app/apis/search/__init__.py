@@ -370,11 +370,13 @@ async def search_documents(
                 for doc in all_docs:
                     max_similarity = 0
                     
-                    # Check title words
+                    # Check title words (strip punctuation for better matching)
                     if doc.title:
                         for word in doc.title.lower().split():
-                            if len(word) > 3:
-                                similarity = fuzz.ratio(search_lower, word)
+                            # Remove punctuation to handle "salman's" → "salman", "israel's" → "israel"
+                            clean_word = word.strip("'\".,!?;:()[]{}").strip()
+                            if len(clean_word) > 3:
+                                similarity = fuzz.ratio(search_lower, clean_word)
                                 max_similarity = max(max_similarity, similarity)
                     
                     # Check country
