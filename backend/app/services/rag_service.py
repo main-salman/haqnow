@@ -440,7 +440,7 @@ class RAGService:
                 for chunk in context_chunks
             ])
             
-            # Create prompt for LLM
+            # Create prompt for LLM - requesting concise answers by default
             prompt = f"""Based on the following document excerpts, please answer the user's question. If the information is not available in the provided context, please say so clearly.
 
 Context Documents:
@@ -448,7 +448,7 @@ Context Documents:
 
 User Question: {query}
 
-Please provide a detailed and accurate answer based only on the information provided in the context documents. Include references to the specific documents when possible."""
+Please provide a CONCISE answer in 1-2 paragraphs based only on the information provided in the context documents. Include references to the specific documents when possible. Only provide longer answers if the user explicitly asks for more detail."""
 
             if not self.groq_client:
                 return RAGResult(
@@ -466,11 +466,11 @@ Please provide a detailed and accurate answer based only on the information prov
                 lambda: self.groq_client.chat.completions.create(
                     model=self.llm_model,
                     messages=[
-                        {"role": "system", "content": "You are a helpful assistant that answers questions based only on provided document context and cites sources."},
+                        {"role": "system", "content": "You are a helpful assistant that provides CONCISE answers (1-2 paragraphs) based only on provided document context. Only give longer answers if explicitly requested."},
                         {"role": "user", "content": prompt},
                     ],
                     temperature=0.3,
-                    max_tokens=2048,
+                    max_tokens=512,
                 )
             )
             answer = response.choices[0].message.content
