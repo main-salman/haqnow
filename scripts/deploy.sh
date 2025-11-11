@@ -265,6 +265,7 @@ server {
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
     ssl_prefer_server_ciphers on;
+    client_max_body_size 50m;
 
     root /var/www/html;
     index index.html;
