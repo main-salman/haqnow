@@ -496,23 +496,32 @@ export default function SearchPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 flex-1 overflow-y-auto">
-            <Textarea
-              placeholder="Ask a question about this document... (Press Enter to submit)"
-              value={aiQuestion}
-              onChange={(e) => setAiQuestion(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  if (!aiLoading && aiQuestion.trim()) {
-                    // Directly trigger the ask function
-                    handleAskAI();
-                  }
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!aiLoading && aiQuestion.trim()) {
+                  handleAskAI();
                 }
               }}
-              rows={3}
-              maxLength={1000}
-              className="resize-none"
-            />
+            >
+              <Textarea
+                placeholder="Ask a question about this document... (Press Enter to submit)"
+                value={aiQuestion}
+                onChange={(e) => setAiQuestion(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (!aiLoading && aiQuestion.trim()) {
+                      // Directly trigger the ask function
+                      handleAskAI();
+                    }
+                  }
+                }}
+                rows={3}
+                maxLength={1000}
+                className="resize-none"
+              />
+            </form>
             {aiError && (
               <div className="text-sm text-red-600">{aiError}</div>
             )}

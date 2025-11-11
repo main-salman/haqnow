@@ -1,3 +1,27 @@
+[2025-11-11T20:52:00Z] **CRITICAL FIX: Removed DialogTrigger to Fix Double-Click Issue**
+**Root Cause Found:**
+The `DialogTrigger` component was causing the double-click behavior. When using DialogTrigger, it wraps the button and manages its own state, which conflicts with manual state management using `isAIOpen`.
+
+**Fix Applied:**
+1. **Removed DialogTrigger import** - No longer needed
+2. **Changed button to direct onClick handler**:
+   - OLD: `<DialogTrigger asChild><Button>...</Button></DialogTrigger>`
+   - NEW: `<Button onClick={() => setIsAIOpen(true)}>...</Button>`
+3. **Direct state management** - Button now directly sets `isAIOpen(true)` on click
+
+**Result:**
+- ✅ Single click now opens dialog immediately
+- ✅ Enter key submission still works (calls `handleAskAI()` directly)
+- ✅ "Press Enter to submit" text visible in dialog description
+- ✅ Consistent behavior across SearchPage and DocumentDetailPage
+
+**Technical Details:**
+- DialogTrigger was creating a wrapper that interfered with controlled state
+- Direct onClick handler gives us full control over dialog state
+- No breaking changes - same user experience, just faster
+
+**Deployment:** v4.12.9 - Successfully deployed to production
+
 [2025-11-11T20:45:00Z] **HOTFIX: DocumentDetailPage Enter Key & UI Improvements**
 **Critical Issue Found:**
 After v4.12.7 deployment, discovered that DocumentDetailPage.tsx still had old implementation pattern and wasn't updated with the UI/UX fixes from SearchPage.tsx.
