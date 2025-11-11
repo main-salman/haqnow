@@ -1,24 +1,24 @@
 """
 RAG (Retrieval-Augmented Generation) Service for Document Q&A
-Uses open source components: Ollama + sentence-transformers + PostgreSQL
+Uses Groq (fast LLM inference) + sentence-transformers (local embeddings) + PostgreSQL
 """
 
 import asyncio
 import logging
 from typing import List, Dict, Any, Optional, Tuple
 import os
-import requests
 from dataclasses import dataclass
 import json
 
-# Optional imports for RAG functionality
+# LLM API client (Groq)
 try:
-    import ollama
-    OLLAMA_AVAILABLE = True
+    from groq import Groq
+    GROQ_AVAILABLE = True
 except ImportError:
-    OLLAMA_AVAILABLE = False
-    ollama = None
+    GROQ_AVAILABLE = False
+    Groq = None
 
+# Local embeddings (sentence-transformers)
 try:
     from sentence_transformers import SentenceTransformer
     SENTENCE_TRANSFORMERS_AVAILABLE = True
@@ -57,62 +57,45 @@ class DocumentChunk:
 
 class RAGService:
     """
-    Open source RAG service for document question answering
+    Hybrid RAG service using Groq (cloud LLM) + sentence-transformers (local embeddings)
     """
     
     def __init__(self):
+        self.groq_client = None
         self.embedding_model = None
-        self.ollama_client = None
-        self.model_name = "gemma:2b"  # default local model
-        # GPT-OSS settings (preferred if configured)
-        self.gpt_oss_base = os.getenv("GPT_OSS_BASE_URL")
-        self.gpt_oss_key = os.getenv("GPT_OSS_API_KEY")
-        self.gpt_oss_model = os.getenv("GPT_OSS_MODEL", "gpt-oss-20b")
-        self._initialize_models()
+        self.llm_model = "mixtral-8x7b-32768"  # Groq model for LLM
+        self.embedding_model_name = "paraphrase-multilingual-MiniLM-L12-v2"  # sentence-transformers
+        self.embedding_dimensions = 384  # sentence-transformers dimensions
+        self._initialize_clients()
         self._initialize_rag_database()
     
-    def _initialize_models(self):
-        """Initialize open source AI models"""
+    def _initialize_clients(self):
+        """Initialize Groq API (LLM) and sentence-transformers (embeddings)"""
         try:
-            # Check if dependencies are available
+            # Initialize Groq for LLM inference (cloud)
+            groq_api_key = os.getenv("GROQ_API_KEY")
+            if not groq_api_key:
+                logger.error("GROQ_API_KEY not found in environment variables")
+                raise ValueError("GROQ_API_KEY is required for RAG functionality")
+            
+            if not GROQ_AVAILABLE:
+                logger.error("groq package not installed - run: pip install groq")
+                raise ImportError("groq package required")
+            
+            self.groq_client = Groq(api_key=groq_api_key)
+            logger.info(f"✅ Groq client initialized (LLM: {self.llm_model})")
+            
+            # Initialize sentence-transformers for embeddings (local)
             if not SENTENCE_TRANSFORMERS_AVAILABLE:
-                logger.warning("sentence-transformers not available - RAG embeddings disabled")
-                self.embedding_model = None
-            else:
-                # Initialize sentence-transformers for embeddings (384-dim to match DB)
-                # Use a multilingual model to support Russian and other languages while keeping 384-dim
-                logger.info("Loading sentence-transformers embedding model (paraphrase-multilingual-MiniLM-L12-v2, 384-dim)...")
-                self.embedding_model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
-                logger.info("✅ Embedding model loaded successfully (multilingual 384-dim)")
+                logger.error("sentence-transformers not installed - run: pip install sentence-transformers")
+                raise ImportError("sentence-transformers package required")
             
-            # Use Ollama only (requested)
-            self.gpt_oss_base = None
-            self.gpt_oss_key = None
-            if not OLLAMA_AVAILABLE:
-                logger.warning("ollama not available - RAG text generation disabled")
-                self.ollama_client = None
-            else:
-                logger.info("Connecting to Ollama...")
-                self.ollama_client = ollama.Client()
-            
-            # Check if model is available, pull if needed
-            if self.ollama_client:
-                try:
-                    models = self.ollama_client.list()
-                    available_models = [m['name'] for m in models['models']]
-                    if self.model_name not in available_models:
-                        logger.info(f"Pulling {self.model_name} model from Ollama...")
-                        self.ollama_client.pull(self.model_name)
-                        logger.info(f"✅ {self.model_name} model pulled successfully")
-                    else:
-                        logger.info(f"✅ {self.model_name} model already available")
-                except Exception as e:
-                    logger.warning(f"Could not verify Ollama model: {e}")
-                    self.model_name = "llama3:8b"
-                    logger.info(f"Falling back to {self.model_name}")
+            logger.info(f"Loading sentence-transformers model ({self.embedding_model_name}, {self.embedding_dimensions}-dim)...")
+            self.embedding_model = SentenceTransformer(self.embedding_model_name)
+            logger.info(f"✅ Embedding model loaded (local, multilingual, {self.embedding_dimensions}-dim)")
             
         except Exception as e:
-            logger.error(f"Failed to initialize RAG models: {e}")
+            logger.error(f"Failed to initialize RAG clients: {e}")
             raise
     
     def _initialize_rag_database(self):
@@ -135,9 +118,9 @@ class RAGService:
             # Don't raise exception as this shouldn't prevent the main app from starting
     
     async def generate_embedding(self, text: str) -> List[float]:
-        """Generate embedding for a single text string"""
+        """Generate embedding for a single text string using sentence-transformers (local)"""
         if not self.embedding_model:
-            logger.error("Embedding model not available - install sentence-transformers")
+            logger.error("Embedding model not available")
             return None
         
         try:
@@ -154,9 +137,9 @@ class RAGService:
             return None
 
     async def generate_embeddings(self, texts: List[str]) -> List[List[float]]:
-        """Generate embeddings for texts using sentence-transformers"""
+        """Generate embeddings for multiple texts using sentence-transformers (local)"""
         if not self.embedding_model:
-            raise RuntimeError("Embedding model not available - install sentence-transformers")
+            raise RuntimeError("Embedding model not available")
         
         try:
             # Run in thread pool to avoid blocking
@@ -439,7 +422,7 @@ class RAGService:
             return []
     
     async def generate_answer(self, query: str, context_chunks: List[DocumentChunk]) -> RAGResult:
-        """Generate answer using GPT-OSS if configured, otherwise Ollama."""
+        """Generate answer using Groq API (fast inference)"""
         
         try:
             # Prepare context from chunks
@@ -459,8 +442,7 @@ User Question: {query}
 
 Please provide a detailed and accurate answer based only on the information provided in the context documents. Include references to the specific documents when possible."""
 
-            answer = ""
-            if not self.ollama_client:
+            if not self.groq_client:
                 return RAGResult(
                     answer="AI text generation is not available.",
                     sources=[],
@@ -468,15 +450,22 @@ Please provide a detailed and accurate answer based only on the information prov
                     query=query,
                     context_used=context_text[:1000] + "..." if len(context_text) > 1000 else context_text
                 )
-            response = self.ollama_client.chat(
-                model=self.model_name,
-                messages=[
-                    {"role": "system", "content": "You are a helpful assistant that answers questions based only on provided document context and cites sources."},
-                    {"role": "user", "content": prompt},
-                ],
-                stream=False,
+            
+            # Call Groq API for fast inference
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None,
+                lambda: self.groq_client.chat.completions.create(
+                    model=self.llm_model,
+                    messages=[
+                        {"role": "system", "content": "You are a helpful assistant that answers questions based only on provided document context and cites sources."},
+                        {"role": "user", "content": prompt},
+                    ],
+                    temperature=0.3,
+                    max_tokens=2048,
+                )
             )
-            answer = response['message']['content']
+            answer = response.choices[0].message.content
             
             # Prepare sources information (deduplicate by document_id)
             sources_by_doc: Dict[int, Dict[str, Any]] = {}
