@@ -27,7 +27,7 @@ class DocumentChunk(RagBase):
     
     # Vector embedding - use pgvector if available, otherwise ARRAY
     if PGVECTOR_AVAILABLE and Vector:
-        # Use 384 dimensions to match all-MiniLM-L6-v2 embeddings
+        # Use 384 dimensions to match sentence-transformers (paraphrase-multilingual-MiniLM-L12-v2)
         embedding = Column(Vector(384))
     else:
         embedding = Column(ARRAY(Float))  # Fallback to array

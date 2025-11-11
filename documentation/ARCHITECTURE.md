@@ -7,7 +7,8 @@
 ```
 ┌─ Frontend (React) ──── Port 80/443 ──── nginx
 ├─ Backend (FastAPI) ─── Port 8000 ───── Python
-├─ AI/RAG (Ollama) ───── Port 11434 ──── Local LLM
+├─ AI/RAG (Groq API) ─── HTTPS ──────── Cloud LLM (ultra-fast inference)
+├─ Embeddings (Local) ── sentence-transformers ─ Local (384-dim, multilingual)
 ├─ MySQL Database ────── Port 21699 ──── Exoscale DBaaS
 ├─ PostgreSQL RAG ───── Port 21699 ──── Exoscale DBaaS  
 └─ S3 Storage ────────── HTTPS ─────── Exoscale SOS
@@ -25,7 +26,7 @@
 - **Purpose**: AI/vector operations
 - **Tables**: document_chunks (with embeddings), rag_queries
 - **Connection**: `POSTGRES_RAG_URI` in .env
-- **Extension**: pgvector for similarity search
+- **Extension**: pgvector for similarity search (384-dim vectors)
 - **Location**: Exoscale DBaaS (managed service)
 
 ## 🤖 **AI/RAG Pipeline**
@@ -34,7 +35,7 @@
 ```
 Document Upload → Admin Approval → OCR Text Extraction
      ↓
-Document Chunking (500 chars) → Embedding Generation (384-dim)
+Document Chunking (500 chars) → Local Embedding (sentence-transformers, 384-dim)
      ↓  
 Vector Storage (PostgreSQL) → Index Building (pgvector)
      ↓
@@ -43,17 +44,17 @@ Ready for AI Q&A Search
 
 ### **Query Flow**
 ```
-User Question → Embedding Generation → Vector Similarity Search
+User Question → Local Embedding (sentence-transformers) → Vector Similarity (pgvector)
      ↓
-Context Retrieval (top 5 chunks) → LLM Processing (Ollama)
+Context Retrieval (top chunks) → LLM Processing (Groq API - Mixtral, ultra-fast)
      ↓
 Answer + Sources + Confidence Score → User Response
 ```
 
 ### **AI Stack Components**
-- **Ollama**: Local LLM server (models: llama3, phi3:mini, gemma:2b)
-- **sentence-transformers**: Embedding model (all-MiniLM-L6-v2)
-- **pgvector**: PostgreSQL extension for vector operations
+- **Groq API**: Ultra-fast cloud LLM inference (mixtral-8x7b-32768, ~2-5s responses)
+- **sentence-transformers**: Local multilingual embeddings (paraphrase-multilingual-MiniLM-L12-v2, 384-dim)
+- **pgvector**: PostgreSQL extension for vector similarity search
 - **FastAPI RAG Service**: Orchestrates the entire pipeline
 
 ## 🌐 **Network Architecture**
@@ -68,14 +69,14 @@ Internet → Deflect CDN → nginx (production server) → FastAPI (8000)
                             ├─ MySQL DBaaS
                             ├─ PostgreSQL DBaaS  
                             ├─ S3 Object Storage
-                            └─ Ollama (local:11434)
+                            └─ Groq API (LLM only)
 ```
 
 ### **Service Ports**
 - **80/443**: nginx (frontend + proxy)
 - **8000**: FastAPI backend (internal)
-- **11434**: Ollama LLM server (internal)
 - **21699**: Database connections (external)
+- **External APIs**: Groq (LLM only) via HTTPS
 
 ## 📁 **File System Layout**
 
@@ -125,10 +126,10 @@ fadih/
 ### **AI Search Flow**
 ```
 1. User asks question → Frontend → Backend /api/rag/question
-2. Generate query embedding → sentence-transformers
-3. Vector similarity search → PostgreSQL pgvector
+2. Generate query embedding → sentence-transformers (local, 384-dim)
+3. Vector similarity search → PostgreSQL pgvector (cosine similarity)
 4. Retrieve top chunks → Context preparation
-5. LLM processing → Ollama (local model)
+5. LLM processing → Groq API (mixtral-8x7b-32768 - ultra-fast)
 6. Response + sources → Frontend display
 ```
 
@@ -175,21 +176,21 @@ Health checks → Service verification → Complete
 
 ## 📊 **Performance Considerations**
 
-### **Current Bottlenecks**
-1. **AI processing**: 20-30 second response times
-2. **Blocking operations**: AI queries block main thread
-3. **Database queries**: Vector search can be slow
-4. **Model loading**: Large LLM models consume memory
+### **Performance Improvements (Hybrid Architecture)**
+1. **AI processing**: ~2-5 second response times (was 20-30s with Ollama)
+2. **Non-blocking**: All operations are async
+3. **Groq speed**: Up to 625 tokens/second (50-100x faster than Ollama)
+4. **Low memory**: sentence-transformers uses ~500MB RAM (vs 4GB+ for Ollama)
+5. **Cost**: $0 with Groq free tier (no OpenAI costs)
 
 ### **Optimization Opportunities**
-1. **Async processing**: Background AI job queue
-2. **Caching**: Redis for frequent queries
-3. **Model optimization**: Use smaller/faster models
-4. **Database tuning**: pgvector index optimization
-5. **Service separation**: Dedicated AI service
+1. **Caching**: Redis for frequent queries and embeddings
+2. **Database tuning**: pgvector index optimization
+3. **Batch embeddings**: sentence-transformers supports efficient batching
+4. **Model caching**: sentence-transformers models cached after first load
 
 ### **Resource Usage**
-- **RAM**: ~4GB (backend + Ollama models)
-- **Storage**: ~10GB (models + documents)
-- **CPU**: 2-4 cores recommended
-- **Network**: External database connections
+- **RAM**: ~1.5GB (backend + sentence-transformers model)
+- **Storage**: ~2GB (documents + 500MB embedding model)
+- **CPU**: 2 cores sufficient (embeddings are CPU-bound but fast)
+- **Network**: Groq API + database connections only

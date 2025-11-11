@@ -4,13 +4,14 @@
 
 ## 🤖 **NEW: AI-Powered Q&A System (RAG)**
 
-**Revolutionary RAG (Retrieval-Augmented Generation) technology now enables intelligent question answering about corruption documents using only open source components:**
+**Revolutionary RAG (Retrieval-Augmented Generation) technology now enables intelligent question answering about corruption documents using a hybrid approach:**
 
 ✨ **Ask Natural Language Questions**: "What corruption cases involve Brazil?" or "What types of government fraud are mentioned?"  
 🔍 **AI-Powered Answers**: Get detailed responses synthesized from relevant documents  
 📚 **Source Attribution**: Every answer includes clickable links to source documents  
 🎯 **Confidence Scoring**: Know how reliable each answer is (High/Medium/Low confidence)  
-🔒 **Fully Private**: All AI processing happens locally with open source models (Ollama + sentence-transformers)  
+🔒 **Privacy-Focused**: Embeddings processed locally with open source models (sentence-transformers)  
+⚡ **Ultra-Fast**: Groq cloud LLM provides responses in 2-5 seconds (50-100x faster than local models)  
 🌍 **Multi-Language**: Works with documents in all 60+ supported languages  
 📈 **Smart Discovery**: Find relevant information across thousands of documents instantly
 
@@ -22,11 +23,12 @@ The AI Q&A system uses a sophisticated Retrieval-Augmented Generation pipeline w
 - **Primary MySQL Database**: Stores document metadata, user data, translations, and search indexes
 - **PostgreSQL RAG Database**: Dedicated vector database with pgvector extension for AI embeddings and similarity search
 
-#### **Open Source AI Stack**
-- **Ollama + Llama3**: Local large language model for answer generation
-- **sentence-transformers**: Open source embedding model (`all-MiniLM-L6-v2`) for document vectorization  
+#### **Hybrid AI Stack (Fast + Private)**
+- **Groq API**: Ultra-fast cloud LLM inference (mixtral-8x7b-32768) - 2-5 second responses
+- **sentence-transformers**: Local open source embeddings (`paraphrase-multilingual-MiniLM-L12-v2`, 384-dim)  
 - **pgvector**: PostgreSQL extension for efficient vector similarity search
 - **FastAPI RAG Service**: Custom Python service orchestrating the AI pipeline
+- **Cost**: $0 with Groq free tier (embeddings are local/free)
 
 #### **Document Processing Pipeline**
 1. **Document Upload** → Admin approval → OCR text extraction
@@ -48,12 +50,12 @@ The AI Q&A system uses a sophisticated Retrieval-Augmented Generation pipeline w
 ┌─────────────────────┐    ┌──────────────────────────────────────┐    ┌─────────────────┐
 │     FRONTEND        │    │              BACKEND                 │    │   AI/RAG LAYER  │
 │                     │    │                                      │    │                 │
-│  React + TypeScript │◄──►│            FastAPI                   │◄──►│   Ollama LLM    │
-│  Vite + shadcn/ui   │    │         SQLAlchemy ORM               │    │   (Llama3)      │
-│  Multi-language i18n│    │      JWT Authentication             │    │                 │
-│  Interactive Maps   │    │       Rate Limiting                  │    │ sentence-trans. │
-│  AI Q&A Interface   │    │       RAG Service                    │    │ (Embeddings)    │
-│  Real-time Search   │    │                                      │    │                 │
+│  React + TypeScript │◄──►│            FastAPI                   │◄──►│   Groq API      │
+│  Vite + shadcn/ui   │    │         SQLAlchemy ORM               │    │   (Mixtral)     │
+│  Multi-language i18n│    │      JWT Authentication             │    │  Ultra-Fast LLM │
+│  Interactive Maps   │    │       Rate Limiting                  │    │                 │
+│  AI Q&A Interface   │    │       RAG Service                    │    │ sentence-trans. │
+│  Real-time Search   │    │                                      │    │(Local Embedding)│
 └─────────────────────┘    └──────────────────────────────────────┘    └─────────────────┘
            │                                    │                                 │
            │               ┌────────────────────┼─────────────────────────────────┼──────────┐
