@@ -248,19 +248,12 @@ async def search_documents(
                     logger.warning("Fuzzy fallback failed", error=str(fuzzy_error))
         
         elif search_type == "hybrid":
-            # Hybrid search: combine semantic and keyword results
+            # Hybrid search: keyword + fuzzy fallback (semantic disabled due to dimension mismatch)
             all_results = []
             
-            # Get semantic results if available
-            if semantic_search_service.is_available():
-                semantic_results = semantic_search_service.search_similar_documents(
-                    search_query, db, limit=per_page * 2
-                )
-                for result in semantic_results:
-                    result['search_type'] = 'semantic'
-                all_results.extend(semantic_results)
-                
-                logger.info("Hybrid search: semantic results", count=len(semantic_results))
+            # Skip semantic search (broken due to embedding dimension mismatch)
+            # The old BAAI/bge-large-en-v1.5 (1024-dim) embeddings don't match current system
+            logger.info("Hybrid search: using keyword only (semantic disabled)")
             
             # Get keyword results
             query_builder = db.query(Document).filter(Document.status == "approved")
