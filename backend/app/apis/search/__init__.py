@@ -210,32 +210,42 @@ async def search_documents(
             query_builder = query_builder.order_by(Document.created_at.desc()).offset(offset).limit(per_page)
             documents_data = query_builder.all()
             
-            # Automatic semantic fallback for typo tolerance (if few/no results)
-            # This catches typos, misspellings, and conceptual matches
-            if total_count < 5 and semantic_search_service.is_available() and search_query:
-                logger.info("Few keyword results, trying semantic search fallback for typos", 
-                           keyword_results=total_count, query=search_query)
+            # Fuzzy search fallback for typo tolerance (if no/few results)
+            # Uses partial word matching to catch common typos
+            if total_count == 0 and search_query and len(search_query) > 3:
+                logger.info("No keyword results, trying fuzzy search fallback", 
+                           query=search_query)
                 try:
-                    # Use higher limit to catch more potential matches
-                    semantic_results = semantic_search_service.search_similar_documents(
-                        search_query, db, limit=per_page * 2
-                    )
-                    if semantic_results:
-                        # Merge semantic results with keyword results (deduplicate by ID)
-                        existing_ids = {doc.id for doc in documents_data}
-                        for sem_doc in semantic_results:
-                            if sem_doc['id'] not in existing_ids:
-                                # Convert dict to Document object
-                                doc = db.query(Document).filter(Document.id == sem_doc['id']).first()
-                                if doc:
-                                    documents_data.append(doc)
-                                    existing_ids.add(doc.id)
-                        
-                        total_count = len(documents_data)
-                        logger.info("Semantic fallback added results", 
-                                   total_results=total_count, semantic_added=len(semantic_results))
-                except Exception as sem_error:
-                    logger.warning("Semantic fallback failed", error=str(sem_error))
+                    # Search for substrings of the query (handles missing/extra characters)
+                    # Example: "salmon" finds "salman", "humanitarion" finds "humanitarian"
+                    fuzzy_query = db.query(Document).filter(Document.status == "approved")
+                    
+                    # Match first 4-5 characters (handles end typos)
+                    query_start = search_query[:min(5, len(search_query)-1)]
+                    
+                    fuzzy_conditions = [
+                        Document.title.ilike(f"%{query_start}%"),
+                        Document.ocr_text.ilike(f"%{query_start}%"),
+                        Document.description.ilike(f"%{query_start}%"),
+                        Document.country.ilike(f"%{query_start}%"),
+                    ]
+                    
+                    fuzzy_query = fuzzy_query.filter(or_(*fuzzy_conditions))
+                    
+                    if country:
+                        fuzzy_query = fuzzy_query.filter(Document.country == country)
+                    if state:
+                        fuzzy_query = fuzzy_query.filter(Document.state == state)
+                    
+                    fuzzy_results = fuzzy_query.order_by(Document.created_at.desc()).limit(per_page).all()
+                    
+                    if fuzzy_results:
+                        documents_data = fuzzy_results
+                        total_count = len(fuzzy_results)
+                        logger.info("Fuzzy search found results",
+                                   fuzzy_results=total_count, query_start=query_start)
+                except Exception as fuzzy_error:
+                    logger.warning("Fuzzy fallback failed", error=str(fuzzy_error))
         
         elif search_type == "hybrid":
             # Hybrid search: combine semantic and keyword results
