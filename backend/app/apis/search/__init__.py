@@ -350,8 +350,14 @@ async def search_documents(
         
         # Fuzzy search fallback for typo tolerance (applies to all search types)
         # Triggers when no results found to catch common misspellings
+        logger.info("Checking fuzzy fallback", 
+                   has_results=len(documents_data) if documents_data else 0,
+                   total_count=total_count, 
+                   query=search_query,
+                   query_len=len(search_query) if search_query else 0)
+        
         if (not documents_data or total_count == 0) and search_query and len(search_query) > 3:
-            logger.info("No results, trying fuzzy fallback",query=search_query)
+            logger.info("Triggering fuzzy fallback",query=search_query)
             try:
                 # Match first 4-5 characters to catch typos like salmon→salman, humanitarion→humanitarian  
                 query_start = search_query[:min(5, len(search_query)-1)]
