@@ -343,22 +343,13 @@ async def search_documents(
         
         # Fuzzy search fallback for typo tolerance (applies to all search types)
         # Triggers when no results found to catch common misspellings
-        print(f"DEBUG: Checking fuzzy - documents_data={len(documents_data) if documents_data else 0}, total_count={total_count}, query={search_query}")
-        logger.info("Checking fuzzy fallback", 
-                   has_results=len(documents_data) if documents_data else 0,
-                   total_count=total_count, 
-                   query=search_query)
-        
         if (not documents_data or total_count == 0) and search_query and len(search_query) > 3:
-            print(f"DEBUG: Triggering fuzzy fallback for query: {search_query}")
-            logger.info("Triggering fuzzy fallback",query=search_query)
+            logger.info("Triggering fuzzy fallback for typos",query=search_query)
             try:
                 # Match first 4 characters to catch typos like salmon→salman, humanitarion→humanitarian  
                 # salmon[:4]="salm" matches "salman" ✅
                 # humanitarion[:4]="huma" matches "humanitarian" ✅
                 query_start = search_query[:4] if len(search_query) > 4 else search_query[:3]
-                
-                print(f"DEBUG: Fuzzy searching for: %{query_start}%")
                 
                 fuzzy_query = db.query(Document).filter(Document.status == "approved")
                 fuzzy_conditions = [
