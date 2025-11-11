@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Migration script: Switch from Ollama to Groq for LLM (embeddings stay local with sentence-transformers)
-- Drops and recreates document_chunks table (keeps 384-dim)
-- Re-embeds all approved documents using sentence-transformers (local)
-- Requires GROQ_API_KEY in environment
+Migration script: Switch to cloud-based AI (Groq + OpenAI)
+- Drops and recreates document_chunks table (1536-dim for OpenAI embeddings)
+- Re-embeds all approved documents using OpenAI API
+- Requires GROQ_API_KEY and OPENAI_API_KEY in environment
 
-Usage: python backend/migrate_to_groq_llm.py
+Usage: python backend/migrate_to_openai_embeddings.py
 """
 
 import sys
@@ -34,14 +34,19 @@ logger = logging.getLogger(__name__)
 async def migrate_embeddings():
     """Main migration function"""
     
-    # Check for Groq API key
+    # Check for required API keys
     if not os.getenv("GROQ_API_KEY"):
         logger.error("❌ GROQ_API_KEY not set in .env file!")
         logger.error("Get your API key from: https://console.groq.com")
         sys.exit(1)
     
+    if not os.getenv("OPENAI_API_KEY"):
+        logger.error("❌ OPENAI_API_KEY not set in .env file!")
+        logger.error("Get your API key from: https://platform.openai.com/api-keys")
+        sys.exit(1)
+    
     logger.info("=" * 80)
-    logger.info("🚀 Starting migration to Groq LLM (embeddings: sentence-transformers, 384-dim)")
+    logger.info("🚀 Starting migration to cloud AI (Groq LLM + OpenAI embeddings, 1536-dim)")
     logger.info("=" * 80)
     
     # Step 1: Drop and recreate document_chunks table
@@ -55,8 +60,8 @@ async def migrate_embeddings():
         rag_db.commit()
         logger.info("   ✅ Old table dropped")
         
-        # Create new table with 384 dimensions (sentence-transformers)
-        logger.info("   Creating new document_chunks table (384-dim)...")
+        # Create new table with 1536 dimensions (OpenAI)
+        logger.info("   Creating new document_chunks table (1536-dim)...")
         create_table_sql = """
         CREATE TABLE document_chunks (
             id SERIAL PRIMARY KEY,
@@ -65,7 +70,7 @@ async def migrate_embeddings():
             content TEXT NOT NULL,
             document_title VARCHAR(500),
             document_country VARCHAR(100),
-            embedding vector(384),
+            embedding vector(1536),
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             CONSTRAINT uq_document_chunk UNIQUE (document_id, chunk_index)
@@ -105,8 +110,8 @@ async def migrate_embeddings():
     finally:
         db.close()
     
-    # Step 3: Re-embed all documents using sentence-transformers (local)
-    logger.info(f"\n🤖 Step 3: Re-embedding {len(documents)} documents with sentence-transformers (local)...")
+    # Step 3: Re-embed all documents using OpenAI API
+    logger.info(f"\n🤖 Step 3: Re-embedding {len(documents)} documents with OpenAI API...")
     logger.info("   (This may take a while depending on document count)")
     
     successful = 0
@@ -131,7 +136,7 @@ async def migrate_embeddings():
             
             full_content = "\n\n".join(content_parts)
             
-            # Process document with new RAG service (uses sentence-transformers + Groq)
+            # Process document with new RAG service (uses OpenAI + Groq)
             await rag_service.process_document_for_rag(
                 document_id=doc.id,
                 content=full_content,
@@ -155,7 +160,8 @@ async def migrate_embeddings():
     if failed > 0:
         logger.info(f"❌ Failed: {failed} documents")
     logger.info(f"📈 Success rate: {(successful / len(documents) * 100):.1f}%")
-    logger.info("\n🎉 Migration complete! RAG system now uses Groq (LLM) + sentence-transformers (embeddings).")
+    logger.info("\n🎉 Migration complete! RAG system now uses Groq (LLM) + OpenAI (embeddings).")
+    logger.info("💰 Cost: ~$0.13 per 1M tokens for embeddings (~$5/month typical usage)")
     logger.info("=" * 80)
 
 

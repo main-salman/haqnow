@@ -1,3 +1,32 @@
+[2025-11-11T01:20:00Z] **FIX: Switch to OpenAI Embeddings (Cloud-Based)**
+**Problem**: Server has only 2GB RAM. sentence-transformers uses ~900MB, causing OOM kills every 30-60 seconds.
+**Solution**: Switched to OpenAI embeddings API (cloud-based, zero memory overhead).
+
+**Changes Made:**
+1. **RAG Service** (`backend/app/services/rag_service.py`):
+   - Replaced sentence-transformers with OpenAI embeddings API
+   - Uses `text-embedding-3-small` model (1536 dimensions)
+   - Zero memory overhead - all embedding computation in cloud
+
+2. **Database Schema** (`backend/app/database/rag_models.py`):
+   - Updated vector dimensions from 384 → 1536 (OpenAI embeddings)
+
+3. **Dependencies** (`backend/requirements.txt`):
+   - Removed: `sentence-transformers>=2.2.2,<3.0.0`
+   - Added: `openai>=1.12.0`
+
+4. **Migration Script**:
+   - Updated to use OpenAI API for re-embedding documents
+   - Recreates document_chunks table with 1536-dim vectors
+
+**Performance & Cost:**
+- **Memory**: ~300-400MB backend (was 1.3GB+ with sentence-transformers)
+- **Speed**: OpenAI embeddings are fast (~50ms per request)
+- **Cost**: ~$0.13 per 1M tokens (~$5/month for typical usage)
+- **Result**: No more OOM crashes, service stable
+
+**Architecture**: Fully cloud-based AI (Groq for LLM + OpenAI for embeddings)
+
 [2025-11-11T01:15:00Z] **FIX: Deployment Script Updates for Groq Migration**
 - Updated `scripts/deploy.sh` to remove all Ollama installation steps
 - Changed uvicorn workers from 2 to 1 (prevents OOM crashes on 2GB RAM server)

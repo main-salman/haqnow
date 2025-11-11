@@ -18,13 +18,13 @@ except ImportError:
     GROQ_AVAILABLE = False
     Groq = None
 
-# Local embeddings (sentence-transformers)
+# OpenAI for embeddings
 try:
-    from sentence_transformers import SentenceTransformer
-    SENTENCE_TRANSFORMERS_AVAILABLE = True
+    from openai import OpenAI
+    OPENAI_AVAILABLE = True
 except ImportError:
-    SENTENCE_TRANSFORMERS_AVAILABLE = False
-    SentenceTransformer = None
+    OPENAI_AVAILABLE = False
+    OpenAI = None
 
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -57,15 +57,15 @@ class DocumentChunk:
 
 class RAGService:
     """
-    Hybrid RAG service using Groq (cloud LLM) + sentence-transformers (local embeddings)
+    Cloud RAG service using Groq (LLM) + OpenAI (embeddings) - fully cloud-based
     """
     
     def __init__(self):
         self.groq_client = None
-        self.embedding_model = None
+        self.openai_client = None
         self.llm_model = "mixtral-8x7b-32768"  # Groq model for LLM
-        self.embedding_model_name = "paraphrase-multilingual-MiniLM-L12-v2"  # sentence-transformers
-        self.embedding_dimensions = 384  # sentence-transformers dimensions
+        self.embedding_model = "text-embedding-3-small"  # OpenAI embeddings
+        self.embedding_dimensions = 1536  # OpenAI text-embedding-3-small dimensions
         self._initialize_clients()
         self._initialize_rag_database()
     
@@ -85,12 +85,18 @@ class RAGService:
             self.groq_client = Groq(api_key=groq_api_key)
             logger.info(f"✅ Groq client initialized (LLM: {self.llm_model})")
             
-            # Delay loading sentence-transformers model until first use (saves ~900MB RAM at startup)
-            if not SENTENCE_TRANSFORMERS_AVAILABLE:
-                logger.warning("sentence-transformers not installed - RAG embeddings will not work")
-                self.embedding_model = None
-            else:
-                logger.info(f"✅ sentence-transformers available - model will be lazy-loaded on first RAG query")
+            # Initialize OpenAI for embeddings (cloud-based, no memory overhead)
+            openai_api_key = os.getenv("OPENAI_API_KEY")
+            if not openai_api_key:
+                logger.error("OPENAI_API_KEY not found in environment variables")
+                raise ValueError("OPENAI_API_KEY is required for RAG embeddings")
+            
+            if not OPENAI_AVAILABLE:
+                logger.error("openai package not installed - run: pip install openai")
+                raise ImportError("openai package required")
+            
+            self.openai_client = OpenAI(api_key=openai_api_key)
+            logger.info(f"✅ OpenAI client initialized (embeddings: {self.embedding_model}, {self.embedding_dimensions}-dim)")
             
         except Exception as e:
             logger.error(f"Failed to initialize RAG clients: {e}")
@@ -116,58 +122,42 @@ class RAGService:
             # Don't raise exception as this shouldn't prevent the main app from starting
     
     async def generate_embedding(self, text: str) -> List[float]:
-        """Generate embedding for a single text string using sentence-transformers (local)"""
-        # Lazy load the model on first use to save memory at startup
-        if self.embedding_model is None and SENTENCE_TRANSFORMERS_AVAILABLE:
-            logger.info(f"🔄 Lazy-loading sentence-transformers model ({self.embedding_model_name})...")
-            try:
-                self.embedding_model = SentenceTransformer(self.embedding_model_name)
-                logger.info(f"✅ Embedding model loaded ({self.embedding_dimensions}-dim)")
-            except Exception as e:
-                logger.error(f"Failed to load embedding model: {e}")
-                return None
-        
-        if not self.embedding_model:
-            logger.error("Embedding model not available")
+        """Generate embedding for a single text string using OpenAI API"""
+        if not self.openai_client:
+            logger.error("OpenAI client not available")
             return None
         
         try:
-            # Run in thread pool to avoid blocking
+            # Call OpenAI embeddings API
             loop = asyncio.get_event_loop()
-            embedding = await loop.run_in_executor(
-                None, 
-                self.embedding_model.encode, 
-                text
+            response = await loop.run_in_executor(
+                None,
+                lambda: self.openai_client.embeddings.create(
+                    input=text,
+                    model=self.embedding_model
+                )
             )
-            return embedding.tolist()
+            return response.data[0].embedding
         except Exception as e:
             logger.error(f"Failed to generate embedding: {e}")
             return None
 
     async def generate_embeddings(self, texts: List[str]) -> List[List[float]]:
-        """Generate embeddings for multiple texts using sentence-transformers (local)"""
-        # Lazy load the model on first use to save memory at startup
-        if self.embedding_model is None and SENTENCE_TRANSFORMERS_AVAILABLE:
-            logger.info(f"🔄 Lazy-loading sentence-transformers model ({self.embedding_model_name})...")
-            try:
-                self.embedding_model = SentenceTransformer(self.embedding_model_name)
-                logger.info(f"✅ Embedding model loaded ({self.embedding_dimensions}-dim)")
-            except Exception as e:
-                logger.error(f"Failed to load embedding model: {e}")
-                raise RuntimeError(f"Embedding model loading failed: {e}")
-        
-        if not self.embedding_model:
-            raise RuntimeError("Embedding model not available")
+        """Generate embeddings for multiple texts using OpenAI API"""
+        if not self.openai_client:
+            raise RuntimeError("OpenAI client not available")
         
         try:
-            # Run in thread pool to avoid blocking
+            # OpenAI API supports batch embedding generation
             loop = asyncio.get_event_loop()
-            embeddings = await loop.run_in_executor(
-                None, 
-                self.embedding_model.encode, 
-                texts
+            response = await loop.run_in_executor(
+                None,
+                lambda: self.openai_client.embeddings.create(
+                    input=texts,
+                    model=self.embedding_model
+                )
             )
-            return embeddings.tolist()
+            return [item.embedding for item in response.data]
         except Exception as e:
             logger.error(f"Failed to generate embeddings: {e}")
             raise

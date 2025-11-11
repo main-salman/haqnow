@@ -42,9 +42,9 @@ sendgrid>=6.11.0
 # NLP (optional - graceful degradation if fails)
 spacy>=3.7.0
 
-# RAG/AI stack - Groq (cloud LLM) + sentence-transformers (local embeddings)
+# RAG/AI stack - Groq (cloud LLM) + OpenAI (cloud embeddings)
 groq>=0.4.1
-sentence-transformers>=2.2.2,<3.0.0
+openai>=1.12.0
 
 # Mistral (conflicts with old googletrans so removed for now)
 # mistralai==0.1.2
