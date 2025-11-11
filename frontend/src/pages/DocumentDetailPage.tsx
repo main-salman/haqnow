@@ -10,7 +10,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Download, Tag, PlusCircle, ArrowLeft, Brain, Loader2, FileText } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -209,12 +208,18 @@ export default function DocumentDetailPage() {
 
             {/* AI Q&A Button */}
             <Dialog open={isAIOpen} onOpenChange={setIsAIOpen}>
-              <DialogTrigger asChild>
-                <Button variant="secondary">
-                  <Brain className="mr-2 h-4 w-4" />
-                  Ask AI about this document
-                </Button>
-              </DialogTrigger>
+              <Button 
+                variant="secondary"
+                onClick={() => {
+                  setIsAIOpen(true);
+                  setAiQuestion("");
+                  setAiAnswer(null);
+                  setAiError(null);
+                }}
+              >
+                <Brain className="mr-2 h-4 w-4" />
+                Ask AI about this document
+              </Button>
               <DialogContent className="sm:max-w-[700px] max-h-[85vh] flex flex-col">
                 <DialogHeader>
                   <DialogTitle>Ask AI about this document</DialogTitle>
