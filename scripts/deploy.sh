@@ -47,12 +47,24 @@ echo ""
 # Step 3: Commit and push changes
 echo "📝 Committing and pushing changes..."
 git add -A
-git commit -m "Deploy version $NEW_VERSION
+
+# Check if there are changes to commit
+if git diff --staged --quiet && git diff --quiet; then
+    echo "ℹ️  No changes to commit (working tree clean)"
+else
+    git commit -m "Deploy version $NEW_VERSION
 
 - Version incremented using deployment script
 - Frontend built and ready for deployment
 - Automatic version management: $([ "$VERSION_TYPE" = "patch" ] && echo "patch increment" || echo "$VERSION_TYPE update")"
+    
+    if [ $? -ne 0 ]; then
+        echo "❌ Git commit failed!"
+        exit 1
+    fi
+fi
 
+# Always push to ensure remote is up to date
 git push origin main
 
 if [ $? -ne 0 ]; then
@@ -76,6 +88,8 @@ fi
 echo "✅ Environment configuration copied to server"
 
 echo "📦 Uploading built frontend assets..."
+# Clean old files on server before uploading
+ssh ${SSH_OPTS} root@${SERVER_HOST} "rm -rf /tmp/frontend_dist" || true
 scp -r ${SSH_OPTS} frontend/dist root@${SERVER_HOST}:/tmp/frontend_dist
 echo "✅ Frontend assets uploaded"
 echo ""
@@ -115,12 +129,21 @@ git status --porcelain || true
 echo "🧹 Cleaning untracked files..."
 git clean -fd || true
 
-# Force sync to match remote exactly
+# Fetch latest changes from GitHub
+echo "📥 Fetching latest changes from GitHub..."
 git fetch origin || { echo "❌ Failed to fetch from remote"; exit 1; }
+
+# Reset to match remote exactly (ensures we have latest code)
+echo "🔄 Resetting to latest commit from GitHub..."
 git reset --hard origin/main || { echo "❌ Failed to reset to origin/main"; exit 1; }
 
+# Verify we're on the latest commit
 CURRENT_COMMIT=$(git rev-parse --short HEAD)
+REMOTE_COMMIT=$(git rev-parse --short origin/main)
 echo "✅ Repository synced to latest version: $CURRENT_COMMIT"
+if [ "$CURRENT_COMMIT" != "$REMOTE_COMMIT" ]; then
+    echo "⚠️  Warning: Local commit ($CURRENT_COMMIT) differs from remote ($REMOTE_COMMIT)"
+fi
 
 # Verify we're on the correct branch and commit
 if [ "$(git rev-parse --abbrev-ref HEAD)" != "main" ]; then
@@ -221,12 +244,31 @@ echo "🧪 Testing RAG system components..."
 cd ..
 
 # Deploy frontend assets uploaded from local build
+echo "📦 Deploying frontend assets..."
 if [ -d /tmp/frontend_dist ]; then
+  # Verify frontend files exist before deploying
+  if [ ! -f /tmp/frontend_dist/index.html ]; then
+    echo "❌ Frontend build incomplete: index.html not found in /tmp/frontend_dist"
+    exit 1
+  fi
+  
+  # Remove old files and deploy new ones
   sudo rm -rf /var/www/html/* || true
   sudo cp -r /tmp/frontend_dist/* /var/www/html/ || true
   sudo chown -R www-data:www-data /var/www/html || true
+  
+  # Verify deployment
+  if [ -f /var/www/html/index.html ]; then
+    echo "✅ Frontend assets deployed successfully"
+    FRONTEND_FILES=$(find /var/www/html/assets -name "*.js" 2>/dev/null | wc -l)
+    echo "   Deployed $FRONTEND_FILES JavaScript files"
+  else
+    echo "❌ Frontend deployment verification failed"
+    exit 1
+  fi
 else
-  echo "⚠️  /tmp/frontend_dist not found; skipping frontend deploy"
+  echo "❌ /tmp/frontend_dist not found; frontend deployment failed"
+  exit 1
 fi
 
 # Configure nginx site and Let's Encrypt TLS
