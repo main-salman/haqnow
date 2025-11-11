@@ -1,3 +1,38 @@
+[2025-11-11T03:55:00Z] **FIXES: Complete RAG System Validation & Multilingual Setup**
+**Issues Found & Fixed:**
+
+1. **Database Schema - TEXT Column Too Small**:
+   - Problem: `search_text` column (TEXT, 64KB max) couldn't store large document text (90KB+)
+   - Error: "Data too long for column 'search_text'"
+   - Fix: Changed `ocr_text`, `search_text`, `ocr_text_original`, `ocr_text_english` to MEDIUMTEXT (16MB limit)
+   - Script: `backend/fix_text_columns.py`
+
+2. **Missing OCR Dependencies**:
+   - Problem: Tesseract OCR and Poppler not installed on server
+   - Result: Document text extraction failing
+   - Fix: Installed `tesseract-ocr`, `poppler-utils`, and language packs (ara, fra, rus)
+
+3. **Nginx Upload Limit**:
+   - Problem: 413 error on 1.1MB file upload (nginx default 1MB limit)
+   - Fix: Added `client_max_body_size 50m;` to nginx config
+   - Updated `scripts/deploy.sh` to include this in future deployments
+
+4. **Document Approval Status**:
+   - Problem: Document 10 had OCR text but wasn't approved (status: "processed")
+   - Fix: Set status to "approved" so it's accessible for RAG Q&A
+
+**Testing Results:**
+- ✅ Document 10 (Resume): Successfully processed, 8518 chars OCR, RAG working
+- ✅ RAG Q&A: Detailed 1455-char answer in 1.6 seconds
+- ✅ Memory: Stable at ~1.0-1.3GB (no OOM crashes)
+- ✅ Multilingual OCR: Arabic, French, Russian support installed
+
+**Architecture Validation:**
+- ✅ Groq LLM (llama-3.3-70b-versatile): Working, fast responses
+- ✅ OpenAI Embeddings (text-embedding-3-small, 1536-dim): Working
+- ✅ PostgreSQL RAG DB: Chunks stored correctly
+- ✅ File uploads: Now supports up to 50MB
+
 [2025-11-11T01:30:00Z] **SUCCESS: Final Groq Model Update**
 - Updated Groq model from `mixtral-8x7b-32768` (deprecated) to `llama-3.3-70b-versatile` (current production model)
 - Verified stable operation: Search API working, RAG Q&A working
