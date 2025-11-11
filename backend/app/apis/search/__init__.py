@@ -353,8 +353,12 @@ async def search_documents(
             print(f"DEBUG: Triggering fuzzy fallback for query: {search_query}")
             logger.info("Triggering fuzzy fallback",query=search_query)
             try:
-                # Match first 4-5 characters to catch typos like salmon→salman, humanitarion→humanitarian  
-                query_start = search_query[:min(5, len(search_query)-1)]
+                # Match first 4 characters to catch typos like salmon→salman, humanitarion→humanitarian  
+                # salmon[:4]="salm" matches "salman" ✅
+                # humanitarion[:4]="huma" matches "humanitarian" ✅
+                query_start = search_query[:4] if len(search_query) > 4 else search_query[:3]
+                
+                print(f"DEBUG: Fuzzy searching for: %{query_start}%")
                 
                 fuzzy_query = db.query(Document).filter(Document.status == "approved")
                 fuzzy_conditions = [
