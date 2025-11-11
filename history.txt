@@ -1,3 +1,10 @@
+[2025-11-11T01:15:00Z] **FIX: Deployment Script Updates for Groq Migration**
+- Updated `scripts/deploy.sh` to remove all Ollama installation steps
+- Changed uvicorn workers from 2 to 1 (prevents OOM crashes on 2GB RAM server)
+- Added Groq API key validation during deployment
+- Removed ollama from service status checks
+- **Critical**: Server was experiencing OOM (Out of Memory) kills every ~30 seconds due to sentence-transformers using ~500MB per worker. Reducing to 1 worker resolved the issue.
+
 [2025-11-11T00:00:00Z] **MAJOR: AI/RAG Stack Migration - Ollama → Groq (Hybrid Architecture)**
 **Problem**: Ollama running locally was extremely slow (20-30 second responses) and consumed 4GB+ RAM, causing server memory issues.
 **Solution**: Migrated to hybrid architecture using Groq (cloud LLM) + sentence-transformers (local embeddings).

@@ -89,7 +89,7 @@ echo "=== Deploying HaqNow v$NEW_VERSION ==="
 echo "🛠️  Installing system prerequisites (git, python3-venv, python3-virtualenv, pip, node, npm)..."
 sudo apt-get update -y || true
 sudo apt-get install -y git python3-venv python3-virtualenv python3-pip nodejs npm || true
-# Ensure nginx and curl (for health checks / ollama) exist
+# Ensure nginx and curl (for health checks) exist
 sudo apt-get install -y nginx curl || true
 sudo mkdir -p /var/www/html || true
 
@@ -193,25 +193,14 @@ fi
  "$PIP_CMD" install -r "$REQ_RAG_TMP" || echo "RAG dependencies installation completed"
 
 
-# Setup Ollama for local LLM processing (confirmed fallback/provider)
-echo "🧠 Setting up Ollama for AI Q&A..."
-if ! command -v ollama &> /dev/null; then
-    echo "📥 Installing Ollama..."
-    curl -fsSL https://ollama.ai/install.sh | sh
-    echo "✅ Ollama installed"
+# RAG/AI Setup - Using Groq API (no local LLM needed)
+echo "🧠 AI/RAG System: Using Groq API for LLM inference..."
+if grep -q "GROQ_API_KEY=" /opt/foi-archive/backend/.env 2>/dev/null; then
+    echo "✅ Groq API key configured"
 else
-    echo "✅ Ollama already installed"
+    echo "⚠️  Warning: GROQ_API_KEY not found in .env - AI Q&A will not work"
 fi
-
-# Start Ollama service
-echo "🔄 Starting Ollama service..."
-sudo systemctl start ollama || nohup ollama serve > /tmp/ollama.log 2>&1 &
-sudo systemctl enable ollama || echo "⚠️ Ollama service setup failed"
-sleep 5
-
-# Pull required LLM model
-echo "📦 Ensuring Ollama model (llama3:latest) is available..."
-ollama pull "llama3:latest" || echo "⚠️ LLM model download failed - RAG Q&A may not work"
+echo "📦 Embeddings: Using sentence-transformers (local, installed via requirements.txt)"
 
 # Create RAG database tables
 echo "🗄️ Setting up RAG database tables..."
@@ -382,7 +371,7 @@ After=network.target
 Type=simple
 WorkingDirectory=/opt/foi-archive/backend
 EnvironmentFile=/opt/foi-archive/backend/.env
-ExecStart=/opt/foi-archive/backend/.venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2 --proxy-headers
+ExecStart=/opt/foi-archive/backend/.venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1 --proxy-headers
 Restart=always
 
 [Install]
@@ -415,7 +404,7 @@ sudo systemctl enable nginx
 
 # Verify local services are running
 echo "🔍 Verifying local service status..."
-for service in foi-archive nginx ollama; do
+for service in foi-archive nginx; do
     if sudo systemctl is-active --quiet $service; then
         echo "  ✅ $service: running"
     else
