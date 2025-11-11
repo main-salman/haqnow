@@ -349,36 +349,51 @@ async def search_documents(
                        keyword_count=len([r for r in unique_results if r.get('search_type') == 'keyword']),
                        search_type="hybrid")
         
-        # Fuzzy search fallback for typo tolerance (applies to all search types)
+        # Intelligent fuzzy search fallback using Levenshtein distance (applies to all search types)
         # Triggers when no results found to catch common misspellings
-        if (not documents_data or total_count == 0) and search_query and len(search_query) > 3:
-            logger.info("Triggering fuzzy fallback for typos",query=search_query)
+        if (not documents_data or total_count == 0) and search_query and len(search_query) > 3 and RAPIDFUZZ_AVAILABLE:
+            logger.info("Triggering intelligent fuzzy search", query=search_query)
             try:
-                # Match first 4 characters to catch typos like salmon→salman, humanitarion→humanitarian  
-                # salmon[:4]="salm" matches "salman" ✅
-                # humanitarion[:4]="huma" matches "humanitarian" ✅
-                query_start = search_query[:4] if len(search_query) > 4 else search_query[:3]
-                
-                fuzzy_query = db.query(Document).filter(Document.status == "approved")
-                fuzzy_conditions = [
-                    Document.title.ilike(f"%{query_start}%"),
-                    Document.ocr_text.ilike(f"%{query_start}%"),
-                    Document.description.ilike(f"%{query_start}%"),
-                    Document.country.ilike(f"%{query_start}%"),
-                ]
-                fuzzy_query = fuzzy_query.filter(or_(*fuzzy_conditions))
-                
+                # Get all approved documents
+                all_docs = db.query(Document).filter(Document.status == "approved")
                 if country:
-                    fuzzy_query = fuzzy_query.filter(Document.country == country)
+                    all_docs = all_docs.filter(Document.country == country)
                 if state:
-                    fuzzy_query = fuzzy_query.filter(Document.state == state)
+                    all_docs = all_docs.filter(Document.state == state)
+                all_docs = all_docs.all()
                 
-                documents_data = fuzzy_query.order_by(Document.created_at.desc()).limit(per_page).all()
+                # Fuzzy match using Levenshtein distance
+                # Examples: pakestan→pakistan (87%), isreal→israel (83%), salmon→salman (86%)
+                fuzzy_matches = []
+                search_lower = search_query.lower()
+                
+                for doc in all_docs:
+                    max_similarity = 0
+                    
+                    # Check title words
+                    if doc.title:
+                        for word in doc.title.lower().split():
+                            if len(word) > 3:
+                                similarity = fuzz.ratio(search_lower, word)
+                                max_similarity = max(max_similarity, similarity)
+                    
+                    # Check country
+                    if doc.country:
+                        country_sim = fuzz.ratio(search_lower, doc.country.lower())
+                        max_similarity = max(max_similarity, country_sim)
+                    
+                    # Accept matches with 75%+ similarity
+                    if max_similarity >= 75:
+                        fuzzy_matches.append((doc, max_similarity))
+                
+                # Sort by similarity and limit results
+                fuzzy_matches.sort(key=lambda x: x[1], reverse=True)
+                documents_data = [doc for doc, score in fuzzy_matches[:per_page]]
                 total_count = len(documents_data)
                 
                 if total_count > 0:
-                    logger.info("Fuzzy fallback found results", 
-                               results=total_count, query_start=query_start)
+                    logger.info("Fuzzy search found results",
+                               results=total_count, threshold=75)
             except Exception as e:
                 logger.warning("Fuzzy fallback failed", error=str(e))
         
