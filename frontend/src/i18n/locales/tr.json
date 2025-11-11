@@ -30,6 +30,7 @@
     "subtitle": "Dünya çapından ifşa edilen yolsuzluk belgelerinin veritabanını arayın",
     "placeholder": "Anahtar kelimeler, ülke veya belge türü yazın...",
     "button": "Belgeleri Ara",
+    "searchButton": "Ara",
     "searching": "Searching...",
     "errorTitle": "Arama hatası",
     "noResults": "Belge bulunamadı",

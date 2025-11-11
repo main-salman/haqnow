@@ -466,11 +466,11 @@ Please provide a CONCISE answer in 1-2 paragraphs based only on the information 
                 lambda: self.groq_client.chat.completions.create(
                     model=self.llm_model,
                     messages=[
-                        {"role": "system", "content": "You are a helpful assistant that provides CONCISE answers (1-2 paragraphs) based only on provided document context. Only give longer answers if explicitly requested."},
+                        {"role": "system", "content": "You are a helpful assistant that provides BRIEF, CONCISE answers. Your answers MUST be 1-2 short paragraphs maximum (3-5 sentences total) unless the user explicitly asks for a detailed or longer response. Base your answer ONLY on the provided document context."},
                         {"role": "user", "content": prompt},
                     ],
                     temperature=0.3,
-                    max_tokens=512,
+                    max_tokens=300,
                 )
             )
             answer = response.choices[0].message.content

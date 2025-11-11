@@ -30,6 +30,7 @@
     "subtitle": "Entrez des étiquettes séparées par des virgules pour trouver des documents pertinents.",
     "placeholder": "par ex., rapport, budget, environnement",
     "button": "Rechercher",
+    "searchButton": "Rechercher",
     "searching": "Recherche en cours...",
     "errorTitle": "Erreur de Recherche",
     "noResults": "Aucun document trouvé correspondant à vos critères de recherche.",
