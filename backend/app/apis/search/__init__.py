@@ -11,6 +11,14 @@ import structlog
 import requests
 from urllib.parse import urlparse
 
+# Fuzzy string matching for typo tolerance
+try:
+    from rapidfuzz import fuzz
+    RAPIDFUZZ_AVAILABLE = True
+except ImportError:
+    RAPIDFUZZ_AVAILABLE = False
+    fuzz = None
+
 # Import rate limiting, auth, and database
 from app.middleware.rate_limit import check_download_rate_limit, record_download
 from app.auth.jwt_auth import validate_api_key, APIConsumer

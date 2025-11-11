@@ -42,6 +42,9 @@ sendgrid>=6.11.0
 # NLP (optional - graceful degradation if fails)
 spacy>=3.7.0
 
+# Fuzzy string matching for typo-tolerant search
+rapidfuzz>=3.0.0
+
 # RAG/AI stack - Groq (cloud LLM) + OpenAI (cloud embeddings)
 groq>=0.4.1
 openai>=1.12.0
