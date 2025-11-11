@@ -157,7 +157,7 @@ async def search_documents(
                     func.text("IN NATURAL LANGUAGE MODE")
                 )
                 
-                # Fallback search conditions
+                # Fallback search conditions (LIKE matching)
                 fallback_conditions = [
                     Document.title.ilike(f"%{search_query}%"),
                     Document.country.ilike(f"%{search_query}%"),
@@ -165,20 +165,30 @@ async def search_documents(
                     func.json_search(Document.generated_tags, 'one', f"%{search_query}%").isnot(None)
                 ]
                 
-                combined_condition = or_(fulltext_condition, or_(*fallback_conditions))
+                # Phonetic search conditions (SOUNDEX for typo tolerance)
+                phonetic_conditions = [
+                    func.soundex(Document.title) == func.soundex(search_query),
+                    func.soundex(Document.country) == func.soundex(search_query),
+                ]
+                
+                # Combine all conditions: fulltext OR exact match OR phonetic match
+                combined_condition = or_(fulltext_condition, or_(*fallback_conditions), or_(*phonetic_conditions))
                 query_builder = query_builder.filter(combined_condition)
                 
-                logger.info("Using keyword search", query=search_query, search_type="keyword")
+                logger.info("Using keyword search with phonetic matching", query=search_query, search_type="keyword")
                 
             except Exception as search_error:
-                logger.warning("Full-text search failed, using LIKE search", error=str(search_error))
+                logger.warning("Full-text search failed, using LIKE search with phonetic matching", error=str(search_error))
                 search_conditions = [
                     Document.title.ilike(f"%{search_query}%"),
                     Document.description.ilike(f"%{search_query}%"),
                     Document.ocr_text.ilike(f"%{search_query}%"),
                     Document.country.ilike(f"%{search_query}%"),
                     Document.state.ilike(f"%{search_query}%"),
-                    func.json_search(Document.generated_tags, 'one', f"%{search_query}%").isnot(None)
+                    func.json_search(Document.generated_tags, 'one', f"%{search_query}%").isnot(None),
+                    # Add phonetic matching for typo tolerance
+                    func.soundex(Document.title) == func.soundex(search_query),
+                    func.soundex(Document.country) == func.soundex(search_query),
                 ]
                 query_builder = query_builder.filter(or_(*search_conditions))
             
@@ -194,6 +204,31 @@ async def search_documents(
             offset = (page - 1) * per_page
             query_builder = query_builder.order_by(Document.created_at.desc()).offset(offset).limit(per_page)
             documents_data = query_builder.all()
+            
+            # Automatic semantic fallback for typo tolerance (if few/no results)
+            if total_count < 3 and semantic_search_service.is_available() and search_query:
+                logger.info("Few keyword results, trying semantic search fallback", 
+                           keyword_results=total_count, query=search_query)
+                try:
+                    semantic_results = semantic_search_service.search_similar_documents(
+                        search_query, db, limit=per_page
+                    )
+                    if semantic_results:
+                        # Merge semantic results with keyword results (deduplicate by ID)
+                        existing_ids = {doc.id for doc in documents_data}
+                        for sem_doc in semantic_results:
+                            if sem_doc['id'] not in existing_ids:
+                                # Convert dict to Document object
+                                doc = db.query(Document).filter(Document.id == sem_doc['id']).first()
+                                if doc:
+                                    documents_data.append(doc)
+                                    existing_ids.add(doc.id)
+                        
+                        total_count = len(documents_data)
+                        logger.info("Semantic fallback added results", 
+                                   total_results=total_count, semantic_added=len(semantic_results))
+                except Exception as sem_error:
+                    logger.warning("Semantic fallback failed", error=str(sem_error))
         
         elif search_type == "hybrid":
             # Hybrid search: combine semantic and keyword results
@@ -224,7 +259,12 @@ async def search_documents(
                     Document.state.ilike(f"%{search_query}%"),
                     func.json_search(Document.generated_tags, 'one', f"%{search_query}%").isnot(None)
                 ]
-                combined_condition = or_(fulltext_condition, or_(*fallback_conditions))
+                # Add phonetic matching for typo tolerance in hybrid mode too
+                phonetic_conditions = [
+                    func.soundex(Document.title) == func.soundex(search_query),
+                    func.soundex(Document.country) == func.soundex(search_query),
+                ]
+                combined_condition = or_(fulltext_condition, or_(*fallback_conditions), or_(*phonetic_conditions))
                 query_builder = query_builder.filter(combined_condition)
                 
             except Exception:
