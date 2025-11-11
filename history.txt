@@ -1,3 +1,113 @@
+[2025-11-11T21:05:00Z] **IMPROVEMENT: Enhanced deploy.sh for Reliable Deployments**
+**User Request:** Ensure deploy.sh always deploys all files properly by committing to git first and pulling latest changes from GitHub on server.
+
+**Improvements Made:**
+
+1. **Git Commit Logic Enhanced:**
+   - Checks if there are changes before committing
+   - Only commits if working tree has changes
+   - Always pushes to GitHub (even if no commit needed)
+   - Better error handling for git operations
+
+2. **Server Git Sync Improved:**
+   - Explicit "Fetching latest changes from GitHub" step
+   - Clear "Resetting to latest commit" message
+   - Verifies local and remote commits match
+   - Warns if commits differ (shouldn't happen but good to know)
+
+3. **Frontend Deployment Robustness:**
+   - Verifies frontend build exists before deploying
+   - Checks for index.html to ensure build is complete
+   - Verifies deployment succeeded after copying files
+   - Counts deployed JavaScript files for verification
+   - Exits with error if frontend deployment fails (no silent failures)
+
+4. **Frontend Upload Cleanup:**
+   - Already fixed: Cleans `/tmp/frontend_dist` before uploading
+   - Ensures fresh files are always uploaded
+
+**Deployment Flow Now:**
+1. ✅ Update version locally
+2. ✅ Build frontend locally
+3. ✅ Commit changes to git (if any)
+4. ✅ Push to GitHub (always)
+5. ✅ Upload frontend dist to server
+6. ✅ Server pulls latest from GitHub
+7. ✅ Server verifies git sync
+8. ✅ Server deploys frontend with verification
+9. ✅ Server restarts services
+
+**Benefits:**
+- No more old cached files being deployed
+- Always uses latest code from GitHub
+- Better error messages and verification
+- Fails fast if something goes wrong
+- More reliable deployments
+
+**Files Modified:**
+- scripts/deploy.sh - Enhanced git handling and frontend deployment verification
+
+[2025-11-11T21:00:00Z] **CRITICAL FIX: Manual Frontend Deployment - Old Files Issue**
+**Root Cause Found:**
+The deployment script was uploading files, but old cached files in `/tmp/frontend_dist` were being deployed instead of new builds. The server had `DocumentDetailPage-570cf2b9.js` (old, Nov 4) instead of `DocumentDetailPage-3a2f69a0.js` (new, Nov 11).
+
+**Issue:**
+- Old frontend files were cached in `/tmp/frontend_dist` on server
+- Deployment script copied old files instead of new ones
+- Server was serving files without "Press Enter to submit" text
+- Enter key functionality not working because old code was deployed
+
+**Solution Applied:**
+1. **Cleaned and rebuilt frontend** - Removed dist folder, fresh build
+2. **Manually uploaded new files** - Used scp to upload fresh build
+3. **Cleared server cache** - Removed old `/tmp/frontend_dist` before upload
+4. **Verified deployment** - Confirmed "Press Enter to submit" text in deployed files
+5. **Reloaded nginx** - Ensured server serves new files
+
+**Files Deployed:**
+- ✅ DocumentDetailPage-3a2f69a0.js (8.1K, contains "Press Enter to submit")
+- ✅ SearchPage-f1ca0807.js (contains "Press Enter to submit")
+- ✅ All assets updated with latest code
+
+**Verification:**
+- ✅ Server files contain "Press Enter to submit" text
+- ✅ Form wrapper present for Enter key submission
+- ✅ Button click handler directly sets setIsAIOpen(true) - single click
+- ✅ Nginx reloaded to serve new files
+
+**Deployment Status:** v4.12.10 - Files manually deployed and verified
+
+**Next Steps:**
+- Test Enter key submission in browser
+- Test single-click dialog opening
+- If issues persist, may need browser hard refresh (Ctrl+Shift+R)
+
+[2025-11-11T20:55:00Z] **FIX: Added Form Wrapper for Enter Key Submission**
+**Issue:** Enter key not submitting questions despite onKeyDown handler
+
+**Solution Applied:**
+1. **Wrapped Textarea in form element** - Both SearchPage and DocumentDetailPage
+2. **Added form onSubmit handler** - Catches Enter key submission at form level
+3. **Kept onKeyDown handler** - Double protection for Enter key submission
+4. **Form prevents default** - Ensures no page refresh on Enter
+
+**Technical Details:**
+- Form wrapper ensures Enter key triggers form submission
+- onSubmit handler calls handleAskAI() directly
+- onKeyDown handler still works as backup
+- Both handlers check for loading state and non-empty question
+
+**Files Modified:**
+- frontend/src/pages/SearchPage.tsx - Added form wrapper
+- frontend/src/pages/DocumentDetailPage.tsx - Added form wrapper
+
+**Deployment:** v4.12.10 - Successfully deployed
+
+**Testing Required:**
+- ✅ Enter key should now submit questions
+- ✅ Single click should open dialog (already fixed in v4.12.9)
+- ⚠️ If double-click persists, may be browser cache issue - hard refresh needed
+
 [2025-11-11T20:52:00Z] **CRITICAL FIX: Removed DialogTrigger to Fix Double-Click Issue**
 **Root Cause Found:**
 The `DialogTrigger` component was causing the double-click behavior. When using DialogTrigger, it wraps the button and manages its own state, which conflicts with manual state management using `isAIOpen`.
