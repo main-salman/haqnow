@@ -186,18 +186,27 @@ export default function DocumentDetailPage() {
                   Ask AI about this document
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[700px]">
+              <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Ask AI about this document</DialogTitle>
                   <DialogDescription>
-                    Your question will be answered using only the content of this document.
+                    Your question will be answered using only the content of this document. Press Enter to submit.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                   <Textarea
-                    placeholder="Ask a question about this document..."
+                    placeholder="Ask a question about this document... (Press Enter to submit)"
                     value={aiQuestion}
                     onChange={(e) => setAiQuestion(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        const askButton = document.querySelector('[data-ask-button="true"]') as HTMLButtonElement;
+                        if (askButton && !askButton.disabled) {
+                          askButton.click();
+                        }
+                      }
+                    }}
                     rows={3}
                     maxLength={1000}
                     className="resize-none"
@@ -206,17 +215,34 @@ export default function DocumentDetailPage() {
                     <div className="text-sm text-red-600">{aiError}</div>
                   )}
                   {aiAnswer && (
-                    <div className="rounded border p-3 bg-muted/30">
-                      <div className="text-sm text-muted-foreground mb-1">
-                        Confidence: {aiConfidence !== null ? Math.round(aiConfidence * 100) + '%' : '—'}
+                    <div className="rounded border p-4 bg-muted/30 max-h-[40vh] overflow-y-auto">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-sm font-medium text-muted-foreground">
+                          AI Answer
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Confidence: {aiConfidence !== null ? Math.round(aiConfidence * 100) + '%' : '—'}
+                        </div>
                       </div>
-                      <div className="whitespace-pre-wrap leading-relaxed">{aiAnswer}</div>
+                      <div className="whitespace-pre-wrap leading-relaxed text-sm">{aiAnswer}</div>
                     </div>
                   )}
                 </div>
-                <DialogFooter>
+                <DialogFooter className="flex-col sm:flex-row gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsAIOpen(false);
+                      setAiQuestion("");
+                      setAiAnswer(null);
+                      setAiError(null);
+                    }}
+                  >
+                    Close
+                  </Button>
                   <Button
                     variant="default"
+                    data-ask-button="true"
                     onClick={async () => {
                       if (!doc) return;
                       if (!aiQuestion.trim()) {

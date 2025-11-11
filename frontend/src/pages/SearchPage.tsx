@@ -13,6 +13,15 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import {
   Loader2,
   Search as SearchIcon,
   AlertCircle,
@@ -53,6 +62,16 @@ export default function SearchPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchAttempted, setSearchAttempted] = useState(false);
   const [downloadingDocId, setDownloadingDocId] = useState<number | null>(null);
+
+  // AI Q&A state
+  const [isAIOpen, setIsAIOpen] = useState(false);
+  const [aiDocumentId, setAiDocumentId] = useState<number | null>(null);
+  const [aiDocumentTitle, setAiDocumentTitle] = useState("");
+  const [aiQuestion, setAiQuestion] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [aiAnswer, setAiAnswer] = useState<string | null>(null);
+  const [aiConfidence, setAiConfidence] = useState<number | null>(null);
 
   // Extract initial country filter from URL
   const countryFilter = searchParams.get("country");
@@ -256,7 +275,7 @@ export default function SearchPage() {
                     ) : (
                       <>
                         <SearchIcon className="h-4 w-4 mr-2" />
-                        {t('search.searchButton')}
+                        {t('Search')}
                       </>
                     )}
                   </Button>
@@ -377,11 +396,21 @@ export default function SearchPage() {
                           )}
 
                           {/* Ask AI about this document */}
-                          <Button asChild size="sm" variant="outline" className="flex items-center gap-2">
-                            <Link to={`/document-detail-page?id=${doc.id}`}>
-                              <Brain className="h-3 w-3" />
-                              Ask Questions About this Document
-                            </Link>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="flex items-center gap-2"
+                            onClick={() => {
+                              setAiDocumentId(doc.id);
+                              setAiDocumentTitle(doc.title || `Document ${doc.id}`);
+                              setAiQuestion("");
+                              setAiAnswer(null);
+                              setAiError(null);
+                              setIsAIOpen(true);
+                            }}
+                          >
+                            <Brain className="h-3 w-3" />
+                            Ask AI About this Document
                           </Button>
                           
                           {/* Info message for multilingual documents without translation */}
@@ -427,6 +456,108 @@ export default function SearchPage() {
           {/* AI Q&A Tab removed */}
         </Tabs>
       </div>
+
+      {/* AI Q&A Dialog */}
+      <Dialog open={isAIOpen} onOpenChange={setIsAIOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Ask AI about: {aiDocumentTitle}</DialogTitle>
+            <DialogDescription>
+              Your question will be answered using only the content of this document. Press Enter to submit.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Textarea
+              placeholder="Ask a question about this document... (Press Enter to submit)"
+              value={aiQuestion}
+              onChange={(e) => setAiQuestion(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  const askButton = document.querySelector('[data-ask-search-button="true"]') as HTMLButtonElement;
+                  if (askButton && !askButton.disabled) {
+                    askButton.click();
+                  }
+                }
+              }}
+              rows={3}
+              maxLength={1000}
+              className="resize-none"
+            />
+            {aiError && (
+              <div className="text-sm text-red-600">{aiError}</div>
+            )}
+            {aiAnswer && (
+              <div className="rounded border p-4 bg-muted/30 max-h-[40vh] overflow-y-auto">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-sm font-medium text-muted-foreground">
+                    AI Answer
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Confidence: {aiConfidence !== null ? Math.round(aiConfidence * 100) + '%' : '—'}
+                  </div>
+                </div>
+                <div className="whitespace-pre-wrap leading-relaxed text-sm">{aiAnswer}</div>
+              </div>
+            )}
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsAIOpen(false);
+                setAiQuestion("");
+                setAiAnswer(null);
+                setAiError(null);
+              }}
+            >
+              Close
+            </Button>
+            <Button
+              variant="default"
+              data-ask-search-button="true"
+              onClick={async () => {
+                if (!aiDocumentId) return;
+                if (!aiQuestion.trim()) {
+                  setAiError("Please enter a question.");
+                  return;
+                }
+                setAiError(null);
+                setAiAnswer(null);
+                setAiLoading(true);
+                try {
+                  const resp = await fetch('/api/rag/document-question', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question: aiQuestion.trim(), document_id: aiDocumentId }),
+                  });
+                  if (!resp.ok) {
+                    const data = await resp.json().catch(() => ({}));
+                    throw new Error(data?.detail || 'Failed to get AI answer');
+                  }
+                  const data = await resp.json();
+                  setAiAnswer(data.answer || '');
+                  setAiConfidence(typeof data.confidence === 'number' ? data.confidence : null);
+                } catch (e: any) {
+                  setAiError(e?.message || 'An error occurred');
+                } finally {
+                  setAiLoading(false);
+                }
+              }}
+              disabled={aiLoading || !aiQuestion.trim()}
+            >
+              {aiLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                'Ask'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
