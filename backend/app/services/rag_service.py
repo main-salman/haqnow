@@ -85,14 +85,12 @@ class RAGService:
             self.groq_client = Groq(api_key=groq_api_key)
             logger.info(f"✅ Groq client initialized (LLM: {self.llm_model})")
             
-            # Initialize sentence-transformers for embeddings (local)
+            # Delay loading sentence-transformers model until first use (saves ~900MB RAM at startup)
             if not SENTENCE_TRANSFORMERS_AVAILABLE:
-                logger.error("sentence-transformers not installed - run: pip install sentence-transformers")
-                raise ImportError("sentence-transformers package required")
-            
-            logger.info(f"Loading sentence-transformers model ({self.embedding_model_name}, {self.embedding_dimensions}-dim)...")
-            self.embedding_model = SentenceTransformer(self.embedding_model_name)
-            logger.info(f"✅ Embedding model loaded (local, multilingual, {self.embedding_dimensions}-dim)")
+                logger.warning("sentence-transformers not installed - RAG embeddings will not work")
+                self.embedding_model = None
+            else:
+                logger.info(f"✅ sentence-transformers available - model will be lazy-loaded on first RAG query")
             
         except Exception as e:
             logger.error(f"Failed to initialize RAG clients: {e}")
@@ -119,6 +117,16 @@ class RAGService:
     
     async def generate_embedding(self, text: str) -> List[float]:
         """Generate embedding for a single text string using sentence-transformers (local)"""
+        # Lazy load the model on first use to save memory at startup
+        if self.embedding_model is None and SENTENCE_TRANSFORMERS_AVAILABLE:
+            logger.info(f"🔄 Lazy-loading sentence-transformers model ({self.embedding_model_name})...")
+            try:
+                self.embedding_model = SentenceTransformer(self.embedding_model_name)
+                logger.info(f"✅ Embedding model loaded ({self.embedding_dimensions}-dim)")
+            except Exception as e:
+                logger.error(f"Failed to load embedding model: {e}")
+                return None
+        
         if not self.embedding_model:
             logger.error("Embedding model not available")
             return None
@@ -138,6 +146,16 @@ class RAGService:
 
     async def generate_embeddings(self, texts: List[str]) -> List[List[float]]:
         """Generate embeddings for multiple texts using sentence-transformers (local)"""
+        # Lazy load the model on first use to save memory at startup
+        if self.embedding_model is None and SENTENCE_TRANSFORMERS_AVAILABLE:
+            logger.info(f"🔄 Lazy-loading sentence-transformers model ({self.embedding_model_name})...")
+            try:
+                self.embedding_model = SentenceTransformer(self.embedding_model_name)
+                logger.info(f"✅ Embedding model loaded ({self.embedding_dimensions}-dim)")
+            except Exception as e:
+                logger.error(f"Failed to load embedding model: {e}")
+                raise RuntimeError(f"Embedding model loading failed: {e}")
+        
         if not self.embedding_model:
             raise RuntimeError("Embedding model not available")
         
