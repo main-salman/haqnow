@@ -63,7 +63,7 @@ class RAGService:
     def __init__(self):
         self.groq_client = None
         self.openai_client = None
-        self.llm_model = "mixtral-8x7b-32768"  # Groq model for LLM
+        self.llm_model = "llama-3.3-70b-versatile"  # Groq model (production, Nov 2025)
         self.embedding_model = "text-embedding-3-small"  # OpenAI embeddings
         self.embedding_dimensions = 1536  # OpenAI text-embedding-3-small dimensions
         self._initialize_clients()
