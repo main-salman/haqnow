@@ -166,10 +166,15 @@ async def search_documents(
                 ]
                 
                 # Phonetic search conditions (SOUNDEX for typo tolerance)
-                phonetic_conditions = [
-                    func.soundex(Document.title) == func.soundex(search_query),
-                    func.soundex(Document.country) == func.soundex(search_query),
-                ]
+                # Simple SOUNDEX matching on title and country for single-word queries
+                phonetic_conditions = []
+                if ' ' not in search_query and len(search_query) > 3:  # Only for single words
+                    # Check if any word in the title has matching SOUNDEX
+                    phonetic_conditions = [
+                        # For simple cases, just check SOUNDEX directly
+                        func.soundex(Document.title) == func.soundex(search_query),
+                        func.soundex(Document.country) == func.soundex(search_query),
+                    ]
                 
                 # Combine all conditions: fulltext OR exact match OR phonetic match
                 combined_condition = or_(fulltext_condition, or_(*fallback_conditions), or_(*phonetic_conditions))
@@ -206,12 +211,14 @@ async def search_documents(
             documents_data = query_builder.all()
             
             # Automatic semantic fallback for typo tolerance (if few/no results)
-            if total_count < 3 and semantic_search_service.is_available() and search_query:
-                logger.info("Few keyword results, trying semantic search fallback", 
+            # This catches typos, misspellings, and conceptual matches
+            if total_count < 5 and semantic_search_service.is_available() and search_query:
+                logger.info("Few keyword results, trying semantic search fallback for typos", 
                            keyword_results=total_count, query=search_query)
                 try:
+                    # Use higher limit to catch more potential matches
                     semantic_results = semantic_search_service.search_similar_documents(
-                        search_query, db, limit=per_page
+                        search_query, db, limit=per_page * 2
                     )
                     if semantic_results:
                         # Merge semantic results with keyword results (deduplicate by ID)
