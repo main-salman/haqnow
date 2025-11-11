@@ -1,6 +1,7 @@
 """SQLAlchemy models for FOI Archive database."""
 
 from sqlalchemy import Column, Integer, String, Text, DateTime, JSON, Float, Boolean, UniqueConstraint, ForeignKey
+from sqlalchemy.dialects.mysql import MEDIUMTEXT
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from .database import Base
@@ -35,9 +36,9 @@ class Document(Base):
     content_type = Column(String(100), nullable=False)
     
     # Processing information
-    ocr_text = Column(Text, nullable=True)  # Combined/processed OCR text for backward compatibility
+    ocr_text = Column(MEDIUMTEXT, nullable=True)  # Combined/processed OCR text (up to 16MB)
     generated_tags = Column(JSON, nullable=True, default=list)
-    search_text = Column(Text, nullable=True)  # Combined searchable text for full-text search
+    search_text = Column(MEDIUMTEXT, nullable=True)  # Combined searchable text for full-text search (up to 16MB)
     embedding = Column(JSON, nullable=True)  # Semantic search embedding vector (384 dimensions)
     
     # Status and workflow
