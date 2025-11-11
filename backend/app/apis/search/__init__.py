@@ -348,6 +348,37 @@ async def search_documents(
                        keyword_count=len([r for r in unique_results if r.get('search_type') == 'keyword']),
                        search_type="hybrid")
         
+        # Fuzzy search fallback for typo tolerance (applies to all search types)
+        # Triggers when no results found to catch common misspellings
+        if (not documents_data or total_count == 0) and search_query and len(search_query) > 3:
+            logger.info("No results, trying fuzzy fallback",query=search_query)
+            try:
+                # Match first 4-5 characters to catch typos like salmon→salman, humanitarion→humanitarian  
+                query_start = search_query[:min(5, len(search_query)-1)]
+                
+                fuzzy_query = db.query(Document).filter(Document.status == "approved")
+                fuzzy_conditions = [
+                    Document.title.ilike(f"%{query_start}%"),
+                    Document.ocr_text.ilike(f"%{query_start}%"),
+                    Document.description.ilike(f"%{query_start}%"),
+                    Document.country.ilike(f"%{query_start}%"),
+                ]
+                fuzzy_query = fuzzy_query.filter(or_(*fuzzy_conditions))
+                
+                if country:
+                    fuzzy_query = fuzzy_query.filter(Document.country == country)
+                if state:
+                    fuzzy_query = fuzzy_query.filter(Document.state == state)
+                
+                documents_data = fuzzy_query.order_by(Document.created_at.desc()).limit(per_page).all()
+                total_count = len(documents_data)
+                
+                if total_count > 0:
+                    logger.info("Fuzzy fallback found results", 
+                               results=total_count, query_start=query_start)
+            except Exception as e:
+                logger.warning("Fuzzy fallback failed", error=str(e))
+        
         # Get banned words for filtering search results
         banned_words = []
         try:
