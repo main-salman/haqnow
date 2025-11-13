@@ -107,19 +107,10 @@ sudo apt-get install -y git python3-venv python3-virtualenv python3-pip nodejs n
 sudo apt-get install -y nginx curl || true
 sudo mkdir -p /var/www/html || true
 
-# Install and configure ClamAV for virus scanning
-echo "🦠 Installing/Updating ClamAV antivirus..."
-sudo apt-get install -y clamav clamav-daemon clamav-freshclam || true
-# Update virus definitions
-echo "🔄 Updating virus definitions..."
-sudo systemctl stop clamav-freshclam || true
-sudo freshclam || echo "⚠️ Freshclam update had issues (may be running already)"
-sudo systemctl start clamav-freshclam || true
-sudo systemctl enable clamav-freshclam || true
-# Ensure daemon is running
-sudo systemctl start clamav-daemon || true
-sudo systemctl enable clamav-daemon || true
-echo "✅ ClamAV configured and running"
+# Virus scanning now uses VirusTotal API (cloud-based)
+echo "🦠 Virus scanning: Using VirusTotal API (cloud-based)"
+echo "   No local antivirus installation needed"
+echo "   70+ antivirus engines, zero memory footprint"
 
 # Ensure application directory exists and repository is present
 if [ ! -d "/opt/foi-archive/.git" ]; then
@@ -468,7 +459,7 @@ sudo systemctl enable nginx
 
 # Verify local services are running
 echo "🔍 Verifying local service status..."
-for service in foi-archive nginx clamav-daemon clamav-freshclam; do
+for service in foi-archive nginx; do
     if sudo systemctl is-active --quiet $service; then
         echo "  ✅ $service: running"
     else
