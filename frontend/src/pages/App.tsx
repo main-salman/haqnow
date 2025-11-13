@@ -7,6 +7,7 @@ import { Search, Upload } from "lucide-react";
 import CountryDocStatsList from '../components/CountryDocStatsList';
 import InteractiveWorldMap from '../components/InteractiveWorldMap';
 import TopViewedDocuments from '../components/TopViewedDocuments';
+import RecentlySharedDocuments from '../components/RecentlySharedDocuments';
 import Version from '../components/Version';
 import Navigation from '../components/Navigation';
 import ProminentLanguageBar from '../components/ProminentLanguageBar';
@@ -347,6 +348,11 @@ export default function App() {
           {/* Top Viewed Documents Section */}
           <section className="mt-12">
             <TopViewedDocuments />
+          </section>
+
+          {/* Recently Shared Documents Section */}
+          <section className="mt-8">
+            <RecentlySharedDocuments />
           </section>
         </div>
       </main>

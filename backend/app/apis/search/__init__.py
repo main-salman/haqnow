@@ -594,6 +594,47 @@ async def get_top_viewed_documents(
             detail="An error occurred while retrieving top viewed documents"
         )
 
+@router.get("/recently-shared")
+async def get_recently_shared_documents(
+    limit: int = Query(10, ge=1, le=50, description="Number of recent documents to return"),
+    db: Session = Depends(get_db)
+):
+    """
+    Get recently shared (approved) documents.
+    Returns most recently approved documents ordered by approval date.
+    """
+    
+    try:
+        documents = db.query(Document).filter(
+            Document.status == "approved"
+        ).order_by(Document.approved_at.desc()).limit(limit).all()
+        
+        # Convert to simple response format
+        results = []
+        for doc in documents:
+            results.append({
+                "id": doc.id,
+                "title": doc.title,
+                "country": doc.country,
+                "state": doc.state,
+                "approved_at": doc.approved_at.isoformat() if doc.approved_at else None,
+                "created_at": doc.created_at.isoformat() if doc.created_at else None
+            })
+        
+        logger.info("Recently shared documents retrieved", count=len(results))
+        
+        return {
+            "documents": results,
+            "total": len(results)
+        }
+        
+    except Exception as e:
+        logger.error("Error retrieving recently shared documents", error=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving recently shared documents"
+        )
+
 @router.get("/download/{document_id}")
 async def download_document(
     document_id: int, 
