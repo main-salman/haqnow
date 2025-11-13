@@ -23,6 +23,9 @@
     "searchButton": "Search",
     "mapTitle": "Global Corruption Document Distribution",
     "mapPlaceholder": "Interactive World Map Coming Soon",
+    "topViewedTitle": "Most Viewed Documents",
+    "topViewedDescription": "Discover the most accessed corruption documents",
+    "views": "views",
     "copyright": "All rights reserved."
   },
   "search": {

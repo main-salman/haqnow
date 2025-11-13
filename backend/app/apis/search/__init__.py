@@ -1,5 +1,6 @@
 import json
 import re
+import hashlib
 from fastapi import APIRouter, HTTPException, Query, Request, Depends
 from fastapi.responses import StreamingResponse, RedirectResponse
 from pydantic import BaseModel
@@ -25,10 +26,21 @@ from app.auth.jwt_auth import validate_api_key, APIConsumer
 from app.auth.user import AdminUser
 from app.database import get_db, Document, BannedTag
 from app.services.semantic_search_service import semantic_search_service
+from app.services.view_tracking_service import view_tracking_service
 
 logger = structlog.get_logger()
 
 router = APIRouter()
+
+def get_anonymous_session_id(request: Request) -> str:
+    """
+    Generate anonymous session identifier for rate limiting.
+    Uses hash of user-agent to create session without tracking users.
+    """
+    user_agent = request.headers.get("user-agent", "unknown")
+    # Create a hash for anonymous session tracking
+    session_hash = hashlib.sha256(user_agent.encode()).hexdigest()[:16]
+    return session_hash
 
 def filter_banned_words_from_text(text: str, banned_words: List[str]) -> str:
     """Filter banned words from text content in search results."""
@@ -491,10 +503,11 @@ async def search_documents(
         )
 
 @router.get("/document/{document_id}", response_model=SearchDocumentResult)
-async def get_document(document_id: int, db: Session = Depends(get_db)):
+async def get_document(document_id: int, request: Request, db: Session = Depends(get_db)):
     """
     Get a specific document by ID.
     Returns only approved documents.
+    Tracks view count with time-based rate limiting.
     """
     
     try:
@@ -505,7 +518,15 @@ async def get_document(document_id: int, db: Session = Depends(get_db)):
         if not document:
             raise HTTPException(status_code=404, detail="Document not found")
         
-        logger.info("Document retrieved successfully", document_id=document_id)
+        # Track view with anonymous session-based rate limiting
+        session_id = get_anonymous_session_id(request)
+        view_counted = view_tracking_service.increment_view_count(document_id, session_id, db)
+        
+        logger.info(
+            "Document retrieved successfully",
+            document_id=document_id,
+            view_counted=view_counted
+        )
         
         # Keep response fields consistent with search results
         doc_dict = document.to_dict()
@@ -526,6 +547,51 @@ async def get_document(document_id: int, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=500,
             detail="An error occurred while retrieving the document"
+        )
+
+@router.get("/top-viewed")
+async def get_top_viewed_documents(
+    limit: int = Query(10, ge=1, le=50, description="Number of top documents to return"),
+    db: Session = Depends(get_db)
+):
+    """
+    Get top viewed documents (excluding hidden ones).
+    Returns only approved documents ordered by view count.
+    """
+    
+    try:
+        documents = db.query(Document).filter(
+            and_(
+                Document.status == "approved",
+                Document.hidden_from_top_viewed == False,
+                Document.view_count > 0
+            )
+        ).order_by(Document.view_count.desc()).limit(limit).all()
+        
+        # Convert to simple response format
+        results = []
+        for doc in documents:
+            results.append({
+                "id": doc.id,
+                "title": doc.title,
+                "country": doc.country,
+                "state": doc.state,
+                "view_count": doc.view_count,
+                "created_at": doc.created_at.isoformat() if doc.created_at else None
+            })
+        
+        logger.info("Top viewed documents retrieved", count=len(results))
+        
+        return {
+            "documents": results,
+            "total": len(results)
+        }
+        
+    except Exception as e:
+        logger.error("Error retrieving top viewed documents", error=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving top viewed documents"
         )
 
 @router.get("/download/{document_id}")
@@ -559,6 +625,17 @@ async def download_document(
         
         if not document:
             raise HTTPException(status_code=404, detail="Document not found")
+        
+        # Track view with anonymous session-based rate limiting
+        session_id = get_anonymous_session_id(request)
+        view_counted = view_tracking_service.increment_view_count(document_id, session_id, db)
+        
+        logger.info(
+            "Document download",
+            document_id=document_id,
+            language=language,
+            view_counted=view_counted
+        )
         
         # Determine which content to serve based on language parameter and document language
         document_language = getattr(document, 'document_language', 'english')

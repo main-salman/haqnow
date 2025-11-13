@@ -59,6 +59,10 @@ class Document(Base):
     rejected_by = Column(String(255), nullable=True)
     rejection_reason = Column(Text, nullable=True)
     
+    # View tracking
+    view_count = Column(Integer, nullable=False, default=0, index=True)
+    hidden_from_top_viewed = Column(Boolean, nullable=False, default=False, index=True)
+    
     def __repr__(self):
         return f"<Document(id={self.id}, title='{self.title}', status='{self.status}')>"
     
@@ -89,7 +93,9 @@ class Document(Base):
             "rejected_at": self.rejected_at.isoformat() if self.rejected_at else None,
             "approved_by": self.approved_by,
             "rejected_by": self.rejected_by,
-            "rejection_reason": self.rejection_reason
+            "rejection_reason": self.rejection_reason,
+            "view_count": self.view_count,
+            "hidden_from_top_viewed": self.hidden_from_top_viewed
         }
 
 class BannedTag(Base):
