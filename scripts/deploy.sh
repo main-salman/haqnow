@@ -324,8 +324,9 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_http_version 1.1;
-        proxy_read_timeout 300s;
+        proxy_read_timeout 600s;  # 10 minutes for document processing (OCR + AI summary)
         proxy_connect_timeout 75s;
+        proxy_send_timeout 600s;
     }
 
     location /ws {
@@ -362,6 +363,9 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_http_version 1.1;
+        proxy_read_timeout 600s;  # 10 minutes for document processing (OCR + AI summary)
+        proxy_connect_timeout 75s;
+        proxy_send_timeout 600s;
     }
 
     location /ws {
