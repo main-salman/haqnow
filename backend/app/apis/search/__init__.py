@@ -70,6 +70,7 @@ class SearchDocumentResult(BaseModel):
     generated_tags: Optional[List[str]] = None
     ocr_text: Optional[str] = None
     description: Optional[str] = None
+    ai_summary: Optional[str] = None  # AI-generated summary (1 paragraph)
     created_at: Optional[str] = None
     document_language: Optional[str] = None  # Language of the original document
     has_arabic_text: bool = False  # Whether Arabic text is available

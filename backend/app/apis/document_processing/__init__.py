@@ -19,6 +19,7 @@ from app.services.s3_service import s3_service
 from app.services.email_service import email_service
 from app.services.arabic_ocr_service import arabic_ocr_service  # Add Arabic OCR service import
 from app.services.semantic_search_service import semantic_search_service
+from app.services.ai_summary_service import ai_summary_service
 from app.database import get_db, Document, BannedTag
 
 # Optional RAG service import
@@ -499,9 +500,24 @@ async def process_document_internal(document_id: int, db: Session) -> dict | Non
         tags_source_text = english_for_tags if (english_for_tags and english_for_tags.strip()) else extracted_text
         generated_tags = extract_tags_from_text(tags_source_text, db=db)
         
+        # Generate AI summary using Groq API
+        ai_summary = None
+        try:
+            summary_text = tags_source_text[:5000]  # Use first 5000 chars for summary
+            ai_summary = await ai_summary_service.generate_summary(
+                text=summary_text,
+                title=document.title,
+                max_length=200
+            )
+            if ai_summary:
+                logger.info("AI summary generated", document_id=document_id, length=len(ai_summary))
+        except Exception as e:
+            logger.warning("Failed to generate AI summary", error=str(e))
+        
         # Update document in database with searchable text (top 1000 words)
         document.ocr_text = searchable_text
         document.generated_tags = generated_tags
+        document.ai_summary = ai_summary
         document.processed_at = func.now()
         document.status = "processed"
         
@@ -757,9 +773,24 @@ async def process_document(
         tags_source_text = english_for_tags if (english_for_tags and english_for_tags.strip()) else extracted_text
         generated_tags = extract_tags_from_text(tags_source_text, db=db)
         
+        # Generate AI summary using Groq API
+        ai_summary = None
+        try:
+            summary_text = tags_source_text[:5000]  # Use first 5000 chars for summary
+            ai_summary = await ai_summary_service.generate_summary(
+                text=summary_text,
+                title=document.title,
+                max_length=200
+            )
+            if ai_summary:
+                logger.info("AI summary generated", document_id=document_id, length=len(ai_summary))
+        except Exception as e:
+            logger.warning("Failed to generate AI summary", error=str(e))
+        
         # Update document in database with searchable text (top 1000 words)
         document.ocr_text = searchable_text
         document.generated_tags = generated_tags
+        document.ai_summary = ai_summary
         document.processed_at = func.now()
         document.status = "processed"
         

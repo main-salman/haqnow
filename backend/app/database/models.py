@@ -40,6 +40,7 @@ class Document(Base):
     generated_tags = Column(JSON, nullable=True, default=list)
     search_text = Column(MEDIUMTEXT, nullable=True)  # Combined searchable text for full-text search (up to 16MB)
     embedding = Column(JSON, nullable=True)  # Semantic search embedding vector (384 dimensions)
+    ai_summary = Column(Text, nullable=True)  # AI-generated summary (1 paragraph) using Groq API
     
     # Status and workflow
     status = Column(String(50), nullable=False, default="pending", index=True)
@@ -85,6 +86,7 @@ class Document(Base):
             "ocr_text": self.ocr_text,
             "generated_tags": self.generated_tags or [],
             "search_text": self.search_text,
+            "ai_summary": self.ai_summary,
             "status": self.status,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
