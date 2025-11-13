@@ -13,6 +13,7 @@ const AdminLoginPage = lazy(() => import("./pages/AdminLoginPage.tsx"));
 const AdminManagementPage = lazy(() => import("./pages/AdminManagementPage.tsx"));
 const AdminPendingDocumentsPage = lazy(() => import("./pages/AdminPendingDocumentsPage.tsx"));
 const AdminTranslationsPage = lazy(() => import("./pages/AdminTranslationsPage.tsx"));
+const AdminTopViewedPage = lazy(() => import("./pages/AdminTopViewedPage.tsx"));
 const AboutPage = lazy(() => import("./pages/AboutPage.tsx"));
 const App = lazy(() => import("./pages/App.tsx"));
 const DisclaimerPage = lazy(() => import("./pages/DisclaimerPage.tsx"));
@@ -40,6 +41,8 @@ export const userRoutes: RouteObject[] = [
 	{ path: "/adminpendingdocumentspage", element: <AdminPendingDocumentsPage />},
 	{ path: "/admin-translations-page", element: <AdminTranslationsPage />},
 	{ path: "/admintranslationspage", element: <AdminTranslationsPage />},
+	{ path: "/admin-top-viewed-page", element: <AdminTopViewedPage />},
+	{ path: "/admintopviewedpage", element: <AdminTopViewedPage />},
 	{ path: "/about", element: <AboutPage />},
 	{ path: "/aboutpage", element: <AboutPage />},
 	{ path: "/", element: <App />},

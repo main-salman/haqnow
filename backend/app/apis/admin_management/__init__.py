@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List, Optional
 from ...database.database import get_db
-from ...database.models import Admin, APIKey
+from ...database.models import Admin, APIKey, Document
 from ...auth.jwt_auth import get_current_user, User, get_password_hash, verify_password
 from passlib.context import CryptContext
 import secrets
@@ -529,4 +529,42 @@ async def get_admin_profile(
         "created_at": "2025-01-27T00:00:00Z",
         "updated_at": "2025-01-27T00:00:00Z",
         "last_login_at": None
-    } 
+    }
+
+# Top Viewed Documents Management
+
+@router.post("/documents/{document_id}/toggle-top-viewed")
+async def toggle_document_top_viewed(
+    document_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Toggle whether a document is hidden from the top viewed list.
+    Admins can hide/unhide documents from appearing in top viewed.
+    """
+    try:
+        document = db.query(Document).filter(Document.id == document_id).first()
+        
+        if not document:
+            raise HTTPException(status_code=404, detail="Document not found")
+        
+        # Toggle the flag
+        document.hidden_from_top_viewed = not document.hidden_from_top_viewed
+        db.commit()
+        
+        return {
+            "success": True,
+            "document_id": document_id,
+            "hidden_from_top_viewed": document.hidden_from_top_viewed,
+            "message": f"Document {'hidden from' if document.hidden_from_top_viewed else 'visible in'} top viewed list"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error toggling top viewed status: {str(e)}"
+        ) 

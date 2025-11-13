@@ -39,6 +39,8 @@ interface DocumentData {
   approved_by: string | null;
   ocr_text: string | null;
   generated_tags: string[] | null;
+  view_count?: number;
+  hidden_from_top_viewed?: boolean;
 }
 
 // Mock data for countries filter - can be replaced with dynamic data later
