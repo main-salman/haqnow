@@ -1224,7 +1224,8 @@ async def get_document_by_id(
             "rejected_by": document.rejected_by,
             "rejection_reason": document.rejection_reason,
             "ocr_text": document.ocr_text,
-            "generated_tags": document.generated_tags
+            "generated_tags": document.generated_tags,
+            "ai_summary": document.ai_summary
         }
         
         logger.info("Document retrieved successfully", document_id=document_id)

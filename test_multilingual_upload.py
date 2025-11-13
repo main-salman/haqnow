@@ -86,7 +86,7 @@ def get_document_details(document_id, token):
     print(f"\n🔍 Fetching document {document_id} details...")
     
     response = requests.get(
-        f"{BASE_URL}/api/document-processing/documents/{document_id}",
+        f"{BASE_URL}/api/document-processing/document/{document_id}",
         headers={'Authorization': f'Bearer {token}'}
     )
     
@@ -157,6 +157,11 @@ def main():
     if not french_id:
         print("❌ French upload failed, aborting")
         sys.exit(1)
+    
+    # Wait for rate limit (2 minutes between uploads)
+    print("\n⏳ Waiting 2 minutes for rate limit...")
+    import time
+    time.sleep(120)
     
     # Upload Russian document
     russian_id = upload_file(
