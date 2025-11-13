@@ -1,7 +1,7 @@
 {
   "name": "foi-archive",
   "private": true,
-  "version": "4.12.18",
+  "version": "4.12.19",
   "type": "module",
   "scripts": {
     "dev": "vite",
