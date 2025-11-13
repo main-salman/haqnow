@@ -19,6 +19,7 @@ interface ApiDocument {
   id: number;
   title: string;
   description?: string;
+  ai_summary?: string;  // AI-generated summary from Groq
   country: string;
   state?: string;
   file_url: string;
@@ -201,6 +202,19 @@ export default function DocumentDetailPage() {
               <span>Uploaded: {new Date(doc.created_at).toLocaleDateString()}</span>
             )}
           </div>
+          
+          {doc.ai_summary && (
+            <div className="mb-6 p-4 bg-blue-50 border-l-4 border-l-blue-600 rounded-lg">
+              <p className="text-sm font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                <Brain className="h-4 w-4" />
+                AI-Generated Summary
+              </p>
+              <p className="text-blue-800 leading-relaxed">
+                {doc.ai_summary}
+              </p>
+            </div>
+          )}
+          
           <p className="text-foreground/80 mb-6 leading-relaxed">
             {doc.description}
           </p>
