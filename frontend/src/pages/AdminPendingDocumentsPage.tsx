@@ -225,8 +225,24 @@ export default function AdminPendingDocumentsPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-2xl font-serif">Pending Document Review</CardTitle>
-        <CardDescription>Review, approve, or reject submitted documents.</CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-2xl font-serif">Pending Document Review</CardTitle>
+            <CardDescription>Review, approve, or reject submitted documents.</CardDescription>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => {
+              console.log("[AdminPendingDocs] Manual refresh triggered");
+              fetchPendingDocuments();
+            }}
+            className="flex items-center gap-2"
+          >
+            <Loader2 className="h-4 w-4" />
+            Refresh
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Filters */}
