@@ -44,6 +44,7 @@ interface SearchDocumentResult {
   generated_tags?: string[];
   ocr_text?: string;
   description?: string;
+  ai_summary?: string;  // AI-generated summary from Groq
   created_at?: string;
   document_language?: string;  // Language of the original document
   has_arabic_text?: boolean;   // Whether Arabic text is available for download
@@ -361,6 +362,15 @@ export default function SearchPage() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
+                      {doc.ai_summary && (
+                        <div className="mb-4 p-3 bg-blue-50 border-l-4 border-l-blue-500 rounded">
+                          <p className="text-sm font-medium text-blue-900 mb-1">🤖 AI Summary:</p>
+                          <p className="text-sm text-blue-800 leading-relaxed">
+                            {doc.ai_summary}
+                          </p>
+                        </div>
+                      )}
+                      
                       {doc.description && (
                         <div className="mb-4">
                           <p className="text-sm text-muted-foreground leading-relaxed">
