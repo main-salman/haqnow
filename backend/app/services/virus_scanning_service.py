@@ -1,65 +1,33 @@
 """
-Virus Scanning Service using ClamAV
+Virus Scanning Service using VirusTotal API
 Provides synchronous virus scanning for uploaded files with proper error handling.
+Uses VirusTotal's free tier (500 requests/day, 4 requests/minute)
 """
 import io
 import structlog
 from typing import Tuple, Optional
-import tempfile
 import os
+import time
+import hashlib
 
 logger = structlog.get_logger()
 
 class VirusScanningService:
-    """Service for scanning files for viruses and malware using ClamAV"""
+    """Service for scanning files for viruses and malware using VirusTotal API"""
     
     def __init__(self):
-        self.clamd = None
-        self.available = False
-        self._initialize_clamd()
-    
-    def _initialize_clamd(self):
-        """Initialize ClamAV daemon connection"""
-        try:
-            import clamd
-            
-            # Try connecting to ClamAV daemon
-            # First try Unix socket (default on Ubuntu/Debian)
-            try:
-                self.clamd = clamd.ClamdUnixSocket()
-                self.clamd.ping()
-                self.available = True
-                logger.info("ClamAV connected via Unix socket")
-                return
-            except Exception:
-                pass
-            
-            # Try TCP socket (fallback)
-            try:
-                self.clamd = clamd.ClamdNetworkSocket(host='localhost', port=3310)
-                self.clamd.ping()
-                self.available = True
-                logger.info("ClamAV connected via TCP socket")
-                return
-            except Exception:
-                pass
-            
-            logger.warning(
-                "ClamAV daemon not available - virus scanning disabled",
-                error="Could not connect to clamd via Unix socket or TCP"
-            )
-            self.available = False
-            
-        except ImportError:
-            logger.warning(
-                "ClamAV library not installed - virus scanning disabled",
-                error="clamd Python library not found"
-            )
-            self.available = False
+        self.api_key = os.getenv("VIRUSTOTAL_API_KEY")
+        self.available = bool(self.api_key)
+        self.api_url = "https://www.virustotal.com/api/v3"
+        
+        if not self.available:
+            logger.warning("VirusTotal API key not configured - virus scanning disabled")
+        else:
+            logger.info("VirusTotal virus scanning service initialized")
     
     def scan_file_content(self, file_content: bytes, filename: str) -> Tuple[bool, Optional[str]]:
         """
-        Scan file content for viruses.
+        Scan file content for viruses using VirusTotal API.
         
         Args:
             file_content: The file content as bytes
@@ -72,7 +40,7 @@ class VirusScanningService:
         """
         if not self.available:
             logger.warning(
-                "Virus scanning skipped - ClamAV not available",
+                "Virus scanning skipped - VirusTotal API key not configured",
                 filename=filename
             )
             # For security: default to safe when scanner unavailable
@@ -80,58 +48,129 @@ class VirusScanningService:
             return True, None
         
         try:
-            logger.info("Scanning file for viruses", filename=filename, size=len(file_content))
+            import requests
             
-            # Scan the file content using ClamAV
-            # clamd.scan_stream() expects a file-like object
-            file_stream = io.BytesIO(file_content)
-            scan_result = self.clamd.instream(file_stream)
+            logger.info("Scanning file with VirusTotal", filename=filename, size=len(file_content))
             
-            # Parse scan result
-            # Result format: {'stream': ('FOUND', 'Virus.Name')} or {'stream': ('OK', None)}
-            if 'stream' in scan_result:
-                status, virus_name = scan_result['stream']
-                
-                if status == 'FOUND':
-                    logger.warning(
-                        "VIRUS DETECTED in uploaded file",
-                        filename=filename,
-                        virus=virus_name,
-                        size=len(file_content)
-                    )
-                    return False, virus_name
-                elif status == 'OK':
-                    logger.info(
-                        "File scan completed - clean",
-                        filename=filename,
-                        size=len(file_content)
-                    )
-                    return True, None
-                else:
-                    # Unknown status
-                    logger.error(
-                        "Unknown ClamAV scan status",
-                        filename=filename,
-                        status=status
-                    )
-                    return False, f"Unknown scan status: {status}"
-            else:
+            # Calculate file hash to check if already scanned
+            file_hash = hashlib.sha256(file_content).hexdigest()
+            
+            # First, try to get existing scan results by hash
+            headers = {"x-apikey": self.api_key}
+            hash_url = f"{self.api_url}/files/{file_hash}"
+            
+            try:
+                response = requests.get(hash_url, headers=headers, timeout=10)
+                if response.status_code == 200:
+                    # File already scanned, use cached results
+                    data = response.json()
+                    return self._parse_scan_results(data, filename, file_hash)
+            except Exception as e:
+                logger.debug("Hash lookup failed, will upload file", error=str(e))
+            
+            # File not in database, upload for scanning
+            upload_url = f"{self.api_url}/files"
+            files = {"file": (filename, io.BytesIO(file_content))}
+            
+            upload_response = requests.post(
+                upload_url, 
+                headers=headers, 
+                files=files,
+                timeout=30
+            )
+            
+            if upload_response.status_code != 200:
                 logger.error(
-                    "Unexpected ClamAV response format",
-                    filename=filename,
-                    response=scan_result
+                    "VirusTotal upload failed",
+                    status=upload_response.status_code,
+                    response=upload_response.text[:200]
                 )
-                return False, "Unexpected scan response"
+                return False, f"Upload failed: {upload_response.status_code}"
+            
+            upload_data = upload_response.json()
+            analysis_id = upload_data.get("data", {}).get("id")
+            
+            if not analysis_id:
+                logger.error("No analysis ID received from VirusTotal")
+                return False, "No analysis ID"
+            
+            # Wait for analysis to complete (max 30 seconds)
+            analysis_url = f"{self.api_url}/analyses/{analysis_id}"
+            max_attempts = 15
+            
+            for attempt in range(max_attempts):
+                time.sleep(2)  # Wait 2 seconds between checks
+                
+                analysis_response = requests.get(analysis_url, headers=headers, timeout=10)
+                
+                if analysis_response.status_code == 200:
+                    analysis_data = analysis_response.json()
+                    status = analysis_data.get("data", {}).get("attributes", {}).get("status")
+                    
+                    if status == "completed":
+                        return self._parse_scan_results(analysis_data, filename, file_hash)
+                    elif status == "queued" or status == "in-progress":
+                        logger.debug(f"Analysis in progress, attempt {attempt + 1}/{max_attempts}")
+                        continue
+                    else:
+                        logger.warning(f"Unexpected status: {status}")
+                        break
+            
+            # Timeout waiting for results
+            logger.warning("VirusTotal analysis timed out", filename=filename)
+            return False, "Analysis timeout - please try again"
                 
         except Exception as e:
             logger.error(
-                "Error during virus scan",
+                "Error during VirusTotal scan",
                 filename=filename,
                 error=str(e),
                 error_type=type(e).__name__
             )
             # On error, fail safe by rejecting the file
             return False, f"Scan error: {str(e)}"
+    
+    def _parse_scan_results(self, data: dict, filename: str, file_hash: str) -> Tuple[bool, Optional[str]]:
+        """Parse VirusTotal scan results"""
+        try:
+            attributes = data.get("data", {}).get("attributes", {})
+            stats = attributes.get("stats", {}) or attributes.get("last_analysis_stats", {})
+            results = attributes.get("results", {}) or attributes.get("last_analysis_results", {})
+            
+            malicious = stats.get("malicious", 0)
+            suspicious = stats.get("suspicious", 0)
+            
+            if malicious > 0 or suspicious > 0:
+                # Find which engines detected it
+                detections = [
+                    f"{engine}: {result.get('result', 'unknown')}"
+                    for engine, result in results.items()
+                    if result.get("category") in ["malicious", "suspicious"]
+                ][:3]  # First 3 detections
+                
+                virus_info = f"{malicious + suspicious} engines detected threats: {', '.join(detections)}"
+                
+                logger.warning(
+                    "VIRUS DETECTED by VirusTotal",
+                    filename=filename,
+                    file_hash=file_hash,
+                    malicious=malicious,
+                    suspicious=suspicious,
+                    detections=detections
+                )
+                return False, virus_info
+            else:
+                logger.info(
+                    "File scan completed - clean",
+                    filename=filename,
+                    file_hash=file_hash,
+                    engines_scanned=len(results)
+                )
+                return True, None
+                
+        except Exception as e:
+            logger.error("Error parsing VirusTotal results", error=str(e))
+            return False, f"Parse error: {str(e)}"
     
     def scan_file_path(self, file_path: str) -> Tuple[bool, Optional[str]]:
         """
@@ -145,7 +184,7 @@ class VirusScanningService:
         """
         if not self.available:
             logger.warning(
-                "Virus scanning skipped - ClamAV not available",
+                "Virus scanning skipped - VirusTotal API not available",
                 file_path=file_path
             )
             return True, None
@@ -166,22 +205,19 @@ class VirusScanningService:
             return False, f"File read error: {str(e)}"
     
     def get_virus_definitions_version(self) -> Optional[str]:
-        """Get the current virus definitions version from ClamAV"""
+        """Get service information"""
         if not self.available:
             return None
-        
-        try:
-            version_info = self.clamd.version()
-            return version_info
-        except Exception as e:
-            logger.error("Failed to get ClamAV version", error=str(e))
-            return None
+        return "VirusTotal API v3 (70+ engines)"
     
     def get_status(self) -> dict:
         """Get current status of virus scanning service"""
         status = {
             "available": self.available,
-            "scanner": "ClamAV",
+            "scanner": "VirusTotal",
+            "engines": "70+" if self.available else None,
+            "daily_limit": "500 scans/day",
+            "rate_limit": "4 requests/minute"
         }
         
         if self.available:
