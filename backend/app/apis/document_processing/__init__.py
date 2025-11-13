@@ -893,9 +893,12 @@ async def approve_document(
         if not document:
             raise HTTPException(status_code=404, detail="Document not found")
         
-        # Check if document is in pending status
-        if document.status != "pending":
-            raise HTTPException(status_code=400, detail=f"Document is not pending approval (current status: {document.status})")
+        # Allow approving pending or rejected documents
+        if document.status not in ["pending", "rejected"]:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Cannot approve document with status '{document.status}'. Only pending or rejected documents can be approved."
+            )
         
         # Process the document first (OCR + tagging)
         processing_result = await process_document_internal(document_id, db)
@@ -908,6 +911,12 @@ async def approve_document(
         document.status = "approved"
         document.approved_at = func.now()
         document.approved_by = admin_user.email
+        
+        # Clear rejection fields if document was previously rejected
+        if document.rejected_at:
+            document.rejected_at = None
+            document.rejected_by = None
+            document.rejection_reason = None
         
         try:
             db.commit()
@@ -984,11 +993,23 @@ async def reject_document(
         if not document:
             raise HTTPException(status_code=404, detail="Document not found")
         
+        # Allow rejecting pending or approved documents
+        if document.status not in ["pending", "approved"]:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cannot reject document with status '{document.status}'. Only pending or approved documents can be rejected."
+            )
+        
         # Update document status to rejected
         document.status = "rejected"
         document.rejected_at = func.now()
         document.rejected_by = admin_user.email
         document.rejection_reason = reason
+        
+        # Clear approval fields if document was previously approved
+        if document.approved_at:
+            document.approved_at = None
+            document.approved_by = None
         
         try:
             db.commit()
