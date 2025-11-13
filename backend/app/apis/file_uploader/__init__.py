@@ -13,6 +13,7 @@ from sqlalchemy import func
 from app.services.s3_service import s3_service
 from app.services.email_service import email_service
 from app.services.metadata_service import metadata_service
+from app.services.virus_scanning_service import virus_scanning_service
 from app.database import SiteSetting
 import json
 
@@ -96,6 +97,23 @@ async def upload_file(
                    country=country)
         
         # Anonymous upload - no IP tracking
+        
+        # VIRUS SCANNING: Scan file for viruses/malware before processing
+        logger.info("Starting virus scan", filename=file.filename)
+        is_safe, virus_name = virus_scanning_service.scan_file_content(file_content, file.filename)
+        
+        if not is_safe:
+            logger.error(
+                "Virus detected in uploaded file - upload rejected",
+                filename=file.filename,
+                virus=virus_name
+            )
+            raise HTTPException(
+                status_code=400,
+                detail=f"File upload rejected: {virus_name or 'Virus or malware detected'}. Your file has been deleted for security reasons."
+            )
+        
+        logger.info("Virus scan completed - file is clean", filename=file.filename)
         
         # PRIVACY PROTECTION: Strip metadata and convert to clean PDF
         logger.info("Starting metadata stripping process",

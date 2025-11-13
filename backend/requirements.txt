@@ -49,6 +49,9 @@ rapidfuzz>=3.0.0
 groq>=0.4.1
 openai>=1.12.0
 
+# Virus scanning
+clamd>=1.0.2
+
 # Mistral (conflicts with old googletrans so removed for now)
 # mistralai==0.1.2
 
