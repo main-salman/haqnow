@@ -94,9 +94,9 @@ class VirusScanningService:
                 logger.error("No analysis ID received from VirusTotal")
                 return False, "No analysis ID"
             
-            # Wait for analysis to complete (max 30 seconds)
+            # Wait for analysis to complete (max 60 seconds for larger files)
             analysis_url = f"{self.api_url}/analyses/{analysis_id}"
-            max_attempts = 15
+            max_attempts = 30  # Increased from 15 to allow more time
             
             for attempt in range(max_attempts):
                 time.sleep(2)  # Wait 2 seconds between checks
