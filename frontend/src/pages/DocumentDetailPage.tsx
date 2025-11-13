@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Download, Tag, PlusCircle, ArrowLeft, Brain, Loader2, FileText } from "lucide-react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useParams } from "react-router-dom";
 import { AlertCircle } from "lucide-react";
 
 interface ApiDocument {
@@ -37,7 +37,13 @@ interface DocumentTag {
 export default function DocumentDetailPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const documentId = useMemo(() => Number(searchParams.get("id")), [searchParams]);
+  const params = useParams();
+  // Support both URL parameter (/document/16) and query string (?id=16)
+  const documentId = useMemo(() => {
+    const paramId = params.id;
+    const queryId = searchParams.get("id");
+    return Number(paramId || queryId);
+  }, [params.id, searchParams]);
   const [doc, setDoc] = useState<ApiDocument | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

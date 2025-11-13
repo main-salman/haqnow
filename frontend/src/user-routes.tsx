@@ -48,6 +48,7 @@ export const userRoutes: RouteObject[] = [
 	{ path: "/", element: <App />},
 	{ path: "/disclaimer", element: <DisclaimerPage />},
 	{ path: "/disclaimerpage", element: <DisclaimerPage />},
+	{ path: "/document/:id", element: <DocumentDetailPage />},
 	{ path: "/document-detail-page", element: <DocumentDetailPage />},
 	{ path: "/documentdetailpage", element: <DocumentDetailPage />},
 	{ path: "/foi", element: <FOIPage />},
