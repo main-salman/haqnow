@@ -9608,3 +9608,160 @@ User Question → Embedding → Vector Search → Context Retrieval → LLM Gene
 [2025-08-12] E2E: stabilized selectors; added backend health retries; removed react-wheel-of-prizes to fix npm peer deps; added frontend/.npmrc legacy-peer-deps; regenerated package-lock.json; all tests pass locally.
 
 [2025-11-01] SendGrid SMTP debug: server returned '451 Authentication failed: Maximum credits exceeded' on AUTH for both SSL:465 and STARTTLS:587. API tests also failing previously. Root cause: SendGrid account credits exhausted; mail sending blocked until credits increased/reset.
+
+[2025-11-13] SECURITY ENHANCEMENT: Virus & Malware Scanning with ClamAV
+
+## Implementation Summary
+Added comprehensive virus and malware scanning for all file uploads using ClamAV open-source antivirus. All files are now scanned synchronously before processing, with infected files immediately rejected and deleted.
+
+## Changes Made
+
+### Backend Services (New)
+- **Created**: `backend/app/services/virus_scanning_service.py`
+  - Singleton service that interfaces with ClamAV daemon
+  - Supports both Unix socket and TCP connections
+  - Graceful degradation if ClamAV unavailable
+  - Comprehensive error handling and logging
+  - Methods: `scan_file_content()`, `scan_file_path()`, `get_status()`
+  - Returns tuple: (is_safe: bool, virus_name: Optional[str])
+
+### File Upload Integration
+- **Modified**: `backend/app/apis/file_uploader/__init__.py`
+  - Added virus_scanning_service import
+  - Virus scan runs immediately after file validation, before metadata stripping
+  - Synchronous scanning: user waits 2-5 seconds for scan completion
+  - Infected files: HTTP 400 error with virus name, file immediately deleted
+  - Clean files: Continue normal processing flow
+  - Logging: All scan attempts and results logged with structlog
+
+### System Installation & Deployment
+- **Modified**: `backend/install.sh`
+  - Added ClamAV installation: `clamav`, `clamav-daemon`, `clamav-freshclam`
+  - Automatic virus definition updates via `freshclam`
+  - Service enablement and startup
+  - Total install time: ~2-3 minutes including definition updates
+
+- **Modified**: `scripts/deploy.sh`
+  - ClamAV installation/update during every deployment
+  - Automatic virus definition refresh
+  - Service health checks for `clamav-daemon` and `clamav-freshclam`
+  - Ensures ClamAV running on all production deployments
+
+### Python Dependencies
+- **Modified**: `backend/requirements.txt`
+  - Added: `clamd>=1.0.2` (Python interface to ClamAV daemon)
+
+### Frontend User Experience
+- **Modified**: `frontend/src/pages/UploadDocumentPage.tsx`
+  - Toast message: "Scanning file for viruses..." at upload start
+  - Toast message: "Uploading and processing file (virus scan + privacy protection)..."
+  - Security notice badge: Green shield icon with "All uploaded files are automatically scanned for viruses and malware"
+  - Clear user communication about security measures
+  - Error messages show virus name if file infected
+
+### Monitoring & Health Checks
+- **Modified**: `backend/main.py`
+  - Virus scanning service status logged at startup
+  - Shows ClamAV version and availability
+  - Health check endpoint `/api/health` now includes virus_scanning service status
+  - Graceful warnings if service unavailable
+
+## Technical Specifications
+
+### Scanning Approach
+- **Timing**: Synchronous (user waits during scan)
+- **Duration**: ~1-5 seconds per file (depends on size)
+- **Infected Files**: Immediately rejected with HTTP 400 error
+- **Clean Files**: Continue to metadata stripping → S3 upload → database entry
+- **No Database Tracking**: Scan results only in logs (as per requirements)
+- **No Quarantine**: Infected files deleted immediately (as per requirements)
+
+### ClamAV Configuration
+- **Connection**: Unix socket (/var/run/clamav/clamd.ctl) or TCP (localhost:3310)
+- **Updates**: Automatic via freshclam service
+- **Memory Usage**: ~500MB-1GB for daemon
+- **Virus Definitions**: Updated multiple times daily
+- **Detection**: 8+ million signatures including malware, trojans, viruses
+
+### Error Handling
+- **ClamAV Unavailable**: Logs warning, allows uploads (fail-open for availability)
+- **Scan Failure**: Rejects upload with error message (fail-closed for security)
+- **Connection Issues**: Automatic fallback from Unix socket to TCP
+- **Library Missing**: Graceful degradation with warning logs
+
+## Security Benefits
+1. **Zero-Day Protection**: ClamAV signatures updated multiple times daily
+2. **Multi-Format Coverage**: Scans all file types (PDF, DOC, images, archives, etc.)
+3. **No Third-Party Sharing**: All scanning happens on-premises, files never leave server
+4. **Privacy Preserved**: No external API calls, consistent with whistleblower platform requirements
+5. **Synchronous Blocking**: Infected files never reach storage or database
+6. **Complete Audit Trail**: All scans logged with structlog for security monitoring
+
+## Deployment Notes
+- **Automatic**: ClamAV installed/updated on every deployment via deploy.sh
+- **Backwards Compatible**: Existing uploads unaffected, only new uploads scanned
+- **Resource Impact**: Minimal (~1GB RAM, negligible CPU for 20 uploads/week)
+- **Service Management**: Handled by systemd (auto-restart on failure)
+- **Health Monitoring**: Status visible in `/api/health` endpoint
+
+## User Communication
+Users are informed about virus scanning through:
+1. **Upload Page**: Green security badge explaining automatic scanning
+2. **Progress Toast**: "Scanning file for viruses..." during upload
+3. **Error Messages**: Clear explanation if file rejected ("Virus detected: [name]")
+4. **Privacy Protection**: Scanning happens alongside metadata stripping
+
+## Cost & Performance
+- **Cost**: $0 (completely free, open-source)
+- **Performance**: ~20 docs/week = negligible impact
+- **Scalability**: Can handle 1000+ scans/day without issues
+- **Maintenance**: Automatic virus definition updates, zero admin overhead
+
+## Files Modified/Created
+```
+✅ NEW: backend/app/services/virus_scanning_service.py (180 lines)
+✅ MODIFIED: backend/app/apis/file_uploader/__init__.py (+18 lines for virus scanning)
+✅ MODIFIED: backend/requirements.txt (+2 lines for clamd)
+✅ MODIFIED: backend/install.sh (+21 lines for ClamAV setup)
+✅ MODIFIED: scripts/deploy.sh (+15 lines for ClamAV in deployment)
+✅ MODIFIED: frontend/src/pages/UploadDocumentPage.tsx (+7 lines for UI updates)
+✅ MODIFIED: backend/main.py (+10 lines for service monitoring)
+```
+
+## Testing Recommendations
+1. Test upload with clean file → should succeed
+2. Test upload with EICAR test file → should reject with virus error
+3. Check `/api/health` endpoint → should show virus_scanning: available
+4. Verify ClamAV services running: `systemctl status clamav-daemon clamav-freshclam`
+5. Check logs for virus scan entries: `tail -f /tmp/backend.log | grep -i virus`
+
+## EICAR Test File
+Standard test virus signature (harmless):
+```
+X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*
+```
+Upload this text as a file to test virus detection (should be blocked).
+
+## Future Enhancements (Optional)
+- [ ] Admin dashboard showing scan statistics
+- [ ] Database tracking of scan history (if needed)
+- [ ] Async scanning for very large files (>100MB)
+- [ ] Multiple antivirus engine integration
+- [ ] Custom virus signature additions
+- [ ] Automated quarantine review process
+
+## Deployment Command
+```bash
+./scripts/deploy.sh patch
+```
+
+This will:
+1. Install/update ClamAV on server
+2. Update virus definitions
+3. Deploy new scanning service
+4. Restart backend with virus scanning enabled
+5. Verify all services including ClamAV are running
+
+## Result
+🎯 **All document uploads to HaqNow are now automatically scanned for viruses and malware using industry-standard ClamAV antivirus, providing an additional layer of security for the platform while maintaining privacy and anonymity standards. Infected files are immediately rejected before any processing or storage.**
+

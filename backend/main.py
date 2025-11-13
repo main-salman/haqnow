@@ -144,8 +144,16 @@ def create_app() -> FastAPI:
     # Health check endpoint
     @app.get("/health")
     async def health_check():
-        """Health check endpoint."""
-        return {"status": "healthy", "message": "HaqNow API is running"}
+        """Health check endpoint with service status."""
+        from app.services.virus_scanning_service import virus_scanning_service
+        
+        return {
+            "status": "healthy",
+            "message": "HaqNow API is running",
+            "services": {
+                "virus_scanning": virus_scanning_service.get_status()
+            }
+        }
     
     # Root endpoint
     @app.get("/")
@@ -176,6 +184,7 @@ async def startup_event():
     # Verify essential services
     from app.services.s3_service import s3_service
     from app.services.email_service import email_service
+    from app.services.virus_scanning_service import virus_scanning_service
     
     if not s3_service.client:
         logger.warning("S3 service not properly configured")
@@ -186,6 +195,12 @@ async def startup_event():
         logger.warning("Email service not properly configured")
     else:
         logger.info("Email service initialized successfully")
+    
+    if not virus_scanning_service.available:
+        logger.warning("Virus scanning service not available - uploads will not be scanned")
+    else:
+        version = virus_scanning_service.get_virus_definitions_version()
+        logger.info("Virus scanning service initialized successfully", version=version)
     
     logger.info("HaqNow API startup complete")
 

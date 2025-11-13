@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card } from './ui/card';
+import { Card } from '@/components/ui/card';
 import { Eye, FileText } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 

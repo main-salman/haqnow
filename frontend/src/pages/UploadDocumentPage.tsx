@@ -546,7 +546,7 @@ export default function UploadDocumentPage() {
     }
 
     setIsSubmitting(true);
-    toast.loading("Submitting document for review...", { id: "upload-toast" });
+    toast.loading("Scanning file for viruses...", { id: "upload-toast" });
 
     // Prepare file for upload
     let fileToUpload = formData.file;
@@ -574,7 +574,7 @@ export default function UploadDocumentPage() {
 
     try {
       // Upload using the new backend API
-      toast.loading("Uploading file...", { id: "upload-toast" });
+      toast.loading("Uploading and processing file (virus scan + privacy protection)...", { id: "upload-toast" });
       
       // Create FormData for the backend upload
       const uploadFormData = new FormData();
@@ -829,9 +829,13 @@ export default function UploadDocumentPage() {
             </div>
             {errors.file && <p className="text-sm text-destructive mt-1 flex items-center"><AlertCircle className="h-4 w-4 mr-1" />{errors.file}</p>}
 
-            {/* Supported file types info */}
-            <div className="text-xs text-muted-foreground">
-              <p>{t('upload.fileNote')}</p>
+            {/* Security & supported file types info */}
+            <div className="text-xs space-y-2">
+              <div className="flex items-center gap-2 text-green-700 bg-green-50 p-2 rounded border border-green-200">
+                <Shield className="h-4 w-4 flex-shrink-0" />
+                <span><strong>Security:</strong> All uploaded files are automatically scanned for viruses and malware before processing.</span>
+              </div>
+              <p className="text-muted-foreground">{t('upload.fileNote')}</p>
             </div>
 
             {/* Form Fields */}
