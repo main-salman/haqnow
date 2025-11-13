@@ -26,6 +26,8 @@
     "topViewedTitle": "Most Viewed Documents",
     "topViewedDescription": "Discover the most accessed corruption documents",
     "views": "views",
+    "recentlySharedTitle": "Recently Shared Documents",
+    "recentlySharedDescription": "Latest corruption documents added to the platform",
     "copyright": "All rights reserved."
   },
   "search": {
