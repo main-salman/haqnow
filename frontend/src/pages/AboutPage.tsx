@@ -33,7 +33,7 @@ export default function AboutPage() {
               • {t('about.affiliatesTitle')}
             </a>
             <a href="#founder" className="block text-blue-600 hover:text-blue-800 hover:underline transition-colors">
-              • Meet the Founder
+              • HaqNow Foundation
             </a>
             <a href="#mission" className="block text-blue-600 hover:text-blue-800 hover:underline transition-colors">
               • Mission & Values
@@ -67,23 +67,15 @@ export default function AboutPage() {
         {/* Founder Section */}
         <div id="founder" className="bg-white text-gray-800 rounded-lg shadow-lg p-8 mb-8">
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
               {t('about.founder')}
             </h2>
-            <div className="flex justify-center mb-6">
-              <a 
-                href="https://www.linkedin.com/in/salmannaqvi/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium"
-              >
-                <ExternalLink className="w-4 h-4 mr-2" />
-                {t('about.linkedinConnect')}
-              </a>
-            </div>
-            <blockquote className="text-lg italic text-gray-700 mb-6">
-              "{t('about.quote')}"
-            </blockquote>
+            <p className="text-sm text-gray-600 mb-2">
+              {t('about.founderSubtext')}
+            </p>
+            <p className="text-sm text-gray-500 mb-6">
+              {t('about.foundationType')}
+            </p>
           </div>
 
           {/* Mission Alignment */}
@@ -119,21 +111,6 @@ export default function AboutPage() {
                   <div>
                     <h4 className="font-semibold text-gray-900">{t('about.ministryOfWoke')}</h4>
                     <p className="text-gray-600 text-sm">{t('about.ministryOfWokeDesc')}</p>
-                  </div>
-                  <ExternalLink className="w-4 h-4 text-gray-400" />
-                </div>
-              </a>
-              
-              <a 
-                href="https://www.salmannaqvi.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="p-4 border border-gray-200 rounded-lg hover:border-indigo-300 hover:shadow-md transition-all"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-semibold text-gray-900">{t('about.salmanNaqvi')}</h4>
-                    <p className="text-gray-600 text-sm">{t('about.salmanNaqviDesc')}</p>
                   </div>
                   <ExternalLink className="w-4 h-4 text-gray-400" />
                 </div>

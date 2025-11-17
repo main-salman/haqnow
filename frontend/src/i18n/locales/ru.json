@@ -152,9 +152,9 @@
   },
   "about": {
     "title": "О HaqNow",
-    "founder": "Основан Салманом Накви",
-    "linkedinConnect": "Connect on LinkedIn",
-    "quote": "Я страстно увлечен прекращением войн и правами человека всех людей по всему миру.",
+    "founder": "Фонд HaqNow",
+    "founderSubtext": "Основан Салманом Накви",
+    "foundationType": "Некоммерческая организация",
     "globalTransparency": "Глобальная Прозрачность",
     "globalTransparencyDesc": "Exposing corruption worldwide through document disclosure",
     "humanRights": "Права Человека",
