@@ -328,13 +328,20 @@ class DocumentComment(Base):
     
     def to_dict(self, include_replies=True):
         """Convert model to dictionary."""
-        # Calculate reply_count safely
+        # Calculate reply_count safely - count direct replies only
         reply_count = 0
-        if hasattr(self, 'replies') and self.replies is not None:
-            try:
-                reply_count = len([r for r in self.replies if r.status == 'approved'])
-            except (AttributeError, TypeError):
-                reply_count = 0
+        if include_replies:
+            if hasattr(self, 'replies') and self.replies is not None:
+                try:
+                    # Count direct replies only (not nested)
+                    reply_count = len(self.replies)
+                except (AttributeError, TypeError):
+                    reply_count = 0
+            elif hasattr(self, '_replies_list') and self._replies_list is not None:
+                try:
+                    reply_count = len(self._replies_list)
+                except (AttributeError, TypeError):
+                    reply_count = 0
         
         data = {
             "id": self.id,
@@ -349,10 +356,16 @@ class DocumentComment(Base):
         
         if include_replies:
             try:
+                # Use replies if available, otherwise use _replies_list
+                replies_list = None
                 if hasattr(self, 'replies') and self.replies is not None:
-                    # Only include approved replies
-                    approved_replies = [reply for reply in self.replies if hasattr(reply, 'status') and reply.status == 'approved']
-                    data["replies"] = [reply.to_dict(include_replies=False) for reply in approved_replies]
+                    replies_list = self.replies
+                elif hasattr(self, '_replies_list') and self._replies_list is not None:
+                    replies_list = self._replies_list
+                
+                if replies_list:
+                    # Include all replies (they're already filtered by status='approved' in the query)
+                    data["replies"] = [reply.to_dict(include_replies=True) for reply in replies_list]
                 else:
                     data["replies"] = []
             except (AttributeError, TypeError, Exception) as e:
