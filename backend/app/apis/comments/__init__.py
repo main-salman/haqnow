@@ -165,28 +165,47 @@ async def get_comments(
     if not document:
         raise HTTPException(status_code=404, detail="Document not found")
     
-    # Get top-level comments (no parent) with replies eagerly loaded
-    from sqlalchemy.orm import joinedload
-    query = db.query(DocumentComment).options(
-        joinedload(DocumentComment.replies)
-    ).filter(
+    # Get all approved comments for this document (including replies)
+    all_document_comments = db.query(DocumentComment).filter(
         DocumentComment.document_id == document_id,
-        DocumentComment.parent_comment_id.is_(None),
         DocumentComment.status == "approved"
-    )
+    ).all()
     
-    # Get all comments first, then sort in Python (simpler for reply counting)
-    all_comments = query.all()
+    # Build a map of comment_id -> comment for quick lookup
+    comment_map = {comment.id: comment for comment in all_document_comments}
+    
+    # Build reply relationships manually (since SQLAlchemy relationship might not be loaded)
+    for comment in all_document_comments:
+        if comment.parent_comment_id and comment.parent_comment_id in comment_map:
+            parent = comment_map[comment.parent_comment_id]
+            if not hasattr(parent, '_replies_list'):
+                parent._replies_list = []
+            parent._replies_list.append(comment)
+    
+    # Get top-level comments only (no parent)
+    all_comments = [c for c in all_document_comments if c.parent_comment_id is None]
+    
+    # Attach replies to comments
+    for comment in all_comments:
+        if hasattr(comment, '_replies_list'):
+            comment.replies = comment._replies_list
+        else:
+            comment.replies = []
+    
+    # Helper function to count all nested replies recursively
+    def count_all_replies(comment):
+        count = len(comment.replies) if hasattr(comment, 'replies') and comment.replies else 0
+        if hasattr(comment, 'replies') and comment.replies:
+            for reply in comment.replies:
+                count += count_all_replies(reply)
+        return count
     
     # Apply sorting
     if sort_order == "most_replies":
-        # Sort by reply count (only count approved replies)
+        # Sort by reply count (including nested replies)
         comments = sorted(
             all_comments,
-            key=lambda c: (
-                len([r for r in (c.replies or []) if hasattr(r, 'status') and r.status == 'approved']),
-                c.created_at
-            ),
+            key=lambda c: (count_all_replies(c), c.created_at),
             reverse=True
         )
     elif sort_order == "newest":
