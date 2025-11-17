@@ -7,6 +7,8 @@ import { RouteObject } from "react-router";
 
 const AdminApprovedDocumentsPage = lazy(() => import("./pages/AdminApprovedDocumentsPage.tsx"));
 const AdminBannedTagsPage = lazy(() => import("./pages/AdminBannedTagsPage.tsx"));
+const AdminBannedWordsPage = lazy(() => import("./pages/AdminBannedWordsPage.tsx"));
+const AdminCommentModerationPage = lazy(() => import("./pages/AdminCommentModerationPage.tsx"));
 const AdminDashboardPage = lazy(() => import("./pages/AdminDashboardPage.tsx"));
 const AdminDocumentEditPage = lazy(() => import("./pages/AdminDocumentEditPage.tsx"));
 const AdminLoginPage = lazy(() => import("./pages/AdminLoginPage.tsx"));
@@ -29,6 +31,10 @@ export const userRoutes: RouteObject[] = [
 	{ path: "/adminapproveddocumentspage", element: <AdminApprovedDocumentsPage />},
 	{ path: "/admin-banned-tags-page", element: <AdminBannedTagsPage />},
 	{ path: "/adminbannedtagspage", element: <AdminBannedTagsPage />},
+	{ path: "/admin-banned-words-page", element: <AdminBannedWordsPage />},
+	{ path: "/adminbannedwordspage", element: <AdminBannedWordsPage />},
+	{ path: "/admin-comment-moderation-page", element: <AdminCommentModerationPage />},
+	{ path: "/admincommentmoderationpage", element: <AdminCommentModerationPage />},
 	{ path: "/admin-dashboard-page", element: <AdminDashboardPage />},
 	{ path: "/admindashboardpage", element: <AdminDashboardPage />},
 	{ path: "/admin-document-edit-page", element: <AdminDocumentEditPage />},

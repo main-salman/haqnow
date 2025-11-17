@@ -348,19 +348,21 @@ export default function SearchPage() {
                     key={doc.id}
                     className="hover:shadow-lg transition-shadow duration-200 ease-in-out"
                   >
-                    <CardHeader>
-                      <CardTitle className="text-xl font-serif">
-                        {doc.title || "Untitled Document"}
-                      </CardTitle>
-                      <CardDescription>
-                        {t('search.country')}: {doc.country || "N/A"}
-                        {doc.document_language && doc.document_language !== 'english' && (
-                          <Badge variant="outline" className="ml-2">
-                            {doc.document_language === 'arabic' ? 'العربية' : doc.document_language}
-                          </Badge>
-                        )}
-                      </CardDescription>
-                    </CardHeader>
+                    <Link to={`/document/${doc.id}`} className="block">
+                      <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+                        <CardTitle className="text-xl font-serif">
+                          {doc.title || "Untitled Document"}
+                        </CardTitle>
+                        <CardDescription>
+                          {t('search.country')}: {doc.country || "N/A"}
+                          {doc.document_language && doc.document_language !== 'english' && (
+                            <Badge variant="outline" className="ml-2">
+                              {doc.document_language === 'arabic' ? 'العربية' : doc.document_language}
+                            </Badge>
+                          )}
+                        </CardDescription>
+                      </CardHeader>
+                    </Link>
                     <CardContent>
                       {doc.ai_summary && (
                         <div className="mb-4 p-3 bg-blue-50 border-l-4 border-l-blue-500 rounded">
