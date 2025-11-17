@@ -179,9 +179,9 @@
   },
   "about": {
     "title": "HaqNow Hakkında",
-    "founder": "Salman Naqvi Tarafından Kuruldu",
-    "linkedinConnect": "Connect on LinkedIn",
-    "quote": "Savaşları sona erdirme ve dünyadaki tüm insanların insan haklarına tutkulu bir şekilde bağlıyım.",
+    "founder": "HaqNow Vakfı",
+    "founderSubtext": "Salman Naqvi Tarafından Kuruldu",
+    "foundationType": "Kâr amacı gütmeyen organizasyon",
     "globalTransparency": "Küresel Şeffaflık",
     "globalTransparencyDesc": "Exposing corruption worldwide through document disclosure",
     "humanRights": "İnsan Hakları",

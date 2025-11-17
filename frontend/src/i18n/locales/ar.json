@@ -152,9 +152,9 @@
   },
   "about": {
     "title": "حول HaqNow",
-    "founder": "أسسها سلمان نقوي",
-    "linkedinConnect": "تواصل على LinkedIn",
-    "quote": "أنا شغوف بإنهاء الحروب وحقوق الإنسان لجميع البشر حول العالم.",
+    "founder": "مؤسسة HaqNow",
+    "founderSubtext": "أسسها سلمان نقوي",
+    "foundationType": "منظمة غير ربحية",
     "globalTransparency": "الشفافية العالمية",
     "globalTransparencyDesc": "كشف الفساد في جميع أنحاء العالم من خلال الكشف عن الوثائق",
     "humanRights": "حقوق الإنسان",

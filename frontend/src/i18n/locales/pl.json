@@ -179,9 +179,9 @@
   },
   "about": {
     "title": "O HaqNow",
-    "founder": "Założone przez Salmana Naqvi",
-    "linkedinConnect": "Connect on LinkedIn",
-    "quote": "Pasjonuje mnie kończenie wojen i prawa człowieka wszystkich ludzi na całym świecie.",
+    "founder": "Fundacja HaqNow",
+    "founderSubtext": "Założone przez Salmana Naqvi",
+    "foundationType": "Organizacja non-profit",
     "globalTransparency": "Globalna Przejrzystość",
     "globalTransparencyDesc": "Exposing corruption worldwide through document disclosure",
     "humanRights": "Prawa Człowieka",
