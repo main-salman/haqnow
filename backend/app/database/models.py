@@ -321,7 +321,7 @@ class DocumentComment(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
     
     # Relationships
-    replies = relationship("DocumentComment", backref="parent", remote_side=[id], cascade="all, delete-orphan")
+    replies = relationship("DocumentComment", backref="parent", remote_side=[id], cascade="all, delete")
     
     def __repr__(self):
         return f"<DocumentComment(id={self.id}, document_id={self.document_id}, status='{self.status}')>"
