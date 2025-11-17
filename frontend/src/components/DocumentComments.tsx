@@ -44,14 +44,23 @@ export default function DocumentComments({ documentId }: DocumentCommentsProps) 
   const fetchComments = async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await fetch(`/api/comments/documents/${documentId}/comments?sort_order=${sortOrder}`, {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'same-origin',
       });
       
       if (!response.ok) {
-        throw new Error('Failed to fetch comments');
+        const errorText = await response.text().catch(() => 'Unknown error');
+        console.error('Failed to fetch comments:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorText,
+          url: response.url
+        });
+        throw new Error(`Failed to fetch comments: ${response.status} ${response.statusText}`);
       }
       
       const data = await response.json();
@@ -59,7 +68,7 @@ export default function DocumentComments({ documentId }: DocumentCommentsProps) 
       setError(null);
     } catch (err: any) {
       console.error('Error fetching comments:', err);
-      setError(err.message || 'Failed to load comments');
+      setError(err.message || 'Failed to load comments. Please try refreshing the page.');
     } finally {
       setLoading(false);
     }
@@ -84,7 +93,10 @@ export default function DocumentComments({ documentId }: DocumentCommentsProps) 
       
       const response = await fetch(`/api/comments/documents/${documentId}/comments`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin',
         body: JSON.stringify({
           comment_text: text,
           parent_comment_id: parentId
@@ -92,9 +104,25 @@ export default function DocumentComments({ documentId }: DocumentCommentsProps) 
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || 'Failed to submit comment');
+        let errorMessage = 'Failed to submit comment';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.detail || errorMessage;
+        } catch (e) {
+          const errorText = await response.text().catch(() => '');
+          console.error('Error response:', {
+            status: response.status,
+            statusText: response.statusText,
+            errorText,
+            url: response.url
+          });
+          errorMessage = `Failed to submit comment: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
+
+      const result = await response.json();
+      console.log('Comment submitted successfully:', result);
 
       // Clear form
       if (parentId) {
@@ -108,7 +136,7 @@ export default function DocumentComments({ documentId }: DocumentCommentsProps) 
       await fetchComments();
     } catch (err: any) {
       console.error('Error submitting comment:', err);
-      setError(err.message || 'Failed to submit comment');
+      setError(err.message || 'Failed to submit comment. Please try again.');
     } finally {
       setSubmitting(false);
     }
