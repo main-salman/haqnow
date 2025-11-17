@@ -328,6 +328,14 @@ class DocumentComment(Base):
     
     def to_dict(self, include_replies=True):
         """Convert model to dictionary."""
+        # Calculate reply_count safely
+        reply_count = 0
+        if hasattr(self, 'replies') and self.replies is not None:
+            try:
+                reply_count = len([r for r in self.replies if r.status == 'approved'])
+            except (AttributeError, TypeError):
+                reply_count = 0
+        
         data = {
             "id": self.id,
             "document_id": self.document_id,
@@ -336,11 +344,14 @@ class DocumentComment(Base):
             "status": self.status,
             "flag_count": self.flag_count,
             "created_at": self.created_at.isoformat() if self.created_at else None,
-            "reply_count": len(self.replies) if hasattr(self, 'replies') else 0,
+            "reply_count": reply_count,
         }
         
-        if include_replies and hasattr(self, 'replies'):
-            data["replies"] = [reply.to_dict(include_replies=False) for reply in self.replies if reply.status == 'approved']
+        if include_replies and hasattr(self, 'replies') and self.replies is not None:
+            try:
+                data["replies"] = [reply.to_dict(include_replies=False) for reply in self.replies if reply.status == 'approved']
+            except (AttributeError, TypeError):
+                data["replies"] = []
         
         return data
 
