@@ -305,3 +305,100 @@ class APIKey(Base):
             "last_used_at": self.last_used_at.isoformat() if self.last_used_at else None,
             "usage_count": self.usage_count,
         }
+
+class DocumentComment(Base):
+    """Model for anonymous comments on documents."""
+    
+    __tablename__ = "document_comments"
+    
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    document_id = Column(Integer, ForeignKey('documents.id', ondelete='CASCADE'), nullable=False, index=True)
+    parent_comment_id = Column(Integer, ForeignKey('document_comments.id', ondelete='CASCADE'), nullable=True, index=True)
+    comment_text = Column(Text, nullable=False)
+    session_id = Column(String(64), nullable=False, index=True)  # Anonymous session hash
+    status = Column(String(20), nullable=False, default='pending', index=True)  # pending, approved, rejected, flagged
+    flag_count = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+    
+    # Relationships
+    replies = relationship("DocumentComment", backref="parent", remote_side=[id], cascade="all, delete-orphan")
+    
+    def __repr__(self):
+        return f"<DocumentComment(id={self.id}, document_id={self.document_id}, status='{self.status}')>"
+    
+    def to_dict(self, include_replies=True):
+        """Convert model to dictionary."""
+        data = {
+            "id": self.id,
+            "document_id": self.document_id,
+            "parent_comment_id": self.parent_comment_id,
+            "comment_text": self.comment_text,
+            "status": self.status,
+            "flag_count": self.flag_count,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "reply_count": len(self.replies) if hasattr(self, 'replies') else 0,
+        }
+        
+        if include_replies and hasattr(self, 'replies'):
+            data["replies"] = [reply.to_dict(include_replies=False) for reply in self.replies if reply.status == 'approved']
+        
+        return data
+
+class DocumentAnnotation(Base):
+    """Model for anonymous annotations/highlights on documents."""
+    
+    __tablename__ = "document_annotations"
+    
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    document_id = Column(Integer, ForeignKey('documents.id', ondelete='CASCADE'), nullable=False, index=True)
+    session_id = Column(String(64), nullable=False, index=True)  # Anonymous session hash
+    page_number = Column(Integer, nullable=False)
+    x = Column(Float, nullable=False)  # X coordinate
+    y = Column(Float, nullable=False)  # Y coordinate
+    width = Column(Float, nullable=False)  # Width of highlight
+    height = Column(Float, nullable=False)  # Height of highlight
+    highlighted_text = Column(Text, nullable=True)  # The text that was highlighted
+    annotation_note = Column(Text, nullable=True)  # User's note/comment on the highlight
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+    
+    def __repr__(self):
+        return f"<DocumentAnnotation(id={self.id}, document_id={self.document_id}, page={self.page_number})>"
+    
+    def to_dict(self):
+        """Convert model to dictionary."""
+        return {
+            "id": self.id,
+            "document_id": self.document_id,
+            "page_number": self.page_number,
+            "x": self.x,
+            "y": self.y,
+            "width": self.width,
+            "height": self.height,
+            "highlighted_text": self.highlighted_text,
+            "annotation_note": self.annotation_note,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+class BannedWord(Base):
+    """Model for storing banned words/phrases for spam filtering."""
+    
+    __tablename__ = "banned_words"
+    
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    word = Column(String(200), nullable=False, unique=True, index=True)  # Word or phrase
+    reason = Column(Text, nullable=True)
+    banned_by = Column(String(255), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    
+    def __repr__(self):
+        return f"<BannedWord(id={self.id}, word='{self.word}')>"
+    
+    def to_dict(self):
+        """Convert model to dictionary."""
+        return {
+            "id": self.id,
+            "word": self.word,
+            "reason": self.reason,
+            "banned_by": self.banned_by,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate, Outlet } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LayoutDashboard, FileCheck, FileText, Tag, Users, Settings, LogOut, ShieldBan, Loader2, Languages, TrendingUp } from "lucide-react";
+import { LayoutDashboard, FileCheck, FileText, Tag, Users, Settings, LogOut, ShieldBan, Loader2, Languages, TrendingUp, MessageSquare } from "lucide-react";
 
 // Logout function
 const handleLogout = (navigate: Function) => {
@@ -146,6 +146,8 @@ export default function AdminDashboardPage() {
             <NavItem to="/admin-pending-documents-page" icon={<FileCheck className="mr-3 h-5 w-5" />} label="Pending Documents" />
             <NavItem to="/admin-approved-documents-page" icon={<FileText className="mr-3 h-5 w-5" />} label="Approved Documents" />
             <NavItem to="/admin-banned-tags-page" icon={<ShieldBan className="mr-3 h-5 w-5" />} label="Manage Banned Tags" />
+            <NavItem to="/admin-banned-words-page" icon={<ShieldBan className="mr-3 h-5 w-5" />} label="Manage Banned Words" />
+            <NavItem to="/admin-comment-moderation-page" icon={<MessageSquare className="mr-3 h-5 w-5" />} label="Comment Moderation" />
             <NavItem to="/admin-translations-page" icon={<Languages className="mr-3 h-5 w-5" />} label="Manage Translations" />
             <NavItem to="/admin-top-viewed-page" icon={<TrendingUp className="mr-3 h-5 w-5" />} label="Top Viewed Documents" />
             <NavItem to="/admin-management-page" icon={<Users className="mr-3 h-5 w-5" />} label="Admin Management" />

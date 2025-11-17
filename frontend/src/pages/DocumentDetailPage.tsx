@@ -11,9 +11,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Download, Tag, PlusCircle, ArrowLeft, Brain, Loader2, FileText } from "lucide-react";
+import { Download, Tag, PlusCircle, ArrowLeft, Brain, Loader2, FileText, MessageSquare, ExternalLink } from "lucide-react";
 import { useNavigate, useSearchParams, useParams } from "react-router-dom";
 import { AlertCircle } from "lucide-react";
+import DocumentComments from "@/components/DocumentComments";
+import DocumentAnnotations from "@/components/DocumentAnnotations";
 
 interface ApiDocument {
   id: number;
@@ -319,6 +321,36 @@ export default function DocumentDetailPage() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+
+            {/* Discuss Anonymously Button */}
+            <Button 
+              variant="outline"
+              onClick={() => {
+                // Scroll to comments section
+                const commentsSection = document.getElementById('comments-section');
+                if (commentsSection) {
+                  commentsSection.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+            >
+              <MessageSquare className="mr-2 h-4 w-4" />
+              Discuss anonymously
+            </Button>
+
+            {/* Discuss on Reddit Button */}
+            <Button 
+              variant="outline"
+              asChild
+            >
+              <a 
+                href="https://www.reddit.com/r/haqnow/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+              >
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Discuss on Reddit
+              </a>
+            </Button>
           </div>
         </section>
 
@@ -384,19 +416,15 @@ export default function DocumentDetailPage() {
           )}
         </section>
 
-        {/* PDF Preview Section */}
+        {/* PDF Preview Section with Annotations */}
         <section className="bg-card p-6 rounded-lg shadow">
           <h2 className="text-2xl font-semibold mb-4 font-serif">Document Preview</h2>
-          <div className="aspect-[8.5/11] border border-border rounded overflow-hidden">
-            <iframe
-              src={doc.file_url}
-              title={doc.title}
-              width="100%"
-              height="100%"
-              className="w-full h-full"
-              // sandbox="allow-scripts allow-same-origin" // Consider security implications
-            />
-          </div>
+          <DocumentAnnotations documentId={doc.id} pdfUrl={doc.file_url} />
+        </section>
+
+        {/* Comments Section */}
+        <section className="bg-card p-6 rounded-lg shadow">
+          <DocumentComments documentId={doc.id} />
         </section>
 
         {/* Tags Section */}

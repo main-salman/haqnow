@@ -1,3 +1,89 @@
+[2025-11-17T20:42:13Z] **FEATURE: Anonymous Comments, Annotations, and Social Features**
+**User Request:** Add anonymous discussion features including comments, annotations/highlights, and Reddit integration while maintaining user anonymity and minimizing costs.
+
+**Features Implemented:**
+
+1. **Anonymous Commenting System:**
+   - Threaded comments with replies
+   - Sorting options (most replies, newest, oldest)
+   - Rate limiting (10 min per document)
+   - Comment limit (100 per document)
+   - Auto-hide after 3 flags
+   - Users can delete their own comments
+   - Flag for moderation
+
+2. **PDF Annotations/Highlights:**
+   - Text selection and highlighting
+   - Annotation notes on highlights
+   - Overlay display on PDF viewer
+   - Users can delete their own annotations
+   - Public by default (all users see annotations)
+
+3. **Spam Filtering:**
+   - Keyword-based spam detection
+   - Admin-managed banned words list
+   - Initial best practices banned words included
+   - Cached for performance (5 min TTL)
+
+4. **Social Integration:**
+   - "Discuss anonymously" button on document pages
+   - "Discuss on Reddit" button linking to /r/haqnow
+   - Both buttons added to document detail page
+
+5. **Admin Panels:**
+   - Banned Words Management page
+   - Comment Moderation Queue page
+   - Approve/reject comments
+   - View flagged comments (3+ flags)
+
+**Technical Implementation:**
+
+**Backend:**
+- Database models: DocumentComment, DocumentAnnotation, BannedWord
+- Migration script: create_comment_annotation_tables.py
+- Services: spam_filter_service, comment_rate_limit_service, comment_cache_service
+- API endpoints: Full CRUD for comments/annotations, admin moderation endpoints
+- Router registered: /api/comments/*
+
+**Frontend:**
+- DocumentComments component (threaded, sortable)
+- DocumentAnnotations component (PDF highlights with overlays)
+- AdminBannedWordsPage (manage banned words)
+- AdminCommentModerationPage (moderate comments)
+- Buttons added to DocumentDetailPage
+
+**Database Changes:**
+- document_comments table (threaded, with status tracking)
+- document_annotations table (PDF coordinates, notes)
+- banned_words table (spam filtering)
+
+**Privacy & Anonymity:**
+- Session-based tracking (no IP addresses)
+- Anonymous user identifiers
+- No user accounts required
+- Rate limiting prevents abuse
+
+**Files Created/Modified:**
+- backend/app/database/models.py - Added 3 new models
+- backend/create_comment_annotation_tables.py - Migration script
+- backend/app/services/spam_filter_service.py - Spam filtering
+- backend/app/services/comment_rate_limit_service.py - Rate limiting
+- backend/app/services/comment_cache_service.py - Caching
+- backend/app/apis/comments/__init__.py - API endpoints
+- backend/main.py - Registered comments router
+- frontend/src/components/DocumentComments.tsx - Comment component
+- frontend/src/components/DocumentAnnotations.tsx - Annotation component
+- frontend/src/pages/AdminBannedWordsPage.tsx - Banned words admin
+- frontend/src/pages/AdminCommentModerationPage.tsx - Moderation admin
+- frontend/src/pages/DocumentDetailPage.tsx - Added buttons and components
+- frontend/src/pages/AdminDashboardPage.tsx - Added navigation links
+- frontend/src/user-routes.tsx - Added new routes
+
+**Next Steps:**
+- Run migration: python3 backend/create_comment_annotation_tables.py (on server)
+- Add translations for new UI strings (pending)
+- Test features in production
+
 [2025-11-11T21:05:00Z] **IMPROVEMENT: Enhanced deploy.sh for Reliable Deployments**
 **User Request:** Ensure deploy.sh always deploys all files properly by committing to git first and pulling latest changes from GitHub on server.
 

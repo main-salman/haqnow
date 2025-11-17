@@ -90,6 +90,7 @@ def setup_routers(app: FastAPI):
     from app.apis.admin_management import router as admin_management_router
     from app.apis.rag import router as rag_router
     from app.apis.site_settings import router as site_settings_router
+    from app.apis.comments import router as comments_router
     
     # Add routers with prefixes
     app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
@@ -102,6 +103,7 @@ def setup_routers(app: FastAPI):
     app.include_router(admin_management_router, prefix="/admin-management", tags=["Admin Management"])
     app.include_router(rag_router, prefix="/rag", tags=["RAG Q&A"])
     app.include_router(site_settings_router, prefix="/site-settings", tags=["Site Settings"])
+    app.include_router(comments_router, prefix="/comments", tags=["Comments & Annotations"])
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
