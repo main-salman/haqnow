@@ -171,33 +171,27 @@ async def get_comments(
         DocumentComment.status == "approved"
     ).all()
     
-    # Build a map of comment_id -> comment for quick lookup
-    comment_map = {comment.id: comment for comment in all_document_comments}
-    
-    # Build reply relationships manually (since SQLAlchemy relationship might not be loaded)
+    # Build a map of comment_id -> list of replies (don't assign to SQLAlchemy relationship)
+    replies_map = {}
     for comment in all_document_comments:
-        if comment.parent_comment_id and comment.parent_comment_id in comment_map:
-            parent = comment_map[comment.parent_comment_id]
-            if not hasattr(parent, '_replies_list'):
-                parent._replies_list = []
-            parent._replies_list.append(comment)
+        if comment.parent_comment_id:
+            if comment.parent_comment_id not in replies_map:
+                replies_map[comment.parent_comment_id] = []
+            replies_map[comment.parent_comment_id].append(comment)
+    
+    # Attach replies to ALL comments (including nested replies)
+    for comment in all_document_comments:
+        comment._replies_list = replies_map.get(comment.id, [])
     
     # Get top-level comments only (no parent)
     all_comments = [c for c in all_document_comments if c.parent_comment_id is None]
     
-    # Attach replies to comments
-    for comment in all_comments:
-        if hasattr(comment, '_replies_list'):
-            comment.replies = comment._replies_list
-        else:
-            comment.replies = []
-    
     # Helper function to count all nested replies recursively
     def count_all_replies(comment):
-        count = len(comment.replies) if hasattr(comment, 'replies') and comment.replies else 0
-        if hasattr(comment, 'replies') and comment.replies:
-            for reply in comment.replies:
-                count += count_all_replies(reply)
+        replies_list = getattr(comment, '_replies_list', [])
+        count = len(replies_list)
+        for reply in replies_list:
+            count += count_all_replies(reply)
         return count
     
     # Apply sorting
