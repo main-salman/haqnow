@@ -14,7 +14,7 @@ from app.database.models import Document, DocumentComment, DocumentAnnotation, B
 from app.services.spam_filter_service import spam_filter_service
 from app.services.comment_rate_limit_service import comment_rate_limit_service
 from app.services.comment_cache_service import comment_cache_service
-from app.auth.user import AdminUser, get_current_admin
+from app.auth.user import AdminUser
 
 logger = structlog.get_logger()
 
@@ -388,7 +388,7 @@ async def delete_annotation(
 # Admin endpoints
 @router.get("/admin/comments/pending", response_model=List[CommentResponse])
 async def get_pending_comments(
-    admin_user: AdminUser = Depends(get_current_admin),
+    admin_user: AdminUser,
     db: Session = Depends(get_db)
 ):
     """Get all pending and flagged comments for moderation."""
@@ -402,7 +402,7 @@ async def get_pending_comments(
 async def moderate_comment(
     comment_id: int,
     action: str = Query(..., regex="^(approve|reject)$"),
-    admin_user: AdminUser = Depends(get_current_admin),
+    admin_user: AdminUser,
     db: Session = Depends(get_db)
 ):
     """Approve or reject a comment."""
@@ -428,7 +428,7 @@ async def moderate_comment(
 # Banned words management endpoints
 @router.get("/admin/banned-words", response_model=List[dict])
 async def get_banned_words(
-    admin_user: AdminUser = Depends(get_current_admin),
+    admin_user: AdminUser,
     db: Session = Depends(get_db)
 ):
     """Get all banned words."""
@@ -439,7 +439,7 @@ async def get_banned_words(
 async def add_banned_word(
     word: str = Query(..., min_length=1, max_length=200),
     reason: Optional[str] = Query(None),
-    admin_user: AdminUser = Depends(get_current_admin),
+    admin_user: AdminUser,
     db: Session = Depends(get_db)
 ):
     """Add a banned word."""
@@ -471,7 +471,7 @@ async def add_banned_word(
 @router.delete("/admin/banned-words/{word_id}")
 async def delete_banned_word(
     word_id: int,
-    admin_user: AdminUser = Depends(get_current_admin),
+    admin_user: AdminUser,
     db: Session = Depends(get_db)
 ):
     """Delete a banned word."""
