@@ -347,10 +347,16 @@ class DocumentComment(Base):
             "reply_count": reply_count,
         }
         
-        if include_replies and hasattr(self, 'replies') and self.replies is not None:
+        if include_replies:
             try:
-                data["replies"] = [reply.to_dict(include_replies=False) for reply in self.replies if reply.status == 'approved']
-            except (AttributeError, TypeError):
+                if hasattr(self, 'replies') and self.replies is not None:
+                    # Only include approved replies
+                    approved_replies = [reply for reply in self.replies if hasattr(reply, 'status') and reply.status == 'approved']
+                    data["replies"] = [reply.to_dict(include_replies=False) for reply in approved_replies]
+                else:
+                    data["replies"] = []
+            except (AttributeError, TypeError, Exception) as e:
+                # If there's any error accessing replies, just set empty list
                 data["replies"] = []
         
         return data

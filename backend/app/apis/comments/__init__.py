@@ -119,13 +119,13 @@ async def create_comment(
         if not parent:
             raise HTTPException(status_code=404, detail="Parent comment not found")
     
-    # Create comment
+    # Create comment (public by default - auto-approved)
     comment = DocumentComment(
         document_id=document_id,
         parent_comment_id=comment_data.parent_comment_id,
         comment_text=comment_data.comment_text,
         session_id=session_id,
-        status='pending'  # Auto-approve after 24h if not flagged, but start as pending
+        status='approved'  # Public by default - comments are visible immediately
     )
     
     db.add(comment)
@@ -180,10 +180,13 @@ async def get_comments(
     
     # Apply sorting
     if sort_order == "most_replies":
-        # Sort by reply count
+        # Sort by reply count (only count approved replies)
         comments = sorted(
             all_comments,
-            key=lambda c: (len([r for r in c.replies if r.status == 'approved']), c.created_at),
+            key=lambda c: (
+                len([r for r in (c.replies or []) if hasattr(r, 'status') and r.status == 'approved']),
+                c.created_at
+            ),
             reverse=True
         )
     elif sort_order == "newest":
@@ -191,8 +194,17 @@ async def get_comments(
     else:  # oldest
         comments = sorted(all_comments, key=lambda c: c.created_at)
     
-    # Convert to dict with replies
-    result = [CommentResponse(**comment.to_dict(include_replies=True)) for comment in comments]
+    # Convert to dict with replies (only include approved replies)
+    result = []
+    for comment in comments:
+        try:
+            comment_dict = comment.to_dict(include_replies=True)
+            result.append(CommentResponse(**comment_dict))
+        except Exception as e:
+            logger.error(f"Error converting comment {comment.id} to dict: {e}")
+            # Fallback: create dict without replies
+            comment_dict = comment.to_dict(include_replies=False)
+            result.append(CommentResponse(**comment_dict))
     
     # Cache result (convert Pydantic models to dict)
     cache_data = []
