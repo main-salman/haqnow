@@ -430,21 +430,24 @@ async def moderate_comment(
     action: str = Query(..., regex="^(approve|reject)$"),
     db: Session = Depends(get_db)
 ):
-    """Approve or reject a comment."""
+    """Approve or reject a comment. Reject performs a hard delete."""
     comment = db.query(DocumentComment).filter(DocumentComment.id == comment_id).first()
     
     if not comment:
         raise HTTPException(status_code=404, detail="Comment not found")
     
+    document_id = comment.document_id
+    
     if action == "approve":
         comment.status = "approved"
+        db.commit()
     else:
-        comment.status = "rejected"
-    
-    db.commit()
+        # Hard delete: remove comment and all its replies (cascade delete)
+        db.delete(comment)
+        db.commit()
     
     # Invalidate cache
-    comment_cache_service.invalidate_comments_cache(comment.document_id)
+    comment_cache_service.invalidate_comments_cache(document_id)
     
     logger.info("Comment moderated", comment_id=comment_id, action=action, admin=admin_user.email)
     
