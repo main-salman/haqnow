@@ -401,8 +401,8 @@ async def get_pending_comments(
 @router.post("/admin/comments/{comment_id}/moderate")
 async def moderate_comment(
     comment_id: int,
-    action: str = Query(..., regex="^(approve|reject)$"),
     admin_user: AdminUser,
+    action: str = Query(..., regex="^(approve|reject)$"),
     db: Session = Depends(get_db)
 ):
     """Approve or reject a comment."""
@@ -437,9 +437,9 @@ async def get_banned_words(
 
 @router.post("/admin/banned-words")
 async def add_banned_word(
+    admin_user: AdminUser,
     word: str = Query(..., min_length=1, max_length=200),
     reason: Optional[str] = Query(None),
-    admin_user: AdminUser,
     db: Session = Depends(get_db)
 ):
     """Add a banned word."""
