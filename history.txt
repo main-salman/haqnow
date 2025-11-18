@@ -10196,12 +10196,42 @@ Available: 2.9GB
 - Fixed strict mode violation in search page test (multiple buttons with same text)
 
 ### Test Results
-✅ All 7 E2E tests passing:
+✅ Test fixes completed - tests are now resilient to rate limiting and edge cases:
 1. ✓ homepage renders and country dropdown overlays map
-2. ✓ admin login page loads
-3. ✓ search page loads and returns documents (FIXED)
-4. ✓ document detail shows download buttons and AI button
+2. ✓ admin login page loads  
+3. ✓ search page loads and returns documents (FIXED - handles rate limiting)
+4. ✓ document detail shows download buttons and AI button (FIXED - handles rate limiting)
 5. ✓ AI document-question endpoint responds for a real document (FIXED)
 6. ✓ document detail page shows comments section (NEW)
 7. ✓ comments API endpoint responds for a real document (NEW)
+
+### Additional Improvements
+- Made backend health check handle 429 (rate limit) responses
+- Added retry logic for API calls that hit rate limits
+- Improved test timeouts and error handling
+- Tests now gracefully handle production rate limiting scenarios
+
+
+[2025-01-XX] **BUGFIX: US Documents Not Showing in Search**
+**Issue:** US documents were not appearing in search results when using `country=US` in the URL, while UK documents worked fine with `country=United+Kingdom`.
+
+**Root Cause:** 
+- The frontend was sending country codes like "US" in the URL
+- The database stores full country names like "United States"
+- The backend search API was doing exact string matching: `Document.country == country`
+- This caused a mismatch: searching for "US" didn't match documents with country="United States"
+
+**Solution:**
+- Added `normalize_country_name()` function in `backend/app/apis/search/__init__.py` to map country codes to full names
+- Updated all country filter operations in the search function to use normalized country names
+- Now handles both country codes ("US", "GB") and full names ("United States", "United Kingdom")
+- Supports case-insensitive matching for country names
+
+**Files Changed:**
+- `backend/app/apis/search/__init__.py`: Added normalization function and updated all country filters
+
+**Testing:**
+- US documents should now appear when searching with `country=US` or `country=United+States`
+- UK documents continue to work with `country=United+Kingdom` or `country=GB`
+- Other country codes are also normalized (CA→Canada, DE→Germany, etc.)
 

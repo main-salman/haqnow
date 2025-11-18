@@ -32,6 +32,80 @@ logger = structlog.get_logger()
 
 router = APIRouter()
 
+def normalize_country_name(country: str) -> str:
+    """
+    Normalize country parameter to match database values.
+    Maps common country codes to full country names as stored in the database.
+    """
+    if not country:
+        return country
+    
+    # Country code to full name mapping (matching what's stored in database)
+    country_mapping = {
+        'US': 'United States',
+        'USA': 'United States',
+        'GB': 'United Kingdom',
+        'UK': 'United Kingdom',
+        'CA': 'Canada',
+        'DE': 'Germany',
+        'FR': 'France',
+        'ES': 'Spain',
+        'IT': 'Italy',
+        'NL': 'Netherlands',
+        'BE': 'Belgium',
+        'CH': 'Switzerland',
+        'AT': 'Austria',
+        'SE': 'Sweden',
+        'NO': 'Norway',
+        'DK': 'Denmark',
+        'FI': 'Finland',
+        'PL': 'Poland',
+        'CZ': 'Czech Republic',
+        'HU': 'Hungary',
+        'RO': 'Romania',
+        'BG': 'Bulgaria',
+        'GR': 'Greece',
+        'PT': 'Portugal',
+        'IE': 'Ireland',
+        'RU': 'Russia',
+        'CN': 'China',
+        'JP': 'Japan',
+        'KR': 'South Korea',
+        'IN': 'India',
+        'PK': 'Pakistan',
+        'ID': 'Indonesia',
+        'MY': 'Malaysia',
+        'TH': 'Thailand',
+        'VN': 'Vietnam',
+        'PH': 'Philippines',
+        'SG': 'Singapore',
+        'AU': 'Australia',
+        'NZ': 'New Zealand',
+        'ZA': 'South Africa',
+        'NG': 'Nigeria',
+        'EG': 'Egypt',
+        'MA': 'Morocco',
+        'DZ': 'Algeria',
+        'TN': 'Tunisia',
+        'LY': 'Libya',
+        'SD': 'Sudan',
+        'ET': 'Ethiopia',
+    }
+    
+    # Check if it's a country code (uppercase, 2-3 characters)
+    country_upper = country.upper().strip()
+    if country_upper in country_mapping:
+        return country_mapping[country_upper]
+    
+    # If it's already a full name, return as-is (case-insensitive match)
+    # This handles variations like "United States" vs "united states"
+    for code, full_name in country_mapping.items():
+        if full_name.lower() == country.lower().strip():
+            return full_name
+    
+    # Return original if no mapping found (might be a country name we don't have in mapping)
+    return country.strip()
+
 def get_anonymous_session_id(request: Request) -> str:
     """
     Generate anonymous session identifier for rate limiting.
@@ -111,6 +185,9 @@ async def search_documents(
     """
     
     try:
+        # Normalize country parameter to match database values (e.g., "US" -> "United States")
+        normalized_country = normalize_country_name(country) if country else None
+        
         search_query = q.strip() if q else ""
         documents_data = []
         total_count = 0
@@ -121,8 +198,8 @@ async def search_documents(
             query_builder = db.query(Document).filter(Document.status == "approved")
             
             # Apply filters
-            if country:
-                query_builder = query_builder.filter(Document.country == country)
+            if normalized_country:
+                query_builder = query_builder.filter(Document.country == normalized_country)
             if state:
                 query_builder = query_builder.filter(Document.state == state)
             
@@ -144,10 +221,10 @@ async def search_documents(
                 )
                 
                 # Apply country/state filters
-                if country or state:
+                if normalized_country or state:
                     semantic_results = [
                         doc for doc in semantic_results 
-                        if (not country or doc.get('country') == country) and 
+                        if (not normalized_country or doc.get('country') == normalized_country) and 
                            (not state or doc.get('state') == state)
                     ]
                 
@@ -219,8 +296,8 @@ async def search_documents(
                 query_builder = query_builder.filter(or_(*search_conditions))
             
             # Apply filters
-            if country:
-                query_builder = query_builder.filter(Document.country == country)
+            if normalized_country:
+                query_builder = query_builder.filter(Document.country == normalized_country)
             if state:
                 query_builder = query_builder.filter(Document.state == state)
             
@@ -253,8 +330,8 @@ async def search_documents(
                     
                     fuzzy_query = fuzzy_query.filter(or_(*fuzzy_conditions))
                     
-                    if country:
-                        fuzzy_query = fuzzy_query.filter(Document.country == country)
+                    if normalized_country:
+                        fuzzy_query = fuzzy_query.filter(Document.country == normalized_country)
                     if state:
                         fuzzy_query = fuzzy_query.filter(Document.state == state)
                     
@@ -308,8 +385,8 @@ async def search_documents(
                 query_builder = query_builder.filter(or_(*search_conditions))
             
             # Apply filters for keyword search
-            if country:
-                query_builder = query_builder.filter(Document.country == country)
+            if normalized_country:
+                query_builder = query_builder.filter(Document.country == normalized_country)
             if state:
                 query_builder = query_builder.filter(Document.state == state)
             
@@ -335,10 +412,10 @@ async def search_documents(
                     unique_results.append(result)
             
             # Apply country/state filters to all results
-            if country or state:
+            if normalized_country or state:
                 unique_results = [
                     doc for doc in unique_results 
-                    if (not country or doc.get('country') == country) and 
+                    if (not normalized_country or doc.get('country') == normalized_country) and 
                        (not state or doc.get('state') == state)
                 ]
             
@@ -369,8 +446,8 @@ async def search_documents(
             try:
                 # Get all approved documents
                 all_docs = db.query(Document).filter(Document.status == "approved")
-                if country:
-                    all_docs = all_docs.filter(Document.country == country)
+                if normalized_country:
+                    all_docs = all_docs.filter(Document.country == normalized_country)
                 if state:
                     all_docs = all_docs.filter(Document.state == state)
                 all_docs = all_docs.all()
