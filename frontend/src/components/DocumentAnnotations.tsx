@@ -66,13 +66,41 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
     }
   };
 
-  const handleTextSelection = () => {
-    const selection = window.getSelection();
+  const handleTextSelection = (e?: MouseEvent) => {
+    // Try to get selection from the main window first
+    let selection = window.getSelection();
+    let range: Range | null = null;
+    
+    // If no selection in main window, try to get it from the iframe
     if (!selection || selection.rangeCount === 0) {
+      // Check if we can access iframe content (only works if same-origin)
+      const iframe = pdfContainerRef.current?.querySelector('iframe');
+      if (iframe && iframe.contentWindow) {
+        try {
+          const iframeSelection = iframe.contentWindow.getSelection();
+          if (iframeSelection && iframeSelection.rangeCount > 0) {
+            selection = iframeSelection;
+            range = iframeSelection.getRangeAt(0);
+          }
+        } catch (err) {
+          // Cross-origin restriction - can't access iframe content
+          console.log('Cannot access iframe selection (cross-origin restriction)');
+        }
+      }
+    } else {
+      range = selection.getRangeAt(0);
+    }
+
+    if (!selection || !range || selection.rangeCount === 0) {
+      // If no selection found, check if user has copied text to clipboard
+      if (isSelecting) {
+        // User might have selected text in PDF and copied it
+        // Show instructions to paste the text
+        return;
+      }
       return;
     }
 
-    const range = selection.getRangeAt(0);
     const rect = range.getBoundingClientRect();
     const containerRect = pdfContainerRef.current?.getBoundingClientRect();
     
@@ -94,20 +122,64 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
     }
   };
 
+  // Listen for paste events when in selection mode (for iframe workaround)
+  useEffect(() => {
+    if (!isSelecting) return;
+
+    const handlePaste = async (e: ClipboardEvent) => {
+      e.preventDefault();
+      const pastedText = e.clipboardData?.getData('text') || '';
+      if (pastedText.trim().length > 0) {
+        setSelectedText(pastedText.trim());
+        // Estimate position (center of PDF container)
+        if (pdfContainerRef.current) {
+          const containerRect = pdfContainerRef.current.getBoundingClientRect();
+          const estimatedRect = new DOMRect(
+            containerRect.left + containerRect.width * 0.3,
+            containerRect.top + containerRect.height * 0.4,
+            containerRect.width * 0.4,
+            20 // Estimated height
+          );
+          setSelectedRect(estimatedRect);
+        }
+      }
+    };
+
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [isSelecting]);
+
   const handleCreateAnnotation = async () => {
-    if (!selectedRect || !pdfContainerRef.current) {
+    if (!selectedText || selectedText.trim().length === 0) {
+      setError('Please select or paste some text to highlight');
+      return;
+    }
+
+    if (!pdfContainerRef.current) {
+      setError('PDF container not found');
       return;
     }
 
     const containerRect = pdfContainerRef.current.getBoundingClientRect();
     
     // Calculate relative coordinates (0-1 scale)
-    const x = (selectedRect.left - containerRect.left) / containerRect.width;
-    const y = (selectedRect.top - containerRect.top) / containerRect.height;
-    const width = selectedRect.width / containerRect.width;
-    const height = selectedRect.height / containerRect.height;
+    // If selectedRect is not available (pasted text), use estimated position
+    let x, y, width, height;
+    if (selectedRect) {
+      x = (selectedRect.left - containerRect.left) / containerRect.width;
+      y = (selectedRect.top - containerRect.top) / containerRect.height;
+      width = selectedRect.width / containerRect.width;
+      height = selectedRect.height / containerRect.height;
+    } else {
+      // Use estimated position for pasted text (center-left area)
+      x = 0.1;
+      y = 0.4;
+      width = 0.6;
+      height = 0.05;
+    }
 
     // For now, assume page 1 (in a real implementation, you'd track the current page)
+    // TODO: Track current PDF page number
     const pageNumber = 1;
 
     try {
@@ -269,10 +341,82 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
       )}
 
       {isSelecting && (
-        <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg text-sm">
-          <p className="text-blue-800">
-            Select text in the PDF above to create a highlight. Selected: "{selectedText}"
+        <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg text-sm space-y-2">
+          <p className="text-blue-800 font-medium">
+            Selection Mode Active
           </p>
+          {selectedText ? (
+            <div>
+              <p className="text-blue-800">
+                Selected text: "{selectedText}"
+              </p>
+              <Button
+                size="sm"
+                className="mt-2"
+                onClick={() => {
+                  if (selectedText && selectedRect) {
+                    handleCreateAnnotation();
+                  } else {
+                    setShowNoteDialog(true);
+                  }
+                }}
+              >
+                Create Highlight
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-blue-800">
+                Select text in the PDF above, or copy text from the PDF and paste it here:
+              </p>
+              <Textarea
+                placeholder="Paste selected text here..."
+                value={selectedText}
+                onChange={(e) => {
+                  const text = e.target.value.trim();
+                  setSelectedText(text);
+                  if (text.length > 0 && pdfContainerRef.current) {
+                    // Estimate position for pasted text
+                    const containerRect = pdfContainerRef.current.getBoundingClientRect();
+                    const estimatedRect = new DOMRect(
+                      containerRect.left + containerRect.width * 0.3,
+                      containerRect.top + containerRect.height * 0.4,
+                      containerRect.width * 0.4,
+                      20
+                    );
+                    setSelectedRect(estimatedRect);
+                  }
+                }}
+                rows={2}
+                className="bg-white"
+              />
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (selectedText && selectedRect) {
+                      setShowNoteDialog(true);
+                    }
+                  }}
+                  disabled={!selectedText}
+                >
+                  Add Note & Create
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setIsSelecting(false);
+                    setSelectedText("");
+                    setSelectedRect(null);
+                    window.getSelection()?.removeAllRanges();
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
