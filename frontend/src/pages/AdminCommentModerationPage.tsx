@@ -96,7 +96,16 @@ export default function AdminCommentModerationPage() {
       return;
     }
 
+    // Prevent double-deletion by checking if already deleting
+    if (deletingId === commentId) {
+      return;
+    }
+
     setDeletingId(commentId);
+    
+    // Optimistically remove from UI immediately
+    setComments(prevComments => prevComments.filter(c => c.id !== commentId));
+    
     try {
       const token = localStorage.getItem('jwt_token');
       if (!token) {
@@ -112,6 +121,14 @@ export default function AdminCommentModerationPage() {
       });
 
       if (!response.ok) {
+        // If 404, comment was already deleted - that's fine, just refresh
+        if (response.status === 404) {
+          console.log(`Comment ${commentId} was already deleted`);
+          toast.success('Comment already removed');
+          await fetchComments();
+          return;
+        }
+        
         let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
         try {
           const errorData = await response.json();
@@ -130,9 +147,6 @@ export default function AdminCommentModerationPage() {
 
       const result = await response.json().catch(() => ({}));
       console.log('Comment deleted successfully:', result);
-
-      // Remove comment from local state immediately for better UX
-      setComments(prevComments => prevComments.filter(c => c.id !== commentId));
       
       toast.success('Comment deleted successfully!');
       
@@ -140,9 +154,16 @@ export default function AdminCommentModerationPage() {
       await fetchComments();
     } catch (error: any) {
       console.error('Error deleting comment:', error);
-      toast.error(`Failed to delete comment: ${error.message}`);
-      // Refresh to get current state
-      await fetchComments();
+      
+      // If it's a 404, the comment was already deleted - that's fine
+      if (error.message && error.message.includes('404')) {
+        toast.success('Comment already removed');
+        await fetchComments();
+      } else {
+        toast.error(`Failed to delete comment: ${error.message}`);
+        // Refresh to get current state
+        await fetchComments();
+      }
     } finally {
       setDeletingId(null);
     }

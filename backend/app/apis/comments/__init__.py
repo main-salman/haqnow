@@ -429,12 +429,17 @@ async def get_all_comments(
     db: Session = Depends(get_db)
 ):
     """Get all comments (for admin management), sorted by document_id then created_at."""
+    # Only get comments that actually exist (not soft-deleted)
+    # Since we use hard delete, this should return all existing comments
     comments = db.query(DocumentComment).order_by(
         DocumentComment.document_id,
         desc(DocumentComment.created_at)
     ).all()
     
-    return [CommentResponse(**comment.to_dict(include_replies=False)) for comment in comments]
+    # Filter out any None results (shouldn't happen, but safety check)
+    valid_comments = [c for c in comments if c is not None]
+    
+    return [CommentResponse(**comment.to_dict(include_replies=False)) for comment in valid_comments]
 
 @router.delete("/admin/comments/{comment_id}")
 async def admin_delete_comment(
