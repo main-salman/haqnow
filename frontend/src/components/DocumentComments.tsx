@@ -232,10 +232,14 @@ export default function DocumentComments({ documentId }: DocumentCommentsProps) 
         .map(comment => {
           // Remove from replies if it's a reply
           if (comment.replies && comment.replies.length > 0) {
+            const originalReplyCount = comment.replies.length;
+            const filteredReplies = removeCommentFromState(comment.replies);
+            const deletedCount = originalReplyCount - filteredReplies.length;
+            
             return {
               ...comment,
-              replies: removeCommentFromState(comment.replies),
-              reply_count: Math.max(0, (comment.reply_count || 0) - (comment.replies.some(r => r.id === commentId) ? 1 : 0))
+              replies: filteredReplies,
+              reply_count: Math.max(0, (comment.reply_count || 0) - deletedCount)
             };
           }
           return comment;
@@ -243,7 +247,11 @@ export default function DocumentComments({ documentId }: DocumentCommentsProps) 
     };
 
     // Optimistically remove from UI immediately
-    setComments(prevComments => removeCommentFromState(prevComments));
+    setComments(prevComments => {
+      const updated = removeCommentFromState(prevComments);
+      console.log(`Optimistically removed comment ${commentId}, remaining comments:`, updated.length);
+      return updated;
+    });
 
     try {
       const response = await fetch(`/api/comments/comments/${commentId}`, {
@@ -279,18 +287,25 @@ export default function DocumentComments({ documentId }: DocumentCommentsProps) 
       const result = await response.json().catch(() => ({}));
       console.log('Comment deleted successfully:', result);
 
-      // Refresh from server to ensure consistency
-      await fetchComments();
+      // Refresh from server after a delay to ensure consistency
+      // This avoids race conditions with cached data
+      setTimeout(async () => {
+        await fetchComments();
+      }, 500);
     } catch (err: any) {
       console.error('Error deleting comment:', err);
       
       // If it's a 404, comment was already deleted - refresh to sync
       if (err.message && err.message.includes('404')) {
-        await fetchComments();
+        setTimeout(async () => {
+          await fetchComments();
+        }, 500);
       } else {
         setError(err.message || 'Failed to delete comment');
         // Refresh to get current state
-        await fetchComments();
+        setTimeout(async () => {
+          await fetchComments();
+        }, 500);
       }
     } finally {
       setDeletingId(null);
