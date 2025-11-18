@@ -10193,4 +10193,15 @@ Available: 2.9GB
 - Added 2 new tests for comments/annotations features
 - Made AI endpoint test more robust to handle edge cases
 - All tests now properly match actual UI text and API response structures
+- Fixed strict mode violation in search page test (multiple buttons with same text)
+
+### Test Results
+✅ All 7 E2E tests passing:
+1. ✓ homepage renders and country dropdown overlays map
+2. ✓ admin login page loads
+3. ✓ search page loads and returns documents (FIXED)
+4. ✓ document detail shows download buttons and AI button
+5. ✓ AI document-question endpoint responds for a real document (FIXED)
+6. ✓ document detail page shows comments section (NEW)
+7. ✓ comments API endpoint responds for a real document (NEW)
 

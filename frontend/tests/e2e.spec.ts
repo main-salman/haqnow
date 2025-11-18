@@ -57,7 +57,8 @@ test('search page loads and returns documents', async ({ page, request }) => {
 
   await page.goto(`${BASE}/search-page?country=${encodeURIComponent(country)}`);
   // Expect at least one result card element containing the Ask AI link text
-  await expect(page.getByText(/Ask AI About this Document/i)).toBeVisible({ timeout: 15000 });
+  // Use .first() since there may be multiple documents with the same button text
+  await expect(page.getByText(/Ask AI About this Document/i).first()).toBeVisible({ timeout: 15000 });
 });
 
 // Helper to fetch a valid document id from API
