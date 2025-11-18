@@ -64,7 +64,15 @@ export default function DocumentComments({ documentId }: DocumentCommentsProps) 
       }
       
       const data = await response.json();
-      setComments(data);
+      
+      // Normalize comments to ensure replies is always an array
+      const normalizedData = (data || []).map((comment: Comment) => ({
+        ...comment,
+        replies: comment.replies || [],
+        reply_count: comment.reply_count || 0
+      }));
+      
+      setComments(normalizedData);
       setError(null);
     } catch (err: any) {
       console.error('Error fetching comments:', err);
@@ -132,32 +140,55 @@ export default function DocumentComments({ documentId }: DocumentCommentsProps) 
         setNewComment("");
       }
 
+      // Normalize the result to match Comment interface
+      const normalizedComment: Comment = {
+        ...result,
+        replies: result.replies || [], // Ensure replies is an array, not null
+        reply_count: result.reply_count || 0
+      };
+
       // Add new comment to local state immediately for better UX
-      if (result && result.id) {
+      if (normalizedComment && normalizedComment.id) {
         setComments(prevComments => {
+          // Check if comment already exists (avoid duplicates)
+          const commentExists = prevComments.some(c => c.id === normalizedComment.id);
+          if (commentExists) {
+            console.log('Comment already in list, skipping optimistic update');
+            return prevComments;
+          }
+
           // If it's a reply, add it to the parent's replies
           if (parentId) {
             return prevComments.map(comment => {
               if (comment.id === parentId) {
+                // Check if reply already exists
+                const replyExists = (comment.replies || []).some(r => r.id === normalizedComment.id);
+                if (replyExists) {
+                  return comment;
+                }
                 return {
                   ...comment,
-                  replies: [...(comment.replies || []), result],
+                  replies: [...(comment.replies || []), normalizedComment],
                   reply_count: (comment.reply_count || 0) + 1
                 };
               }
               // Check if it's a reply to a reply
-              if (comment.replies) {
+              if (comment.replies && comment.replies.length > 0) {
                 const updatedReplies = comment.replies.map(reply => {
                   if (reply.id === parentId) {
+                    const nestedReplyExists = (reply.replies || []).some(r => r.id === normalizedComment.id);
+                    if (nestedReplyExists) {
+                      return reply;
+                    }
                     return {
                       ...reply,
-                      replies: [...(reply.replies || []), result],
+                      replies: [...(reply.replies || []), normalizedComment],
                       reply_count: (reply.reply_count || 0) + 1
                     };
                   }
                   return reply;
                 });
-                if (updatedReplies.some(r => r.id === result.parent_comment_id)) {
+                if (updatedReplies.some(r => r.id === normalizedComment.parent_comment_id)) {
                   return { ...comment, replies: updatedReplies };
                 }
               }
@@ -165,12 +196,15 @@ export default function DocumentComments({ documentId }: DocumentCommentsProps) 
             });
           }
           // If it's a top-level comment, add it to the beginning
-          return [result, ...prevComments];
+          return [normalizedComment, ...prevComments];
         });
       }
 
-      // Refresh comments from server to ensure consistency
-      await fetchComments();
+      // Refresh comments from server after a short delay to ensure consistency
+      // This gives the server time to process and avoids race conditions
+      setTimeout(async () => {
+        await fetchComments();
+      }, 500);
     } catch (err: any) {
       console.error('Error submitting comment:', err);
       setError(err.message || 'Failed to submit comment. Please try again.');
