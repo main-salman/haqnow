@@ -45,11 +45,14 @@ export default function DocumentComments({ documentId }: DocumentCommentsProps) 
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`/api/comments/documents/${documentId}/comments?sort_order=${sortOrder}`, {
+      // Add cache-busting timestamp to ensure fresh data
+      const cacheBuster = `&_t=${Date.now()}`;
+      const response = await fetch(`/api/comments/documents/${documentId}/comments?sort_order=${sortOrder}${cacheBuster}`, {
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'same-origin',
+        cache: 'no-store', // Prevent browser caching
       });
       
       if (!response.ok) {
