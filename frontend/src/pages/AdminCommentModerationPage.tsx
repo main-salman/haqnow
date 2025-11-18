@@ -107,19 +107,42 @@ export default function AdminCommentModerationPage() {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.detail || errorMessage;
+        } catch (e) {
+          const errorText = await response.text().catch(() => '');
+          console.error('Delete error response:', {
+            status: response.status,
+            statusText: response.statusText,
+            errorText,
+            url: response.url
+          });
+        }
+        throw new Error(errorMessage);
       }
 
+      const result = await response.json().catch(() => ({}));
+      console.log('Comment deleted successfully:', result);
+
+      // Remove comment from local state immediately for better UX
+      setComments(prevComments => prevComments.filter(c => c.id !== commentId));
+      
       toast.success('Comment deleted successfully!');
+      
+      // Refresh from server to ensure consistency
       await fetchComments();
     } catch (error: any) {
       console.error('Error deleting comment:', error);
       toast.error(`Failed to delete comment: ${error.message}`);
+      // Refresh to get current state
+      await fetchComments();
     } finally {
       setDeletingId(null);
     }
