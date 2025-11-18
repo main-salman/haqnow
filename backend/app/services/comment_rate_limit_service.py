@@ -13,7 +13,7 @@ class CommentRateLimitService:
         # In-memory store for rate limiting (session-based, no user tracking)
         # Format: {f"{document_id}:{session_id}": last_action_timestamp}
         self._action_timestamps = {}
-        self._rate_limit_seconds = 600  # 10 minutes between actions
+        self._rate_limit_seconds = 60  # 60 seconds (1 minute) between actions
     
     def check_rate_limit(self, document_id: int, session_id: str) -> Tuple[bool, Optional[float]]:
         """
