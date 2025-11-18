@@ -132,7 +132,44 @@ export default function DocumentComments({ documentId }: DocumentCommentsProps) 
         setNewComment("");
       }
 
-      // Refresh comments
+      // Add new comment to local state immediately for better UX
+      if (result && result.id) {
+        setComments(prevComments => {
+          // If it's a reply, add it to the parent's replies
+          if (parentId) {
+            return prevComments.map(comment => {
+              if (comment.id === parentId) {
+                return {
+                  ...comment,
+                  replies: [...(comment.replies || []), result],
+                  reply_count: (comment.reply_count || 0) + 1
+                };
+              }
+              // Check if it's a reply to a reply
+              if (comment.replies) {
+                const updatedReplies = comment.replies.map(reply => {
+                  if (reply.id === parentId) {
+                    return {
+                      ...reply,
+                      replies: [...(reply.replies || []), result],
+                      reply_count: (reply.reply_count || 0) + 1
+                    };
+                  }
+                  return reply;
+                });
+                if (updatedReplies.some(r => r.id === result.parent_comment_id)) {
+                  return { ...comment, replies: updatedReplies };
+                }
+              }
+              return comment;
+            });
+          }
+          // If it's a top-level comment, add it to the beginning
+          return [result, ...prevComments];
+        });
+      }
+
+      // Refresh comments from server to ensure consistency
       await fetchComments();
     } catch (err: any) {
       console.error('Error submitting comment:', err);

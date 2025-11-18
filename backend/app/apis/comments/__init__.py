@@ -451,15 +451,29 @@ async def admin_delete_comment(
     document_id = comment.document_id
     
     # Hard delete: remove comment and all its replies (cascade delete)
+    # First, delete all replies to this comment
+    replies = db.query(DocumentComment).filter(
+        DocumentComment.parent_comment_id == comment_id
+    ).all()
+    for reply in replies:
+        db.delete(reply)
+    
+    # Then delete the comment itself
     db.delete(comment)
     db.commit()
     
     # Invalidate cache
     comment_cache_service.invalidate_comments_cache(document_id)
     
-    logger.info("Comment deleted by admin", comment_id=comment_id, document_id=document_id, admin=admin_user.email)
+    logger.info(
+        "Comment deleted by admin",
+        comment_id=comment_id,
+        document_id=document_id,
+        replies_deleted=len(replies),
+        admin=admin_user.email
+    )
     
-    return {"message": "Comment deleted successfully"}
+    return {"message": "Comment deleted successfully", "replies_deleted": len(replies)}
 
 @router.post("/admin/comments/{comment_id}/moderate")
 async def moderate_comment(
