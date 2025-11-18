@@ -423,6 +423,44 @@ async def get_pending_comments(
     
     return [CommentResponse(**comment.to_dict(include_replies=False)) for comment in comments]
 
+@router.get("/admin/comments/all", response_model=List[CommentResponse])
+async def get_all_comments(
+    admin_user: AdminUser,
+    db: Session = Depends(get_db)
+):
+    """Get all comments (for admin management), sorted by document_id then created_at."""
+    comments = db.query(DocumentComment).order_by(
+        DocumentComment.document_id,
+        desc(DocumentComment.created_at)
+    ).all()
+    
+    return [CommentResponse(**comment.to_dict(include_replies=False)) for comment in comments]
+
+@router.delete("/admin/comments/{comment_id}")
+async def admin_delete_comment(
+    comment_id: int,
+    admin_user: AdminUser,
+    db: Session = Depends(get_db)
+):
+    """Admin endpoint to delete any comment."""
+    comment = db.query(DocumentComment).filter(DocumentComment.id == comment_id).first()
+    
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    
+    document_id = comment.document_id
+    
+    # Hard delete: remove comment and all its replies (cascade delete)
+    db.delete(comment)
+    db.commit()
+    
+    # Invalidate cache
+    comment_cache_service.invalidate_comments_cache(document_id)
+    
+    logger.info("Comment deleted by admin", comment_id=comment_id, document_id=document_id, admin=admin_user.email)
+    
+    return {"message": "Comment deleted successfully"}
+
 @router.post("/admin/comments/{comment_id}/moderate")
 async def moderate_comment(
     comment_id: int,
