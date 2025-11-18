@@ -184,20 +184,80 @@ export default function DocumentComments({ documentId }: DocumentCommentsProps) 
       return;
     }
 
+    // Prevent double-deletion
+    if (deletingId === commentId) {
+      return;
+    }
+
+    setDeletingId(commentId);
+    
+    // Helper function to remove comment from nested structure
+    const removeCommentFromState = (commentsList: Comment[]): Comment[] => {
+      return commentsList
+        .filter(c => c.id !== commentId) // Remove the comment itself
+        .map(comment => {
+          // Remove from replies if it's a reply
+          if (comment.replies && comment.replies.length > 0) {
+            return {
+              ...comment,
+              replies: removeCommentFromState(comment.replies),
+              reply_count: Math.max(0, (comment.reply_count || 0) - (comment.replies.some(r => r.id === commentId) ? 1 : 0))
+            };
+          }
+          return comment;
+        });
+    };
+
+    // Optimistically remove from UI immediately
+    setComments(prevComments => removeCommentFromState(prevComments));
+
     try {
-      setDeletingId(commentId);
       const response = await fetch(`/api/comments/comments/${commentId}`, {
         method: 'DELETE',
+        credentials: 'same-origin',
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete comment');
+        // If 404, comment was already deleted - that's fine
+        if (response.status === 404) {
+          console.log(`Comment ${commentId} was already deleted`);
+          // Already removed from UI, just refresh to ensure consistency
+          await fetchComments();
+          return;
+        }
+        
+        let errorMessage = 'Failed to delete comment';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.detail || errorMessage;
+        } catch (e) {
+          const errorText = await response.text().catch(() => '');
+          console.error('Delete error response:', {
+            status: response.status,
+            statusText: response.statusText,
+            errorText
+          });
+          errorMessage = `Failed to delete comment: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
 
+      const result = await response.json().catch(() => ({}));
+      console.log('Comment deleted successfully:', result);
+
+      // Refresh from server to ensure consistency
       await fetchComments();
     } catch (err: any) {
       console.error('Error deleting comment:', err);
-      setError(err.message || 'Failed to delete comment');
+      
+      // If it's a 404, comment was already deleted - refresh to sync
+      if (err.message && err.message.includes('404')) {
+        await fetchComments();
+      } else {
+        setError(err.message || 'Failed to delete comment');
+        // Refresh to get current state
+        await fetchComments();
+      }
     } finally {
       setDeletingId(null);
     }
