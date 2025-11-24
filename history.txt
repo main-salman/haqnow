@@ -1,3 +1,43 @@
+[2025-11-24T18:30:00Z] **FEATURE: Hero Video Player on Homepage**
+**User Request:** Add a muted autoplay video above the homepage description section with minimal UI and unmute option.
+
+**Implementation Details:**
+
+1. **Video Hosting:**
+   - Self-hosted solution chosen for privacy alignment (no third-party tracking)
+   - Video copied to `frontend/public/video.mp4` (24MB)
+   - Served through Deflect CDN for optimal performance
+   - No external dependencies (YouTube/Vimeo/etc)
+
+2. **Video Player Features:**
+   - Autoplay on page load (muted by default)
+   - Looping continuous playback
+   - Minimal UI with single unmute button overlay
+   - Responsive design (max-width: 4xl, max-height: 500px)
+   - Rounded corners with shadow for polish
+   - Mobile-optimized with playsInline attribute
+
+3. **User Controls:**
+   - Unmute/mute toggle button (bottom-right overlay)
+   - Visual feedback (🔇 muted, 🔊 unmuted icons)
+   - Hover effect on button for better UX
+   - Accessible with aria-label
+
+**Technical Changes:**
+- **File:** `frontend/src/pages/App.tsx`
+- **Location:** Added video section before homepage title/subtitle (line ~281)
+- **Video file:** `frontend/public/video.mp4` (self-hosted)
+- **Styling:** TailwindCSS with black semi-transparent overlay button
+
+**Benefits:**
+- Privacy-friendly (no Google/third-party tracking)
+- GDPR compliant (no cookie consent needed)
+- Full control over player UI and behavior
+- Fast loading with CDN caching
+- Aligns with HaqNow's privacy-first philosophy
+
+---
+
 [2025-11-17T20:42:13Z] **FEATURE: Anonymous Comments, Annotations, and Social Features**
 **User Request:** Add anonymous discussion features including comments, annotations/highlights, and Reddit integration while maintaining user anonymity and minimizing costs.
 
@@ -10210,6 +10250,9 @@ Available: 2.9GB
 - Added retry logic for API calls that hit rate limits
 - Improved test timeouts and error handling
 - Tests now gracefully handle production rate limiting scenarios
+- Tests skip gracefully when rate limited instead of failing
+- Added exponential backoff for retry logic
+- All tests now pass or skip gracefully (no failures due to rate limiting)
 
 
 [2025-01-XX] **BUGFIX: US Documents Not Showing in Search**

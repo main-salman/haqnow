@@ -280,6 +280,38 @@ export default function App() {
 
       <main className="flex-grow container mx-auto px-4 py-8 md:py-12">
         <div className="space-y-10 md:space-y-16">
+          {/* Hero Video Section */}
+          <section className="w-full max-w-4xl mx-auto">
+            <div className="relative rounded-lg overflow-hidden shadow-lg bg-gray-100">
+              <video
+                className="w-full h-auto"
+                autoPlay
+                loop
+                muted
+                playsInline
+                style={{ maxHeight: '500px', objectFit: 'cover' }}
+              >
+                <source src="/video.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+              
+              {/* Minimal unmute button overlay */}
+              <button
+                onClick={(e) => {
+                  const video = e.currentTarget.previousElementSibling as HTMLVideoElement;
+                  if (video) {
+                    video.muted = !video.muted;
+                    e.currentTarget.textContent = video.muted ? '🔇' : '🔊';
+                  }
+                }}
+                className="absolute bottom-4 right-4 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors duration-200"
+                aria-label="Toggle sound"
+              >
+                🔇
+              </button>
+            </div>
+          </section>
+
           <section className="text-center space-y-4">
             <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
               {t('homepage.title')}
