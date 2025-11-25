@@ -1,28 +1,19 @@
-"""Admin Management API endpoints for 2FA and multi-admin support."""
+"""Admin Management API endpoints for multi-admin support with passwordless authentication."""
 
 from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import List, Optional
 from ...database.database import get_db
 from ...database.models import Admin, APIKey, Document
-from ...auth.jwt_auth import get_current_user, User, get_password_hash, verify_password
-from passlib.context import CryptContext
-import secrets
-import string
-import pyotp
-import qrcode
-import io
-import base64
+from ...auth.jwt_auth import get_current_user, User
 
 router = APIRouter()
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Pydantic models for API requests/responses
 class AdminCreate(BaseModel):
-    email: str
+    email: EmailStr
     name: str
-    password: str
     is_super_admin: bool = False
 
 class AdminUpdate(BaseModel):
@@ -34,25 +25,12 @@ class AdminResponse(BaseModel):
     id: int
     email: str
     name: str
-    two_factor_enabled: bool
     is_active: bool
     is_super_admin: bool
     created_by: Optional[str]
     created_at: str
     updated_at: str
     last_login_at: Optional[str]
-
-class TwoFactorSetupResponse(BaseModel):
-    qr_code_url: str
-    secret: str
-    backup_codes: List[str]
-
-class TwoFactorVerifyRequest(BaseModel):
-    token: str
-
-class PasswordChangeRequest(BaseModel):
-    current_password: str
-    new_password: str
 
 class APIKeyCreateRequest(BaseModel):
     name: str
@@ -128,15 +106,12 @@ async def create_admin(
             detail="Admin with this email already exists"
         )
     
-    # Create new admin
-    password_hash = pwd_context.hash(admin_data.password)
+    # Create new admin (passwordless - uses OTP authentication)
     new_admin = Admin(
-        email=admin_data.email,
+        email=admin_data.email.lower().strip(),
         name=admin_data.name,
-        password_hash=password_hash,
         is_super_admin=admin_data.is_super_admin,
         is_active=True,
-        two_factor_enabled=False,
         created_by=current_user.email
     )
     
@@ -206,233 +181,6 @@ async def update_admin(
     db.refresh(admin)
     
     return admin.to_dict()
-
-@router.post("/2fa/setup", response_model=TwoFactorSetupResponse)
-async def setup_two_factor(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """Set up 2FA for the current admin user."""
-    try:
-        # Get the admin from database
-        admin = db.query(Admin).filter(Admin.email == current_user.email).first()
-        if not admin:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Admin not found"
-            )
-        
-        # Generate a new TOTP secret
-        secret = pyotp.random_base32()
-        
-        # Create TOTP instance
-        totp = pyotp.TOTP(secret)
-        
-        # Generate the provisioning URI for QR code
-        provisioning_uri = totp.provisioning_uri(
-            name=current_user.email,
-            issuer_name="HaqNow.com"
-        )
-        
-        # Generate QR code as base64 image
-        qr = qrcode.QRCode(
-            version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_M,
-            box_size=6,
-            border=4,
-        )
-        qr.add_data(provisioning_uri)
-        qr.make(fit=True)
-        
-        # Create QR code image
-        qr_image = qr.make_image(fill_color="black", back_color="white")
-        
-        # Convert to base64
-        buffer = io.BytesIO()
-        qr_image.save(buffer, format='PNG')
-        qr_code_base64 = base64.b64encode(buffer.getvalue()).decode()
-        qr_code_data_url = f"data:image/png;base64,{qr_code_base64}"
-        
-        # Generate backup codes
-        backup_codes = [
-            ''.join(secrets.choice(string.digits) for _ in range(8))
-            for _ in range(10)
-        ]
-        
-        # Store the secret in the admin record (temporarily, until verified)
-        admin.two_factor_secret = secret
-        admin.backup_codes = ','.join(backup_codes)  # Store as comma-separated string
-        db.commit()
-        
-        return TwoFactorSetupResponse(
-            qr_code_url=qr_code_data_url,
-            secret=secret,
-            backup_codes=backup_codes
-        )
-        
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to setup 2FA: {str(e)}"
-        )
-
-@router.post("/2fa/verify")
-async def verify_two_factor(
-    verify_data: TwoFactorVerifyRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """Verify 2FA token and enable 2FA for the user."""
-    try:
-        # Get the admin from database
-        admin = db.query(Admin).filter(Admin.email == current_user.email).first()
-        if not admin:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Admin not found"
-            )
-        
-        # Check if 2FA secret exists
-        if not admin.two_factor_secret:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="2FA not set up. Please set up 2FA first."
-            )
-        
-        # Validate token format
-        if not verify_data.token or not verify_data.token.isdigit() or len(verify_data.token) != 6:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Verification code must be exactly 6 digits"
-            )
-        
-        # Verify the TOTP token with debugging
-        totp = pyotp.TOTP(admin.two_factor_secret)
-        
-        # Debug information
-        current_token = totp.now()
-        print(f"🔍 2FA Debug Info:")
-        print(f"  - User provided token: {verify_data.token}")
-        print(f"  - Current valid token: {current_token}")
-        print(f"  - Secret length: {len(admin.two_factor_secret)}")
-        print(f"  - Secret: {admin.two_factor_secret[:8]}...")
-        
-        # Try verification with a wider time window (allow ±1 time step = ±30 seconds)
-        is_valid = totp.verify(verify_data.token, valid_window=1)
-        
-        if not is_valid:
-            # Try additional debugging - check a few more time windows
-            print(f"  - Checking additional time windows...")
-            for i in range(-2, 3):
-                test_token = totp.at(totp.timecode(totp.now()) + i)
-                print(f"    Window {i}: {test_token}")
-            
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Invalid verification code. Please ensure your device time is synchronized and try again."
-            )
-        
-        # Enable 2FA for the user
-        admin.two_factor_enabled = True
-        db.commit()
-        
-        return {"message": "2FA enabled successfully"}
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to verify 2FA: {str(e)}"
-        )
-
-@router.post("/2fa/disable")
-async def disable_two_factor(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """Disable 2FA for the current admin user."""
-    try:
-        # Get the admin from database
-        admin = db.query(Admin).filter(Admin.email == current_user.email).first()
-        if not admin:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Admin not found"
-            )
-        
-        # Disable 2FA and clear secrets
-        admin.two_factor_enabled = False
-        admin.two_factor_secret = None
-        admin.backup_codes = None
-        db.commit()
-        
-        return {"message": "2FA disabled successfully"}
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to disable 2FA: {str(e)}"
-        )
-
-@router.post("/change-password")
-async def change_password(
-    password_data: PasswordChangeRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """Change password for the current admin user."""
-    try:
-        # Get the admin from database
-        admin = db.query(Admin).filter(Admin.email == current_user.email).first()
-        if not admin:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Admin not found"
-            )
-        
-        # Verify current password
-        if not pwd_context.verify(password_data.current_password, admin.password_hash):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Current password is incorrect"
-            )
-        
-        # Validate new password strength
-        if len(password_data.new_password) < 8:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="New password must be at least 8 characters long"
-            )
-        
-        # Check if new password is different from current
-        if password_data.current_password == password_data.new_password:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="New password must be different from current password"
-            )
-        
-        # Hash new password
-        new_password_hash = pwd_context.hash(password_data.new_password)
-        
-        # Update password in database
-        admin.password_hash = new_password_hash
-        db.commit()
-        
-        return {"message": "Password changed successfully"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to change password: {str(e)}"
-        )
 
 # -------------- API Keys Management (Admin) --------------
 

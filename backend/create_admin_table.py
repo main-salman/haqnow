@@ -2,6 +2,7 @@
 """
 Migration script to create the admins table and set up initial admin user.
 This script should be run once to set up the admin management system.
+Uses passwordless OTP authentication - no password required.
 """
 
 import os
@@ -9,15 +10,12 @@ import sys
 from datetime import datetime
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from passlib.context import CryptContext
 
 # Add the current directory to the Python path so we can import our modules
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app.database.database import DATABASE_URL
 from app.database.models import Base, Admin
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def main():
     """Create the admins table and initial admin user."""
@@ -43,26 +41,20 @@ def main():
             print(f"   Existing admin: {existing_admin.email}")
             return
         
-        # Get admin credentials from environment
+        # Get admin email from environment
         admin_email = os.getenv("admin_email")
-        admin_password = os.getenv("admin_password")
         
-        if not admin_email or not admin_password:
-            print("❌ Error: admin_email and admin_password environment variables must be set.")
-            print("   Please set these in your .env file or environment.")
+        if not admin_email:
+            print("❌ Error: admin_email environment variable must be set.")
+            print("   Please set this in your .env file or environment.")
             return
         
-        # Create password hash
-        password_hash = pwd_context.hash(admin_password)
-        
-        # Create initial admin user
+        # Create initial admin user (passwordless - uses OTP authentication)
         initial_admin = Admin(
-            email=admin_email,
+            email=admin_email.lower().strip(),
             name="Super Administrator", 
-            password_hash=password_hash,
             is_super_admin=True,
             is_active=True,
-            two_factor_enabled=False,  # Start with 2FA disabled, can be enabled via admin panel
             created_by=None  # Initial admin has no creator
         )
         
@@ -71,13 +63,14 @@ def main():
         
         print("✅ Successfully created admins table and initial admin user!")
         print(f"   📧 Admin email: {admin_email}")
-        print(f"   🔐 2FA: Disabled (can be enabled in admin panel)")
+        print(f"   🔐 Authentication: Passwordless OTP (email-based)")
         print(f"   👑 Super Admin: Yes")
         print("")
         print("🎯 Next steps:")
-        print("   1. Log in to the admin panel with your credentials")
-        print("   2. Enable 2FA for enhanced security")
-        print("   3. Create additional admin users if needed")
+        print("   1. Log in to the admin panel using your email")
+        print("   2. You'll receive an OTP code via email")
+        print("   3. Enter the code to complete login")
+        print("   4. Create additional admin users if needed")
         
     except Exception as e:
         print(f"❌ Error creating admin user: {e}")

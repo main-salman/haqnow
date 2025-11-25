@@ -4,131 +4,115 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner"; // For displaying notifications
+import { toast } from "sonner";
 
 export default function AdminLoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [otpCode, setOtpCode] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  
-  // 2FA state
-  const [requires2FA, setRequires2FA] = useState(false);
-  const [twoFactorToken, setTwoFactorToken] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
   const [userEmail, setUserEmail] = useState("");
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleRequestOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
-    toast.loading("Attempting to log in...", { id: "login-toast" });
+    toast.loading("Sending OTP code...", { id: "otp-request-toast" });
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('/api/auth/login/request-otp', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           email: email,
-          password: password,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.detail || 'Login failed');
+        throw new Error(data.detail || 'Failed to send OTP');
       }
 
-      // Check if 2FA is required
-      if (data.requires_2fa) {
-        setRequires2FA(true);
-        setUserEmail(data.email);
-        toast.info("2FA Required", { 
-          id: "login-toast", 
-          description: "Please enter your 2FA code"
-        });
-        return;
-      }
-
-      // Normal login (no 2FA) - store JWT token
-      localStorage.setItem('jwt_token', data.access_token);
-      localStorage.setItem('user_email', data.user.email);
-      
-      // Security: Remove sensitive logging - only log success without user data
-      console.log("Admin login successful");
-      toast.success("Login Successful!", { 
-        id: "login-toast", 
-        description: "Redirecting to admin dashboard..."
+      setOtpSent(true);
+      setUserEmail(email);
+      toast.success("OTP Sent!", { 
+        id: "otp-request-toast", 
+        description: "Check your email for the 6-digit code"
       });
       
-      navigate("/admin-dashboard-page");
-      
     } catch (error: any) {
-      console.error("Login error:", error);
-      const errorMessage = error.message === "Incorrect email or password" 
-        ? "Invalid email or password. Please try again."
-        : "An error occurred during login. Please try again later.";
+      console.error("OTP request error:", error);
+      const errorMessage = error.message || "Failed to send OTP. Please try again.";
       setError(errorMessage);
-      toast.error("Login Failed", { id: "login-toast", description: errorMessage });
+      toast.error("OTP Request Failed", { id: "otp-request-toast", description: errorMessage });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleVerify2FA = async (e: React.FormEvent) => {
+  const handleVerifyOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
-    toast.loading("Verifying 2FA code...", { id: "2fa-toast" });
+    toast.loading("Verifying OTP code...", { id: "otp-verify-toast" });
 
     try {
-      const response = await fetch('/api/auth/login/verify-2fa', {
+      const response = await fetch('/api/auth/login/verify-otp', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           email: userEmail,
-          token: twoFactorToken,
+          otp_code: otpCode,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.detail || '2FA verification failed');
+        throw new Error(data.detail || 'OTP verification failed');
       }
 
       // Store JWT token in localStorage
       localStorage.setItem('jwt_token', data.access_token);
       localStorage.setItem('user_email', data.user.email);
       
-      console.log("2FA verification successful");
-      toast.success("2FA Verified!", { 
-        id: "2fa-toast", 
+      console.log("OTP verification successful");
+      toast.success("Login Successful!", { 
+        id: "otp-verify-toast", 
         description: "Redirecting to admin dashboard..."
       });
       
       navigate("/admin-dashboard-page");
       
     } catch (error: any) {
-      console.error("2FA verification error:", error);
-      const errorMessage = error.message || "Invalid 2FA code. Please try again.";
+      console.error("OTP verification error:", error);
+      const errorMessage = error.message || "Invalid or expired OTP code. Please try again.";
       setError(errorMessage);
-      toast.error("2FA Failed", { id: "2fa-toast", description: errorMessage });
+      toast.error("OTP Verification Failed", { id: "otp-verify-toast", description: errorMessage });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleBackToLogin = () => {
-    setRequires2FA(false);
-    setTwoFactorToken("");
-    setUserEmail("");
+  const handleBackToEmail = () => {
+    setOtpSent(false);
+    setOtpCode("");
     setError("");
+  };
+
+  const handleResendOTP = () => {
+    setOtpCode("");
+    setError("");
+    const form = document.createElement('form');
+    form.onsubmit = handleRequestOTP;
+    handleRequestOTP({ preventDefault: () => {} } as React.FormEvent);
   };
 
   return (
@@ -136,18 +120,18 @@ export default function AdminLoginPage() {
       <Card className="w-full max-w-sm shadow-xl">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-serif">
-            {requires2FA ? "Two-Factor Authentication" : "Admin Login"}
+            {otpSent ? "Enter Verification Code" : "Admin Login"}
           </CardTitle>
           <CardDescription>
-            {requires2FA 
-              ? "Enter your 6-digit authentication code" 
-              : "Access the HaqNow Admin Panel"}
+            {otpSent 
+              ? "Enter the 6-digit code sent to your email" 
+              : "Enter your email to receive a login code"}
           </CardDescription>
         </CardHeader>
         
-        {!requires2FA ? (
-          // Regular login form
-          <form onSubmit={handleLogin}>
+        {!otpSent ? (
+          // Email input form
+          <form onSubmit={handleRequestOTP}>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -159,18 +143,7 @@ export default function AdminLoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={isLoading}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  disabled={isLoading}
+                  autoFocus
                 />
               </div>
               {error && (
@@ -181,30 +154,37 @@ export default function AdminLoginPage() {
             </CardContent>
             <CardFooter>
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Logging in..." : "Login"}
+                {isLoading ? "Sending code..." : "Send Login Code"}
               </Button>
             </CardFooter>
           </form>
         ) : (
-          // 2FA verification form
-          <form onSubmit={handleVerify2FA}>
+          // OTP verification form
+          <form onSubmit={handleVerifyOTP}>
             <CardContent className="space-y-4">
               <div className="text-sm text-muted-foreground text-center">
-                Logged in as: <strong>{userEmail}</strong>
+                Code sent to: <strong>{userEmail}</strong>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="twoFactorToken">Authentication Code</Label>
+                <Label htmlFor="otpCode">Verification Code</Label>
                 <Input
-                  id="twoFactorToken"
+                  id="otpCode"
                   type="text"
                   placeholder="000000"
-                  value={twoFactorToken}
-                  onChange={(e) => setTwoFactorToken(e.target.value)}
+                  value={otpCode}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                    setOtpCode(value);
+                  }}
                   maxLength={6}
                   required
                   disabled={isLoading}
-                  className="text-center text-lg tracking-widest"
+                  className="text-center text-lg tracking-widest font-mono"
+                  autoFocus
                 />
+                <p className="text-xs text-muted-foreground text-center">
+                  Enter the 6-digit code from your email
+                </p>
               </div>
               {error && (
                 <p className="text-sm text-destructive text-center bg-destructive/10 p-2 rounded-md">
@@ -213,18 +193,29 @@ export default function AdminLoginPage() {
               )}
             </CardContent>
             <CardFooter className="flex-col space-y-2">
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Verifying..." : "Verify"}
+              <Button type="submit" className="w-full" disabled={isLoading || otpCode.length !== 6}>
+                {isLoading ? "Verifying..." : "Verify & Login"}
               </Button>
-              <Button 
-                type="button" 
-                variant="outline" 
-                className="w-full" 
-                onClick={handleBackToLogin}
-                disabled={isLoading}
-              >
-                Back to Login
-              </Button>
+              <div className="flex gap-2 w-full">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="flex-1" 
+                  onClick={handleBackToEmail}
+                  disabled={isLoading}
+                >
+                  Change Email
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="flex-1" 
+                  onClick={handleResendOTP}
+                  disabled={isLoading}
+                >
+                  Resend Code
+                </Button>
+              </div>
             </CardFooter>
           </form>
         )}

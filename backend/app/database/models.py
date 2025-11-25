@@ -160,19 +160,13 @@ class Translation(Base):
         }
 
 class Admin(Base):
-    """Model for storing admin users with 2FA support."""
+    """Model for storing admin users with passwordless OTP authentication."""
     
     __tablename__ = "admins"
     
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     email = Column(String(255), nullable=False, unique=True, index=True)
     name = Column(String(255), nullable=False)
-    password_hash = Column(String(255), nullable=False)
-    
-    # 2FA fields
-    two_factor_enabled = Column(Boolean, nullable=False, default=False)
-    two_factor_secret = Column(String(32), nullable=True)  # TOTP secret
-    backup_codes = Column(JSON, nullable=True, default=list)  # Backup codes array
     
     # Admin management
     is_active = Column(Boolean, nullable=False, default=True)
@@ -193,7 +187,6 @@ class Admin(Base):
             "id": self.id,
             "email": self.email,
             "name": self.name,
-            "two_factor_enabled": self.two_factor_enabled,
             "is_active": self.is_active,
             "is_super_admin": self.is_super_admin,
             "created_by": self.created_by,
@@ -201,12 +194,6 @@ class Admin(Base):
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "last_login_at": self.last_login_at.isoformat() if self.last_login_at else None
         }
-        
-        if include_sensitive:
-            data.update({
-                "two_factor_secret": self.two_factor_secret,
-                "backup_codes": self.backup_codes or []
-            })
         
         return data
 
