@@ -1,104 +1,112 @@
-"""Authentication API endpoints."""
+"""Authentication API endpoints - Passwordless OTP authentication."""
 
 from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel
-from datetime import timedelta
-from ...auth.jwt_auth import authenticate_admin, create_access_token, get_current_user, User
+from pydantic import BaseModel, EmailStr
+from datetime import timedelta, datetime
+from ...auth.jwt_auth import create_access_token, get_current_user, User
 from sqlalchemy.orm import Session
 from ...database.database import get_db
 from ...database.models import Admin
-import pyotp
+from ...services.otp_service import otp_service
+from ...services.email_service import email_service
 
 router = APIRouter()
 security = HTTPBearer()
 
-class LoginRequest(BaseModel):
+class OTPRequest(BaseModel):
+    email: EmailStr
+
+class OTPRequestResponse(BaseModel):
+    message: str
     email: str
-    password: str
+
+class OTPVerifyRequest(BaseModel):
+    email: EmailStr
+    otp_code: str
 
 class LoginResponse(BaseModel):
     access_token: str
     token_type: str
     user: User
 
-class TwoFactorRequiredResponse(BaseModel):
-    requires_2fa: bool = True
-    email: str
-    message: str = "2FA verification required"
-
-class TwoFactorLoginRequest(BaseModel):
-    email: str
-    token: str
-
 class UserResponse(BaseModel):
     user: User
 
-@router.post("/login")
-async def login(request: LoginRequest, db: Session = Depends(get_db)):
-    """Admin login endpoint with 2FA support."""
-    user = authenticate_admin(request.email, request.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    # Check if user has 2FA enabled
-    admin = db.query(Admin).filter(Admin.email == request.email).first()
-    if admin and admin.two_factor_enabled:
-        # Return 2FA required response instead of JWT token
-        return TwoFactorRequiredResponse(
+@router.post("/login/request-otp", response_model=OTPRequestResponse)
+async def request_otp(request: OTPRequest, db: Session = Depends(get_db)):
+    """
+    Request OTP code for passwordless login.
+    Sends OTP code to admin email if the email exists in the system.
+    """
+    # Check if admin exists and is active
+    admin = db.query(Admin).filter(Admin.email == request.email.lower().strip()).first()
+    if not admin:
+        # Don't reveal if email exists or not for security
+        # Still return success to prevent email enumeration
+        return OTPRequestResponse(
+            message="If this email exists, an OTP code has been sent.",
             email=request.email
         )
     
-    # No 2FA required - create access token as normal
-    access_token_expires = timedelta(minutes=30)
-    access_token = create_access_token(
-        data={"sub": user.email, "is_admin": user.is_admin},
-        expires_delta=access_token_expires
-    )
+    if not admin.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is inactive"
+        )
     
-    return LoginResponse(
-        access_token=access_token,
-        token_type="bearer",
-        user=user
+    # Generate OTP
+    otp_code = otp_service.generate_otp(request.email.lower().strip())
+    
+    if not otp_code:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many OTP requests. Please wait before requesting another code."
+        )
+    
+    # Send OTP email
+    email_sent = email_service.send_otp_email(request.email.lower().strip(), otp_code)
+    
+    if not email_sent:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to send OTP email. Please try again later."
+        )
+    
+    return OTPRequestResponse(
+        message="OTP code has been sent to your email.",
+        email=request.email
     )
 
-@router.post("/login/verify-2fa", response_model=LoginResponse)
-async def verify_login_2fa(request: TwoFactorLoginRequest, db: Session = Depends(get_db)):
-    """Verify 2FA token during login and return JWT token."""
-    # First verify that the user exists and is active
-    admin = db.query(Admin).filter(Admin.email == request.email).first()
-    if not admin or not admin.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid user",
-        )
+@router.post("/login/verify-otp", response_model=LoginResponse)
+async def verify_otp(request: OTPVerifyRequest, db: Session = Depends(get_db)):
+    """
+    Verify OTP code and return JWT token for passwordless login.
+    """
+    email = request.email.lower().strip()
     
-    # Check if user has 2FA enabled and secret exists
-    if not admin.two_factor_enabled or not admin.two_factor_secret:
+    # Validate OTP code format
+    if not request.otp_code or not request.otp_code.isdigit() or len(request.otp_code) != 6:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="2FA not enabled for this user",
+            detail="Invalid OTP code format. Please enter a 6-digit code."
         )
     
-    # Validate token format
-    if not request.token or not request.token.isdigit() or len(request.token) != 6:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid 2FA token format",
-        )
-    
-    # Verify the TOTP token
-    totp = pyotp.TOTP(admin.two_factor_secret)
-    is_valid = totp.verify(request.token, valid_window=1)
+    # Verify OTP
+    is_valid = otp_service.verify_otp(email, request.otp_code)
     
     if not is_valid:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid 2FA token",
+            detail="Invalid or expired OTP code. Please request a new code."
+        )
+    
+    # Get admin user
+    admin = db.query(Admin).filter(Admin.email == email).first()
+    if not admin or not admin.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid user or account inactive"
         )
     
     # Create user object and JWT token
@@ -117,7 +125,6 @@ async def verify_login_2fa(request: TwoFactorLoginRequest, db: Session = Depends
     )
     
     # Update last login time
-    from datetime import datetime
     admin.last_login_at = datetime.utcnow()
     db.commit()
     

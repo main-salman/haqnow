@@ -9,7 +9,6 @@ from sqlalchemy.orm import Session
 from ..database.database import SessionLocal
 from ..database.models import APIKey
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
@@ -19,8 +18,6 @@ SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key-change-this-in-product
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
 
 class User(BaseModel):
@@ -35,14 +32,6 @@ class User(BaseModel):
 class TokenData(BaseModel):
     """Token data model."""
     email: Optional[str] = None
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a password against its hash."""
-    return pwd_context.verify(plain_password, hashed_password)
-
-def get_password_hash(password: str) -> str:
-    """Get password hash."""
-    return pwd_context.hash(password)
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """Create a JWT access token."""
@@ -62,48 +51,6 @@ def verify_token(token: str) -> Optional[Dict[str, Any]]:
         return payload
     except JWTError:
         return None
-
-def authenticate_admin(email: str, password: str) -> Optional[User]:
-    """Authenticate admin user against database."""
-    from sqlalchemy.orm import Session
-    from ..database.database import SessionLocal
-    from ..database.models import Admin
-    from passlib.context import CryptContext
-    from datetime import datetime
-    
-    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    db = SessionLocal()
-    
-    try:
-        # Find admin in database
-        admin = db.query(Admin).filter(Admin.email == email).first()
-        if not admin:
-            return None
-        
-        # Check if admin is active
-        if not admin.is_active:
-            return None
-        
-        # Verify password
-        if not pwd_context.verify(password, admin.password_hash):
-            return None
-        
-        # Update last login time
-        admin.last_login_at = datetime.utcnow()
-        db.commit()
-        
-        return User(
-            sub=email,
-            user_id=email,
-            name=admin.name,
-            email=email,
-            is_admin=True
-        )
-    except Exception as e:
-        print(f"Authentication error: {e}")
-        return None
-    finally:
-        db.close()
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> User:
     """Get current user from JWT token."""

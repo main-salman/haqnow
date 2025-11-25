@@ -189,6 +189,28 @@ class EmailService:
         """
         
         return self.send_email(self.admin_email, subject, content)
+    
+    def send_otp_email(self, to_email: str, otp_code: str) -> bool:
+        """Send OTP code email for passwordless login."""
+        subject = "Your HaqNow Admin Login Code"
+        content = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #2563eb;">HaqNow Admin Login</h2>
+                <p>Your one-time login code is:</p>
+                <div style="background-color: #f3f4f6; border: 2px dashed #2563eb; padding: 20px; text-align: center; margin: 20px 0;">
+                    <h1 style="color: #2563eb; font-size: 32px; letter-spacing: 8px; margin: 0;">{otp_code}</h1>
+                </div>
+                <p style="color: #6b7280; font-size: 14px;">This code will expire in 10 minutes.</p>
+                <p style="color: #6b7280; font-size: 14px;">If you didn't request this code, please ignore this email.</p>
+                <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+                <p style="color: #9ca3af; font-size: 12px;">Best regards,<br>HaqNow System</p>
+            </div>
+        </body>
+        </html>
+        """
+        return self.send_email(to_email, subject, content)
 
 # Global email service instance
 email_service = EmailService() 
