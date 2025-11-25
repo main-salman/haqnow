@@ -20,13 +20,8 @@ import {
   Users, 
   UserPlus, 
   Shield, 
-  ShieldCheck, 
   Trash2, 
   Loader2, 
-  Eye, 
-  EyeOff,
-  Key,
-  Download,
   Megaphone,
   Plus,
   ToggleLeft,
@@ -38,7 +33,6 @@ interface Admin {
   id: number;
   email: string;
   name: string;
-  two_factor_enabled: boolean;
   is_active: boolean;
   is_super_admin: boolean;
   created_by: string | null;
@@ -57,25 +51,7 @@ export default function AdminManagementPage() {
   // Add admin form state
   const [newAdminEmail, setNewAdminEmail] = useState('');
   const [newAdminName, setNewAdminName] = useState('');
-  const [newAdminPassword, setNewAdminPassword] = useState('');
   const [newAdminRole, setNewAdminRole] = useState('admin');
-  const [showPassword, setShowPassword] = useState(false);
-  
-  // 2FA setup state
-  const [show2FASetup, setShow2FASetup] = useState(false);
-  const [qrCodeUrl, setQrCodeUrl] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
-  const [backupCodes, setBackupCodes] = useState<string[]>([]);
-  const [is2FAEnabled, setIs2FAEnabled] = useState(false);
-
-  // Password change state
-  const [showPasswordChange, setShowPasswordChange] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   // Announcement banner state
   const [announcementEnabled, setAnnouncementEnabled] = useState(false);
@@ -122,11 +98,6 @@ export default function AdminManagementPage() {
     return isSuperAdmin;
   };
 
-  // Check if current user has 2FA enabled
-  const currentUserHas2FA = () => {
-    const currentAdmin = admins.find(admin => admin.email === currentUserEmail);
-    return currentAdmin?.two_factor_enabled || false;
-  };
 
   // Fetch current user's own admin info (for regular admins)
   const fetchCurrentUserInfo = async () => {
@@ -151,7 +122,6 @@ export default function AdminManagementPage() {
           setAdmins([userData]);
         }
         
-        setIs2FAEnabled(userData.two_factor_enabled || false);
         return userData;
       }
     } catch (error) {
@@ -199,7 +169,6 @@ export default function AdminManagementPage() {
       const data = await response.json();
       console.log('🔍 API Response:', data);
       setAdmins(data || []);
-      setIs2FAEnabled(currentUserHas2FA());
     } catch (error: any) {
       console.error('Error fetching admins:', error);
       alert('Failed to fetch admin list. Please try again.');
@@ -318,10 +287,10 @@ export default function AdminManagementPage() {
     } catch {}
   };
 
-  // Add new admin
+  // Add new admin (passwordless - uses OTP authentication)
   const handleAddAdmin = async () => {
-    if (!newAdminEmail || !newAdminName || !newAdminPassword) {
-      alert('Please fill in all fields');
+    if (!newAdminEmail || !newAdminName) {
+      alert('Please fill in email and name');
       return;
     }
 
@@ -337,7 +306,6 @@ export default function AdminManagementPage() {
         body: JSON.stringify({
           email: newAdminEmail,
           name: newAdminName,
-          password: newAdminPassword,
           is_super_admin: newAdminRole === 'super_admin',
         }),
       });
@@ -350,10 +318,9 @@ export default function AdminManagementPage() {
       // Clear form and refresh list
       setNewAdminEmail('');
       setNewAdminName('');
-      setNewAdminPassword('');
       setNewAdminRole('admin');
       await fetchAdmins();
-      alert('Admin added successfully!');
+      alert('Admin added successfully! They will use passwordless OTP login.');
     } catch (error: any) {
       console.error('Error adding admin:', error);
       alert(error.message || 'Failed to add admin. Please try again.');
@@ -425,164 +392,6 @@ export default function AdminManagementPage() {
     }
   };
 
-  // Setup 2FA
-  const handleSetup2FA = async () => {
-    try {
-      const token = localStorage.getItem('jwt_token');
-      const response = await fetch('/api/admin-management/2fa/setup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to setup 2FA');
-      }
-
-      const data = await response.json();
-      setQrCodeUrl(data.qr_code_url);
-      setShow2FASetup(true);
-    } catch (error: any) {
-      console.error('Error setting up 2FA:', error);
-      alert('Failed to setup 2FA. Please try again.');
-    }
-  };
-
-  // Verify and enable 2FA
-  const handleVerify2FA = async () => {
-    if (!verificationCode) {
-      alert('Please enter the verification code');
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem('jwt_token');
-      const response = await fetch('/api/admin-management/2fa/verify', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          token: verificationCode,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Invalid verification code');
-      }
-
-      const data = await response.json();
-      setBackupCodes(data.backup_codes || []);
-      setIs2FAEnabled(true);
-      await fetchAdmins();
-      alert('2FA enabled successfully! Please save your backup codes.');
-    } catch (error: any) {
-      console.error('Error verifying 2FA:', error);
-      alert('Invalid verification code. Please try again.');
-    }
-  };
-
-  // Disable 2FA
-  const handleDisable2FA = async () => {
-    try {
-      const token = localStorage.getItem('jwt_token');
-      const response = await fetch('/api/admin-management/2fa/disable', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to disable 2FA');
-      }
-
-      setIs2FAEnabled(false);
-      setShow2FASetup(false);
-      setQrCodeUrl('');
-      setVerificationCode('');
-      setBackupCodes([]);
-      await fetchAdmins();
-      alert('2FA disabled successfully!');
-    } catch (error: any) {
-      console.error('Error disabling 2FA:', error);
-      alert('Failed to disable 2FA. Please try again.');
-    }
-  };
-
-  // Download backup codes
-  const downloadBackupCodes = () => {
-    const text = backupCodes.join('\n');
-    const blob = new Blob([text], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'haqnow-2fa-backup-codes.txt';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  // Change password
-  const handleChangePassword = async () => {
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      alert('Please fill in all password fields');
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      alert('New passwords do not match');
-      return;
-    }
-
-    if (newPassword.length < 8) {
-      alert('New password must be at least 8 characters long');
-      return;
-    }
-
-    if (currentPassword === newPassword) {
-      alert('New password must be different from current password');
-      return;
-    }
-
-    setIsChangingPassword(true);
-    try {
-      const token = localStorage.getItem('jwt_token');
-      const response = await fetch('/api/admin-management/change-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          current_password: currentPassword,
-          new_password: newPassword,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || 'Failed to change password');
-      }
-
-      // Clear form and close dialog
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-      setShowPasswordChange(false);
-      alert('Password changed successfully!');
-    } catch (error: any) {
-      console.error('Error changing password:', error);
-      alert(`Failed to change password: ${error.message}`);
-    } finally {
-      setIsChangingPassword(false);
-    }
-  };
 
   useEffect(() => {
     fetchAdmins();
@@ -836,78 +645,8 @@ curl -H "X-API-Key: <your_key>" \
         </div>
       </div>
 
-      {/* 2FA Management Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            Two-Factor Authentication (2FA)
-          </CardTitle>
-          <CardDescription>
-            Enhance your account security with two-factor authentication
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {currentUserHas2FA() ? (
-                <>
-                  <ShieldCheck className="h-5 w-5 text-green-600" />
-                  <span className="text-green-600 font-medium">2FA Enabled</span>
-                </>
-              ) : (
-                <>
-                  <Shield className="h-5 w-5 text-orange-600" />
-                  <span className="text-orange-600 font-medium">2FA Disabled</span>
-                </>
-              )}
-            </div>
-            <div className="flex gap-2">
-              {!currentUserHas2FA() ? (
-                <Button onClick={handleSetup2FA}>
-                  <Key className="h-4 w-4 mr-2" />
-                  Setup 2FA
-                </Button>
-              ) : (
-                <Button variant="outline" onClick={handleDisable2FA}>
-                  Disable 2FA
-                </Button>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Change Password Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Key className="h-5 w-5" />
-            Change Password
-          </CardTitle>
-          <CardDescription>
-            Update your account password for enhanced security
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button onClick={() => setShowPasswordChange(true)} variant="outline">
-            <Key className="h-4 w-4 mr-2" />
-            Change Password
-          </Button>
-        </CardContent>
-      </Card>
 
       {/* Add New Admin Section - Only for Super Admins */}
-      {/* Debug: Always show this for debugging */}
-      <div style={{padding: '10px', background: '#f0f0f0', margin: '10px 0', fontSize: '12px'}}>
-        <strong>Debug Info:</strong><br/>
-        Current User Email: {currentUserEmail}<br/>
-        Admins Loaded: {admins.length}<br/>
-        User Type: {isCurrentUserSuperAdmin() ? 'SUPER ADMIN' : 'REGULAR ADMIN'}<br/>
-        Can Add/Manage Admins: {isCurrentUserSuperAdmin() ? 'YES' : 'NO'}<br/>
-        Can Change Own Password: YES<br/>
-        Can Setup 2FA: YES
-      </div>
       {isCurrentUserSuperAdmin() && (
         <Card>
           <CardHeader>
@@ -942,44 +681,20 @@ curl -H "X-API-Key: <your_key>" \
                 />
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="newAdminPassword">Password</Label>
-                <div className="relative">
-                  <Input
-                    id="newAdminPassword"
-                    type={showPassword ? "text" : "password"}
-                    value={newAdminPassword}
-                    onChange={(e) => setNewAdminPassword(e.target.value)}
-                    placeholder="••••••••"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="newAdminRole">Role</Label>
-                <select
-                  id="newAdminRole"
-                  value={newAdminRole}
-                  onChange={(e) => setNewAdminRole(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <option value="admin">Admin</option>
-                  <option value="super_admin">Super Admin</option>
-                </select>
-              </div>
+            <div>
+              <Label htmlFor="newAdminRole">Role</Label>
+              <select
+                id="newAdminRole"
+                value={newAdminRole}
+                onChange={(e) => setNewAdminRole(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="admin">Admin</option>
+                <option value="super_admin">Super Admin</option>
+              </select>
+              <p className="text-xs text-muted-foreground mt-1">
+                New admins will use passwordless OTP login via email
+              </p>
             </div>
             <Button 
               onClick={handleAddAdmin} 
@@ -1022,12 +737,6 @@ curl -H "X-API-Key: <your_key>" \
                     <Badge variant={admin.is_super_admin ? 'default' : 'outline'}>
                       {admin.is_super_admin ? 'Super Admin' : 'Admin'}
                     </Badge>
-                    {admin.two_factor_enabled && (
-                      <Badge variant="secondary" className="text-green-600">
-                        <ShieldCheck className="h-3 w-3 mr-1" />
-                        2FA
-                      </Badge>
-                    )}
                   </div>
                   <p className="text-sm text-muted-foreground">{admin.email}</p>
                   <p className="text-xs text-muted-foreground">
@@ -1132,170 +841,6 @@ curl -H "X-API-Key: <your_key>" \
       </Card>
       )}
 
-      {/* 2FA Setup Modal */}
-      {show2FASetup && (
-        <AlertDialog open={show2FASetup} onOpenChange={setShow2FASetup}>
-          <AlertDialogContent className="max-w-md">
-            <AlertDialogHeader>
-              <AlertDialogTitle>Setup Two-Factor Authentication</AlertDialogTitle>
-              <AlertDialogDescription>
-                Scan the QR code with your authenticator app (Google Authenticator, Authy, etc.)
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <div className="space-y-4">
-              {qrCodeUrl && (
-                <div className="flex justify-center">
-                  <img 
-                    src={qrCodeUrl} 
-                    alt="2FA QR Code" 
-                    className="w-48 h-48"
-                  />
-                </div>
-              )}
-              <div>
-                <Label htmlFor="verificationCode">Verification Code</Label>
-                <Input
-                  id="verificationCode"
-                  type="text"
-                  value={verificationCode}
-                  onChange={(e) => setVerificationCode(e.target.value)}
-                  placeholder="Enter 6-digit code"
-                  maxLength={6}
-                />
-              </div>
-              {backupCodes.length > 0 && (
-                <div className="p-4 bg-muted rounded-lg">
-                  <h4 className="font-medium mb-2">Backup Codes</h4>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Save these codes in a safe place. You can use them to access your account if you lose your authenticator device.
-                  </p>
-                  <div className="grid grid-cols-2 gap-1 text-xs font-mono">
-                    {backupCodes.map((code, index) => (
-                      <div key={index}>{code}</div>
-                    ))}
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={downloadBackupCodes}
-                    className="mt-2"
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Download Codes
-                  </Button>
-                </div>
-              )}
-            </div>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleVerify2FA}>
-                Verify & Enable 2FA
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
-
-      {/* Change Password Dialog */}
-      {showPasswordChange && (
-        <AlertDialog open={showPasswordChange} onOpenChange={setShowPasswordChange}>
-          <AlertDialogContent className="max-w-md">
-            <AlertDialogHeader>
-              <AlertDialogTitle>Change Password</AlertDialogTitle>
-              <AlertDialogDescription>
-                Enter your current password and choose a new secure password
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="currentPassword">Current Password</Label>
-                <div className="relative">
-                  <Input
-                    id="currentPassword"
-                    type={showCurrentPassword ? "text" : "password"}
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    placeholder="Enter current password"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                  >
-                    {showCurrentPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="newPassword">New Password</Label>
-                <div className="relative">
-                  <Input
-                    id="newPassword"
-                    type={showNewPassword ? "text" : "password"}
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Enter new password (min 8 characters)"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                  >
-                    {showNewPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm new password"
-                />
-              </div>
-            </div>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => {
-                setCurrentPassword('');
-                setNewPassword('');
-                setConfirmPassword('');
-              }}>
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction 
-                onClick={handleChangePassword}
-                disabled={isChangingPassword}
-              >
-                {isChangingPassword ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Changing...
-                  </>
-                ) : (
-                  <>
-                    <Key className="h-4 w-4 mr-2" />
-                    Change Password
-                  </>
-                )}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
     </div>
   );
 } 
