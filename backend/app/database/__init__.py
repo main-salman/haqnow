@@ -1,7 +1,7 @@
 """Database module for FOI Archive application."""
 
 from .database import get_db, engine, SessionLocal
-from .models import Document, BannedTag, Translation, SiteSetting
+from .models import Document, BannedTag, Translation, SiteSetting, JobQueue
 
 __all__ = [
     "get_db",
@@ -11,4 +11,5 @@ __all__ = [
     "BannedTag",
     "Translation",
     "SiteSetting",
+    "JobQueue",
 ]
