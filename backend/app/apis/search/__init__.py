@@ -638,6 +638,8 @@ async def get_top_viewed_documents(
     """
     
     try:
+        # Query documents directly - deleted documents are permanently removed from DB
+        # so they automatically won't appear in results
         documents = db.query(Document).filter(
             and_(
                 Document.status.in_(["approved", "processed"]),
@@ -683,6 +685,8 @@ async def get_recently_shared_documents(
     """
     
     try:
+        # Query documents directly - deleted documents are permanently removed from DB
+        # so they automatically won't appear in results
         documents = db.query(Document).filter(
             Document.status.in_(["approved", "processed"]),
             Document.approved_at.isnot(None)  # Only show documents that have been approved
