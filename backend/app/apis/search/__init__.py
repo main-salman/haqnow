@@ -195,7 +195,7 @@ async def search_documents(
         # Choose search strategy based on search_type parameter
         if not search_query:
             # No search query - return all documents by date
-            query_builder = db.query(Document).filter(Document.status.in_(["approved", "processed"]))
+            query_builder = db.query(Document).filter(Document.status == "approved")
             
             # Apply filters
             if normalized_country:
@@ -246,7 +246,7 @@ async def search_documents(
         
         if search_type == "keyword" or (search_type == "semantic" and not semantic_search_service.is_available()):
             # Traditional keyword search
-            query_builder = db.query(Document).filter(Document.status.in_(["approved", "processed"]))
+            query_builder = db.query(Document).filter(Document.status == "approved")
             
             try:
                 # Full-text search on search_text column
@@ -316,7 +316,7 @@ async def search_documents(
                 try:
                     # Search for substrings of the query (handles missing/extra characters)
                     # Example: "salmon" finds "salman", "humanitarion" finds "humanitarian"
-                    fuzzy_query = db.query(Document).filter(Document.status.in_(["approved", "processed"]))
+                    fuzzy_query = db.query(Document).filter(Document.status == "approved")
                     
                     # Match first 4-5 characters (handles end typos)
                     query_start = search_query[:min(5, len(search_query)-1)]
@@ -354,7 +354,7 @@ async def search_documents(
             logger.info("Hybrid search: using keyword only (semantic disabled)")
             
             # Get keyword results
-            query_builder = db.query(Document).filter(Document.status.in_(["approved", "processed"]))
+            query_builder = db.query(Document).filter(Document.status == "approved")
             
             try:
                 fulltext_condition = func.match(Document.search_text).against(
@@ -445,7 +445,7 @@ async def search_documents(
             logger.info("Triggering intelligent fuzzy search", query=search_query)
             try:
                 # Get all approved documents
-                all_docs = db.query(Document).filter(Document.status.in_(["approved", "processed"]))
+                all_docs = db.query(Document).filter(Document.status == "approved")
                 if normalized_country:
                     all_docs = all_docs.filter(Document.country == normalized_country)
                 if state:
@@ -590,7 +590,7 @@ async def get_document(document_id: int, request: Request, db: Session = Depends
     
     try:
         document = db.query(Document).filter(
-            and_(Document.id == document_id, Document.status.in_(["approved", "processed"]))
+            and_(Document.id == document_id, Document.status == "approved")
         ).first()
         
         if not document:
@@ -642,7 +642,7 @@ async def get_top_viewed_documents(
         # so they automatically won't appear in results
         documents = db.query(Document).filter(
             and_(
-                Document.status.in_(["approved", "processed"]),
+                Document.status == "approved",
                 Document.hidden_from_top_viewed == False,
                 Document.view_count > 0
             )
@@ -688,7 +688,7 @@ async def get_recently_shared_documents(
         # Query documents directly - deleted documents are permanently removed from DB
         # so they automatically won't appear in results
         documents = db.query(Document).filter(
-            Document.status.in_(["approved", "processed"]),
+            Document.status == "approved",
             Document.approved_at.isnot(None)  # Only show documents that have been approved
         ).order_by(Document.approved_at.desc()).limit(limit).all()
         
@@ -744,7 +744,7 @@ async def download_document(
     try:
         # Get document from database
         document = db.query(Document).filter(
-            and_(Document.id == document_id, Document.status.in_(["approved", "processed"]))
+            and_(Document.id == document_id, Document.status == "approved")
         ).first()
         
         if not document:
@@ -970,7 +970,7 @@ async def add_tag(request: AddTagRequest, db: Session = Depends(get_db)):
         
         # Get document from database
         document = db.query(Document).filter(
-            and_(Document.id == request.document_id, Document.status.in_(["approved", "processed"]))
+            and_(Document.id == request.document_id, Document.status == "approved")
         ).first()
         
         if not document:
@@ -1030,7 +1030,7 @@ async def get_document_tags(document_id: int, db: Session = Depends(get_db)):
     
     try:
         document = db.query(Document).filter(
-            and_(Document.id == document_id, Document.status.in_(["approved", "processed"]))
+            and_(Document.id == document_id, Document.status == "approved")
         ).first()
         
         if not document:

@@ -520,7 +520,7 @@ async def process_document_internal(document_id: int, db: Session) -> dict | Non
         document.generated_tags = generated_tags
         document.ai_summary = ai_summary
         document.processed_at = func.now()
-        document.status = "processed"
+        document.status = "approved"  # Keep status as approved after processing
         
         # Update combined search_text for full-text search optimization (English-first)
         search_text_parts = []
@@ -589,7 +589,7 @@ async def process_document_internal(document_id: int, db: Session) -> dict | Non
             "document_id": document_id,
             "ocr_text": searchable_text,
             "generated_tags": generated_tags,
-            "status": "processed"
+            "status": "approved"
         }
         
     except Exception as e:
@@ -793,7 +793,7 @@ async def process_document(
         document.generated_tags = generated_tags
         document.ai_summary = ai_summary
         document.processed_at = func.now()
-        document.status = "processed"
+        document.status = "approved"  # Keep status as approved after processing
         
         # Update combined search_text for full-text search optimization (English-first)
         search_text_parts = []
@@ -1124,7 +1124,7 @@ async def delete_document(
 @router.get("/documents", response_model=DocumentListResponse)
 async def get_documents(
     admin_user: AdminUser,
-    status: Optional[str] = Query(None, description="Filter by status: pending, approved, rejected, processed"),
+    status: Optional[str] = Query(None, description="Filter by status: pending, approved, rejected"),
     page: int = Query(1, ge=1, description="Page number"),
     per_page: int = Query(20, ge=1, le=100, description="Results per page"),
     db: Session = Depends(get_db)
@@ -1139,12 +1139,9 @@ async def get_documents(
         query_builder = db.query(Document)
         
         # Filter by status if provided
-        # For "approved" status, also include "processed" documents (which are approved and fully processed)
+        # Filter by status if provided
         if status:
-            if status == "approved":
-                query_builder = query_builder.filter(Document.status.in_(["approved", "processed"]))
-            else:
-                query_builder = query_builder.filter(Document.status == status)
+            query_builder = query_builder.filter(Document.status == status)
         
         # Get total count before pagination
         total_count = query_builder.count()
