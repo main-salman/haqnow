@@ -80,6 +80,8 @@ def determine_section(key):
         return 'privacy'
     elif key.startswith('disclaimer.'):
         return 'disclaimer'
+    elif key.startswith('moderation.'):
+        return 'moderation'
     elif key.startswith('general.'):
         return 'general'
     else:
