@@ -684,7 +684,7 @@ async def get_recently_shared_documents(
     
     try:
         documents = db.query(Document).filter(
-            Document.status == "approved"
+            Document.status.in_(["approved", "processed"])
         ).order_by(Document.approved_at.desc()).limit(limit).all()
         
         # Convert to simple response format
