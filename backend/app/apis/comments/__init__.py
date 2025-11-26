@@ -74,10 +74,11 @@ async def create_comment(
     db: Session = Depends(get_db)
 ):
     """Create a new anonymous comment on a document."""
-    # Verify document exists and is approved
+    # Verify document exists and is approved or processed
+    # Deleted documents are permanently removed from DB, so they won't appear
     document = db.query(Document).filter(
         Document.id == document_id,
-        Document.status == "approved"
+        Document.status.in_(["approved", "processed"])
     ).first()
     
     if not document:
@@ -156,10 +157,11 @@ async def get_comments(
     if cached is not None:
         return cached
     
-    # Verify document exists
+    # Verify document exists and is approved or processed
+    # Deleted documents are permanently removed from DB, so they won't appear
     document = db.query(Document).filter(
         Document.id == document_id,
-        Document.status == "approved"
+        Document.status.in_(["approved", "processed"])
     ).first()
     
     if not document:
@@ -294,10 +296,11 @@ async def create_annotation(
     db: Session = Depends(get_db)
 ):
     """Create a new annotation/highlight on a document."""
-    # Verify document exists
+    # Verify document exists and is approved or processed
+    # Deleted documents are permanently removed from DB, so they won't appear
     document = db.query(Document).filter(
         Document.id == document_id,
-        Document.status == "approved"
+        Document.status.in_(["approved", "processed"])
     ).first()
     
     if not document:
@@ -356,10 +359,11 @@ async def get_annotations(
     if cached is not None:
         return cached
     
-    # Verify document exists
+    # Verify document exists and is approved or processed
+    # Deleted documents are permanently removed from DB, so they won't appear
     document = db.query(Document).filter(
         Document.id == document_id,
-        Document.status == "approved"
+        Document.status.in_(["approved", "processed"])
     ).first()
     
     if not document:
