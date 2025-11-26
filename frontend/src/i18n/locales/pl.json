@@ -52,6 +52,14 @@
   "upload": {
     "title": "Prześlij Dokument Korupcji",
     "subtitle": "Anonimowo prześlij dokumenty ujawniające korupcję. Twoja tożsamość pozostanie chroniona.",
+    "processSteps": {
+      "title": "Co dzieje się z dokumentem po jego przesłaniu",
+      "step1": "Twój dokument jest bezpiecznie przesyłany na platformę HaqNow.",
+      "step2": "Nasz system skanuje plik w poszukiwaniu wirusów i złośliwego oprogramowania, aby chronić wszystkich użytkowników.",
+      "step3": "Wszystkie wykrywalne metadane są usuwane, a następnie tworzona jest czysta kopia PDF dokumentu.",
+      "step4": "Moderatorzy HaqNow ręcznie sprawdzają dokument (zazwyczaj w ciągu 12–24 godzin).",
+      "step5": "Po zatwierdzeniu dokument jest publikowany i staje się publicznie dostępny na HaqNow."
+    },
     "documentTitle": "Tytuł Dokumentu",
     "titlePlaceholder": "Brief descriptive title for the document",
     "country": "Kraj",

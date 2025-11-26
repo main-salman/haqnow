@@ -52,6 +52,14 @@
   "upload": {
     "title": "Upload Document",
     "subtitle": "Share corruption evidence anonymously and securely",
+    "processSteps": {
+      "title": "What happens after you upload your document",
+      "step1": "Your document is securely uploaded to HaqNow.",
+      "step2": "Our system scans the file for viruses and malware to help protect all users.",
+      "step3": "All detectable metadata is removed and a clean PDF copy of your document is created.",
+      "step4": "HaqNow moderators manually review the document (usually within 12–24 hours).",
+      "step5": "After approval, the document is published and becomes publicly available on HaqNow."
+    },
     "documentTitle": "Document Title",
     "titlePlaceholder": "Brief descriptive title for the document",
     "country": "Country",

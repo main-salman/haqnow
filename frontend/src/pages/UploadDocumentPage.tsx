@@ -790,28 +790,45 @@ export default function UploadDocumentPage() {
             
             {/* Document Processing Steps */}
             <div className="mt-6 mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
-              <h3 className="text-sm font-semibold text-gray-800 mb-3 text-center">What happens to your uploaded document:</h3>
+              <h3 className="text-sm font-semibold text-gray-800 mb-3 text-center">
+                {t('upload.processSteps.title')}
+              </h3>
               <div className="space-y-2">
                 {[
-                  { step: 1, text: "Document Uploaded", icon: UploadCloud },
-                  { step: 2, text: "Document scanned by anti virus", icon: Shield },
-                  { step: 3, text: "Document metadata removed", icon: FileText },
-                  { step: 4, text: "Document manually approved by HaqNow moderators (12-24 hours)", icon: Clock },
-                  { step: 5, text: "Document becomes publicly available on HaqNow", icon: CheckCircle2 },
+                  { step: 1, text: t('upload.processSteps.step1'), icon: UploadCloud },
+                  { step: 2, text: t('upload.processSteps.step2'), icon: Shield },
+                  { step: 3, text: t('upload.processSteps.step3'), icon: FileText },
+                  { step: 4, text: t('upload.processSteps.step4'), icon: Clock },
+                  { step: 5, text: t('upload.processSteps.step5'), icon: CheckCircle2 },
                 ].map((item, index) => {
                   const Icon = item.icon;
                   const isActive = uploadProgress && uploadProgress.progress >= (index * 20);
                   return (
-                    <div key={item.step} className={`flex items-center gap-2 text-xs transition-all duration-300 ${isActive ? 'text-green-700 font-medium' : 'text-gray-600'}`}>
-                      <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${isActive ? 'bg-green-100 border-2 border-green-500' : 'bg-gray-100 border-2 border-gray-300'}`}>
+                    <div
+                      key={item.step}
+                      className={`flex items-center gap-2 text-xs transition-all duration-300 ${
+                        isActive ? 'text-green-700 font-medium' : 'text-gray-600'
+                      }`}
+                    >
+                      <div
+                        className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 ${
+                          isActive
+                            ? 'bg-green-100 border-2 border-green-500 shadow-sm'
+                            : 'bg-gray-100 border-2 border-gray-300'
+                        }`}
+                      >
                         {isActive ? (
                           <CheckCircle2 className="h-4 w-4 text-green-600" />
                         ) : (
                           <span className="text-xs font-semibold">{item.step}</span>
                         )}
                       </div>
-                      <Icon className={`h-3 w-3 flex-shrink-0 ${isActive ? 'text-green-600' : 'text-gray-400'}`} />
-                      <span>{item.text}</span>
+                      <Icon
+                        className={`h-3 w-3 flex-shrink-0 transition-colors duration-300 ${
+                          isActive ? 'text-green-600' : 'text-gray-400'
+                        }`}
+                      />
+                      <span className="leading-snug">{item.text}</span>
                     </div>
                   );
                 })}

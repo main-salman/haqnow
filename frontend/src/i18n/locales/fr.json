@@ -47,6 +47,14 @@
   "upload": {
     "title": "Télécharger un Document",
     "subtitle": "Partagez des preuves de corruption de manière anonyme et sécurisée",
+    "processSteps": {
+      "title": "Que se passe‑t‑il après le téléchargement de votre document",
+      "step1": "Votre document est transmis en toute sécurité à la plateforme HaqNow.",
+      "step2": "Notre système analyse le fichier à la recherche de virus et de logiciels malveillants afin de protéger tous les utilisateurs.",
+      "step3": "Toutes les métadonnées détectables sont supprimées et une copie PDF propre du document est créée.",
+      "step4": "Les modérateurs HaqNow examinent le document manuellement (généralement sous 12 à 24 heures).",
+      "step5": "Après validation, le document est publié et devient accessible au public sur HaqNow."
+    },
     "documentTitle": "Titre du Document",
     "titlePlaceholder": "Titre descriptif bref pour le document",
     "country": "Pays",
