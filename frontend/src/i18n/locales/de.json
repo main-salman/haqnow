@@ -47,6 +47,14 @@
   "upload": {
     "title": "Dokument Hochladen",
     "subtitle": "Teilen Sie Korruptionsbeweise anonym und sicher",
+    "processSteps": {
+      "title": "Was mit Ihrem Dokument nach dem Hochladen passiert",
+      "step1": "Ihr Dokument wird sicher auf die HaqNow‑Plattform hochgeladen.",
+      "step2": "Unser System scannt die Datei auf Viren und Schadsoftware, um alle Nutzer zu schützen.",
+      "step3": "Alle erkennbaren Metadaten werden entfernt und eine saubere PDF‑Kopie des Dokuments wird erstellt.",
+      "step4": "Die HaqNow‑Moderatoren prüfen das Dokument manuell (in der Regel innerhalb von 12–24 Stunden).",
+      "step5": "Nach der Freigabe wird das Dokument veröffentlicht und ist öffentlich auf HaqNow einsehbar."
+    },
     "documentTitle": "Dokumenttitel",
     "titlePlaceholder": "Kurzer beschreibender Titel für das Dokument",
     "country": "Land",

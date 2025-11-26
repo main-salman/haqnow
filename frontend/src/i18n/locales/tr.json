@@ -52,6 +52,14 @@
   "upload": {
     "title": "Yolsuzluk Belgesi Yükle",
     "subtitle": "Yolsuzluğu ifşa eden belgeleri anonim olarak yükleyin. Kimliğiniz korunacaktır.",
+    "processSteps": {
+      "title": "Belgeniz yüklendikten sonra neler olur",
+      "step1": "Belgeniz güvenli bir şekilde HaqNow platformuna yüklenir.",
+      "step2": "Sistemimiz, tüm kullanıcıları korumak için dosyayı virüs ve kötü amaçlı yazılımlar açısından tarar.",
+      "step3": "Tespit edilebilen tüm meta veriler kaldırılır ve belgenin temiz bir PDF kopyası oluşturulur.",
+      "step4": "HaqNow moderatörleri belgeyi manuel olarak inceler (genellikle 12–24 saat içinde).",
+      "step5": "Onaylandıktan sonra belge yayımlanır ve HaqNow üzerinde herkese açık hale gelir."
+    },
     "documentTitle": "Belge Başlığı",
     "titlePlaceholder": "Brief descriptive title for the document",
     "country": "Ülke",
