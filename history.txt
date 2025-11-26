@@ -1,3 +1,98 @@
+[2025-01-XX] **FEATURE: Document Processing Queue System with Progress Tracking**
+
+**User Request:** Add queueing system for document processing to prevent CPU overload when multiple documents are uploaded. Show progress during upload and virus scan. Display step-by-step checklist of what happens to uploaded documents.
+
+**Implementation Details:**
+
+1. **Database Queue System:**
+   - Created `job_queue` table with status tracking (pending, processing, completed, failed)
+   - Added `JobQueue` model to `backend/app/database/models.py`
+   - Migration script: `backend/create_job_queue_table.py`
+   - Queue supports FIFO ordering, retry logic (max 3 retries), progress tracking
+   - Maximum queue size: 100 jobs
+
+2. **Queue Service:**
+   - Created `backend/app/services/queue_service.py` with QueueService class
+   - Methods: enqueue_job, get_next_job, update_job_progress, complete_job, fail_job
+   - Queue position tracking for user visibility
+   - Failed jobs tracking for admin review
+
+3. **Background Worker:**
+   - Created `backend/worker.py` - async worker script that polls queue and processes jobs
+   - Processes jobs sequentially (FIFO) to prevent CPU overload
+   - Updates progress at each step: Downloading → OCR → Tags → Finalizing
+   - Graceful shutdown handling with signal handlers
+   - Runs as systemd service: `foi-archive-worker`
+
+4. **API Changes:**
+   - Modified `backend/app/apis/document_processing/__init__.py`:
+     - `approve-document` endpoint now enqueues jobs instead of processing synchronously
+     - Added `/job-status/{job_id}` endpoint for checking job status
+     - Added `/job-status-by-document/{document_id}` endpoint
+     - Added `/queue-stats` endpoint (admin only)
+     - Added `/failed-jobs` endpoint (admin only) for reviewing failed processing jobs
+   - Modified `backend/app/apis/file_uploader/__init__.py`:
+     - Upload endpoint returns job_id (null until approval)
+     - Virus scan remains synchronous (fast operation)
+
+5. **Frontend Upload Page Updates:**
+   - Added step-by-step checklist showing:
+     1. Document Uploaded
+     2. Document scanned by anti virus
+     3. Document metadata removed
+     4. Document manually approved by HaqNow moderators (12-24 hours)
+     5. Document becomes publicly available on HaqNow
+   - Progress tracking with visual progress bar
+   - Real-time status updates during upload and virus scan
+   - Queue position display when job is queued
+   - Polling for job status after upload (every 5 seconds)
+   - Animated step checklist with checkmarks for completed steps
+
+6. **Admin Page Updates:**
+   - Updated `frontend/src/pages/AdminPendingDocumentsPage.tsx`:
+     - Added "Failed Processing Jobs" section below pending documents
+     - Shows failed jobs with error messages, retry counts, document info
+     - Refresh button to reload failed jobs list
+     - Links to view failed documents
+
+7. **Deployment Updates:**
+   - Updated `scripts/deploy.sh`:
+     - Creates job_queue table during deployment
+     - Creates and starts `foi-archive-worker` systemd service
+     - Worker service auto-restarts on failure
+     - Service verification includes worker status
+
+**Technical Changes:**
+- **New Files:**
+  - `backend/create_job_queue_table.py` - Database migration
+  - `backend/app/services/queue_service.py` - Queue management service
+  - `backend/worker.py` - Background worker script
+- **Modified Files:**
+  - `backend/app/database/models.py` - Added JobQueue model
+  - `backend/app/apis/document_processing/__init__.py` - Queue integration, new endpoints
+  - `backend/app/apis/file_uploader/__init__.py` - Job ID in response
+  - `frontend/src/pages/UploadDocumentPage.tsx` - Progress tracking, step checklist
+  - `frontend/src/pages/AdminPendingDocumentsPage.tsx` - Failed jobs display
+  - `scripts/deploy.sh` - Worker service setup
+
+**Key Features:**
+- ✅ FIFO queue ordering
+- ✅ Maximum queue size: 100 jobs
+- ✅ Sequential processing per user (prevents CPU overload)
+- ✅ Progress tracking with percentage and current step
+- ✅ Queue position visibility
+- ✅ Automatic retry (max 3 attempts) with exponential backoff
+- ✅ Failed jobs visible to admins
+- ✅ Background processing continues even if user closes browser
+- ✅ Step-by-step checklist UI with animations
+- ✅ Real-time progress updates via polling (5-second intervals)
+
+**Performance Benefits:**
+- CPU usage controlled - only one document processes at a time
+- Website remains responsive during document processing
+- Multiple simultaneous uploads are queued instead of blocking
+- Processing happens in background worker, not blocking API requests
+
 [2025-11-26T16:30:00Z] **FEATURE: Moderation Policies on Disclaimer Page with Table of Contents**
 
 **User Request:** Add moderation policies to the disclaimer page (https://www.haqnow.com/disclaimer) with:

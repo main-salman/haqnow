@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { UploadCloud, FileText, AlertCircle, CheckCircle, Loader2, Shield, ArrowLeft, Camera, Smartphone, AlertTriangle } from "lucide-react";
+import { UploadCloud, FileText, AlertCircle, CheckCircle, Loader2, Shield, ArrowLeft, Camera, Smartphone, AlertTriangle, Clock, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { countriesData, Country, State } from "utils/countriesData"; // Added
 import HCaptcha from '@hcaptcha/react-hcaptcha';
@@ -87,6 +87,13 @@ export default function UploadDocumentPage() {
   const [showCameraDisclaimer, setShowCameraDisclaimer] = useState(false);
   const [capturedPhotos, setCapturedPhotos] = useState<File[]>([]);
   const [consentChecked, setConsentChecked] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{
+    step: string;
+    progress: number;
+    queuePosition?: number;
+    jobId?: number;
+  } | null>(null);
+  const [isPolling, setIsPolling] = useState(false);
 
   // Available document languages - comprehensive list for all supported OCR languages
   const documentLanguages = [
@@ -546,7 +553,8 @@ export default function UploadDocumentPage() {
     }
 
     setIsSubmitting(true);
-    toast.loading("Scanning file for viruses...", { id: "upload-toast" });
+    setUploadProgress({ step: "Uploading file...", progress: 0 });
+    toast.loading("Uploading file...", { id: "upload-toast" });
 
     // Prepare file for upload
     let fileToUpload = formData.file;
@@ -574,7 +582,8 @@ export default function UploadDocumentPage() {
 
     try {
       // Upload using the new backend API
-      toast.loading("Uploading and processing file (virus scan + privacy protection)...", { id: "upload-toast" });
+      setUploadProgress({ step: "Scanning for viruses...", progress: 20 });
+      toast.loading("Scanning file for viruses...", { id: "upload-toast" });
       
       // Create FormData for the backend upload
       const uploadFormData = new FormData();
@@ -632,26 +641,44 @@ export default function UploadDocumentPage() {
       }
       
       const responseData = await uploadResponse.json();
-
-      toast.success("Document Submitted!", {
+      
+      // Update progress
+      setUploadProgress({ 
+        step: "Virus scan complete. Metadata removal in progress...", 
+        progress: 40,
+        jobId: responseData.job_id 
+      });
+      
+      toast.success("Document Uploaded!", {
           id: "upload-toast",
-          description: "Your document has been successfully submitted for review. Thank you!",
+          description: "File uploaded successfully. Processing will continue in the background.",
       });
       
-      // Reset form
-      setFormData({
-          title: "", 
-          description: "", 
-          country: "", 
-          stateProvince: "", 
-          adminLevel: "", 
-          file: null,
-          uploader_name: "",
-          uploader_email: ""
+      // Job will be created when document is approved by admin
+      // For now, just show upload completion
+      setUploadProgress({ 
+        step: "Upload complete. Waiting for admin approval (12-24 hours)...", 
+        progress: 60 
       });
       
-      // Optional: navigate to a thank you page
-      // navigate("/thank-you-for-submission");
+      // Note: Job status polling will start after admin approval
+      // Users can check status later via document ID if needed
+      
+      // Reset form after a delay
+      setTimeout(() => {
+        setFormData({
+            title: "", 
+            description: "", 
+            country: "", 
+            stateProvince: "", 
+            adminLevel: "", 
+            file: null,
+            documentLanguage: "english"
+        });
+        setCapturedPhotos([]);
+        setConsentChecked(false);
+        setCaptchaToken(null);
+      }, 2000);
 
     } catch (error) {
       toast.error("Unexpected Error", { 
@@ -660,6 +687,92 @@ export default function UploadDocumentPage() {
       });
     }
     setIsSubmitting(false);
+  };
+
+  // Poll for job status
+  const pollJobStatus = async (jobId: number) => {
+    const maxAttempts = 60; // Poll for up to 5 minutes (60 * 5 seconds)
+    let attempts = 0;
+    
+    const poll = async () => {
+      if (attempts >= maxAttempts || !isPolling) {
+        setIsPolling(false);
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/api/document-processing/job-status/${jobId}`);
+        if (response.ok) {
+          const jobStatus = await response.json();
+          
+          // Update progress based on job status
+          if (jobStatus.status === 'completed') {
+            setUploadProgress({ 
+              step: "Processing complete! Waiting for admin approval...", 
+              progress: 80,
+              queuePosition: 0
+            });
+            setIsPolling(false);
+            toast.success("Processing Complete!", {
+              id: "upload-toast",
+              description: "Your document has been processed and is pending admin approval.",
+            });
+          } else if (jobStatus.status === 'failed') {
+            setUploadProgress({ 
+              step: "Processing failed. Please contact support.", 
+              progress: 0
+            });
+            setIsPolling(false);
+            toast.error("Processing Failed", {
+              id: "upload-toast",
+              description: "Document processing failed. Your document was uploaded but needs manual review.",
+            });
+          } else if (jobStatus.status === 'processing') {
+            // Update progress based on current step
+            let progressPercent = 50;
+            if (jobStatus.current_step) {
+              if (jobStatus.current_step.includes("OCR")) progressPercent = 60;
+              else if (jobStatus.current_step.includes("tags")) progressPercent = 75;
+              else if (jobStatus.current_step.includes("Finalizing")) progressPercent = 90;
+            }
+            
+            setUploadProgress({ 
+              step: jobStatus.current_step || "Processing document...", 
+              progress: progressPercent,
+              queuePosition: jobStatus.queue_position
+            });
+            
+            // Continue polling
+            attempts++;
+            setTimeout(poll, 5000); // Poll every 5 seconds
+          } else if (jobStatus.status === 'pending') {
+            setUploadProgress({ 
+              step: `Waiting in queue (position ${jobStatus.queue_position || '?'})...`, 
+              progress: 45,
+              queuePosition: jobStatus.queue_position
+            });
+            
+            // Continue polling
+            attempts++;
+            setTimeout(poll, 5000);
+          }
+        } else {
+          // Error fetching status, stop polling
+          setIsPolling(false);
+        }
+      } catch (error) {
+        console.error("Error polling job status:", error);
+        attempts++;
+        if (attempts < maxAttempts) {
+          setTimeout(poll, 5000);
+        } else {
+          setIsPolling(false);
+        }
+      }
+    };
+    
+    // Start polling
+    setTimeout(poll, 2000); // Wait 2 seconds before first poll
   };
 
   return (
@@ -674,6 +787,37 @@ export default function UploadDocumentPage() {
             <CardDescription>
               {t('upload.subtitle')}
             </CardDescription>
+            
+            {/* Document Processing Steps */}
+            <div className="mt-6 mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
+              <h3 className="text-sm font-semibold text-gray-800 mb-3 text-center">What happens to your uploaded document:</h3>
+              <div className="space-y-2">
+                {[
+                  { step: 1, text: "Document Uploaded", icon: UploadCloud },
+                  { step: 2, text: "Document scanned by anti virus", icon: Shield },
+                  { step: 3, text: "Document metadata removed", icon: FileText },
+                  { step: 4, text: "Document manually approved by HaqNow moderators (12-24 hours)", icon: Clock },
+                  { step: 5, text: "Document becomes publicly available on HaqNow", icon: CheckCircle2 },
+                ].map((item, index) => {
+                  const Icon = item.icon;
+                  const isActive = uploadProgress && uploadProgress.progress >= (index * 20);
+                  return (
+                    <div key={item.step} className={`flex items-center gap-2 text-xs transition-all duration-300 ${isActive ? 'text-green-700 font-medium' : 'text-gray-600'}`}>
+                      <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${isActive ? 'bg-green-100 border-2 border-green-500' : 'bg-gray-100 border-2 border-gray-300'}`}>
+                        {isActive ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <span className="text-xs font-semibold">{item.step}</span>
+                        )}
+                      </div>
+                      <Icon className={`h-3 w-3 flex-shrink-0 ${isActive ? 'text-green-600' : 'text-gray-400'}`} />
+                      <span>{item.text}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            
             <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-sm text-blue-800 text-center">
                 📚 <strong>Important:</strong> Please read our{' '}
@@ -689,6 +833,29 @@ export default function UploadDocumentPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Upload Progress Display */}
+            {uploadProgress && (
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-blue-900">{uploadProgress.step}</span>
+                  {uploadProgress.queuePosition !== undefined && uploadProgress.queuePosition > 0 && (
+                    <span className="text-xs text-blue-700">Queue position: {uploadProgress.queuePosition}</span>
+                  )}
+                </div>
+                <div className="w-full bg-blue-200 rounded-full h-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${uploadProgress.progress}%` }}
+                  />
+                </div>
+                {isPolling && (
+                  <div className="mt-2 flex items-center gap-2 text-xs text-blue-700">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span>Processing in background...</span>
+                  </div>
+                )}
+              </div>
+            )}
             {/* File Upload Section */}
             <div className="space-y-4">
               {/* Upload Options */}

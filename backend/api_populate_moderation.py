@@ -7,14 +7,12 @@ Similar to api_populate_disclaimer.py but for moderation policies.
 import json
 import requests
 import os
-from dotenv import load_dotenv
+import sys
 
-# Load environment variables
-load_dotenv()
-
-BASE_URL = os.getenv("BASE_URL", "https://www.haqnow.com")
-ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "salman.naqvi@gmail.com")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
+# API Configuration
+BASE_URL = "https://www.haqnow.com"
+ADMIN_EMAIL = "salman.naqvi@gmail.com"
+ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'default_password_please_set_env')
 
 def flatten_dict(d, parent_key='', sep='.'):
     """Flatten nested dictionary."""

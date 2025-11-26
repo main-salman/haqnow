@@ -161,8 +161,9 @@ if [ -f /tmp/.env ]; then
   cp /tmp/.env /opt/foi-archive/backend/.env || true
 fi
 
-# Stop backend service during deployment
+# Stop backend and worker services during deployment
 sudo systemctl stop foi-archive || true
+sudo systemctl stop foi-archive-worker || true
 
 # Install/update backend dependencies
 cd backend
@@ -233,6 +234,10 @@ echo "📦 Embeddings: Using sentence-transformers (local, installed via require
 # Create RAG database tables
 echo "🗄️ Setting up RAG database tables..."
 "$PY_CMD" create_rag_tables.py || echo "RAG tables already exist or creation failed"
+
+# Create job queue table
+echo "📋 Creating job queue table..."
+"$PY_CMD" create_job_queue_table.py || echo "Job queue table already exists or creation failed"
 
 # Run privacy migration if needed
 echo "🔒 Running privacy migration (IP address removal)..."
@@ -441,6 +446,39 @@ systemctl daemon-reload
 sudo systemctl start foi-archive || true
 sudo systemctl enable foi-archive || true
 
+# Create and start worker service
+echo "👷 Setting up document processing worker service..."
+cat >/etc/systemd/system/foi-archive-worker.service << 'WORKER_UNIT'
+[Unit]
+Description=HaqNow Document Processing Worker
+After=network.target mysql.service
+Requires=mysql.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/foi-archive/backend
+Environment="PATH=/opt/foi-archive/backend/.venv/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/opt/foi-archive/backend/.venv/bin/python worker.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+WORKER_UNIT
+
+systemctl daemon-reload
+sudo systemctl start foi-archive-worker || true
+sudo systemctl enable foi-archive-worker || true
+
+if sudo systemctl is-active --quiet foi-archive-worker; then
+    echo "✅ Worker service started successfully"
+else
+    echo "⚠️ Worker service failed to start, check logs with: journalctl -u foi-archive-worker"
+fi
+
 # Wait for backend to start
 sleep 8
 
@@ -463,7 +501,7 @@ sudo systemctl enable nginx
 
 # Verify local services are running
 echo "🔍 Verifying local service status..."
-for service in foi-archive nginx; do
+for service in foi-archive foi-archive-worker nginx; do
     if sudo systemctl is-active --quiet $service; then
         echo "  ✅ $service: running"
     else
