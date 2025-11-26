@@ -1,3 +1,63 @@
+[2025-11-26T16:30:00Z] **FEATURE: Moderation Policies on Disclaimer Page with Table of Contents**
+
+**User Request:** Add moderation policies to the disclaimer page (https://www.haqnow.com/disclaimer) with:
+1. Table of contents linking to three sections (Moderation Policies, Disclaimers, FAQ)
+2. All three sections as collapsible accordion sections (collapsed by default)
+3. Moderation policies translated into all languages and stored in database
+
+**Implementation Details:**
+
+1. **Moderation Policy Content:**
+   - Extracted content from HTML document into structured translation keys
+   - Created 7 sections covering: Purpose/Principles, Allowed Documents, Prohibited Documents, Moderation Structure, Anonymity Protection, Takedown Requests, Disputed Content
+   - Used larger translation keys (fewer keys) for easier admin management
+   - Added moderation translations to `frontend/src/i18n/locales/en.json`
+
+2. **Disclaimer Page Updates:**
+   - Added table of contents card at top with clickable links to each section
+   - Converted all sections to accordion format using Radix UI Accordion component
+   - All sections collapsed by default (empty defaultValue array)
+   - Three main accordion items: Moderation Policies, Disclaimers, FAQ
+   - Smooth scroll navigation from table of contents links
+   - Preserved existing disclaimer and FAQ functionality
+
+3. **Component Structure:**
+   - Created `frontend/src/components/ui/accordion.tsx` component (copied from shadcn)
+   - Updated `DisclaimerPage.tsx` to use Accordion component
+   - Added helper function `renderModerationContent()` to format content with line breaks
+   - Maintained existing FAQ loading from database
+
+4. **Translation System:**
+   - Added moderation section support to `populate_translations.py` (determine_section function)
+   - Created `backend/api_populate_moderation.py` script to populate moderation translations to database
+   - Moderation translations stored in database with section='moderation'
+   - Admin can manage translations via Admin Translations interface
+
+**Technical Changes:**
+- **File:** `frontend/src/pages/DisclaimerPage.tsx` - Complete restructure with accordion sections
+- **File:** `frontend/src/components/ui/accordion.tsx` - New accordion component
+- **File:** `frontend/src/i18n/locales/en.json` - Added moderation.* translation keys
+- **File:** `backend/populate_translations.py` - Added moderation section detection
+- **File:** `backend/api_populate_moderation.py` - New script to populate moderation translations
+
+**Translation Keys Added:**
+- `moderation.title` - Main title
+- `moderation.section1Title` through `moderation.section7Title` - Section titles
+- `moderation.section1Content` through `moderation.section7Content` - Section content
+- `disclaimer.tableOfContentsTitle` - Table of contents heading
+- `disclaimer.moderationSectionTitle` - Moderation section label
+- `disclaimer.disclaimerSectionTitle` - Disclaimer section label
+- `disclaimer.faqSectionTitle` - FAQ section label
+
+**Benefits:**
+- Better organization with collapsible sections
+- Easy navigation via table of contents
+- Moderation policies accessible to all users
+- Fully translatable via admin interface
+- Database as single source of truth for translations
+
+---
+
 [2025-11-24T18:30:00Z] **FEATURE: Hero Video Player on Homepage**
 **User Request:** Add a muted autoplay video above the homepage description section with minimal UI and unmute option.
 
