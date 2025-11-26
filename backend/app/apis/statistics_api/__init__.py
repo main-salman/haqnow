@@ -46,13 +46,13 @@ async def get_country_stats(db: Session = Depends(get_db)):
     """Get document count statistics by country."""
     
     try:
-        # Get all approved and processed documents grouped by country
+        # Get all approved documents grouped by country
         # Deleted documents are permanently removed from DB, so they won't appear
         country_stats = db.query(
             Document.country,
             func.count(Document.id).label('doc_count')
         ).filter(
-            Document.status.in_(["approved", "processed"])
+            Document.status == "approved"
         ).group_by(
             Document.country
         ).order_by(
@@ -89,14 +89,14 @@ async def get_state_stats(country: str, db: Session = Depends(get_db)):
     """Get document count statistics by state/province for a specific country."""
     
     try:
-        # Get all approved and processed documents for the specified country grouped by state
+        # Get all approved documents for the specified country grouped by state
         # Deleted documents are permanently removed from DB, so they won't appear
         state_stats = db.query(
             Document.state,
             func.count(Document.id).label('doc_count')
         ).filter(
             Document.country == country,
-            Document.status.in_(["approved", "processed"])
+            Document.status == "approved"
         ).group_by(
             Document.state
         ).order_by(
@@ -148,22 +148,23 @@ async def get_global_stats(db: Session = Depends(get_db)):
             Document.status == "pending"
         ).scalar()
         
-        # Get processed documents count
+        # Get processed documents count (approved documents that have been processed)
         processed_documents = db.query(func.count(Document.id)).filter(
-            Document.status == "processed"
+            Document.status == "approved",
+            Document.processed_at.isnot(None)
         ).scalar()
         
-        # Get unique countries count (from approved and processed documents)
+        # Get unique countries count (from approved documents)
         # Deleted documents are permanently removed from DB, so they won't appear
         total_countries = db.query(func.count(distinct(Document.country))).filter(
-            Document.status.in_(["approved", "processed"]),
+            Document.status == "approved",
             Document.country.isnot(None)
         ).scalar()
         
-        # Get unique states count (from approved and processed documents)
+        # Get unique states count (from approved documents)
         # Deleted documents are permanently removed from DB, so they won't appear
         total_states = db.query(func.count(distinct(Document.state))).filter(
-            Document.status.in_(["approved", "processed"]),
+            Document.status == "approved",
             Document.state.isnot(None)
         ).scalar()
         
