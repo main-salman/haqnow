@@ -153,6 +153,64 @@
 
 ---
 
+[2025-11-26T17:05:00Z] **FEATURE: Multilingual Moderation Policies and Disclaimer TOC Translations**
+**User Request:** Ensure the new moderation policy section on the disclaimer page is fully translated into all supported languages and appears correctly in the admin translations interface.
+
+**Implementation Details:**
+
+1. **Arabic (`ar.json`):**
+   - Added localized disclaimer FAQ text (previously partly in English).
+   - Added new disclaimer keys for the table of contents:
+     - `disclaimer.tableOfContentsTitle`
+     - `disclaimer.moderationSectionTitle`
+     - `disclaimer.disclaimerSectionTitle`
+     - `disclaimer.faqSectionTitle`
+   - Added full `moderation` section with:
+     - `moderation.title`
+     - `moderation.section1Title`–`moderation.section7Title`
+     - `moderation.section1Content`–`moderation.section7Content`
+   - Translations match the English policy content from *HaqNow Moderation Best Practices Policy* and preserve structure (paragraphs + bullet points).
+
+2. **French (`fr.json`):**
+   - Localized all disclaimer FAQ answers to French (were previously English).
+   - Added disclaimer TOC keys (`tableOfContentsTitle`, `moderationSectionTitle`, `disclaimerSectionTitle`, `faqSectionTitle`).
+   - Added full `moderation` translations (titles + content for 7 sections) with concise, natural French while keeping policy meaning intact.
+
+3. **German (`de.json`):**
+   - Localized all disclaimer FAQ Q/A entries to German.
+   - Added disclaimer TOC keys for the three sections.
+   - Added `moderation` block with 7 localized section titles and contents, preserving bullet and numbered lists.
+
+4. **Russian (`ru.json`):**
+   - Localized disclaimer FAQs from English to Russian.
+   - Added disclaimer TOC keys.
+   - Added full `moderation` translations (title + 7 sections) in Russian, aligned with the English moderation policy and formatted for readability.
+
+5. **Polish (`pl.json`):**
+   - Localized disclaimer FAQs previously left in English.
+   - Added disclaimer TOC translation keys.
+   - Added full `moderation` section with 7 localized titles and content blocks.
+
+6. **Turkish (`tr.json`):**
+   - Localized disclaimer FAQ answers into Turkish.
+   - Added disclaimer TOC keys for moderation, disclaimers, and FAQ.
+   - Added full `moderation` translations (title + 7 sections) with Turkish prose mirroring the policy content.
+
+7. **Database / Admin Integration:**
+   - These locale changes will be propagated into the `translations` table (section=`moderation` and `disclaimer`) by running the existing `populate_translations.py` logic, which is invoked during `./scripts/deploy.sh`.
+   - As a result, `https://www.haqnow.com/admin-translations-page` will show fully translated moderation keys for all languages under the `moderation` section.
+
+**Files Touched:**
+- `frontend/src/i18n/locales/ar.json`
+- `frontend/src/i18n/locales/fr.json`
+- `frontend/src/i18n/locales/de.json`
+- `frontend/src/i18n/locales/ru.json`
+- `frontend/src/i18n/locales/pl.json`
+- `frontend/src/i18n/locales/tr.json`
+- `history.txt`
+
+---
+
 [2025-11-24T18:30:00Z] **FEATURE: Hero Video Player on Homepage**
 **User Request:** Add a muted autoplay video above the homepage description section with minimal UI and unmute option.
 
