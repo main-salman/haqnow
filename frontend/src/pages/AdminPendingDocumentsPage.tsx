@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, CheckCircle, XCircle, Filter, Search as SearchIcon, Loader2, FileText } from "lucide-react"; // Added Loader2 and FileText
+import { Eye, CheckCircle, XCircle, Filter, Search as SearchIcon, Loader2, FileText, AlertTriangle } from "lucide-react"; // Added Loader2 and FileText
 import { Link } from "react-router-dom";
 // Remove Supabase import - we don't use it anymore
 // import { supabase } from "utils/supabaseClient";
@@ -51,6 +51,8 @@ export default function AdminPendingDocumentsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCountry, setSelectedCountry] = useState("all");
   const [updatingDocId, setUpdatingDocId] = useState<number | null>(null); // For loading state on specific row buttons
+  const [failedJobs, setFailedJobs] = useState<any[]>([]);
+  const [isLoadingFailedJobs, setIsLoadingFailedJobs] = useState(false);
 
   // Function to fetch pending documents from backend API
   const fetchPendingDocuments = async () => {
@@ -99,7 +101,35 @@ export default function AdminPendingDocumentsPage() {
   useEffect(() => {
     console.log("[AdminPendingDocs] useEffect triggered. Fetching documents...");
     fetchPendingDocuments();
+    fetchFailedJobs();
   }, []);
+
+  const fetchFailedJobs = async () => {
+    setIsLoadingFailedJobs(true);
+    try {
+      const token = localStorage.getItem('jwt_token');
+      if (!token) {
+        return;
+      }
+
+      const response = await fetch('/api/document-processing/failed-jobs?limit=50', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setFailedJobs(data.failed_jobs || []);
+      }
+    } catch (err) {
+      console.error("[AdminPendingDocs] Error fetching failed jobs:", err);
+    } finally {
+      setIsLoadingFailedJobs(false);
+    }
+  };
 
   const handleApprove = async (docId: number) => {
     console.log(`[AdminPendingDocs] handleApprove called for docId: ${docId}`);
@@ -223,6 +253,7 @@ export default function AdminPendingDocumentsPage() {
   }
 
   return (
+    <div className="space-y-6">
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
@@ -364,5 +395,85 @@ export default function AdminPendingDocumentsPage() {
         )}
       </CardContent>
     </Card>
+
+    {/* Failed Jobs Section */}
+    {failedJobs.length > 0 && (
+      <Card className="mt-6 border-orange-200">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-orange-600" />
+              <div>
+                <CardTitle className="text-xl font-serif text-orange-900">Failed Processing Jobs</CardTitle>
+                <CardDescription>Documents that failed to process automatically</CardDescription>
+              </div>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={fetchFailedJobs}
+              className="flex items-center gap-2"
+            >
+              <Loader2 className="h-4 w-4" />
+              Refresh
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="border rounded-lg overflow-hidden">
+            <Table>
+              <TableHeader className="bg-orange-50">
+                <TableRow>
+                  <TableHead>Document</TableHead>
+                  <TableHead>Error</TableHead>
+                  <TableHead>Failed At</TableHead>
+                  <TableHead>Retries</TableHead>
+                  <TableHead className="text-center">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {failedJobs.map((job) => (
+                  <TableRow key={job.id}>
+                    <TableCell>
+                      {job.document ? (
+                        <div>
+                          <div className="font-medium">{job.document.title || 'Untitled'}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {job.document.country} {job.document.state ? `- ${job.document.state}` : ''}
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">Document ID: {job.document_id}</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="max-w-md truncate text-sm text-red-600" title={job.error_message}>
+                        {job.error_message || 'Unknown error'}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {job.failed_at ? new Date(job.failed_at).toLocaleString() : 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      {job.retry_count} / {job.max_retries}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {job.document && (
+                        <Button asChild variant="outline" size="sm">
+                          <Link to={`/admin-document-edit-page?id=${job.document_id}`}>
+                            <Eye className="h-4 w-4 mr-1" /> View
+                          </Link>
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    )}
+    </div>
   );
 }

@@ -14,6 +14,7 @@ from app.services.s3_service import s3_service
 from app.services.email_service import email_service
 from app.services.metadata_service import metadata_service
 from app.services.virus_scanning_service import virus_scanning_service
+from app.services.queue_service import queue_service
 from app.database import SiteSetting
 import json
 
@@ -37,6 +38,7 @@ class FileUploadResponse(BaseModel):
     file_path: str
     message: str
     document_id: int
+    job_id: Optional[int] = None  # Job ID for tracking processing status
 
 class DocumentUploadRequest(BaseModel):
     title: str
@@ -236,7 +238,8 @@ async def upload_file(
             file_url=file_url,
             file_path=file_path,
             document_id=document_id,
-            message=message
+            message=message,
+            job_id=None  # Job will be created when document is approved
         )
     
     except HTTPException:

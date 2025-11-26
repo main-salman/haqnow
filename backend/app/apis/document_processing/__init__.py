@@ -20,7 +20,8 @@ from app.services.email_service import email_service
 from app.services.arabic_ocr_service import arabic_ocr_service  # Add Arabic OCR service import
 from app.services.semantic_search_service import semantic_search_service
 from app.services.ai_summary_service import ai_summary_service
-from app.database import get_db, Document, BannedTag
+from app.services.queue_service import queue_service
+from app.database import get_db, Document, BannedTag, JobQueue
 
 # Optional RAG service import
 try:
@@ -900,14 +901,22 @@ async def approve_document(
                 detail=f"Cannot approve document with status '{document.status}'. Only pending or rejected documents can be approved."
             )
         
-        # Process the document first (OCR + tagging)
-        processing_result = await process_document_internal(document_id, db)
+        # Enqueue processing job instead of processing synchronously
+        job = queue_service.enqueue_job(
+            db=db,
+            document_id=document_id,
+            job_type='process_document',
+            priority=0  # FIFO
+        )
         
-        if not processing_result:
-            raise HTTPException(status_code=500, detail="Failed to process document during approval")
+        if not job:
+            # Queue is full - reject approval
+            raise HTTPException(
+                status_code=503,
+                detail="Processing queue is full. Please try again later."
+            )
         
-        # Update document status to approved after successful processing
-        document = db.query(Document).filter(Document.id == document_id).first()  # Refresh from DB
+        # Update document status to approved (processing will happen in background)
         document.status = "approved"
         document.approved_at = func.now()
         document.approved_by = admin_user.email
@@ -1364,3 +1373,72 @@ async def admin_download_document(
             status_code=500,
             detail="An error occurred while downloading the document"
         )
+
+@router.get("/job-status/{job_id}")
+async def get_job_status(
+    job_id: int,
+    db: Session = Depends(get_db)
+):
+    """Get processing job status by job ID."""
+    job_status = queue_service.get_job_status(db, job_id)
+    if not job_status:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    queue_position = queue_service.get_queue_position(db, job_id)
+    job_status['queue_position'] = queue_position
+    
+    return job_status
+
+@router.get("/job-status-by-document/{document_id}")
+async def get_job_status_by_document(
+    document_id: int,
+    db: Session = Depends(get_db)
+):
+    """Get processing job status by document ID."""
+    job = queue_service.get_job_by_document_id(db, document_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="No job found for this document")
+    
+    job_status = job.to_dict()
+    queue_position = queue_service.get_queue_position(db, job.id)
+    job_status['queue_position'] = queue_position
+    
+    return job_status
+
+@router.get("/queue-stats")
+async def get_queue_stats(
+    admin_user: AdminUser,
+    db: Session = Depends(get_db)
+):
+    """Get queue statistics (admin only)."""
+    stats = queue_service.get_queue_stats(db)
+    return stats
+
+@router.get("/failed-jobs")
+async def get_failed_jobs(
+    admin_user: AdminUser,
+    limit: int = Query(100, ge=1, le=500),
+    db: Session = Depends(get_db)
+):
+    """Get failed jobs for admin review."""
+    failed_jobs = queue_service.get_failed_jobs(db, limit=limit)
+    
+    # Include document information
+    result = []
+    for job in failed_jobs:
+        document = db.query(Document).filter(Document.id == job.document_id).first()
+        job_dict = job.to_dict()
+        if document:
+            job_dict['document'] = {
+                'id': document.id,
+                'title': document.title,
+                'country': document.country,
+                'state': document.state,
+                'status': document.status
+            }
+        result.append(job_dict)
+    
+    return {
+        'failed_jobs': result,
+        'total': len(result)
+    }

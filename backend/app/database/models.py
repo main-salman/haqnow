@@ -419,3 +419,47 @@ class BannedWord(Base):
             "banned_by": self.banned_by,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
+
+class JobQueue(Base):
+    """Model for document processing job queue."""
+    
+    __tablename__ = "job_queue"
+    
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    document_id = Column(Integer, ForeignKey('documents.id', ondelete='CASCADE'), nullable=False, index=True)
+    job_type = Column(String(50), nullable=False, default='process_document')
+    status = Column(String(20), nullable=False, default='pending', index=True)  # pending, processing, completed, failed
+    priority = Column(Integer, nullable=False, default=0, index=True)
+    current_step = Column(String(100), nullable=True)
+    progress_percent = Column(Integer, nullable=True, default=0)
+    error_message = Column(Text, nullable=True)
+    retry_count = Column(Integer, nullable=False, default=0)
+    max_retries = Column(Integer, nullable=False, default=3)
+    started_at = Column(DateTime(timezone=True), nullable=True)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    failed_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    
+    def __repr__(self):
+        return f"<JobQueue(id={self.id}, document_id={self.document_id}, status='{self.status}')>"
+    
+    def to_dict(self):
+        """Convert model to dictionary."""
+        return {
+            "id": self.id,
+            "document_id": self.document_id,
+            "job_type": self.job_type,
+            "status": self.status,
+            "priority": self.priority,
+            "current_step": self.current_step,
+            "progress_percent": self.progress_percent,
+            "error_message": self.error_message,
+            "retry_count": self.retry_count,
+            "max_retries": self.max_retries,
+            "started_at": self.started_at.isoformat() if self.started_at else None,
+            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "failed_at": self.failed_at.isoformat() if self.failed_at else None,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
