@@ -944,32 +944,18 @@ async def approve_document(
         except Exception as e:
             logger.warning("Failed to send approval notification", error=str(e))
         
-        # Process document for RAG (Q&A system) in background
-        if RAG_AVAILABLE and rag_service:
-            try:
-                # Process for RAG without blocking the approval
-                await rag_service.process_document_for_rag(
-                    document_id=document_id,
-                    content=processing_result.get('ocr_text', ''),
-                    title=document.title or "Untitled Document",
-                    country=document.country or "Unknown"
-                )
-                logger.info(f"Document {document_id} processed for RAG successfully")
-            except Exception as e:
-                logger.warning(f"Failed to process document {document_id} for RAG: {e}")
-                # Don't fail approval if RAG processing fails
+        # Note: RAG processing will happen after document processing completes in the worker
+        # The worker will handle OCR and then trigger RAG processing
         
-        logger.info("Document approved and processed successfully", 
+        logger.info("Document approved and queued for processing", 
                    document_id=document_id,
                    approved_by=admin_user.email,
-                   tags_count=len(processing_result.get('generated_tags', [])),
-                   text_length=len(processing_result.get('ocr_text', '')))
+                   job_id=job.id)
         
         return {
-            "message": "Document approved and processed successfully", 
+            "message": "Document approved and queued for processing", 
             "document_id": document_id,
-            "ocr_text_length": len(processing_result.get('ocr_text', '')),
-            "tags_generated": len(processing_result.get('generated_tags', []))
+            "job_id": job.id
         }
         
     except HTTPException:
@@ -1153,8 +1139,12 @@ async def get_documents(
         query_builder = db.query(Document)
         
         # Filter by status if provided
+        # For "approved" status, also include "processed" documents (which are approved and fully processed)
         if status:
-            query_builder = query_builder.filter(Document.status == status)
+            if status == "approved":
+                query_builder = query_builder.filter(Document.status.in_(["approved", "processed"]))
+            else:
+                query_builder = query_builder.filter(Document.status == status)
         
         # Get total count before pagination
         total_count = query_builder.count()
