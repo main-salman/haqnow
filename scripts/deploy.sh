@@ -451,8 +451,7 @@ echo "👷 Setting up document processing worker service..."
 cat >/etc/systemd/system/foi-archive-worker.service << 'WORKER_UNIT'
 [Unit]
 Description=HaqNow Document Processing Worker
-After=network.target mysql.service
-Requires=mysql.service
+After=network.target
 
 [Service]
 Type=simple
