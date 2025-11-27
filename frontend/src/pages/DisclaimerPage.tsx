@@ -17,6 +17,7 @@ const DisclaimerPage: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [customFAQs, setCustomFAQs] = useState<FAQ[]>([]);
+  const [openAccordionItems, setOpenAccordionItems] = useState<string[]>([]);
 
   // Helper function to convert URLs in text to clickable links
   const renderTextWithLinks = (text: string) => {
@@ -139,10 +140,13 @@ const DisclaimerPage: React.FC = () => {
               <li>
                 <a 
                   href="#moderation-policies" 
-                  className="text-green-600 hover:text-green-800 underline flex items-center"
+                  className="text-green-600 hover:text-green-800 underline flex items-center cursor-pointer"
                   onClick={(e) => {
                     e.preventDefault();
-                    document.getElementById('moderation-policies')?.scrollIntoView({ behavior: 'smooth' });
+                    setOpenAccordionItems(['moderation']);
+                    setTimeout(() => {
+                      document.getElementById('moderation-policies')?.scrollIntoView({ behavior: 'smooth' });
+                    }, 100);
                   }}
                 >
                   <FileText className="h-4 w-4 mr-2" />
@@ -152,10 +156,13 @@ const DisclaimerPage: React.FC = () => {
               <li>
                 <a 
                   href="#disclaimers" 
-                  className="text-green-600 hover:text-green-800 underline flex items-center"
+                  className="text-green-600 hover:text-green-800 underline flex items-center cursor-pointer"
                   onClick={(e) => {
                     e.preventDefault();
-                    document.getElementById('disclaimers')?.scrollIntoView({ behavior: 'smooth' });
+                    setOpenAccordionItems(['disclaimer']);
+                    setTimeout(() => {
+                      document.getElementById('disclaimers')?.scrollIntoView({ behavior: 'smooth' });
+                    }, 100);
                   }}
                 >
                   <Shield className="h-4 w-4 mr-2" />
@@ -165,10 +172,13 @@ const DisclaimerPage: React.FC = () => {
               <li>
                 <a 
                   href="#faq" 
-                  className="text-green-600 hover:text-green-800 underline flex items-center"
+                  className="text-green-600 hover:text-green-800 underline flex items-center cursor-pointer"
                   onClick={(e) => {
                     e.preventDefault();
-                    document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' });
+                    setOpenAccordionItems(['faq']);
+                    setTimeout(() => {
+                      document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' });
+                    }, 100);
                   }}
                 >
                   <HelpCircle className="h-4 w-4 mr-2" />
@@ -182,7 +192,12 @@ const DisclaimerPage: React.FC = () => {
         {/* Accordion Container */}
         <Card className="border-green-200 shadow-lg mb-8">
           <CardContent className="p-0">
-            <Accordion type="multiple" className="w-full" defaultValue={[]}>
+            <Accordion 
+              type="multiple" 
+              className="w-full" 
+              value={openAccordionItems}
+              onValueChange={setOpenAccordionItems}
+            >
               {/* Moderation Policies Section */}
               <AccordionItem value="moderation" id="moderation-policies">
                 <AccordionTrigger className="px-6 py-4 text-xl font-semibold">
@@ -256,84 +271,84 @@ const DisclaimerPage: React.FC = () => {
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="px-6 pb-6">
-                  <div className="prose prose-lg max-w-none">
-                    {/* Corporate Warning */}
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
-                      <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                        <Shield className="h-6 w-6 mr-2" />
-                        {t('disclaimer.corporateWarningTitle')}
-                      </h3>
-                      <p className="text-gray-700 font-medium mb-4">
-                        <strong>{t('disclaimer.corporateWarningText')}</strong>
-                      </p>
-                      <p className="text-gray-600 mb-4">
-                        {t('disclaimer.corporateWarningDescription')}
-                      </p>
-                      <ul className="list-disc list-inside text-gray-600 space-y-2 ml-4">
-                        <li>{t('disclaimer.corporateWarningItem1')}</li>
-                        <li>{t('disclaimer.corporateWarningItem2')}</li>
-                        <li>{t('disclaimer.corporateWarningItem3')}</li>
-                        <li>{t('disclaimer.corporateWarningItem4')}</li>
-                      </ul>
-                    </div>
+            <div className="prose prose-lg max-w-none">
+              {/* Corporate Warning */}
+              <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
+                <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                  <Shield className="h-6 w-6 mr-2" />
+                  {t('disclaimer.corporateWarningTitle')}
+                </h3>
+                <p className="text-gray-700 font-medium mb-4">
+                  <strong>{t('disclaimer.corporateWarningText')}</strong>
+                </p>
+                <p className="text-gray-600 mb-4">
+                  {t('disclaimer.corporateWarningDescription')}
+                </p>
+                <ul className="list-disc list-inside text-gray-600 space-y-2 ml-4">
+                  <li>{t('disclaimer.corporateWarningItem1')}</li>
+                  <li>{t('disclaimer.corporateWarningItem2')}</li>
+                  <li>{t('disclaimer.corporateWarningItem3')}</li>
+                  <li>{t('disclaimer.corporateWarningItem4')}</li>
+                </ul>
+              </div>
 
-                    {/* Country Warning */}
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
-                      <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                        <Globe className="h-6 w-6 mr-2" />
-                        {t('disclaimer.countryWarningTitle')}
-                      </h3>
-                      <p className="text-gray-700 font-medium mb-4">
-                        {t('disclaimer.countryWarningText')}
-                      </p>
-                      <div className="bg-green-100 border border-green-300 rounded-md p-4 mb-4">
-                        <h4 className="font-semibold text-gray-900 mb-2">{t('disclaimer.countryWarningSubtitle')}</h4>
-                        <ul className="list-disc list-inside text-gray-700 space-y-1 ml-4">
-                          <li>{t('disclaimer.countryWarningItem1')}</li>
-                          <li>{t('disclaimer.countryWarningItem2')}</li>
-                          <li>{t('disclaimer.countryWarningItem3')}</li>
-                          <li>{t('disclaimer.countryWarningItem4')}</li>
-                        </ul>
-                      </div>
-                    </div>
+              {/* Country Warning */}
+              <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
+                <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                  <Globe className="h-6 w-6 mr-2" />
+                  {t('disclaimer.countryWarningTitle')}
+                </h3>
+                <p className="text-gray-700 font-medium mb-4">
+                  {t('disclaimer.countryWarningText')}
+                </p>
+                <div className="bg-green-100 border border-green-300 rounded-md p-4 mb-4">
+                  <h4 className="font-semibold text-gray-900 mb-2">{t('disclaimer.countryWarningSubtitle')}</h4>
+                  <ul className="list-disc list-inside text-gray-700 space-y-1 ml-4">
+                    <li>{t('disclaimer.countryWarningItem1')}</li>
+                    <li>{t('disclaimer.countryWarningItem2')}</li>
+                    <li>{t('disclaimer.countryWarningItem3')}</li>
+                    <li>{t('disclaimer.countryWarningItem4')}</li>
+                  </ul>
+                </div>
+              </div>
 
-                    {/* Best Practices */}
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
-                      <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                        <Eye className="h-6 w-6 mr-2" />
-                        {t('disclaimer.bestPracticesTitle')}
-                      </h3>
-                      <ul className="list-disc list-inside text-gray-700 space-y-2 ml-4">
-                        <li>{t('disclaimer.bestPracticesItem1')}</li>
-                        <li>{t('disclaimer.bestPracticesItem2')}</li>
-                        <li>{t('disclaimer.bestPracticesItem3')}</li>
-                        <li>{t('disclaimer.bestPracticesItem4')}</li>
-                        <li>{t('disclaimer.bestPracticesItem5')}</li>
-                        <li>{t('upload.phoneUploadTip')}</li>
-                      </ul>
-                    </div>
+              {/* Best Practices */}
+              <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
+                <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                  <Eye className="h-6 w-6 mr-2" />
+                  {t('disclaimer.bestPracticesTitle')}
+                </h3>
+                <ul className="list-disc list-inside text-gray-700 space-y-2 ml-4">
+                  <li>{t('disclaimer.bestPracticesItem1')}</li>
+                  <li>{t('disclaimer.bestPracticesItem2')}</li>
+                  <li>{t('disclaimer.bestPracticesItem3')}</li>
+                  <li>{t('disclaimer.bestPracticesItem4')}</li>
+                  <li>{t('disclaimer.bestPracticesItem5')}</li>
+                  <li>{t('upload.phoneUploadTip')}</li>
+                </ul>
+              </div>
 
-                    {/* Privacy Commitment */}
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-                      <h3 className="text-xl font-bold text-gray-900 mb-4">{t('disclaimer.privacyCommitmentTitle')}</h3>
-                      <p className="text-gray-700 mb-4">
-                        {t('disclaimer.privacyCommitmentText')}
-                      </p>
-                      <ul className="list-disc list-inside text-gray-700 space-y-1 ml-4">
-                        <li>{t('disclaimer.privacyCommitmentItem1')}</li>
-                        <li>{t('disclaimer.privacyCommitmentItem2')}</li>
-                        <li>{t('disclaimer.privacyCommitmentItem3')}</li>
-                        <li>{t('disclaimer.privacyCommitmentItem4')}</li>
-                      </ul>
-                      <p className="text-gray-600 mt-4 font-medium">
-                        {t('disclaimer.privacyCommitmentNote')}
-                      </p>
-                    </div>
-                  </div>
+              {/* Privacy Commitment */}
+              <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-4">{t('disclaimer.privacyCommitmentTitle')}</h3>
+                <p className="text-gray-700 mb-4">
+                  {t('disclaimer.privacyCommitmentText')}
+                </p>
+                <ul className="list-disc list-inside text-gray-700 space-y-1 ml-4">
+                  <li>{t('disclaimer.privacyCommitmentItem1')}</li>
+                  <li>{t('disclaimer.privacyCommitmentItem2')}</li>
+                  <li>{t('disclaimer.privacyCommitmentItem3')}</li>
+                  <li>{t('disclaimer.privacyCommitmentItem4')}</li>
+                </ul>
+                <p className="text-gray-600 mt-4 font-medium">
+                  {t('disclaimer.privacyCommitmentNote')}
+                </p>
+              </div>
+            </div>
                 </AccordionContent>
               </AccordionItem>
 
-              {/* FAQ Section */}
+        {/* FAQ Section */}
               <AccordionItem value="faq" id="faq">
                 <AccordionTrigger className="px-6 py-4 text-xl font-semibold">
                   <div className="flex items-center">
@@ -342,16 +357,16 @@ const DisclaimerPage: React.FC = () => {
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="px-6 pb-6">
-                  <div className="space-y-6">
-                    {allFAQs.map((faq, index) => (
-                      <div key={faq.id} className="border-b border-gray-200 pb-6 last:border-b-0">
-                        <h4 className="text-lg font-semibold text-gray-900 mb-3">
-                          Q{index + 1}: {faq.question}
-                        </h4>
-                        <p className="text-gray-700 leading-relaxed">{renderTextWithLinks(faq.answer)}</p>
-                      </div>
-                    ))}
-                  </div>
+            <div className="space-y-6">
+              {allFAQs.map((faq, index) => (
+                <div key={faq.id} className="border-b border-gray-200 pb-6 last:border-b-0">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-3">
+                    Q{index + 1}: {faq.question}
+                  </h4>
+                  <p className="text-gray-700 leading-relaxed">{renderTextWithLinks(faq.answer)}</p>
+                </div>
+              ))}
+            </div>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
