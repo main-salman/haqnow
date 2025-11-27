@@ -151,17 +151,29 @@ export default function AdminPendingDocumentsPage() {
 
       console.log("[AdminPendingDocs] Backend approve response:", response);
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
-      }
-
       const result = await response.json();
       console.log("[AdminPendingDocs] Approve result:", result);
+
+      // Check for error messages in response body, even if status appears "ok"
+      if (!response.ok || result.detail) {
+        // If there's a detail field, it's an error message
+        if (result.detail) {
+          throw new Error(result.detail);
+        }
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      // Verify success message exists
+      if (!result.message || (!result.message.includes("approved") && !result.message.includes("queued"))) {
+        throw new Error("Unexpected response format from server");
+      }
       
       toast.success("Document approved successfully!");
       
-      // Refresh the document list
+      // Optimistically remove the document from the list immediately
+      setDocuments(prevDocs => prevDocs.filter(doc => doc.id !== docId));
+      
+      // Refresh the document list to ensure consistency
       fetchPendingDocuments();
       
     } catch (err: any) {
@@ -192,17 +204,29 @@ export default function AdminPendingDocumentsPage() {
 
       console.log("[AdminPendingDocs] Backend reject response:", response);
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
-      }
-
       const result = await response.json();
       console.log("[AdminPendingDocs] Reject result:", result);
+
+      // Check for error messages in response body, even if status appears "ok"
+      if (!response.ok || result.detail) {
+        // If there's a detail field, it's an error message
+        if (result.detail) {
+          throw new Error(result.detail);
+        }
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      // Verify success message exists
+      if (!result.message || !result.message.includes("successfully")) {
+        throw new Error("Unexpected response format from server");
+      }
       
       toast.success("Document rejected successfully!");
       
-      // Refresh the document list
+      // Optimistically remove the document from the list immediately
+      setDocuments(prevDocs => prevDocs.filter(doc => doc.id !== docId));
+      
+      // Refresh the document list to ensure consistency
       fetchPendingDocuments();
       
     } catch (err: any) {
