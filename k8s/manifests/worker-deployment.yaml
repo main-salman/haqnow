@@ -15,9 +15,9 @@ spec:
       labels:
         app: worker
     spec:
-      containers:
-      - name: worker
-        image: docker.io/haqnow/worker:latest
+          containers:
+          - name: worker
+            image: ${REGISTRY:-docker.io}/${DOCKER_USER:-haqnow}/worker:latest
         envFrom:
         - configMapRef:
             name: haqnow-config

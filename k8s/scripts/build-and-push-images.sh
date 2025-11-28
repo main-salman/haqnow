@@ -10,10 +10,16 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 # Configuration
-# Using Docker Hub temporarily - can switch to CRS later
-REGISTRY="docker.io"
+# Default to Docker Hub, but can use ghcr.io or other registries
+REGISTRY="${REGISTRY:-docker.io}"
 DOCKER_USER="${DOCKER_USER:-haqnow}"  # Set DOCKER_USER env var or use default
 PROJECT="${DOCKER_USER}"
+
+# GitHub Container Registry uses different format
+if [ "$REGISTRY" = "ghcr.io" ]; then
+    # ghcr.io uses lowercase owner/repo format
+    PROJECT=$(echo "$DOCKER_USER" | tr '[:upper:]' '[:lower:]')
+fi
 
 # Load credentials
 if [ ! -f .env ]; then
