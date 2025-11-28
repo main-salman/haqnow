@@ -49,6 +49,7 @@ rapidfuzz>=3.0.0
 # RAG/AI stack - Groq (cloud LLM) + OpenAI (cloud embeddings)
 groq>=0.4.1
 openai>=1.12.0
+sentence-transformers>=2.2.2,<3.0.0  # Required for semantic search
 
 # Virus scanning
 # No dependencies needed - uses VirusTotal API (cloud-based)

@@ -21,9 +21,11 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Python dependencies (optimized for speed)
+COPY requirements.txt requirements-rag.txt ./
+# Use pre-built wheels and install in parallel where possible
+RUN pip install --no-cache-dir --prefer-binary -r requirements.txt && \
+    pip install --no-cache-dir --prefer-binary sentence-transformers>=2.2.2,<3.0.0
 
 # Copy application code
 COPY . .

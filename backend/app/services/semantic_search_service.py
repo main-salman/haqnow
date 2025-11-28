@@ -16,7 +16,12 @@ import asyncio
 import json
 import numpy as np
 from typing import List, Tuple, Optional, Dict, Any
-from sentence_transformers import SentenceTransformer
+try:
+    from sentence_transformers import SentenceTransformer
+    SENTENCE_TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    SENTENCE_TRANSFORMERS_AVAILABLE = False
+    SentenceTransformer = None
 import structlog
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -36,6 +41,10 @@ class SemanticSearchService:
         
     def _load_model(self):
         """Load the sentence transformer model (lazy loading)."""
+        if not SENTENCE_TRANSFORMERS_AVAILABLE:
+            logger.warning("sentence-transformers not available - semantic search disabled")
+            self._model_loaded = False
+            return
         if not self._model_loaded:
             try:
                 logger.info("Loading semantic search model", model=self.model_name)
@@ -46,7 +55,7 @@ class SemanticSearchService:
                            dimensions=self.model.get_sentence_embedding_dimension())
             except Exception as e:
                 logger.error("Failed to load semantic search model", error=str(e))
-                raise
+                self._model_loaded = False
     
     def is_available(self) -> bool:
         """Check if the semantic search service is available."""
@@ -68,9 +77,15 @@ class SemanticSearchService:
         """
         if not text or not text.strip():
             return None
+        
+        if not SENTENCE_TRANSFORMERS_AVAILABLE or not self._model_loaded:
+            logger.warning("Semantic search unavailable - sentence-transformers not installed")
+            return None
             
         try:
             self._load_model()
+            if not self.model:
+                return None
             
             # Clean and prepare text
             clean_text = text.strip()
