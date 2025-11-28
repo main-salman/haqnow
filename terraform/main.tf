@@ -4,6 +4,10 @@ terraform {
       source  = "exoscale/exoscale"
       version = "~> 0.64"
     }
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.4"
+    }
   }
   required_version = ">= 1.0"
 }
@@ -24,8 +28,13 @@ resource "exoscale_dbaas" "foi_mysql" {
   mysql {
     admin_username   = var.mysql_user
     admin_password   = var.mysql_password
-    ip_filter        = [var.server_ip_cidr]  # Allow access from our server
+    # IP filter: Start with VM IP, will be updated after SKS nodes are created
+    ip_filter        = [var.server_ip_cidr]
     backup_schedule  = "02:00"  # Daily backup at 2 AM UTC
+  }
+  
+  lifecycle {
+    ignore_changes = [mysql]  # Allow manual updates during migration
   }
 }
 
@@ -46,9 +55,14 @@ resource "exoscale_dbaas" "foi_postgres_rag" {
   pg {
     admin_username   = var.postgres_user
     admin_password   = var.postgres_password
-    ip_filter        = [var.server_ip_cidr]  # Allow access from our server
+    # IP filter: Start with VM IP, will be updated after SKS nodes are created
+    ip_filter        = [var.server_ip_cidr]
     backup_schedule  = "03:00"  # Daily backup at 3 AM UTC
     version         = "15"      # PostgreSQL 15 supports pgvector
+  }
+  
+  lifecycle {
+    ignore_changes = [pg]  # Allow manual updates during migration
   }
 }
 

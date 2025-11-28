@@ -1,20 +1,48 @@
 #!/bin/bash
 
 # Comprehensive deployment script for HaqNow
-# Usage: ./deploy.sh [patch|minor|major]
-# Default: patch
+# Usage: ./deploy.sh [patch|minor|major] [--sks|--vm]
+# Default: patch, auto-detect deployment target
+#
+# Deployment targets:
+#   --sks  : Deploy to Exoscale SKS (Kubernetes)
+#   --vm   : Deploy to VM (legacy)
+#   (auto) : Auto-detect based on SKS_CLUSTER_ID in .env
 
 set -e  # Exit on any error
 
 VERSION_TYPE=${1:-patch}
+DEPLOY_TARGET=${2:-auto}
+
+# Auto-detect deployment target if not specified
+if [ "$DEPLOY_TARGET" = "auto" ]; then
+    if [ -f .env ] && grep -q "^SKS_CLUSTER_ID=" .env && [ -n "$(grep "^SKS_CLUSTER_ID=" .env | cut -d'=' -f2)" ]; then
+        DEPLOY_TARGET="--sks"
+        echo "🔍 Auto-detected: SKS deployment (SKS_CLUSTER_ID found in .env)"
+    else
+        DEPLOY_TARGET="--vm"
+        echo "🔍 Auto-detected: VM deployment (no SKS_CLUSTER_ID in .env)"
+    fi
+fi
 
 # Preferred host (use domain to avoid IP churn). Override by exporting SERVER_HOST.
-SERVER_HOST=${SERVER_HOST:-www.haqnow.com}
-# SSH identity (override with SSH_KEY_PATH)
+if [ "$DEPLOY_TARGET" = "--sks" ]; then
+    # For SKS, use NLB IP from .env or default
+    if [ -f .env ] && grep -q "^SKS_NLB_IP=" .env; then
+        SERVER_HOST=${SERVER_HOST:-$(grep "^SKS_NLB_IP=" .env | cut -d'=' -f2)}
+    else
+        SERVER_HOST=${SERVER_HOST:-www.haqnow.com}
+    fi
+else
+    SERVER_HOST=${SERVER_HOST:-www.haqnow.com}
+fi
+
+# SSH identity (override with SSH_KEY_PATH) - only for VM deployment
 SSH_KEY_PATH=${SSH_KEY_PATH:-$HOME/.ssh/id_rsa}
 SSH_OPTS="-i ${SSH_KEY_PATH} -o StrictHostKeyChecking=accept-new"
 
 echo "🚀 Starting HaqNow deployment process..."
+echo "📦 Deployment target: $([ "$DEPLOY_TARGET" = "--sks" ] && echo "SKS (Kubernetes)" || echo "VM (Legacy)")"
 echo ""
 
 # Step 1: Update version
@@ -75,7 +103,69 @@ fi
 echo "✅ Changes pushed to repository"
 echo ""
 
-# Step 4: Copy environment configuration and built frontend to server
+# Step 4: Deploy based on target
+if [ "$DEPLOY_TARGET" = "--sks" ]; then
+    # SKS Deployment
+    echo "☸️  Deploying to SKS (Kubernetes)..."
+    echo ""
+    
+    # Check if Docker is running
+    if ! docker info > /dev/null 2>&1; then
+        echo "❌ Docker is not running!"
+        echo "Please start Docker Desktop and try again"
+        exit 1
+    fi
+    
+    # Check if kubectl is configured
+    export KUBECONFIG="${KUBECONFIG:-$(pwd)/k8s/kubeconfig}"
+    if [ ! -f "$KUBECONFIG" ]; then
+        echo "❌ Kubeconfig not found at $KUBECONFIG"
+        echo "Please run: ./k8s/scripts/migrate-with-terraform.sh"
+        exit 1
+    fi
+    
+    if ! kubectl cluster-info > /dev/null 2>&1; then
+        echo "❌ Kubernetes cluster not accessible"
+        exit 1
+    fi
+    
+    # Set Docker user
+    export DOCKER_USER="${DOCKER_USER:-haqnow}"
+    
+    # Build and push images
+    echo "🔨 Building and pushing container images..."
+    ./k8s/scripts/build-and-push-images.sh
+    
+    # Update secrets from .env
+    echo "🔐 Updating Kubernetes secrets..."
+    ./k8s/scripts/create-secrets.sh
+    
+    # Deploy to SKS
+    echo "🚀 Deploying to SKS cluster..."
+    ./k8s/scripts/deploy.sh
+    
+    # Test deployment
+    echo "🧪 Testing deployment..."
+    ./k8s/scripts/test-deployment.sh
+    
+    echo ""
+    echo "✅ SKS deployment complete!"
+    echo "🌐 Application available at: http://${SERVER_HOST}"
+    echo "📊 Check status: kubectl get pods -n haqnow"
+    echo ""
+    echo "Next steps:"
+    echo "  1. Run Playwright e2e tests: cd frontend && npm run test:e2e"
+    echo "  2. Update DNS to point to NLB IP: ${SERVER_HOST}"
+    echo "  3. Create VM snapshot for rollback"
+    echo ""
+    exit 0
+fi
+
+# VM Deployment (legacy)
+echo "🖥️  Deploying to VM (legacy)..."
+echo ""
+
+# Copy environment configuration and built frontend to server
 echo "⚙️ Copying .env configuration to server..."
 # Copy to /tmp first; move into place after repo exists on server
 scp ${SSH_OPTS} .env root@${SERVER_HOST}:/tmp/.env
