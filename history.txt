@@ -10491,3 +10491,134 @@ Available: 2.9GB
 - UK documents continue to work with `country=United+Kingdom` or `country=GB`
 - Other country codes are also normalized (CA→Canada, DE→Germany, etc.)
 
+
+================================================================================
+SKS Migration - Terraform Infrastructure Setup
+Date: 2025-01-XX
+================================================================================
+
+✅ Created Terraform configuration for SKS migration:
+
+1. terraform/sks.tf
+   - SKS cluster resource (Starter tier)
+   - Security group for SKS nodes with proper rules
+   - Node pool with 2 nodes (standard.medium)
+   - Network Load Balancer
+   - Kubeconfig generation
+
+2. terraform/sks_variables.tf
+   - sks_enabled flag to toggle SKS infrastructure
+   - sks_k8s_version, sks_service_level, sks_cni
+   - sks_node_instance_type, sks_node_count
+   - sks_anti_affinity, sks_auto_upgrade
+
+3. terraform/sks_outputs.tf
+   - Cluster ID, node pool ID, security group ID
+   - NLB IP address
+   - Kubeconfig path
+
+4. terraform/main.tf
+   - Updated database resources to ignore IP filter changes during migration
+   - Added local provider for kubeconfig file generation
+
+5. k8s/scripts/migrate-with-terraform.sh
+   - Main migration script using Terraform
+   - Handles initialization, planning, and applying
+   - Generates kubeconfig automatically
+
+6. k8s/scripts/update-database-ips-terraform.sh
+   - Uses kubectl to get node IPs after cluster creation
+   - Updates MySQL and PostgreSQL IP filters via Exoscale CLI
+
+7. k8s/README.md
+   - Complete migration guide with Terraform steps
+
+Key Changes:
+- All infrastructure managed via Terraform (no manual CLI commands)
+- Conditional resources using var.sks_enabled flag
+- Proper security group rules for Kubernetes networking
+- Database IP filters can be updated manually during migration
+- Node IPs retrieved via kubectl (not Terraform data source)
+
+Next Steps:
+1. Add sks_enabled = true to terraform/terraform.tfvars
+2. Run ./k8s/scripts/migrate-with-terraform.sh
+3. Update database IP filters
+4. Build and push container images
+5. Deploy application to SKS
+
+================================================================================
+
+================================================================================
+SKS Migration - Secrets Added to .env and Documentation Updated
+Date: 2025-01-XX
+================================================================================
+
+✅ Added SKS configuration to .env:
+  • SKS_CLUSTER_ID=4768d21b-8a7a-495d-8ae0-0ec1b88137d7
+  • SKS_CLUSTER_NAME=foi-archive-sks-production
+  • SKS_NLB_IP=159.100.246.117
+  • SKS_NODEPOOL_ID=6db11320-5a78-4c40-ba57-cc0870c0fff4
+  • SKS_SECURITY_GROUP_ID=f3c810ea-3948-419b-8de8-d9fe3e17087b
+  • SKS_NODE_IPS=194.182.164.188,159.100.254.32
+  • SKS_KUBECONFIG_PATH=k8s/kubeconfig
+  • DOCKER_USER=haqnow
+
+✅ Created k8s/DEPLOYMENT_GUIDE.md with complete deployment instructions
+
+✅ Updated manifests to use Docker Hub image references:
+  • backend-deployment.yaml: docker.io/haqnow/backend-api:latest
+  • worker-deployment.yaml: docker.io/haqnow/worker:latest
+  • frontend-deployment.yaml: docker.io/haqnow/frontend:latest
+
+✅ Pre-deployment setup complete:
+  • Kubernetes secrets created
+  • Namespace created
+  • ConfigMap created
+  • All manifests prepared
+
+📋 Remaining Steps:
+  1. Start Docker Desktop
+  2. Build and push container images
+  3. Deploy application to SKS
+  4. Test deployment
+  5. Run Playwright e2e tests
+  6. Update DNS to NLB IP
+  7. Create VM snapshot
+  8. Delete old VM
+
+================================================================================
+
+================================================================================
+SKS Migration - Deployment Scripts Updated
+Date: 2025-01-XX
+================================================================================
+
+✅ Updated scripts/deploy.sh for SKS support:
+  • Auto-detects deployment target based on SKS_CLUSTER_ID in .env
+  • Supports --sks flag for explicit SKS deployment
+  • Supports --vm flag for explicit VM deployment
+  • Uses SKS_NLB_IP from .env for SKS deployments
+  • Checks Docker status before SKS deployment
+  • Checks kubectl/kubeconfig before SKS deployment
+
+✅ Created scripts/DEPLOYMENT_TARGETS.md:
+  • Complete guide for both deployment targets
+  • Migration instructions from VM to SKS
+  • Usage examples
+
+✅ Updated .env:
+  • HOW_TO_DEPLOY updated to use auto-detection
+  • DNS IP configuration ready (159.100.246.117)
+
+📋 Deployment Flow:
+  1. Auto-detection: Checks for SKS_CLUSTER_ID in .env
+  2. If found: Deploys to SKS (builds images, updates secrets, deploys)
+  3. If not found: Deploys to VM (legacy SSH-based deployment)
+
+🚀 Usage:
+  ./scripts/deploy.sh patch          # Auto-detect
+  ./scripts/deploy.sh patch --sks   # Force SKS
+  ./scripts/deploy.sh patch --vm     # Force VM
+
+================================================================================
