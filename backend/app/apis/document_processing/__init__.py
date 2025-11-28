@@ -18,7 +18,10 @@ from app.auth.user import AdminUser
 from app.services.s3_service import s3_service
 from app.services.email_service import email_service
 from app.services.arabic_ocr_service import arabic_ocr_service  # Add Arabic OCR service import
-from app.services.semantic_search_service import semantic_search_service
+try:
+    from app.services.semantic_search_service import semantic_search_service
+except ImportError:
+    semantic_search_service = None
 from app.services.ai_summary_service import ai_summary_service
 from app.services.queue_service import queue_service
 from app.database import get_db, Document, BannedTag, JobQueue
@@ -547,7 +550,7 @@ async def process_document_internal(document_id: int, db: Session) -> dict | Non
         
         # Generate semantic search embedding
         try:
-            if semantic_search_service.is_available():
+            if semantic_search_service and semantic_search_service.is_available():
                 document_dict = {
                     'id': document.id,
                     'title': document.title,
@@ -820,7 +823,7 @@ async def process_document(
         
         # Generate semantic search embedding
         try:
-            if semantic_search_service.is_available():
+            if semantic_search_service and semantic_search_service.is_available():
                 document_dict = {
                     'id': document.id,
                     'title': document.title,
