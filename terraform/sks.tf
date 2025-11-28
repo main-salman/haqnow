@@ -137,10 +137,10 @@ resource "exoscale_sks_kubeconfig" "haqnow" {
   groups      = ["system:masters"]
 }
 
-# Save kubeconfig to local file
+# Save kubeconfig to local file (in gitignored location)
 resource "local_sensitive_file" "haqnow_kubeconfig" {
   count            = var.sks_enabled ? 1 : 0
-  filename         = "${path.module}/../k8s/kubeconfig"
+  filename         = "${path.module}/../k8s/.kubeconfig"  # .kubeconfig is gitignored
   content          = exoscale_sks_kubeconfig.haqnow[0].kubeconfig
   file_permission  = "0600"
   

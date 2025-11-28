@@ -201,7 +201,7 @@ terraform plan
 ### Pods not starting
 
 ```bash
-export KUBECONFIG=$(terraform output -raw sks_kubeconfig_path)
+export KUBECONFIG=$(terraform output -raw sks_kubeconfig_path)  # Points to k8s/.kubeconfig (gitignored)
 kubectl describe pod <pod-name> -n haqnow
 kubectl logs <pod-name> -n haqnow
 ```

@@ -159,6 +159,13 @@ data/
 secrets.yml
 credentials.json
 
+# Kubernetes credentials (NEVER commit these)
+k8s/kubeconfig
+k8s/.kubeconfig
+k8s/*.kubeconfig
+**/.kubeconfig
+**/kubeconfig
+
 # =================================
 # LOGS & TEMPORARY FILES
 # =================================

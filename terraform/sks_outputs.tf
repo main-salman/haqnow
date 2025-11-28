@@ -31,7 +31,7 @@ output "sks_nlb_ip" {
 }
 
 output "sks_kubeconfig_path" {
-  description = "Path to kubeconfig file"
+  description = "Path to kubeconfig file (gitignored, contains sensitive credentials)"
   value       = var.sks_enabled ? local_sensitive_file.haqnow_kubeconfig[0].filename : null
   sensitive   = false
 }

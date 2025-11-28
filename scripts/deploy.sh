@@ -117,7 +117,7 @@ if [ "$DEPLOY_TARGET" = "--sks" ]; then
     fi
     
     # Check if kubectl is configured
-    export KUBECONFIG="${KUBECONFIG:-$(pwd)/k8s/kubeconfig}"
+    export KUBECONFIG="${KUBECONFIG:-$(pwd)/k8s/.kubeconfig}"
     if [ ! -f "$KUBECONFIG" ]; then
         echo "❌ Kubeconfig not found at $KUBECONFIG"
         echo "Please run: ./k8s/scripts/migrate-with-terraform.sh"

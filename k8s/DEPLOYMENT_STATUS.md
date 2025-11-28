@@ -62,7 +62,7 @@ export DOCKER_USER="haqnow"
 
 ```bash
 # Check cluster status
-export KUBECONFIG="$(pwd)/k8s/kubeconfig"
+export KUBECONFIG="$(pwd)/k8s/.kubeconfig"
 kubectl get nodes
 kubectl get pods -n haqnow
 kubectl get services -n haqnow
