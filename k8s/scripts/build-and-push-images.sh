@@ -24,14 +24,21 @@ fi
 echo -e "${GREEN}🔨 Building and pushing container images${NC}"
 echo ""
 
-# Login to Docker Hub (optional - can push without login for public images)
+# Login to Docker Hub
 echo -e "${YELLOW}Attempting Docker Hub login...${NC}"
 if [ -n "$DOCKER_PASSWORD" ]; then
     echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin "$REGISTRY" || {
-        echo -e "${YELLOW}⚠️  Login failed, but continuing (may push to public registry)${NC}"
+        echo -e "${RED}❌ Docker Hub login failed${NC}"
+        echo "Please check your Docker Hub credentials"
+        exit 1
     }
+    echo -e "${GREEN}✅ Logged in to Docker Hub${NC}"
 else
-    echo -e "${YELLOW}⚠️  DOCKER_PASSWORD not set. Will attempt to push without login (public images)${NC}"
+    echo -e "${YELLOW}⚠️  DOCKER_PASSWORD not set. Attempting anonymous push...${NC}"
+    echo -e "${YELLOW}Note: You may need to create repositories on Docker Hub first:${NC}"
+    echo "  - https://hub.docker.com/repository/create"
+    echo "  - Create: haqnow/backend-api, haqnow/worker, haqnow/frontend"
+    echo ""
 fi
 
 # Build and push backend API image

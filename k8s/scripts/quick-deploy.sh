@@ -20,7 +20,7 @@ if ! docker info > /dev/null 2>&1; then
 fi
 
 # Check kubectl
-export KUBECONFIG="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../k8s/kubeconfig" && pwd)"
+export KUBECONFIG="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/k8s/.kubeconfig"
 if ! kubectl cluster-info > /dev/null 2>&1; then
     echo -e "${RED}❌ Kubernetes cluster not accessible${NC}"
     exit 1

@@ -49,8 +49,8 @@ export DOCKER_USER="haqnow"
 ### Step 3: Deploy Application to SKS
 
 ```bash
-# Ensure kubeconfig is set
-export KUBECONFIG="$(pwd)/k8s/kubeconfig"
+# Ensure kubeconfig is set (gitignored, contains sensitive credentials)
+export KUBECONFIG="$(pwd)/k8s/.kubeconfig"
 
 # Deploy all components
 ./k8s/scripts/deploy.sh

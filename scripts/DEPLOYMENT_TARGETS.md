@@ -14,7 +14,7 @@ HaqNow supports two deployment targets:
 **Requirements**:
 - Docker Desktop running
 - SKS cluster created via Terraform
-- Kubeconfig available at `k8s/kubeconfig`
+- Kubeconfig available at `k8s/.kubeconfig` (gitignored, contains sensitive credentials)
 
 **What it does**:
 1. Builds and pushes container images to Docker Hub
