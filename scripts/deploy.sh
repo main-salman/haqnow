@@ -133,11 +133,20 @@ if [ "$DEPLOY_TARGET" = "--sks" ]; then
     # Load registry config from .env
     if [ -f .env ]; then
         export REGISTRY="${REGISTRY:-ghcr.io}"
-        export DOCKER_USER="${DOCKER_USER:-$(grep '^GITHUB_USER=' .env | cut -d'=' -f2 || echo 'main-salman')}"
-        export GITHUB_TOKEN="${GITHUB_TOKEN:-$(grep '^GITHUB_TOKEN=' .env | cut -d'=' -f2 | sed 's/#.*$//' | tr -d ' ')}"
+        # Try GITHUB_USER first, then DOCKER_USER, then default
+        export DOCKER_USER="${DOCKER_USER:-$(grep '^GITHUB_USER=' .env 2>/dev/null | cut -d'=' -f2 | tr -d ' ' || grep '^DOCKER_USER=' .env 2>/dev/null | cut -d'=' -f2 | tr -d ' ' || echo 'main-salman')}"
+        # Get GITHUB_TOKEN, handling comments and whitespace
+        export GITHUB_TOKEN="${GITHUB_TOKEN:-$(grep '^GITHUB_TOKEN=' .env 2>/dev/null | cut -d'=' -f2- | sed 's/#.*$//' | tr -d ' ' | head -1)}"
     else
         export REGISTRY="${REGISTRY:-ghcr.io}"
         export DOCKER_USER="${DOCKER_USER:-main-salman}"
+    fi
+    
+    # Validate GITHUB_TOKEN
+    if [ -z "$GITHUB_TOKEN" ]; then
+        echo "❌ GITHUB_TOKEN not found in .env"
+        echo "Please add: GITHUB_TOKEN=your_token_here"
+        exit 1
     fi
     
     # Set up Docker Buildx for caching
