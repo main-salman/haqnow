@@ -1,8 +1,9 @@
-FROM python:3.11-slim
+# Multi-stage build for faster rebuilds
+FROM python:3.11-slim AS base
 
 WORKDIR /app
 
-# Install system dependencies for OCR and document processing
+# Install system dependencies (cached layer)
 RUN apt-get update && apt-get install -y \
     tesseract-ocr \
     tesseract-ocr-ara \
@@ -21,18 +22,17 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies (optimized for speed)
+# Dependencies stage (cached unless requirements change)
+FROM base AS dependencies
 COPY requirements.txt requirements-rag.txt ./
-# Use pre-built wheels and install in parallel where possible
-RUN pip install --no-cache-dir --prefer-binary -r requirements.txt && \
-    pip install --no-cache-dir --prefer-binary sentence-transformers>=2.2.2,<3.0.0
+# Install dependencies with caching
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --prefer-binary -r requirements.txt && \
+    pip install --prefer-binary sentence-transformers>=2.2.2,<3.0.0
 
-# Copy application code
+# Application stage (only rebuilds when code changes)
+FROM dependencies AS app
 COPY . .
 
-# Expose port
 EXPOSE 8000
-
-# Default command (can be overridden in Kubernetes)
 CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
-

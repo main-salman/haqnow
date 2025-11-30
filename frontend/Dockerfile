@@ -1,30 +1,26 @@
-FROM node:18-alpine AS builder
+# Multi-stage build for faster rebuilds
+FROM node:18-alpine AS base
 
 WORKDIR /app
 
-# Install Python and build tools for native dependencies
+# Install build dependencies (cached layer)
 RUN apk add --no-cache python3 make g++
 
-# Copy package files
+# Dependencies stage (cached unless package.json changes)
+FROM base AS dependencies
 COPY package*.json ./
-RUN npm install --legacy-peer-deps --ignore-scripts || npm install --legacy-peer-deps
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --legacy-peer-deps --ignore-scripts
 
-# Copy source code
+# Build stage (only rebuilds when source changes)
+FROM dependencies AS builder
 COPY . .
-
-# Build application
 RUN npm run build
 
-# Production stage - use nginx to serve static files
+# Production stage
 FROM nginx:alpine
-
-# Copy built files from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
-
-# Copy nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
-
 CMD ["nginx", "-g", "daemon off;"]
-
