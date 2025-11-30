@@ -157,10 +157,12 @@ if [ "$DEPLOY_TARGET" = "--sks" ]; then
     # Login to registry
     if [ "$REGISTRY" = "ghcr.io" ] && [ -n "$GITHUB_TOKEN" ]; then
         echo "🔐 Logging in to GitHub Container Registry..."
-        echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$DOCKER_USER" --password-stdin > /dev/null 2>&1 || {
+        echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$DOCKER_USER" --password-stdin || {
             echo "❌ Failed to login to GHCR"
+            echo "Debug: DOCKER_USER=$DOCKER_USER, Token length=${#GITHUB_TOKEN}"
             exit 1
         }
+        echo "✅ Logged in to GHCR"
     fi
     
     IMAGE_PREFIX="${REGISTRY}/${DOCKER_USER}"
