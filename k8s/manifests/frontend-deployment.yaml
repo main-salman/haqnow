@@ -15,9 +15,11 @@ spec:
       labels:
         app: frontend
     spec:
-          containers:
-          - name: frontend
-            image: ${REGISTRY:-docker.io}/${DOCKER_USER:-haqnow}/frontend:latest
+      imagePullSecrets:
+      - name: ghcr-secret
+      containers:
+      - name: frontend
+        image: ghcr.io/main-salman/frontend:latest
         ports:
         - containerPort: 80
           name: http

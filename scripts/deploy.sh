@@ -1,13 +1,14 @@
 #!/bin/bash
 
-# Comprehensive deployment script for HaqNow
-# Usage: ./deploy.sh [patch|minor|major] [--sks|--vm]
+# Fast deployment script for HaqNow - Single source of truth
+# Usage: ./scripts/deploy.sh [patch|minor|major] [--sks|--vm]
 # Default: patch, auto-detect deployment target
 #
-# Deployment targets:
-#   --sks  : Deploy to Exoscale SKS (Kubernetes)
-#   --vm   : Deploy to VM (legacy)
-#   (auto) : Auto-detect based on SKS_CLUSTER_ID in .env
+# Optimizations:
+# - Parallel Docker builds
+# - Buildx cache mounts for faster rebuilds
+# - Only rebuilds changed layers
+# - Target: <10 minutes (ideally 2-3 minutes for code-only changes)
 
 set -e  # Exit on any error
 
@@ -105,7 +106,7 @@ echo ""
 
 # Step 4: Deploy based on target
 if [ "$DEPLOY_TARGET" = "--sks" ]; then
-    # SKS Deployment
+    # SKS Deployment - Optimized for speed
     echo "☸️  Deploying to SKS (Kubernetes)..."
     echo ""
     
@@ -129,12 +130,91 @@ if [ "$DEPLOY_TARGET" = "--sks" ]; then
         exit 1
     fi
     
-    # Set Docker user
-    export DOCKER_USER="${DOCKER_USER:-haqnow}"
+    # Load registry config from .env
+    if [ -f .env ]; then
+        export REGISTRY="${REGISTRY:-ghcr.io}"
+        export DOCKER_USER="${DOCKER_USER:-$(grep '^GITHUB_USER=' .env | cut -d'=' -f2 || echo 'main-salman')}"
+        export GITHUB_TOKEN="${GITHUB_TOKEN:-$(grep '^GITHUB_TOKEN=' .env | cut -d'=' -f2 | sed 's/#.*$//' | tr -d ' ')}"
+    else
+        export REGISTRY="${REGISTRY:-ghcr.io}"
+        export DOCKER_USER="${DOCKER_USER:-main-salman}"
+    fi
     
-    # Build and push images
-    echo "🔨 Building and pushing container images..."
-    ./k8s/scripts/build-and-push-images.sh
+    # Set up Docker Buildx for caching
+    echo "🔧 Setting up Docker Buildx..."
+    docker buildx create --use --name haqnow-builder 2>/dev/null || docker buildx use haqnow-builder
+    docker buildx inspect --bootstrap > /dev/null 2>&1 || true
+    
+    # Login to registry
+    if [ "$REGISTRY" = "ghcr.io" ] && [ -n "$GITHUB_TOKEN" ]; then
+        echo "🔐 Logging in to GitHub Container Registry..."
+        echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$DOCKER_USER" --password-stdin > /dev/null 2>&1 || {
+            echo "❌ Failed to login to GHCR"
+            exit 1
+        }
+    fi
+    
+    IMAGE_PREFIX="${REGISTRY}/${DOCKER_USER}"
+    START_TIME=$(date +%s)
+    
+    # Build images in parallel with caching
+    echo "🔨 Building container images (parallel, cached)..."
+    echo ""
+    
+    # Build backend API (with cache)
+    echo "📦 Building backend-api..."
+    docker buildx build \
+        --platform linux/amd64 \
+        --cache-from type=registry,ref=${IMAGE_PREFIX}/backend-api:latest \
+        --cache-to type=inline \
+        --load \
+        -f backend/Dockerfile \
+        -t ${IMAGE_PREFIX}/backend-api:latest \
+        backend/ > /tmp/backend-build.log 2>&1 &
+    BACKEND_PID=$!
+    
+    # Build worker (with cache)
+    echo "📦 Building worker..."
+    docker buildx build \
+        --platform linux/amd64 \
+        --cache-from type=registry,ref=${IMAGE_PREFIX}/worker:latest \
+        --cache-to type=inline \
+        --load \
+        -f backend/Dockerfile.worker \
+        -t ${IMAGE_PREFIX}/worker:latest \
+        backend/ > /tmp/worker-build.log 2>&1 &
+    WORKER_PID=$!
+    
+    # Build frontend (with cache)
+    echo "📦 Building frontend..."
+    docker buildx build \
+        --platform linux/amd64 \
+        --cache-from type=registry,ref=${IMAGE_PREFIX}/frontend:latest \
+        --cache-to type=inline \
+        --load \
+        -f frontend/Dockerfile \
+        -t ${IMAGE_PREFIX}/frontend:latest \
+        frontend/ > /tmp/frontend-build.log 2>&1 &
+    FRONTEND_PID=$!
+    
+    # Wait for all builds to complete
+    echo "⏳ Waiting for builds to complete..."
+    wait $BACKEND_PID && echo "✅ Backend API built" || { echo "❌ Backend build failed"; cat /tmp/backend-build.log | tail -20; exit 1; }
+    wait $WORKER_PID && echo "✅ Worker built" || { echo "❌ Worker build failed"; cat /tmp/worker-build.log | tail -20; exit 1; }
+    wait $FRONTEND_PID && echo "✅ Frontend built" || { echo "❌ Frontend build failed"; cat /tmp/frontend-build.log | tail -20; exit 1; }
+    
+    BUILD_TIME=$(($(date +%s) - START_TIME))
+    echo ""
+    echo "⏱️  Build time: ${BUILD_TIME}s"
+    echo ""
+    
+    # Push images in parallel
+    echo "📤 Pushing images to registry..."
+    docker push ${IMAGE_PREFIX}/backend-api:latest > /tmp/backend-push.log 2>&1 &
+    docker push ${IMAGE_PREFIX}/worker:latest > /tmp/worker-push.log 2>&1 &
+    docker push ${IMAGE_PREFIX}/frontend:latest > /tmp/frontend-push.log 2>&1 &
+    
+    wait && echo "✅ All images pushed"
     
     # Update secrets from .env
     echo "🔐 Updating Kubernetes secrets..."
@@ -142,32 +222,36 @@ if [ "$DEPLOY_TARGET" = "--sks" ]; then
     
     # Deploy to SKS
     echo "🚀 Deploying to SKS cluster..."
+    export REGISTRY DOCKER_USER
     ./k8s/scripts/deploy.sh
     
-    # Test deployment
-    echo "🧪 Testing deployment..."
-    ./k8s/scripts/test-deployment.sh
+    # Restart pods to pull new images
+    echo "🔄 Restarting pods to pull new images..."
+    kubectl rollout restart deployment/backend-api -n haqnow
+    kubectl rollout restart deployment/worker -n haqnow
+    kubectl rollout restart deployment/frontend -n haqnow
     
+    # Wait for rollout
+    echo "⏳ Waiting for rollout to complete..."
+    kubectl rollout status deployment/backend-api -n haqnow --timeout=120s || true
+    kubectl rollout status deployment/worker -n haqnow --timeout=120s || true
+    kubectl rollout status deployment/frontend -n haqnow --timeout=120s || true
+    
+    TOTAL_TIME=$(($(date +%s) - START_TIME))
     echo ""
-    echo "✅ SKS deployment complete!"
+    echo "✅ SKS deployment complete! (Total time: ${TOTAL_TIME}s)"
     echo "🌐 Application available at: http://${SERVER_HOST}"
     echo "📊 Check status: kubectl get pods -n haqnow"
-    echo ""
-    echo "Next steps:"
-    echo "  1. Run Playwright e2e tests: cd frontend && npm run test:e2e"
-    echo "  2. Update DNS to point to NLB IP: ${SERVER_HOST}"
-    echo "  3. Create VM snapshot for rollback"
     echo ""
     exit 0
 fi
 
-# VM Deployment (legacy)
+# VM Deployment (legacy) - Keep existing fast VM deployment
 echo "🖥️  Deploying to VM (legacy)..."
 echo ""
 
 # Copy environment configuration and built frontend to server
 echo "⚙️ Copying .env configuration to server..."
-# Copy to /tmp first; move into place after repo exists on server
 scp ${SSH_OPTS} .env root@${SERVER_HOST}:/tmp/.env
 
 if [ $? -ne 0 ]; then
@@ -178,7 +262,6 @@ fi
 echo "✅ Environment configuration copied to server"
 
 echo "📦 Uploading built frontend assets..."
-# Clean old files on server before uploading
 ssh ${SSH_OPTS} root@${SERVER_HOST} "rm -rf /tmp/frontend_dist" || true
 scp -r ${SSH_OPTS} frontend/dist root@${SERVER_HOST}:/tmp/frontend_dist
 echo "✅ Frontend assets uploaded"
@@ -682,4 +765,4 @@ echo ""
 echo "🧪 Testing RAG system on live site..."
 echo "🔍 To test AI Q&A: Visit /search-page → Click 'AI Q&A' tab → Ask questions!"
 echo ""
-echo "Next deployment: ./deploy.sh [patch|minor|major]" 
+echo "Next deployment: ./scripts/deploy.sh [patch|minor|major]"

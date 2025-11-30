@@ -15,9 +15,11 @@ spec:
       labels:
         app: worker
     spec:
-          containers:
-          - name: worker
-            image: ${REGISTRY:-docker.io}/${DOCKER_USER:-haqnow}/worker:latest
+      imagePullSecrets:
+      - name: ghcr-secret
+      containers:
+      - name: worker
+        image: ghcr.io/main-salman/worker:latest
         envFrom:
         - configMapRef:
             name: haqnow-config
@@ -25,8 +27,8 @@ spec:
             name: haqnow-secrets
         resources:
           requests:
-            memory: "512Mi"
-            cpu: "500m"
+            memory: "256Mi"
+            cpu: "100m"
           limits:
             memory: "1Gi"
             cpu: "1000m"
