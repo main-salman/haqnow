@@ -1,4 +1,5 @@
 # Frontend Ingress - serves static files
+# Only responds to haqnow.com domains, blocks direct IP access
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -26,16 +27,6 @@ spec:
               number: 80
   - host: haqnow.com
     http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: frontend-service
-            port:
-              number: 80
-  # Default rule for IP access
-  - http:
       paths:
       - path: /
         pathType: Prefix
@@ -78,16 +69,6 @@ spec:
               number: 8000
   - host: haqnow.com
     http:
-      paths:
-      - path: /api(/|$)(.*)
-        pathType: ImplementationSpecific
-        backend:
-          service:
-            name: backend-service
-            port:
-              number: 8000
-  # Default rule for IP access
-  - http:
       paths:
       - path: /api(/|$)(.*)
         pathType: ImplementationSpecific
