@@ -1,0 +1,36 @@
+# Base image with all heavy dependencies - BUILD ONCE, REUSE MANY TIMES
+# Rebuild only when requirements.txt changes
+# Tag: ghcr.io/main-salman/backend-base:latest
+#
+# Build command: docker buildx build --platform linux/amd64 -f Dockerfile.base -t ghcr.io/main-salman/backend-base:latest --push .
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    tesseract-ocr \
+    tesseract-ocr-ara \
+    tesseract-ocr-fra \
+    tesseract-ocr-deu \
+    tesseract-ocr-spa \
+    tesseract-ocr-rus \
+    tesseract-ocr-chi-sim \
+    tesseract-ocr-jpn \
+    poppler-utils \
+    libgl1 \
+    libglib2.0-0 \
+    pkg-config \
+    libmariadb-dev \
+    python3-dev \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install ALL Python dependencies (the slow part)
+COPY requirements.txt requirements-rag.txt ./
+RUN pip install --no-cache-dir --prefer-binary -r requirements.txt && \
+    pip install --no-cache-dir --prefer-binary "sentence-transformers>=2.2.2,<3.0.0"
+
+# This base image has everything except the app code
+# App images will use: FROM ghcr.io/main-salman/backend-base:latest
