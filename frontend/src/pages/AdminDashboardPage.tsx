@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate, Outlet } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LayoutDashboard, FileCheck, FileText, Tag, Users, Settings, LogOut, ShieldBan, Loader2, Languages, TrendingUp, MessageSquare } from "lucide-react";
+import { LayoutDashboard, FileCheck, FileText, Tag, Users, Settings, LogOut, ShieldBan, Loader2, Languages, TrendingUp, MessageSquare, BarChart3 } from "lucide-react";
 
 // Logout function
 const handleLogout = (navigate: Function) => {
@@ -143,6 +143,7 @@ export default function AdminDashboardPage() {
           </div>
           <nav className="space-y-2">
             <NavItem to="/admin-dashboard-page" icon={<LayoutDashboard className="mr-3 h-5 w-5" />} label="Dashboard Home" />
+            <NavItem to="/admin-analytics-page" icon={<BarChart3 className="mr-3 h-5 w-5" />} label="Analytics" />
             <NavItem to="/admin-pending-documents-page" icon={<FileCheck className="mr-3 h-5 w-5" />} label="Pending Documents" />
             <NavItem to="/admin-approved-documents-page" icon={<FileText className="mr-3 h-5 w-5" />} label="Approved Documents" />
             <NavItem to="/admin-banned-tags-page" icon={<ShieldBan className="mr-3 h-5 w-5" />} label="Manage Banned Tags" />

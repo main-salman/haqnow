@@ -5,6 +5,7 @@ import { RouteObject } from "react-router";
 
 
 
+const AdminAnalyticsPage = lazy(() => import("./pages/AdminAnalyticsPage.tsx"));
 const AdminApprovedDocumentsPage = lazy(() => import("./pages/AdminApprovedDocumentsPage.tsx"));
 const AdminBannedTagsPage = lazy(() => import("./pages/AdminBannedTagsPage.tsx"));
 const AdminBannedWordsPage = lazy(() => import("./pages/AdminBannedWordsPage.tsx"));
@@ -27,6 +28,8 @@ const UploadDocumentPage = lazy(() => import("./pages/UploadDocumentPage.tsx"));
 
 export const userRoutes: RouteObject[] = [
 
+	{ path: "/admin-analytics-page", element: <AdminAnalyticsPage />},
+	{ path: "/adminanalyticspage", element: <AdminAnalyticsPage />},
 	{ path: "/admin-approved-documents-page", element: <AdminApprovedDocumentsPage />},
 	{ path: "/adminapproveddocumentspage", element: <AdminApprovedDocumentsPage />},
 	{ path: "/admin-banned-tags-page", element: <AdminBannedTagsPage />},

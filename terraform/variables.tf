@@ -180,3 +180,36 @@ variable "vm_enabled" {
   type        = bool
   default     = true
 }
+
+# ============================================
+# Umami Analytics Configuration
+# ============================================
+variable "umami_enabled" {
+  description = "Whether to deploy Umami analytics infrastructure"
+  type        = bool
+  default     = true
+}
+
+variable "umami_postgres_plan" {
+  description = "Exoscale DBaaS PostgreSQL plan for Umami (hobbyist-2 is sufficient for analytics)"
+  type        = string
+  default     = "hobbyist-2"
+}
+
+variable "umami_db_user" {
+  description = "Umami PostgreSQL database username"
+  type        = string
+  default     = "umami"
+}
+
+variable "umami_db_password" {
+  description = "Umami PostgreSQL database password"
+  type        = string
+  sensitive   = true
+}
+
+variable "umami_app_secret" {
+  description = "Umami application secret (32+ characters)"
+  type        = string
+  sensitive   = true
+}
