@@ -10925,3 +10925,18 @@ Point www.haqnow.com and haqnow.com to: 194.182.166.72
 3. Restart backend service
 4. Test RAG queries to verify functionality
 
+---
+
+## December 1, 2025 - Added Thaura.AI Attribution to AI Dialog
+
+**Change:** Added "Powered by Thaura.AI, your ethical AI companion" attribution to the "Ask AI about this document" dialog.
+
+**Details:**
+- Added attribution text in the DialogFooter section
+- "Thaura.AI" is a clickable link to https://thaura.ai/
+- Styled with muted text that doesn't distract from main functionality
+- Responsive design: centered on mobile, left-aligned on desktop
+
+**File Modified:**
+- frontend/src/pages/DocumentDetailPage.tsx - Added Thaura.AI attribution in AI Q&A dialog footer
+
