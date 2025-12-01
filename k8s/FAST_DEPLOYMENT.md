@@ -191,7 +191,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 
 The old process used separate scripts:
 - `k8s/scripts/build-and-push-images.sh`
-- `k8s/scripts/deploy.sh`
+- `scripts/deploy.sh` (handles both VM and SKS deployments)
 - `k8s/scripts/create-secrets.sh`
 
 **New process**: Everything in `scripts/deploy.sh` (single source of truth)

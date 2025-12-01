@@ -52,7 +52,7 @@ export DOCKER_USER="haqnow"
 ./k8s/scripts/create-secrets.sh
 
 # 3. Deploy application
-./k8s/scripts/deploy.sh
+./scripts/deploy.sh --sks
 
 # 4. Test deployment
 ./k8s/scripts/test-deployment.sh

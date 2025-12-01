@@ -53,7 +53,7 @@ export DOCKER_USER="haqnow"
 export KUBECONFIG="$(pwd)/k8s/.kubeconfig"
 
 # Deploy all components
-./k8s/scripts/deploy.sh
+./scripts/deploy.sh --sks
 ```
 
 **This will:**
