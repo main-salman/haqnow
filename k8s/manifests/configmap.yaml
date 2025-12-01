@@ -17,6 +17,9 @@ data:
   ALLOWED_ORIGINS: "http://www.haqnow.com,https://www.haqnow.com,http://haqnow.com,https://haqnow.com"
   ALLOWED_HOSTS: "localhost,127.0.0.1,www.haqnow.com,haqnow.com"
   
+  # Kubernetes health check compatibility
+  DISABLE_HOST_CHECK: "true"
+  
   # Redis Configuration (optional - falls back to in-memory)
   REDIS_URL: "redis://redis-service:6379"
 
