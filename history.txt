@@ -10835,3 +10835,20 @@ Point www.haqnow.com and haqnow.com to: 194.182.166.72
 - k8s/DEPLOYMENT_GUIDE.md - Updated deploy script reference
 - k8s/scripts/migrate-with-terraform.sh - Updated deploy script reference
 
+---
+
+## December 1, 2025 - Block Direct IP Access
+
+**Security Fix:**
+- Removed default catch-all ingress rules that allowed direct IP access
+- Site now only responds to requests with Host header: www.haqnow.com or haqnow.com
+- Direct IP access (e.g., http://IP:31621/) now returns 404
+
+**Technical Details:**
+- Nginx ingress controller still listens on NodePorts (31621/31993)
+- But without matching Host header, requests are rejected
+- Deflect CDN forwards proper Host headers, so CDN traffic still works
+
+**Files Modified:**
+- k8s/manifests/ingress.yaml - Removed default IP access rules for frontend and backend
+
