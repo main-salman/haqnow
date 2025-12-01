@@ -68,7 +68,12 @@ def setup_cors(app: FastAPI):
 def setup_security_middleware(app: FastAPI):
     """Setup security middleware."""
     # Trusted host middleware
-    allowed_hosts = ["localhost", "127.0.0.1", "*.exoscale.com"]
+    # Allow all hosts in Kubernetes (health checks come from internal IPs)
+    # Set DISABLE_HOST_CHECK=true in k8s environments
+    if os.getenv("DISABLE_HOST_CHECK", "").lower() == "true":
+        return  # Skip TrustedHostMiddleware in Kubernetes
+    
+    allowed_hosts = ["localhost", "127.0.0.1", "*.exoscale.com", "*"]
     custom_hosts = os.getenv("ALLOWED_HOSTS", "").split(",")
     allowed_hosts.extend([host.strip() for host in custom_hosts if host.strip()])
     
