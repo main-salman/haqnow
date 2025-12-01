@@ -10778,3 +10778,38 @@ USAGE:
 **DNS Update Required:**
 Point www.haqnow.com and haqnow.com to: 194.182.166.72
 
+
+[2025-12-01] **MIGRATION COMPLETE: VM to SKS (Kubernetes)**
+
+**Summary:**
+- Successfully migrated HaqNow from single VM to Exoscale SKS (Kubernetes)
+- DNS updated to point to NLB IP: 159.100.246.117
+- Old VM (foi-archive-app-production) decommissioned via Terraform
+
+**Infrastructure Changes:**
+- Created SKS cluster with 2 nodes (standard.medium)
+- Configured NLB with HTTP (80→31621) and HTTPS (443→31993) services
+- Installed nginx-ingress controller for routing
+- Removed extra K8s-created LoadBalancer NLB
+
+**Build Optimizations:**
+- Pre-built base image with heavy dependencies (~10 min one-time build)
+- App image rebuilds take ~11 seconds
+- Total deployment time: ~52 seconds
+
+**Terraform Changes:**
+- Added `vm_enabled` variable (set to false to decommission VM)
+- Added NLB services for HTTP/HTTPS routing
+- Updated outputs for SKS-only infrastructure
+
+**DNS Configuration:**
+- haqnow.com → 159.100.246.117
+- www.haqnow.com → 159.100.246.117
+
+**Files Modified:**
+- terraform/main.tf - Added count to VM resource
+- terraform/variables.tf - Added vm_enabled variable
+- terraform/sks.tf - Added NLB service configurations
+- terraform/terraform.tfvars - Set vm_enabled = false
+- scripts/deploy.sh - Auto-detects SKS vs VM deployment
+

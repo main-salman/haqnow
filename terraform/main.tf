@@ -125,8 +125,9 @@ resource "exoscale_ssh_key" "foi_key" {
   public_key = file("~/.ssh/id_rsa.pub") # Adjust path as needed
 }
 
-# Compute Instance for the application
+# Compute Instance for the application (disabled after SKS migration)
 resource "exoscale_compute_instance" "foi_app" {
+  count              = var.vm_enabled ? 1 : 0
   zone               = var.zone
   name               = "${var.project_name}-app-${var.environment}"
   template_id        = "c71eb1d9-e537-4f92-9832-7089e6e45fae" # Ubuntu 24.04 LTS
@@ -151,7 +152,7 @@ resource "exoscale_compute_instance" "foi_app" {
     admin_password     = var.admin_password
     jwt_secret         = var.jwt_secret_key
     sendgrid_api_key   = var.sendgrid_api_key
-         mysql_host         = data.exoscale_database_uri.foi_mysql_uri.uri
+    mysql_host         = data.exoscale_database_uri.foi_mysql_uri.uri
     mysql_user         = var.mysql_user
     mysql_password     = var.mysql_password
     mysql_database     = var.mysql_database
@@ -161,19 +162,17 @@ resource "exoscale_compute_instance" "foi_app" {
     postgres_database  = var.postgres_database
     mysql_root_password = var.mysql_root_password
   }))
-  
-
 }
 
 # Outputs
 output "instance_ip" {
-  description = "Public IP of the HaqNow.com instance"
-  value       = exoscale_compute_instance.foi_app.public_ip_address
+  description = "Public IP of the HaqNow.com instance (null if VM disabled)"
+  value       = var.vm_enabled ? exoscale_compute_instance.foi_app[0].public_ip_address : null
 }
 
 output "instance_id" {
-  description = "Instance ID"
-  value       = exoscale_compute_instance.foi_app.id
+  description = "Instance ID (null if VM disabled)"
+  value       = var.vm_enabled ? exoscale_compute_instance.foi_app[0].id : null
 }
 
 output "database_uri" {
@@ -190,12 +189,12 @@ output "database_host" {
 
 output "ssh_command" {
   description = "SSH command to connect to the instance"
-  value       = "ssh root@${exoscale_compute_instance.foi_app.public_ip_address}"
+  value       = var.vm_enabled ? "ssh root@${exoscale_compute_instance.foi_app[0].public_ip_address}" : null
 }
 
 output "application_url" {
   description = "URL to access the HaqNow.com application"
-  value       = "http://${exoscale_compute_instance.foi_app.public_ip_address}"
+  value       = var.vm_enabled ? "http://${exoscale_compute_instance.foi_app[0].public_ip_address}" : "http://www.haqnow.com (via SKS)"
 }
 
 output "postgres_rag_uri" {
