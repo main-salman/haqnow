@@ -4,9 +4,14 @@ metadata:
   name: haqnow-ingress
   namespace: haqnow
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
 spec:
   ingressClassName: nginx
+  tls:
+  - hosts:
+    - www.haqnow.com
+    - haqnow.com
+    secretName: haqnow-tls
   rules:
   - host: www.haqnow.com
     http:
