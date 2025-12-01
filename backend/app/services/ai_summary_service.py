@@ -81,7 +81,7 @@ Provide ONLY the summary paragraph, no additional commentary or formatting."""
                         "content": prompt
                     }
                 ],
-                max_tokens=300,  # Enough for ~200 word summary
+                max_tokens=800,  # Increased from 300 to avoid truncation (Thaura uses tokens internally)
                 stream=True  # Thaura requires streaming
             )
             
