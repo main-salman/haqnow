@@ -293,6 +293,18 @@ export default function DocumentDetailPage() {
                   )}
                 </div>
                 <DialogFooter className="flex-col sm:flex-row gap-2 border-t pt-4">
+                  <div className="w-full text-center text-xs text-muted-foreground mb-2 sm:mb-0 sm:mr-auto sm:text-left">
+                    Powered by{' '}
+                    <a 
+                      href="https://thaura.ai/" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline font-medium"
+                    >
+                      Thaura.AI
+                    </a>
+                    , your ethical AI companion
+                  </div>
                   <Button
                     variant="outline"
                     onClick={() => {
