@@ -1,37 +1,10 @@
-# Multi-stage build for faster rebuilds
-FROM python:3.11-slim AS base
+# Fast app image - uses pre-built base with all dependencies
+# Build time: ~10 seconds (just copies code)
+FROM ghcr.io/main-salman/backend-base:latest
 
 WORKDIR /app
 
-# Install system dependencies (cached layer)
-RUN apt-get update && apt-get install -y \
-    tesseract-ocr \
-    tesseract-ocr-ara \
-    tesseract-ocr-fra \
-    tesseract-ocr-deu \
-    tesseract-ocr-spa \
-    tesseract-ocr-rus \
-    tesseract-ocr-chi-sim \
-    tesseract-ocr-jpn \
-    poppler-utils \
-    libgl1 \
-    libglib2.0-0 \
-    pkg-config \
-    libmariadb-dev \
-    python3-dev \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
-
-# Dependencies stage (cached unless requirements change)
-FROM base AS dependencies
-COPY requirements.txt requirements-rag.txt ./
-# Install dependencies with caching
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install --prefer-binary -r requirements.txt && \
-    pip install --prefer-binary sentence-transformers>=2.2.2,<3.0.0
-
-# Application stage (only rebuilds when code changes)
-FROM dependencies AS app
+# Only copy application code (dependencies already in base)
 COPY . .
 
 EXPOSE 8000
