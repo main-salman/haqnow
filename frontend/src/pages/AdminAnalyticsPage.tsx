@@ -270,7 +270,7 @@ export default function AdminAnalyticsPage() {
                 Refresh
               </Button>
               <Button variant="outline" asChild>
-                <a href="https://www.haqnow.com/monitoring" target="_blank" rel="noopener noreferrer">
+                <a href="https://analytics.haqnow.com" target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="mr-2 h-4 w-4" />
                   Visitor Analytics
                 </a>
