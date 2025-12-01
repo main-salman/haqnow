@@ -124,9 +124,52 @@ resource "exoscale_nlb" "haqnow" {
   }
 }
 
-# Note: NLB Services will be configured after Kubernetes deployment
-# They need to point to NodePort services or use Exoscale CCM integration
-# For now, we'll create the NLB and configure services manually or via Kubernetes
+# NLB Service for HTTP (port 80 → NodePort 31621)
+resource "exoscale_nlb_service" "http" {
+  count            = var.sks_enabled ? 1 : 0
+  zone             = var.zone
+  nlb_id           = exoscale_nlb.haqnow[0].id
+  name             = "http"
+  description      = "HTTP traffic to ingress controller"
+  port             = 80
+  target_port      = 31621
+  protocol         = "tcp"
+  strategy         = "round-robin"
+  
+  healthcheck {
+    mode     = "http"
+    port     = 31621
+    uri      = "/health"
+    interval = 10
+    timeout  = 5
+    retries  = 3
+  }
+  
+  instance_pool_id = exoscale_sks_nodepool.haqnow_nodes[0].instance_pool_id
+}
+
+# NLB Service for HTTPS (port 443 → NodePort 31993)
+resource "exoscale_nlb_service" "https" {
+  count            = var.sks_enabled ? 1 : 0
+  zone             = var.zone
+  nlb_id           = exoscale_nlb.haqnow[0].id
+  name             = "https"
+  description      = "HTTPS traffic to ingress controller"
+  port             = 443
+  target_port      = 31993
+  protocol         = "tcp"
+  strategy         = "round-robin"
+  
+  healthcheck {
+    mode     = "tcp"
+    port     = 31993
+    interval = 10
+    timeout  = 5
+    retries  = 3
+  }
+  
+  instance_pool_id = exoscale_sks_nodepool.haqnow_nodes[0].instance_pool_id
+}
 
 # Generate kubeconfig for cluster access
 resource "exoscale_sks_kubeconfig" "haqnow" {
