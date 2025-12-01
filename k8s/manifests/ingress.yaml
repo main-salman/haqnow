@@ -1,7 +1,8 @@
+# Frontend Ingress - serves static files
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: haqnow-ingress
+  name: frontend-ingress
   namespace: haqnow
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
@@ -23,8 +24,46 @@ spec:
             name: frontend-service
             port:
               number: 80
-      - path: /api
+  - host: haqnow.com
+    http:
+      paths:
+      - path: /
         pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
+  # Default rule for IP access
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
+
+---
+# Backend API Ingress - routes /api/* to backend (strips /api prefix)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: backend-ingress
+  namespace: haqnow
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: www.haqnow.com
+    http:
+      paths:
+      - path: /api(/|$)(.*)
+        pathType: ImplementationSpecific
         backend:
           service:
             name: backend-service
@@ -40,11 +79,27 @@ spec:
   - host: haqnow.com
     http:
       paths:
-      - path: /
-        pathType: Prefix
+      - path: /api(/|$)(.*)
+        pathType: ImplementationSpecific
         backend:
           service:
-            name: frontend-service
+            name: backend-service
             port:
-              number: 80
-
+              number: 8000
+  # Default rule for IP access
+  - http:
+      paths:
+      - path: /api(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: backend-service
+            port:
+              number: 8000
+      - path: /health
+        pathType: Exact
+        backend:
+          service:
+            name: backend-service
+            port:
+              number: 8000
