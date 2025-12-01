@@ -2,7 +2,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ExternalLink, Globe, Users, Shield, List } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
+import { useTranslation, Trans } from "react-i18next";
 import Navigation from "@/components/Navigation";
 
 export default function AboutPage() {
@@ -204,7 +204,21 @@ export default function AboutPage() {
         <div id="funding" className="bg-white text-gray-800 rounded-lg shadow-lg p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('about.fundingTitle')}</h2>
           <div className="prose prose-lg text-gray-700 space-y-4">
-            <p>{t('about.fundingBody')}</p>
+            <p>
+              <Trans
+                i18nKey="about.fundingBody"
+                components={{
+                  link: (
+                    <a
+                      className="text-indigo-600 hover:text-indigo-800 underline"
+                      href="https://techforpalestine.org"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    />
+                  ),
+                }}
+              />
+            </p>
           </div>
         </div>
 

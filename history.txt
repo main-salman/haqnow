@@ -10852,3 +10852,22 @@ Point www.haqnow.com and haqnow.com to: 194.182.166.72
 **Files Modified:**
 - k8s/manifests/ingress.yaml - Removed default IP access rules for frontend and backend
 
+---
+
+## December 1, 2025 - Funding Section Update
+
+**Content Update:**
+- Funding section now thanks TechForPalestine.org for hosting support
+- Added inline hyperlink via `<Trans>` to ensure consistent styling and accessibility
+- Populated translations for all supported languages so the new message appears everywhere
+
+**Files Modified:**
+- frontend/src/pages/AboutPage.tsx - Added `<Trans>` with TechForPalestine.org link styling
+- frontend/src/i18n/locales/en.json - Added funding message with link tag
+- frontend/src/i18n/locales/ar.json - Added Arabic funding translation
+- frontend/src/i18n/locales/fr.json - Added French funding translation
+- frontend/src/i18n/locales/de.json - Added German funding translation
+- frontend/src/i18n/locales/ru.json - Added Russian funding translation
+- frontend/src/i18n/locales/pl.json - Added Polish funding translation
+- frontend/src/i18n/locales/tr.json - Added Turkish funding translation
+
