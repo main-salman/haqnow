@@ -10940,3 +10940,105 @@ Point www.haqnow.com and haqnow.com to: 194.182.166.72
 **File Modified:**
 - frontend/src/pages/DocumentDetailPage.tsx - Added Thaura.AI attribution in AI Q&A dialog footer
 
+
+---
+
+## December 1, 2025 - Analytics System Implementation
+
+**Major Feature: Comprehensive Analytics for HaqNow**
+
+Implemented two complementary analytics systems:
+1. **Admin Analytics Dashboard** - Built-in metrics for uploads, documents, and engagement
+2. **Umami Analytics** - Self-hosted visitor tracking (privacy-focused)
+
+### Part 1: Admin Analytics Dashboard (Built-in)
+
+**Backend API** (`backend/app/apis/analytics/__init__.py`):
+- New `/api/analytics/summary` endpoint with comprehensive metrics
+- Upload statistics: total, today, this week, this month, trends
+- Document status: pending, approved, rejected counts
+- Engagement metrics: views, comments, RAG queries
+- Uploads by country and language
+- Processing queue statistics
+- Time-series data for charts (daily, weekly, monthly)
+
+**Frontend** (`frontend/src/pages/AdminAnalyticsPage.tsx`):
+- Beautiful dashboard with recharts visualizations
+- Quick stats cards: Total Uploads, Views, Pending, AI Queries
+- Line chart: Uploads over time (30 days)
+- Pie chart: Document status distribution
+- Bar chart: Top countries by uploads
+- Pie chart: Document language distribution
+- Processing queue statistics grid
+- Auto-refresh every 5 minutes
+- Link to external Umami analytics
+
+**Navigation Updates**:
+- Added Analytics link to admin sidebar in AdminDashboardPage.tsx
+- Added route in user-routes.tsx for /admin-analytics-page
+
+### Part 2: Umami Analytics (Visitor Tracking)
+
+**Infrastructure** (Terraform-managed):
+- `terraform/umami.tf` - PostgreSQL database on Exoscale DBaaS
+- `terraform/variables.tf` - Added umami_enabled, umami_db_password, umami_app_secret
+- `terraform/terraform.tfvars` - Configuration for Umami deployment
+
+**Kubernetes Deployment**:
+- `k8s/manifests/umami-deployment.yaml` - Umami application deployment
+- Auto-generated secrets from Terraform output
+- Ingress for analytics.haqnow.com
+
+**Frontend Integration**:
+- Added Umami tracking script to `frontend/index.html`
+- Script: `<script defer src="https://analytics.haqnow.com/script.js" data-website-id="...">`
+
+**Setup Script**:
+- `scripts/setup-umami.sh` - Automated deployment script
+- Checks prerequisites (terraform, kubectl)
+- Validates credentials in terraform.tfvars
+- Deploys infrastructure with Terraform
+- Deploys to Kubernetes
+- Health check and next steps
+
+**Documentation**:
+- `umami/README.md` - Complete setup and usage guide
+
+### Files Created
+- backend/app/apis/analytics/__init__.py
+- frontend/src/pages/AdminAnalyticsPage.tsx
+- terraform/umami.tf
+- k8s/manifests/umami-deployment.yaml
+- scripts/setup-umami.sh
+- umami/README.md
+
+### Files Modified
+- backend/main.py - Added analytics router
+- frontend/src/user-routes.tsx - Added AdminAnalyticsPage route
+- frontend/src/pages/AdminDashboardPage.tsx - Added Analytics nav link
+- frontend/index.html - Added Umami tracking script
+- terraform/variables.tf - Added Umami variables
+- terraform/terraform.tfvars - Added Umami configuration
+- .env - Added Umami environment variables
+
+### Deployment Steps
+
+**For Admin Analytics (built-in)**:
+```bash
+./scripts/deploy.sh patch
+```
+
+**For Umami Analytics**:
+```bash
+# 1. Update terraform/terraform.tfvars with secure passwords
+# 2. Run setup script
+./scripts/setup-umami.sh
+
+# 3. Configure DNS: analytics.haqnow.com → SKS NLB IP
+# 4. Login to Umami, change password, add website
+# 5. Update frontend/index.html with website ID
+# 6. Deploy frontend changes
+./scripts/deploy.sh patch
+```
+
+---

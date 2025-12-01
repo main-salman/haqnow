@@ -1,0 +1,118 @@
+# Umami Analytics Kubernetes Deployment
+# Self-hosted, privacy-focused web analytics
+#
+# Prerequisites:
+# 1. Run: cd terraform && terraform apply (creates database + secrets)
+# 2. Apply: kubectl apply -f k8s/manifests/umami-secrets.yaml (auto-generated)
+# 3. Apply: kubectl apply -f k8s/manifests/umami-deployment.yaml (this file)
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: umami
+  labels:
+    app: umami
+---
+# Umami Web Application
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: umami
+  namespace: umami
+  labels:
+    app: umami
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: umami
+  template:
+    metadata:
+      labels:
+        app: umami
+    spec:
+      containers:
+      - name: umami
+        image: ghcr.io/umami-software/umami:postgresql-latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: umami-secrets
+              key: database-url
+        - name: DATABASE_TYPE
+          value: postgresql
+        - name: APP_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: umami-secrets
+              key: app-secret
+        - name: DISABLE_TELEMETRY
+          value: "1"
+        - name: TRACKER_SCRIPT_NAME
+          value: script.js
+        # Note: First startup may take longer for database migrations
+        - name: NODE_OPTIONS
+          value: "--max-old-space-size=512"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "768Mi"
+            cpu: "500m"
+        # Longer delays for database migrations on first start
+        livenessProbe:
+          httpGet:
+            path: /api/heartbeat
+            port: 3000
+          initialDelaySeconds: 120
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 5
+        readinessProbe:
+          httpGet:
+            path: /api/heartbeat
+            port: 3000
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: umami
+  namespace: umami
+spec:
+  selector:
+    app: umami
+  ports:
+  - port: 80
+    targetPort: 3000
+  type: ClusterIP
+---
+# Ingress for Umami at analytics.haqnow.com
+# Note: Running under /monitoring requires custom Next.js build with basePath
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: umami-ingress
+  namespace: umami
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: analytics.haqnow.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: umami
+            port:
+              number: 80
