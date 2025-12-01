@@ -467,7 +467,7 @@ Please provide a CONCISE answer in 1-2 paragraphs based only on the information 
                         {"role": "system", "content": "You are a helpful assistant that provides BRIEF, CONCISE answers. Your answers MUST be 1-2 short paragraphs maximum (3-5 sentences total) unless the user explicitly asks for a detailed or longer response. Base your answer ONLY on the provided document context. Do not include any thinking or reasoning tags in your response."},
                         {"role": "user", "content": prompt},
                     ],
-                    max_tokens=800,  # Increased from 300 to avoid truncation (Thaura uses some tokens internally)
+                    max_tokens=2000,  # High limit to avoid truncation (Thaura uses tokens internally for reasoning)
                     stream=True  # Thaura requires streaming for proper responses
                 )
                 

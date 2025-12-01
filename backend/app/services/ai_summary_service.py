@@ -81,7 +81,7 @@ Provide ONLY the summary paragraph, no additional commentary or formatting."""
                         "content": prompt
                     }
                 ],
-                max_tokens=800,  # Increased from 300 to avoid truncation (Thaura uses tokens internally)
+                max_tokens=2000,  # High limit to avoid truncation (Thaura uses tokens internally for reasoning)
                 stream=True  # Thaura requires streaming
             )
             
