@@ -148,6 +148,6 @@ echo ""
 echo "Next steps:"
 echo "  1. Update database IP filters: ./k8s/scripts/update-database-ips.sh"
 echo "  2. Build and push images: ./k8s/scripts/build-and-push-images.sh"
-echo "  3. Deploy application: ./k8s/scripts/deploy.sh"
+echo "  3. Deploy application: ./scripts/deploy.sh --sks"
 echo "  4. Test deployment: ./k8s/scripts/test-deployment.sh"
 

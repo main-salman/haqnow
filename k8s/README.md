@@ -49,7 +49,7 @@ This guide covers migrating HaqNow from VM-based deployment to Exoscale SKS usin
 - `k8s/scripts/build-and-push-images.sh` - Build and push images to CRS
 - `k8s/scripts/create-secrets.sh` - Create Kubernetes secrets from .env
 - `k8s/scripts/update-database-ips-terraform.sh` - Update database IP filters
-- `k8s/scripts/deploy.sh` - Deploy application to SKS
+- `scripts/deploy.sh --sks` - Deploy application to SKS (uses main deploy script)
 - `k8s/scripts/test-deployment.sh` - Test deployment
 
 ## 🚀 Migration Steps
@@ -118,7 +118,7 @@ Creates Kubernetes secrets from your `.env` file.
 ### Step 6: Deploy Application
 
 ```bash
-./k8s/scripts/deploy.sh
+./scripts/deploy.sh --sks
 ```
 
 Deploys all Kubernetes manifests and waits for pods to be ready.

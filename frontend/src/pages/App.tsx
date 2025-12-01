@@ -284,6 +284,7 @@ export default function App() {
           <section className="w-full max-w-4xl mx-auto">
             <div className="relative rounded-lg overflow-hidden shadow-lg bg-gray-100">
               <video
+                id="hero-video"
                 className="w-full h-auto"
                 autoPlay
                 loop
@@ -295,20 +296,43 @@ export default function App() {
                 Your browser does not support the video tag.
               </video>
               
-              {/* Minimal unmute button overlay */}
-              <button
-                onClick={(e) => {
-                  const video = e.currentTarget.previousElementSibling as HTMLVideoElement;
-                  if (video) {
-                    video.muted = !video.muted;
-                    e.currentTarget.textContent = video.muted ? '🔇' : '🔊';
-                  }
-                }}
-                className="absolute bottom-4 right-4 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors duration-200"
-                aria-label="Toggle sound"
-              >
-                🔇
-              </button>
+              {/* Video control buttons overlay */}
+              <div className="absolute bottom-4 right-4 flex gap-2">
+                {/* Pause/Play button */}
+                <button
+                  onClick={(e) => {
+                    const video = document.getElementById('hero-video') as HTMLVideoElement;
+                    if (video) {
+                      if (video.paused) {
+                        video.play();
+                        e.currentTarget.textContent = '⏸️';
+                      } else {
+                        video.pause();
+                        e.currentTarget.textContent = '▶️';
+                      }
+                    }
+                  }}
+                  className="bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors duration-200"
+                  aria-label="Toggle play/pause"
+                >
+                  ⏸️
+                </button>
+                
+                {/* Mute/Unmute button */}
+                <button
+                  onClick={(e) => {
+                    const video = document.getElementById('hero-video') as HTMLVideoElement;
+                    if (video) {
+                      video.muted = !video.muted;
+                      e.currentTarget.textContent = video.muted ? '🔇' : '🔊';
+                    }
+                  }}
+                  className="bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors duration-200"
+                  aria-label="Toggle sound"
+                >
+                  🔇
+                </button>
+              </div>
             </div>
           </section>
 

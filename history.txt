@@ -10813,3 +10813,25 @@ Point www.haqnow.com and haqnow.com to: 194.182.166.72
 - terraform/terraform.tfvars - Set vm_enabled = false
 - scripts/deploy.sh - Auto-detects SKS vs VM deployment
 
+---
+
+## December 1, 2025 - Video Pause Button & Cleanup
+
+**Video Improvements:**
+- Added pause/play button to hero video on homepage
+- Grouped video controls (pause, mute) in a flex container
+- Used emoji icons (⏸️/▶️ for play/pause, 🔇/🔊 for mute)
+
+**Cleanup:**
+- Removed duplicate `k8s/scripts/deploy.sh` - main `scripts/deploy.sh` handles both VM and SKS deployments
+- Updated all k8s documentation to reference `scripts/deploy.sh --sks` instead of the removed duplicate
+
+**Files Modified:**
+- frontend/src/pages/App.tsx - Added pause button, restructured video controls
+- k8s/scripts/deploy.sh - DELETED (duplicate)
+- k8s/FAST_DEPLOYMENT.md - Updated deploy script reference
+- k8s/README.md - Updated deploy script references
+- k8s/DEPLOYMENT_STATUS.md - Updated deploy script reference
+- k8s/DEPLOYMENT_GUIDE.md - Updated deploy script reference
+- k8s/scripts/migrate-with-terraform.sh - Updated deploy script reference
+
