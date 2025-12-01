@@ -15,7 +15,7 @@ Self-hosted, privacy-focused web analytics for tracking visitor metrics without 
 Umami uses:
 - **Database**: Exoscale DBaaS PostgreSQL (managed via Terraform)
 - **Application**: Runs on SKS Kubernetes cluster
-- **Access**: `https://analytics.haqnow.com`
+- **Access**: `https://www.haqnow.com/monitoring`
 
 ## Deployment Steps
 
@@ -65,8 +65,8 @@ kubectl logs -n umami -l app=umami
 
 ### 4. Initial Setup
 
-1. Access Umami at `https://analytics.haqnow.com`
-2. Login with default credentials: `admin` / `umami`
+1. Access Umami at `https://www.haqnow.com/monitoring`
+2. Login with the default credentials (see Umami documentation)
 3. **IMMEDIATELY change the password** in Settings → Profile
 4. Add your website:
    - Go to Settings → Websites → Add website
@@ -79,20 +79,13 @@ kubectl logs -n umami -l app=umami
 Update `frontend/index.html` with your website ID:
 
 ```html
-<script defer src="https://analytics.haqnow.com/script.js" 
+<script defer src="https://www.haqnow.com/monitoring/script.js" 
         data-website-id="YOUR_WEBSITE_ID_HERE"></script>
 ```
 
 Then deploy:
 ```bash
 ./scripts/deploy.sh patch
-```
-
-## DNS Configuration
-
-Add DNS record for analytics subdomain:
-```
-analytics.haqnow.com  →  A record  →  159.100.246.117 (SKS NLB IP)
 ```
 
 ## What Data is Collected
@@ -129,15 +122,6 @@ kubectl logs -n umami -l app=umami -f
 ```bash
 kubectl exec -n umami -it deploy/umami -- \
   sh -c 'echo "SELECT 1" | psql $DATABASE_URL'
-```
-
-### Reset Admin Password
-Connect to the database and run:
-```sql
-UPDATE account 
-SET password = '$2b$10$BUli0c.muyCW1Er1pN9xduLKs9HqNvn2NuktqGGtgQCRrS0RoQv2m' 
-WHERE username = 'admin';
--- This resets password to 'umami'
 ```
 
 ## Cost

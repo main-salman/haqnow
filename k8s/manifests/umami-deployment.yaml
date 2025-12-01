@@ -53,33 +53,25 @@ spec:
           value: "1"
         - name: TRACKER_SCRIPT_NAME
           value: script.js
-        # Note: First startup may take longer for database migrations
-        - name: NODE_OPTIONS
-          value: "--max-old-space-size=512"
         resources:
           requests:
-            memory: "256Mi"
+            memory: "128Mi"
             cpu: "100m"
           limits:
-            memory: "768Mi"
+            memory: "512Mi"
             cpu: "500m"
-        # Longer delays for database migrations on first start
         livenessProbe:
           httpGet:
             path: /api/heartbeat
             port: 3000
-          initialDelaySeconds: 120
+          initialDelaySeconds: 60
           periodSeconds: 30
-          timeoutSeconds: 10
-          failureThreshold: 5
         readinessProbe:
           httpGet:
             path: /api/heartbeat
             port: 3000
-          initialDelaySeconds: 60
+          initialDelaySeconds: 30
           periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 15
 ---
 apiVersion: v1
 kind: Service
@@ -94,8 +86,7 @@ spec:
     targetPort: 3000
   type: ClusterIP
 ---
-# Ingress for Umami at analytics.haqnow.com
-# Note: Running under /monitoring requires custom Next.js build with basePath
+# Ingress for Umami at www.haqnow.com/monitoring
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -103,14 +94,16 @@ metadata:
   namespace: umami
   annotations:
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
 spec:
   ingressClassName: nginx
   rules:
-  - host: analytics.haqnow.com
+  - host: www.haqnow.com
     http:
       paths:
-      - path: /
-        pathType: Prefix
+      - path: /monitoring(/|$)(.*)
+        pathType: ImplementationSpecific
         backend:
           service:
             name: umami
