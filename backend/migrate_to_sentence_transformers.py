@@ -29,8 +29,8 @@ from sentence_transformers import SentenceTransformer
 
 # Configuration
 OLD_DIMENSIONS = 1536
-NEW_DIMENSIONS = 768
-EMBEDDING_MODEL = "all-mpnet-base-v2"
+NEW_DIMENSIONS = 384
+EMBEDDING_MODEL = "all-MiniLM-L6-v2"  # Lightweight model (~90MB)
 BATCH_SIZE = 50  # Process chunks in batches to show progress
 
 
