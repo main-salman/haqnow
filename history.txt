@@ -10892,12 +10892,13 @@ Point www.haqnow.com and haqnow.com to: 194.182.166.72
 
 2. **Embeddings: OpenAI → Sentence-Transformers (Local)**
    - Replaced OpenAI text-embedding-3-small (1536-dim) with sentence-transformers
-   - Model: `all-mpnet-base-v2` (768-dim, high quality)
+   - Model: `all-MiniLM-L6-v2` (384-dim, lightweight ~90MB)
    - Embeddings now generated locally - no data leaves the server
-   - Benefits: Free, private, open-source
+   - Benefits: Free, private, open-source, fits in 1GB memory limit
+   - Note: Using lightweight model to fit within Kubernetes pod memory limits
 
 3. **Database Migration Required:**
-   - Vector column dimension change: 1536 → 768
+   - Vector column dimension change: 1536 → 384
    - All existing documents need re-embedding
    - Migration script: `backend/migrate_to_sentence_transformers.py`
 

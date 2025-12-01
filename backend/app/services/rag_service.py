@@ -66,8 +66,8 @@ class RAGService:
         self.thaura_client = None
         self.embedding_model = None
         self.llm_model = "thaura"  # Thaura AI model
-        self.embedding_model_name = "all-mpnet-base-v2"  # High-quality open-source embeddings
-        self.embedding_dimensions = 768  # Sentence-transformers all-mpnet-base-v2 dimensions
+        self.embedding_model_name = "all-MiniLM-L6-v2"  # Lightweight model (~90MB, fits in 1GB memory)
+        self.embedding_dimensions = 384  # Sentence-transformers all-MiniLM-L6-v2 dimensions
         self._initialize_clients()
         self._initialize_rag_database()
     
