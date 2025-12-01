@@ -1,5 +1,5 @@
 """
-AI Summary Service using Groq API
+AI Summary Service using Thaura AI (Ethical LLM)
 Generates concise 1-paragraph summaries of documents for search and display
 """
 import os
@@ -9,20 +9,21 @@ from typing import Optional
 logger = structlog.get_logger()
 
 class AISummaryService:
-    """Service for generating AI summaries using Groq API"""
+    """Service for generating AI summaries using Thaura AI (ethical, privacy-first)"""
     
     def __init__(self):
-        self.api_key = os.getenv("GROQ_API_KEY")
+        self.api_key = os.getenv("THAURA_API_KEY")
+        self.base_url = os.getenv("THAURA_BASE_URL", "https://backend.thaura.ai/v1")
         self.available = bool(self.api_key)
         
         if not self.available:
-            logger.warning("Groq API key not configured - AI summaries disabled")
+            logger.warning("Thaura API key not configured - AI summaries disabled")
         else:
-            logger.info("AI Summary service initialized with Groq API")
+            logger.info("AI Summary service initialized with Thaura AI (ethical LLM)")
     
     async def generate_summary(self, text: str, title: str = "", max_length: int = 200) -> Optional[str]:
         """
-        Generate a concise 1-paragraph summary of document text using Groq API.
+        Generate a concise 1-paragraph summary of document text using Thaura AI.
         
         Args:
             text: The document text to summarize
@@ -33,7 +34,7 @@ class AISummaryService:
             Summary text or None if generation failed
         """
         if not self.available:
-            logger.warning("AI summary generation skipped - Groq API not configured")
+            logger.warning("AI summary generation skipped - Thaura API not configured")
             return None
         
         if not text or len(text.strip()) < 50:
@@ -41,11 +42,14 @@ class AISummaryService:
             return None
         
         try:
-            from groq import Groq
+            from openai import OpenAI
             
-            client = Groq(api_key=self.api_key)
+            client = OpenAI(
+                api_key=self.api_key,
+                base_url=self.base_url
+            )
             
-            # Truncate text if too long (Groq has token limits)
+            # Truncate text if too long (LLM has token limits)
             max_input_chars = 15000  # ~3750 tokens
             if len(text) > max_input_chars:
                 text = text[:max_input_chars] + "..."
@@ -62,32 +66,42 @@ Document Text:
 
 Provide ONLY the summary paragraph, no additional commentary or formatting."""
             
-            logger.info("Generating AI summary", text_length=len(text), title=title[:50])
+            logger.info("Generating AI summary with Thaura AI", text_length=len(text), title=title[:50])
             
-            # Call Groq API
-            response = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",  # Fast, high-quality model
+            # Call Thaura AI with streaming (required for proper response handling)
+            stream = client.chat.completions.create(
+                model="thaura",  # Thaura's ethical AI model
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are a professional document summarizer. Create concise, factual summaries."
+                        "content": "You are a professional document summarizer. Create concise, factual summaries. Do not include any thinking or reasoning in your response."
                     },
                     {
                         "role": "user",
                         "content": prompt
                     }
                 ],
-                temperature=0.3,  # Lower temperature for more factual output
                 max_tokens=300,  # Enough for ~200 word summary
-                top_p=0.9,
-                stream=False
+                stream=True  # Thaura requires streaming
             )
             
-            summary = response.choices[0].message.content.strip()
+            # Collect streamed response
+            summary = ""
+            for chunk in stream:
+                if hasattr(chunk, 'choices') and chunk.choices:
+                    delta = chunk.choices[0].delta
+                    if hasattr(delta, 'content') and delta.content:
+                        summary += delta.content
+            
+            summary = summary.strip()
             
             if not summary:
-                logger.error("Empty summary received from Groq API")
+                logger.error("Empty summary received from Thaura AI")
                 return None
+            
+            # Clean up any <think> tags if present
+            import re
+            summary = re.sub(r'<think>.*?</think>', '', summary, flags=re.DOTALL).strip()
             
             # Clean up the summary
             summary = summary.replace('\n\n', ' ').replace('\n', ' ')
@@ -107,7 +121,7 @@ Provide ONLY the summary paragraph, no additional commentary or formatting."""
             return summary
             
         except ImportError:
-            logger.error("Groq library not available")
+            logger.error("OpenAI library not available (required for Thaura AI)")
             return None
         except Exception as e:
             logger.error(
@@ -121,11 +135,10 @@ Provide ONLY the summary paragraph, no additional commentary or formatting."""
         """Get current status of AI summary service"""
         return {
             "available": self.available,
-            "model": "llama-3.3-70b-versatile" if self.available else None,
-            "provider": "Groq API"
+            "model": "thaura" if self.available else None,
+            "provider": "Thaura AI (Ethical LLM)"
         }
 
 
 # Singleton instance
 ai_summary_service = AISummaryService()
-

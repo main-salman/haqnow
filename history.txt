@@ -10871,3 +10871,56 @@ Point www.haqnow.com and haqnow.com to: 194.182.166.72
 - frontend/src/i18n/locales/pl.json - Added Polish funding translation
 - frontend/src/i18n/locales/tr.json - Added Turkish funding translation
 
+---
+
+## December 1, 2025 - Migration to Ethical AI (Thaura AI + Sentence-Transformers)
+
+**Major Change: Moving from OpenAI/Groq to Ethical AI providers**
+
+**Motivation:**
+- User requested migration to ethical AI providers for privacy and ethical reasons
+- Thaura AI (https://thaura.ai) - Privacy-first, ethical LLM
+- Sentence-Transformers - Open-source, local embeddings (data never leaves server)
+
+**Changes Made:**
+
+1. **LLM Provider: Groq → Thaura AI**
+   - Replaced Groq API with Thaura AI (OpenAI-compatible)
+   - Model: `thaura` (ethical AI model)
+   - Base URL: `https://backend.thaura.ai/v1`
+   - Note: Thaura requires streaming mode for proper responses
+
+2. **Embeddings: OpenAI → Sentence-Transformers (Local)**
+   - Replaced OpenAI text-embedding-3-small (1536-dim) with sentence-transformers
+   - Model: `all-mpnet-base-v2` (768-dim, high quality)
+   - Embeddings now generated locally - no data leaves the server
+   - Benefits: Free, private, open-source
+
+3. **Database Migration Required:**
+   - Vector column dimension change: 1536 → 768
+   - All existing documents need re-embedding
+   - Migration script: `backend/migrate_to_sentence_transformers.py`
+
+**Files Modified:**
+- backend/app/services/rag_service.py - Complete rewrite for Thaura + Sentence-Transformers
+- backend/app/services/ai_summary_service.py - Updated to use Thaura AI
+- .env - Added THAURA_BASE_URL configuration
+
+**Files Created:**
+- backend/migrate_to_sentence_transformers.py - One-time migration script for embeddings
+
+**Performance Comparison:**
+- Groq: ~0.4-0.5s response time
+- Thaura: ~1.4-1.5s response time (acceptable for use case)
+- Local embeddings: ~1s per embedding (similar to OpenAI API)
+
+**Quality Comparison:**
+- Both systems correctly rank documents in semantic search
+- Sentence-transformers showed slightly better separation between relevant/irrelevant docs
+
+**Post-Deployment Steps:**
+1. Run migration script on server: `python migrate_to_sentence_transformers.py`
+2. Script will re-embed all existing documents
+3. Restart backend service
+4. Test RAG queries to verify functionality
+

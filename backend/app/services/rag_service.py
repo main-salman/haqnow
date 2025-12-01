@@ -1,6 +1,6 @@
 """
 RAG (Retrieval-Augmented Generation) Service for Document Q&A
-Uses Groq (fast LLM inference) + sentence-transformers (local embeddings) + PostgreSQL
+Uses Thaura AI (ethical LLM) + Sentence-Transformers (local embeddings) + PostgreSQL
 """
 
 import asyncio
@@ -10,21 +10,21 @@ import os
 from dataclasses import dataclass
 import json
 
-# LLM API client (Groq)
-try:
-    from groq import Groq
-    GROQ_AVAILABLE = True
-except ImportError:
-    GROQ_AVAILABLE = False
-    Groq = None
-
-# OpenAI for embeddings
+# Thaura AI client (OpenAI-compatible)
 try:
     from openai import OpenAI
-    OPENAI_AVAILABLE = True
+    THAURA_AVAILABLE = True
 except ImportError:
-    OPENAI_AVAILABLE = False
+    THAURA_AVAILABLE = False
     OpenAI = None
+
+# Sentence-Transformers for local embeddings
+try:
+    from sentence_transformers import SentenceTransformer
+    SENTENCE_TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    SENTENCE_TRANSFORMERS_AVAILABLE = False
+    SentenceTransformer = None
 
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -57,46 +57,49 @@ class DocumentChunk:
 
 class RAGService:
     """
-    Cloud RAG service using Groq (LLM) + OpenAI (embeddings) - fully cloud-based
+    Ethical RAG service using Thaura AI (LLM) + Sentence-Transformers (local embeddings)
+    - Thaura AI: Privacy-first, ethical LLM for answer generation
+    - Sentence-Transformers: Open-source, local embeddings (no data leaves server)
     """
     
     def __init__(self):
-        self.groq_client = None
-        self.openai_client = None
-        self.llm_model = "llama-3.3-70b-versatile"  # Groq model (production, Nov 2025)
-        self.embedding_model = "text-embedding-3-small"  # OpenAI embeddings
-        self.embedding_dimensions = 1536  # OpenAI text-embedding-3-small dimensions
+        self.thaura_client = None
+        self.embedding_model = None
+        self.llm_model = "thaura"  # Thaura AI model
+        self.embedding_model_name = "all-mpnet-base-v2"  # High-quality open-source embeddings
+        self.embedding_dimensions = 768  # Sentence-transformers all-mpnet-base-v2 dimensions
         self._initialize_clients()
         self._initialize_rag_database()
     
     def _initialize_clients(self):
-        """Initialize Groq API (LLM) and sentence-transformers (embeddings)"""
+        """Initialize Thaura AI (LLM) and Sentence-Transformers (embeddings)"""
         try:
-            # Initialize Groq for LLM inference (cloud)
-            groq_api_key = os.getenv("GROQ_API_KEY")
-            if not groq_api_key:
-                logger.error("GROQ_API_KEY not found in environment variables")
-                raise ValueError("GROQ_API_KEY is required for RAG functionality")
+            # Initialize Thaura AI for LLM inference (ethical, privacy-first)
+            thaura_api_key = os.getenv("THAURA_API_KEY")
+            thaura_base_url = os.getenv("THAURA_BASE_URL", "https://backend.thaura.ai/v1")
             
-            if not GROQ_AVAILABLE:
-                logger.error("groq package not installed - run: pip install groq")
-                raise ImportError("groq package required")
+            if not thaura_api_key:
+                logger.error("THAURA_API_KEY not found in environment variables")
+                raise ValueError("THAURA_API_KEY is required for RAG functionality")
             
-            self.groq_client = Groq(api_key=groq_api_key)
-            logger.info(f"✅ Groq client initialized (LLM: {self.llm_model})")
-            
-            # Initialize OpenAI for embeddings (cloud-based, no memory overhead)
-            openai_api_key = os.getenv("OPENAI_API_KEY")
-            if not openai_api_key:
-                logger.error("OPENAI_API_KEY not found in environment variables")
-                raise ValueError("OPENAI_API_KEY is required for RAG embeddings")
-            
-            if not OPENAI_AVAILABLE:
+            if not THAURA_AVAILABLE:
                 logger.error("openai package not installed - run: pip install openai")
-                raise ImportError("openai package required")
+                raise ImportError("openai package required for Thaura AI")
             
-            self.openai_client = OpenAI(api_key=openai_api_key)
-            logger.info(f"✅ OpenAI client initialized (embeddings: {self.embedding_model}, {self.embedding_dimensions}-dim)")
+            self.thaura_client = OpenAI(
+                api_key=thaura_api_key,
+                base_url=thaura_base_url
+            )
+            logger.info(f"✅ Thaura AI client initialized (LLM: {self.llm_model}, ethical AI)")
+            
+            # Initialize Sentence-Transformers for local embeddings (open-source, privacy-preserving)
+            if not SENTENCE_TRANSFORMERS_AVAILABLE:
+                logger.error("sentence-transformers package not installed - run: pip install sentence-transformers")
+                raise ImportError("sentence-transformers package required for embeddings")
+            
+            logger.info(f"Loading embedding model: {self.embedding_model_name}...")
+            self.embedding_model = SentenceTransformer(self.embedding_model_name)
+            logger.info(f"✅ Sentence-Transformers initialized (model: {self.embedding_model_name}, {self.embedding_dimensions}-dim, local)")
             
         except Exception as e:
             logger.error(f"Failed to initialize RAG clients: {e}")
@@ -122,42 +125,36 @@ class RAGService:
             # Don't raise exception as this shouldn't prevent the main app from starting
     
     async def generate_embedding(self, text: str) -> List[float]:
-        """Generate embedding for a single text string using OpenAI API"""
-        if not self.openai_client:
-            logger.error("OpenAI client not available")
+        """Generate embedding for a single text string using Sentence-Transformers (local)"""
+        if not self.embedding_model:
+            logger.error("Embedding model not available")
             return None
         
         try:
-            # Call OpenAI embeddings API
+            # Run in executor to avoid blocking async loop
             loop = asyncio.get_event_loop()
-            response = await loop.run_in_executor(
+            embedding = await loop.run_in_executor(
                 None,
-                lambda: self.openai_client.embeddings.create(
-                    input=text,
-                    model=self.embedding_model
-                )
+                lambda: self.embedding_model.encode(text).tolist()
             )
-            return response.data[0].embedding
+            return embedding
         except Exception as e:
             logger.error(f"Failed to generate embedding: {e}")
             return None
 
     async def generate_embeddings(self, texts: List[str]) -> List[List[float]]:
-        """Generate embeddings for multiple texts using OpenAI API"""
-        if not self.openai_client:
-            raise RuntimeError("OpenAI client not available")
+        """Generate embeddings for multiple texts using Sentence-Transformers (local, batched)"""
+        if not self.embedding_model:
+            raise RuntimeError("Embedding model not available")
         
         try:
-            # OpenAI API supports batch embedding generation
+            # Sentence-transformers supports batch encoding efficiently
             loop = asyncio.get_event_loop()
-            response = await loop.run_in_executor(
+            embeddings = await loop.run_in_executor(
                 None,
-                lambda: self.openai_client.embeddings.create(
-                    input=texts,
-                    model=self.embedding_model
-                )
+                lambda: self.embedding_model.encode(texts).tolist()
             )
-            return [item.embedding for item in response.data]
+            return embeddings
         except Exception as e:
             logger.error(f"Failed to generate embeddings: {e}")
             raise
@@ -430,7 +427,7 @@ class RAGService:
             return []
     
     async def generate_answer(self, query: str, context_chunks: List[DocumentChunk]) -> RAGResult:
-        """Generate answer using Groq API (fast inference)"""
+        """Generate answer using Thaura AI (ethical, privacy-first LLM with streaming)"""
         
         try:
             # Prepare context from chunks
@@ -450,7 +447,7 @@ User Question: {query}
 
 Please provide a CONCISE answer in 1-2 paragraphs based only on the information provided in the context documents. Include references to the specific documents when possible. Only provide longer answers if the user explicitly asks for more detail."""
 
-            if not self.groq_client:
+            if not self.thaura_client:
                 return RAGResult(
                     answer="AI text generation is not available.",
                     sources=[],
@@ -459,21 +456,36 @@ Please provide a CONCISE answer in 1-2 paragraphs based only on the information 
                     context_used=context_text[:1000] + "..." if len(context_text) > 1000 else context_text
                 )
             
-            # Call Groq API for fast inference
+            # Call Thaura AI with streaming (required for proper response handling)
             loop = asyncio.get_event_loop()
-            response = await loop.run_in_executor(
-                None,
-                lambda: self.groq_client.chat.completions.create(
+            
+            def call_thaura_streaming():
+                """Call Thaura AI with streaming and collect response"""
+                stream = self.thaura_client.chat.completions.create(
                     model=self.llm_model,
                     messages=[
-                        {"role": "system", "content": "You are a helpful assistant that provides BRIEF, CONCISE answers. Your answers MUST be 1-2 short paragraphs maximum (3-5 sentences total) unless the user explicitly asks for a detailed or longer response. Base your answer ONLY on the provided document context."},
+                        {"role": "system", "content": "You are a helpful assistant that provides BRIEF, CONCISE answers. Your answers MUST be 1-2 short paragraphs maximum (3-5 sentences total) unless the user explicitly asks for a detailed or longer response. Base your answer ONLY on the provided document context. Do not include any thinking or reasoning tags in your response."},
                         {"role": "user", "content": prompt},
                     ],
-                    temperature=0.3,
                     max_tokens=300,
+                    stream=True  # Thaura requires streaming for proper responses
                 )
-            )
-            answer = response.choices[0].message.content
+                
+                # Collect streamed response
+                full_response = ""
+                for chunk in stream:
+                    if hasattr(chunk, 'choices') and chunk.choices:
+                        delta = chunk.choices[0].delta
+                        if hasattr(delta, 'content') and delta.content:
+                            full_response += delta.content
+                
+                return full_response
+            
+            answer = await loop.run_in_executor(None, call_thaura_streaming)
+            
+            # Clean up any <think> tags if present (some models include reasoning)
+            import re
+            answer = re.sub(r'<think>.*?</think>', '', answer, flags=re.DOTALL).strip()
             
             # Prepare sources information (deduplicate by document_id)
             sources_by_doc: Dict[int, Dict[str, Any]] = {}
