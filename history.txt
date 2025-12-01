@@ -10731,3 +10731,50 @@ USAGE:
   ./scripts/deploy.sh patch  # Auto-detects SKS, builds in parallel, deploys
 
 ================================================================================
+
+[2025-12-01] **OPTIMIZATION: SKS Deployment Speed - Build Time Reduced from 10+ min to 11 seconds**
+
+**Problem:** SKS deployment was taking 10+ minutes due to Docker builds with heavy ML dependencies (sentence-transformers, torch). The VM deployment was 2-3 minutes.
+
+**Solution: Pre-built Base Image Strategy**
+
+1. **Created Pre-built Base Image:**
+   - `backend/Dockerfile.base` - Contains ALL heavy dependencies (torch, sentence-transformers, etc.)
+   - Built once and pushed to `ghcr.io/main-salman/backend-base:latest`
+   - Base image build takes ~10 min but only happens when requirements.txt changes
+
+2. **Simplified App Dockerfiles:**
+   - `backend/Dockerfile` - Uses base image, only copies app code (~10s build)
+   - `backend/Dockerfile.worker` - Uses base image, only copies app code (~10s build)
+   - `frontend/Dockerfile` - Copies pre-built dist to nginx (~5s build)
+
+3. **deploy.sh Improvements:**
+   - Auto-detects SKS vs VM deployment
+   - Checks if base image exists before deployment
+   - Parallel builds for backend, worker, frontend
+   - Total deployment time: ~52 seconds
+
+**Performance Results:**
+- First-time base image build: ~10 min (one-time only)
+- App image rebuild: 11 seconds
+- Total deployment: 52 seconds (previously 20+ min)
+
+**Fixed Issues:**
+- TrustedHostMiddleware blocking Kubernetes health checks (added DISABLE_HOST_CHECK env var)
+- Installed nginx-ingress controller for external routing
+- Updated ingress to use ingressClassName instead of deprecated annotation
+
+**Files Modified:**
+- `backend/Dockerfile` - Simplified to use base image
+- `backend/Dockerfile.worker` - Simplified to use base image
+- `backend/Dockerfile.base` - NEW: Contains all heavy dependencies
+- `frontend/Dockerfile` - Simplified to just copy pre-built dist
+- `scripts/deploy.sh` - Added base image detection and fast rebuild logic
+- `backend/main.py` - Added DISABLE_HOST_CHECK for Kubernetes health checks
+- `k8s/manifests/configmap.yaml` - Added DISABLE_HOST_CHECK=true
+- `k8s/manifests/ingress.yaml` - Updated to use ingressClassName: nginx
+- `.env` - Updated SKS_NLB_IP and SKS_DNS_IP to 194.182.166.72
+
+**DNS Update Required:**
+Point www.haqnow.com and haqnow.com to: 194.182.166.72
+
