@@ -173,3 +173,10 @@ variable "server_ip_cidr" {
   type        = string
   default     = "0.0.0.0/0"
 }
+
+# VM enabled flag - set to false to decommission VM after SKS migration
+variable "vm_enabled" {
+  description = "Whether to create the VM instance (set to false after SKS migration)"
+  type        = bool
+  default     = true
+}
