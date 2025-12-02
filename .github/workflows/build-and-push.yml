@@ -33,6 +33,27 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Check if base image exists
+        id: check_base
+        run: |
+          if docker manifest inspect ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend-base:latest > /dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build and push base image (if not exists)
+        if: steps.check_base.outputs.exists == 'false'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile.base
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend-base:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
       - name: Build and push backend API
         uses: docker/build-push-action@v5
         with:
@@ -65,4 +86,3 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
