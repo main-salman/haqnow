@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: haqnow-config
+  namespace: haqnow-dev
+data:
+  # Application Configuration
+  HOST: "0.0.0.0"
+  PORT: "8000"
+  DEBUG: "true"
+  ENVIRONMENT: "development"
+  
+  # Rate limiting
+  UPLOAD_TIMEOUT_SECONDS: "120"
+  
+  # CORS Configuration (includes dev domain)
+  ALLOWED_ORIGINS: "http://www.haqnow.click,https://www.haqnow.click,http://haqnow.click,https://haqnow.click,http://localhost:5173,http://localhost:3000"
+  ALLOWED_HOSTS: "localhost,127.0.0.1,www.haqnow.click,haqnow.click"
+  
+  # Kubernetes health check compatibility
+  DISABLE_HOST_CHECK: "true"
+  
+  # Redis Configuration (optional - falls back to in-memory)
+  REDIS_URL: "redis://redis-service:6379"
+  
+  # Analytics disabled for dev environment
+  UMAMI_WEBSITE_ID: ""
+
