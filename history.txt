@@ -11087,3 +11087,48 @@ Implemented two complementary analytics systems:
 - New table: `otp_codes` with columns: id, email, code, attempts, max_attempts, expires_at, used, created_at
 
 ---
+
+[2025-12-02] **DOCS: Comprehensive Documentation Update**
+
+**User Request:** Update documentation to reflect recent major changes.
+
+**Changes Made:**
+Updated all major documentation files to reflect current architecture:
+
+1. **README.md** - Complete overhaul:
+   - Replaced Groq references with Thaura.AI (ethical, privacy-first LLM)
+   - Updated AI stack: sentence-transformers (768-dim, all-mpnet-base-v2)
+   - Added Umami Analytics section (self-hosted, privacy-focused)
+   - Added Exoscale SKS (Kubernetes) infrastructure details
+   - Updated architecture diagram with K8s components
+   - Updated environment variables section
+   - Updated version history with recent changes
+   - Simplified and modernized overall structure
+
+2. **documentation/ARCHITECTURE.md** - Major update:
+   - Added Kubernetes (SKS) architecture section
+   - Updated AI/RAG pipeline to reflect Thaura.AI + sentence-transformers
+   - Added pod structure and deployment strategy
+   - Updated network architecture for K8s
+   - Added monitoring section (Umami + Admin Dashboard)
+
+3. **CURSOR_CONTEXT.md** - Comprehensive update:
+   - Updated AI stack references (Thaura.AI instead of Groq/Ollama)
+   - Added Kubernetes debugging commands
+   - Updated deployment process for K8s
+   - Added analytics references (Umami)
+   - Updated project structure
+
+**Key Documentation Changes:**
+- Groq → Thaura.AI (ethical, privacy-first LLM)
+- OpenAI embeddings → sentence-transformers (local, 768-dim)
+- VM deployment → Exoscale SKS (Kubernetes)
+- Added Umami analytics (https://analytics.haqnow.com)
+- OTP now database-backed (multi-pod support)
+
+**Files Modified:**
+- README.md
+- documentation/ARCHITECTURE.md
+- CURSOR_CONTEXT.md
+
+---

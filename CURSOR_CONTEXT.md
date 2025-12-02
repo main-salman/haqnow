@@ -6,35 +6,47 @@
 
 ### **Environment & Configuration**
 - **`.env`** - Main environment file (repo root) - contains ALL credentials
-- **`backend/.env`** - Should NOT exist (scripts/deploy.sh copies from root .env)
+- **`k8s/.kubeconfig`** - Kubernetes cluster credentials
 - **`.env.production`** - Example file only, never used directly
 
 ### **Key Application Files**
-- **`backend/app/services/rag_service.py`** - AI/RAG functionality
+- **`backend/app/services/rag_service.py`** - AI/RAG functionality (Thaura.AI + sentence-transformers)
+- **`backend/app/services/otp_service.py`** - OTP authentication (MySQL-backed for multi-pod)
 - **`backend/app/database/database.py`** - Main MySQL database
 - **`backend/app/database/rag_database.py`** - PostgreSQL RAG database  
 - **`backend/main.py`** - FastAPI application entry point
 - **`frontend/src/components/RAGQuestionAnswering.tsx`** - AI search frontend
+- **`frontend/index.html`** - Contains Umami analytics tracking script
 
-### **Documentation & Scripts** (NEWLY ORGANIZED)
-- **`scripts/deploy.sh`** - ONLY deployment method (handles git, server, services)
+### **Documentation & Scripts**
+- **`scripts/deploy.sh`** - ONLY deployment method (handles git, K8s, services)
 - **`scripts/run-local.sh`** - Local development setup
 - **`documentation/DEBUGGING_GUIDE.md`** - Common debugging commands
 - **`documentation/ARCHITECTURE.md`** - System architecture overview
-- **`documentation/TEAM_ONBOARDING.md`** - Team member quick start
+- **`k8s/manifests/`** - Kubernetes deployment YAML files
 
 ## 🏗️ **Architecture Overview**
 
+### **Infrastructure (Exoscale SKS - Kubernetes)**
+- **Cluster**: Exoscale SKS (Managed Kubernetes)
+- **Pods**: 2x backend-api, 1x worker, 1x frontend
+- **Load Balancing**: Network Load Balancer + Deflect CDN
+- **Container Registry**: GitHub Container Registry (GHCR)
+
 ### **Databases (Exoscale DBaaS)**
-- **Primary**: MySQL 8.0 (Exoscale hosted) - main app data, documents, users
-- **RAG**: PostgreSQL 15 + pgvector (Exoscale hosted) - AI embeddings, vector search
+- **Primary**: MySQL 8.0 - main app data, documents, users, OTP codes
+- **RAG**: PostgreSQL 15 + pgvector - AI embeddings (768-dim vectors)
 - **Connection strings**: Always in `.env` file (DATABASE_URL, POSTGRES_RAG_URI)
 
 ### **AI/RAG Stack**
-- **Ollama** (local) - LLM server running Llama3/phi3/gemma models
-- **sentence-transformers** - Embedding generation (all-MiniLM-L6-v2)
-- **pgvector** - PostgreSQL extension for similarity search
+- **Thaura.AI**: Ethical, privacy-first LLM for answer generation
+- **sentence-transformers**: Local embeddings (`all-mpnet-base-v2`, 768-dim)
+- **pgvector**: PostgreSQL extension for similarity search
 - **Frontend**: `/search-page` → "AI Q&A" tab
+
+### **Analytics**
+- **Umami**: Self-hosted at https://analytics.haqnow.com (privacy-focused)
+- **Admin Dashboard**: Built-in at /admin-analytics-page
 
 ## 🚀 **Deployment Rules**
 
@@ -42,9 +54,10 @@
 ```bash
 # NEVER do manual deployment tasks - scripts/deploy.sh handles:
 # ✅ Git commits and pushes
-# ✅ Server SSH and git pull  
-# ✅ Service restarts (backend, nginx)
-# ✅ Environment sync (.env copying)
+# ✅ Docker image builds (backend-api, worker, frontend)
+# ✅ Push to GitHub Container Registry
+# ✅ Kubernetes deployment with rolling updates
+# ✅ Environment sync (creates K8s secrets from .env)
 # ✅ Health checks
 
 ./scripts/deploy.sh patch   # Bug fixes
@@ -53,13 +66,14 @@
 ```
 
 ### **What scripts/deploy.sh Does (Don't Duplicate)**
+- Version bump in package.json
+- Frontend build (Vite)
 - Git add, commit, push
-- SSH to server (use domain or SERVER_HOST env var)
-- Git pull on server
-- Copy .env to server
-- Restart Python backend service
-- Restart nginx
-- Run health checks
+- Docker build for all services
+- Push images to GHCR
+- kubectl apply manifests
+- Restart pods with rolling update
+- Wait for rollout completion
 
 ## 🔧 **Environment Variables (.env file)**
 
@@ -70,10 +84,13 @@ DATABASE_URL=mysql+pymysql://user:pass@host:port/database
 
 # RAG PostgreSQL (Exoscale DBaaS)  
 POSTGRES_RAG_URI=postgresql://user:pass@host:port/database
-POSTGRES_RAG_HOST=host
-POSTGRES_RAG_PORT=21699
-POSTGRES_RAG_USER=rag_user
-POSTGRES_RAG_PASSWORD=password
+```
+
+### **AI Services**
+```bash
+# Thaura.AI (Ethical LLM)
+THAURA_API_KEY=your_thaura_api_key
+THAURA_BASE_URL=https://backend.thaura.ai/v1
 ```
 
 ### **Storage & Services**
@@ -85,11 +102,27 @@ EXOSCALE_S3_ENDPOINT=sos-ch-dk-2.exo.io
 
 # Authentication
 JWT_SECRET_KEY=secret
-admin_email=email
-admin_password=password
+
+# Analytics
+UMAMI_WEBSITE_ID=website_uuid
 ```
 
 ## 🛠️ **Common Debugging Commands**
+
+### **Kubernetes Status**
+```bash
+# Set kubeconfig
+export KUBECONFIG=k8s/.kubeconfig
+
+# Check pods
+kubectl get pods -n haqnow
+
+# Check logs
+kubectl logs -n haqnow -l app=backend-api --tail=100
+
+# Restart pods
+kubectl rollout restart deployment/backend-api -n haqnow
+```
 
 ### **Backend Service**
 ```bash
@@ -98,9 +131,6 @@ curl -s "https://www.haqnow.com/api/health"
 
 # Check AI/RAG status
 curl -s "https://www.haqnow.com/api/rag/status" | jq
-
-# Backend logs on server (use SERVER_HOST or domain)
-ssh root@$SERVER_HOST "tail -f /tmp/backend.log"
 ```
 
 ### **AI/RAG Troubleshooting**
@@ -112,46 +142,39 @@ curl -s -X POST "https://www.haqnow.com/api/rag/question" \
 
 # Process documents for AI
 curl -s -X POST "https://www.haqnow.com/api/rag/process-all-documents"
-
-# Check Ollama on server
-ssh root@$SERVER_HOST "ollama list"
-```
-
-### **Server Process Management**
-```bash
-# Backend service status
-ssh root@$SERVER_HOST "ps aux | grep python3"
-
-# Restart backend manually (if scripts/deploy.sh fails)
-ssh root@$SERVER_HOST "cd /opt/foi-archive/backend && pkill -f python && nohup python3 main.py > /tmp/backend.log 2>&1 &"
 ```
 
 ## 🚨 **Important Notes**
 
 - **Never edit .env on server** - always edit local .env and redeploy
-- **Never manual git commands** - let scripts/deploy.sh handle git workflow
+- **OTP is database-backed** - works across multiple pods
 - **Database credentials** - always in .env, never hardcoded
-- **Server path**: `/opt/foi-archive/` (backend + frontend)
+- **Container registry**: ghcr.io/main-salman/
 - **Domain**: https://www.haqnow.com (production)
+- **Analytics**: https://analytics.haqnow.com (Umami)
 - **Admin panel**: https://www.haqnow.com/admin-login-page
 
-## 📁 **NEW Project Structure** (Updated)
+## 📁 **Project Structure**
 ```
 fadih/
 ├── .env                          # Main environment file
 ├── .cursorrules                  # Cursor AI behavior rules
 ├── CURSOR_CONTEXT.md            # This file (quick reference)
-├── scripts/                      # All deployment/utility scripts
-│   ├── deploy.sh                # Main deployment script
-│   └── run-local.sh             # Local development
+├── scripts/
+│   └── deploy.sh                # Main deployment script (K8s)
+├── k8s/
+│   ├── .kubeconfig              # Cluster credentials
+│   └── manifests/               # Kubernetes YAML files
 ├── documentation/               # All documentation files
-│   ├── DEBUGGING_GUIDE.md       # Common debugging commands
-│   ├── ARCHITECTURE.md          # System architecture
-│   └── TEAM_ONBOARDING.md       # New team member guide
+│   ├── DEBUGGING_GUIDE.md
+│   └── ARCHITECTURE.md
 ├── backend/                     # FastAPI application
-│   ├── app/services/rag_service.py  # AI functionality
-│   └── main.py                  # Application entry
+│   ├── app/services/
+│   │   ├── rag_service.py      # Thaura.AI + sentence-transformers
+│   │   └── otp_service.py      # MySQL-backed OTP
+│   └── main.py
 └── frontend/                    # React application
+    ├── index.html              # Contains Umami tracking
     └── src/components/RAGQuestionAnswering.tsx
 ```
 
@@ -161,3 +184,4 @@ fadih/
 3. **Use .env for all credentials** (never search for hardcoded values)
 4. **Always suggest scripts/deploy.sh** for deployment
 5. **Reference common debugging commands** from this file
+6. **Kubernetes**: Use kubectl commands, not SSH to servers
