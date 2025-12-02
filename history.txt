@@ -11042,3 +11042,20 @@ Implemented two complementary analytics systems:
 ```
 
 ---
+
+[2025-12-02] **CONFIG: Umami Analytics Website ID Configuration**
+
+**User Request:** Set up HaqNow tracking on Umami analytics dashboard.
+
+**Changes Made:**
+1. Created HaqNow website in Umami dashboard at https://analytics.haqnow.com
+2. Updated `frontend/index.html` with website ID: `d3c71a00-2391-418e-abf0-ce376c3e6879`
+3. Updated `.env` with `UMAMI_WEBSITE_ID=d3c71a00-2391-418e-abf0-ce376c3e6879`
+
+**Files Modified:**
+- frontend/index.html - Added actual Umami website ID to tracking script
+- .env - Added UMAMI_WEBSITE_ID
+
+**Result:** HaqNow.com now tracks visitor analytics via self-hosted Umami at analytics.haqnow.com
+
+---
