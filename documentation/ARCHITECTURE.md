@@ -61,37 +61,57 @@ Answer + Sources + Confidence Score → User Response
 
 ## ☸️ **Kubernetes Architecture (Exoscale SKS)**
 
+### **Branch & Environment Strategy**
+- **`main` branch** → Development (https://haqnow.click) → `haqnow-dev` namespace
+- **`prod` branch** → Production (https://www.haqnow.com) → `haqnow` namespace
+
 ### **Cluster Components**
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     Exoscale SKS Cluster                    │
-├─────────────────────────────────────────────────────────────┤
-│  Namespace: haqnow                                         │
-│                                                            │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
-│  │ backend-api  │  │ backend-api  │  │   frontend   │     │
-│  │   Pod #1     │  │   Pod #2     │  │     Pod      │     │
-│  │  (FastAPI)   │  │  (FastAPI)   │  │   (nginx)    │     │
-│  └──────────────┘  └──────────────┘  └──────────────┘     │
-│                                                            │
-│  ┌──────────────┐  ┌──────────────────────────────┐       │
-│  │    worker    │  │   ConfigMap + Secrets        │       │
-│  │     Pod      │  │   (from .env file)           │       │
-│  │  (Python)    │  │                              │       │
-│  └──────────────┘  └──────────────────────────────┘       │
-│                                                            │
-│  ┌────────────────────────────────────────────────┐       │
-│  │         Network Load Balancer (NLB)           │       │
-│  │         → Routes to frontend/backend          │       │
-│  └────────────────────────────────────────────────┘       │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         Exoscale SKS Cluster                            │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ┌─────────────────────────────────┐  ┌─────────────────────────────┐  │
+│  │  Namespace: haqnow (PROD)       │  │  Namespace: haqnow-dev      │  │
+│  │  Domain: haqnow.com             │  │  Domain: haqnow.click       │  │
+│  │                                 │  │                             │  │
+│  │  ┌────────────┐ ┌────────────┐  │  │  ┌────────────┐             │  │
+│  │  │backend-api │ │backend-api │  │  │  │backend-api │             │  │
+│  │  │  Pod #1    │ │  Pod #2    │  │  │  │   Pod      │             │  │
+│  │  └────────────┘ └────────────┘  │  │  └────────────┘             │  │
+│  │                                 │  │                             │  │
+│  │  ┌────────────┐ ┌────────────┐  │  │  ┌────────────┐             │  │
+│  │  │  frontend  │ │   worker   │  │  │  │  frontend  │             │  │
+│  │  │    Pod     │ │    Pod     │  │  │  │    Pod     │             │  │
+│  │  └────────────┘ └────────────┘  │  │  └────────────┘             │  │
+│  └─────────────────────────────────┘  └─────────────────────────────┘  │
+│                                                                         │
+│  ┌───────────────────────────────────────────────────────────────┐     │
+│  │                   Network Load Balancer (NLB)                 │     │
+│  │         Routes haqnow.com → prod, haqnow.click → dev          │     │
+│  └───────────────────────────────────────────────────────────────┘     │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+                    Shared: MySQL + PostgreSQL + S3
 ```
+
+### **Environment Differences**
+| Feature | Production (haqnow) | Development (haqnow-dev) |
+|---------|---------------------|--------------------------|
+| Domain | haqnow.com | haqnow.click |
+| Git Branch | prod | main |
+| Backend Pods | 2 (HA) | 1 |
+| Worker | Dedicated | Shared (uses prod worker) |
+| Analytics | Enabled | Disabled |
+| Image Tags | :latest | :dev |
 
 ### **Deployment Strategy**
 - **Rolling updates**: Zero-downtime deployments
-- **High availability**: 2 backend pods for redundancy
+- **High availability**: 2 backend pods for prod redundancy
 - **Resource limits**: CPU/memory limits per pod
 - **Health checks**: Liveness and readiness probes
+- **Shared resources**: Both environments share databases, S3, and worker
 
 ## 🌐 **Network Architecture**
 
@@ -140,12 +160,16 @@ Internet → Deflect CDN → Network Load Balancer → K8s Ingress
 ### **Local Development Structure**  
 ```
 fadih/
-├── .env ─────────────────── Main environment file
+├── .env ─────────────────── Main environment file (shared by dev/prod)
 ├── scripts/
-│   └── deploy.sh ────────── Deployment automation (handles K8s)
+│   └── deploy.sh ────────── Deployment automation (--env=dev|prod)
 ├── k8s/
 │   ├── .kubeconfig ──────── Cluster credentials
-│   └── manifests/ ───────── Kubernetes YAML files
+│   ├── manifests/ ───────── Production K8s YAML files
+│   │   └── dev/ ─────────── Development K8s YAML files
+│   └── scripts/
+│       ├── create-secrets.sh ─── Prod namespace secrets
+│       └── create-secrets-dev.sh ─ Dev namespace secrets
 ├── documentation/
 │   ├── ARCHITECTURE.md ──── This file
 │   └── DEBUGGING_GUIDE.md ── Troubleshooting
@@ -186,21 +210,49 @@ fadih/
 
 ## 🚀 **Deployment Architecture**
 
+### **Deployment Commands**
+```bash
+# Development deployment (from main branch)
+./scripts/deploy.sh --env=dev patch    # Deploy to haqnow.click
+./scripts/deploy.sh patch              # Default is dev
+
+# Production deployment (from prod branch)
+./scripts/deploy.sh --env=prod patch   # Bug fixes
+./scripts/deploy.sh --env=prod minor   # New features
+./scripts/deploy.sh --env=prod major   # Breaking changes
+```
+
 ### **Deployment Process (deploy.sh)**
 ```
 Local Changes → Version bump → Frontend build
      ↓
-Git commit/push → Docker build (backend-api, worker, frontend)
+Git commit/push → Docker build (backend-api, frontend)
      ↓  
-Push to GHCR → kubectl apply → Rolling update
+Push to GHCR → kubectl apply to appropriate namespace
      ↓
 Health checks → Pods ready → Complete
 ```
 
+### **Dev → Prod Workflow**
+```bash
+# 1. Development work on main branch
+git checkout main
+# Make changes...
+./scripts/deploy.sh --env=dev patch
+# Test on https://haqnow.click
+
+# 2. Promote to production
+git checkout prod
+git merge main
+./scripts/deploy.sh --env=prod patch
+# Live on https://www.haqnow.com
+```
+
 ### **Environment Management**
-- **Local**: `.env` (main source of truth)
+- **Local**: `.env` (main source of truth, shared by both environments)
 - **Kubernetes**: ConfigMap + Secrets (created from .env by deploy.sh)
 - **Sync**: deploy.sh converts .env to K8s secrets automatically
+- **Dev ConfigMap**: Disabled analytics, debug mode enabled
 
 ## 🔒 **Security Architecture**
 

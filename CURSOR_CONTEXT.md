@@ -29,9 +29,14 @@
 
 ### **Infrastructure (Exoscale SKS - Kubernetes)**
 - **Cluster**: Exoscale SKS (Managed Kubernetes)
-- **Pods**: 2x backend-api, 1x worker, 1x frontend
+- **Namespaces**: 
+  - `haqnow` (prod) - 2x backend-api, 1x worker, 1x frontend
+  - `haqnow-dev` (dev) - 1x backend-api, 1x frontend (shared worker with prod)
 - **Load Balancing**: Network Load Balancer + Deflect CDN
 - **Container Registry**: GitHub Container Registry (GHCR)
+- **Domains**: 
+  - Production: https://www.haqnow.com
+  - Development: https://haqnow.click
 
 ### **Databases (Exoscale DBaaS)**
 - **Primary**: MySQL 8.0 - main app data, documents, users, OTP codes
@@ -50,6 +55,10 @@
 
 ## 🚀 **Deployment Rules**
 
+### **Branch Strategy**
+- **`main` branch** → Development environment (https://haqnow.click)
+- **`prod` branch** → Production environment (https://www.haqnow.com)
+
 ### **CRITICAL: Always Use scripts/deploy.sh**
 ```bash
 # NEVER do manual deployment tasks - scripts/deploy.sh handles:
@@ -60,9 +69,29 @@
 # ✅ Environment sync (creates K8s secrets from .env)
 # ✅ Health checks
 
-./scripts/deploy.sh patch   # Bug fixes
-./scripts/deploy.sh minor   # New features  
-./scripts/deploy.sh major   # Breaking changes
+# Development deployment (from main branch)
+./scripts/deploy.sh --env=dev patch    # Deploy to haqnow.click
+./scripts/deploy.sh patch              # Default is dev
+
+# Production deployment (from prod branch)
+./scripts/deploy.sh --env=prod patch   # Bug fixes to haqnow.com
+./scripts/deploy.sh --env=prod minor   # New features to production
+./scripts/deploy.sh --env=prod major   # Breaking changes
+```
+
+### **Workflow: Dev → Prod**
+```bash
+# 1. Work on main branch for development
+git checkout main
+# Make changes...
+./scripts/deploy.sh --env=dev patch
+# Test on https://haqnow.click
+
+# 2. When ready for production
+git checkout prod
+git merge main
+./scripts/deploy.sh --env=prod patch
+# Live on https://www.haqnow.com
 ```
 
 ### **What scripts/deploy.sh Does (Don't Duplicate)**
@@ -114,14 +143,23 @@ UMAMI_WEBSITE_ID=website_uuid
 # Set kubeconfig
 export KUBECONFIG=k8s/.kubeconfig
 
-# Check pods
+# Check pods (prod)
 kubectl get pods -n haqnow
 
-# Check logs
+# Check pods (dev)
+kubectl get pods -n haqnow-dev
+
+# Check logs (prod)
 kubectl logs -n haqnow -l app=backend-api --tail=100
 
-# Restart pods
+# Check logs (dev)
+kubectl logs -n haqnow-dev -l app=backend-api --tail=100
+
+# Restart pods (prod)
 kubectl rollout restart deployment/backend-api -n haqnow
+
+# Restart pods (dev)
+kubectl rollout restart deployment/backend-api -n haqnow-dev
 ```
 
 ### **Backend Service**
@@ -150,9 +188,12 @@ curl -s -X POST "https://www.haqnow.com/api/rag/process-all-documents"
 - **OTP is database-backed** - works across multiple pods
 - **Database credentials** - always in .env, never hardcoded
 - **Container registry**: ghcr.io/main-salman/
-- **Domain**: https://www.haqnow.com (production)
-- **Analytics**: https://analytics.haqnow.com (Umami)
+- **Domains**: 
+  - Production: https://www.haqnow.com (prod branch)
+  - Development: https://haqnow.click (main branch)
+- **Analytics**: https://analytics.haqnow.com (Umami) - disabled for dev
 - **Admin panel**: https://www.haqnow.com/admin-login-page
+- **Git branches**: `main` for dev, `prod` for production
 
 ## 📁 **Project Structure**
 ```
@@ -161,10 +202,14 @@ fadih/
 ├── .cursorrules                  # Cursor AI behavior rules
 ├── CURSOR_CONTEXT.md            # This file (quick reference)
 ├── scripts/
-│   └── deploy.sh                # Main deployment script (K8s)
+│   └── deploy.sh                # Main deployment script (--env=dev|prod)
 ├── k8s/
 │   ├── .kubeconfig              # Cluster credentials
-│   └── manifests/               # Kubernetes YAML files
+│   ├── manifests/               # Production K8s YAML files
+│   │   └── dev/                 # Development K8s YAML files
+│   └── scripts/
+│       ├── create-secrets.sh    # Prod secrets
+│       └── create-secrets-dev.sh # Dev secrets
 ├── documentation/               # All documentation files
 │   ├── DEBUGGING_GUIDE.md
 │   └── ARCHITECTURE.md
