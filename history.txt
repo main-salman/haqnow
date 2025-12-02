@@ -11059,3 +11059,31 @@ Implemented two complementary analytics systems:
 **Result:** HaqNow.com now tracks visitor analytics via self-hosted Umami at analytics.haqnow.com
 
 ---
+
+[2025-12-02] **BUGFIX: OTP Authentication Multi-Pod Support**
+
+**User Report:** OTP codes failing to verify despite correct code - "Invalid or expired OTP code" error.
+
+**Root Cause:** 
+- 2 backend-api pods running in Kubernetes
+- OTP codes were stored in-memory (per-pod)
+- Request OTP → Pod A stores code in memory
+- Verify OTP → Load balancer routes to Pod B → No code found → Error
+
+**Solution:**
+1. Created `otp_codes` MySQL table for persistent storage
+2. Updated `OTPService` to use database instead of in-memory/Redis
+3. OTPs now stored in shared database accessible by all pods
+
+**Files Modified:**
+- backend/app/database/models.py - Added `OTPCode` model
+- backend/app/services/otp_service.py - Rewrote to use MySQL database
+- backend/app/apis/auth/__init__.py - Pass db session to OTP service
+
+**Files Created:**
+- backend/create_otp_table.py - Migration script
+
+**Database Changes:**
+- New table: `otp_codes` with columns: id, email, code, attempts, max_attempts, expires_at, used, created_at
+
+---

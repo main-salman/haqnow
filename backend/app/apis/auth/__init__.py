@@ -55,8 +55,8 @@ async def request_otp(request: OTPRequest, db: Session = Depends(get_db)):
             detail="Account is inactive"
         )
     
-    # Generate OTP
-    otp_code = otp_service.generate_otp(request.email.lower().strip())
+    # Generate OTP (uses database for multi-pod support)
+    otp_code = otp_service.generate_otp(db, request.email.lower().strip())
     
     if not otp_code:
         raise HTTPException(
@@ -92,8 +92,8 @@ async def verify_otp(request: OTPVerifyRequest, db: Session = Depends(get_db)):
             detail="Invalid OTP code format. Please enter a 6-digit code."
         )
     
-    # Verify OTP
-    is_valid = otp_service.verify_otp(email, request.otp_code)
+    # Verify OTP (uses database for multi-pod support)
+    is_valid = otp_service.verify_otp(db, email, request.otp_code)
     
     if not is_valid:
         raise HTTPException(

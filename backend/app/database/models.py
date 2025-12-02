@@ -420,6 +420,35 @@ class BannedWord(Base):
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
+class OTPCode(Base):
+    """Model for storing OTP codes for passwordless authentication."""
+    
+    __tablename__ = "otp_codes"
+    
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    email = Column(String(255), nullable=False, index=True)
+    code = Column(String(10), nullable=False)
+    attempts = Column(Integer, nullable=False, default=0)
+    max_attempts = Column(Integer, nullable=False, default=5)
+    expires_at = Column(DateTime(timezone=True), nullable=False, index=True)
+    used = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    
+    def __repr__(self):
+        return f"<OTPCode(id={self.id}, email='{self.email}', used={self.used})>"
+    
+    def to_dict(self):
+        """Convert model to dictionary."""
+        return {
+            "id": self.id,
+            "email": self.email,
+            "attempts": self.attempts,
+            "expires_at": self.expires_at.isoformat() if self.expires_at else None,
+            "used": self.used,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
 class JobQueue(Base):
     """Model for document processing job queue."""
     
