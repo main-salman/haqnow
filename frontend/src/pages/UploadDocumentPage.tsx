@@ -64,7 +64,7 @@ export interface FormData {
   stateProvince: string;
   adminLevel: string;
   documentLanguage: string;  // Added document language field
-  file: File | null;
+  files: File[];  // Changed to support multiple files
 }
 
 export default function UploadDocumentPage() {
@@ -77,7 +77,7 @@ export default function UploadDocumentPage() {
     stateProvince: "",
     adminLevel: "",
     documentLanguage: "english",  // Default to English
-    file: null,
+    files: [],  // Changed to support multiple files
   });
   const [currentStates, setCurrentStates] = useState<State[]>([]); // Changed type to State[]
   const [errors, setErrors] = useState<Partial<Record<keyof FormData | 'captcha' | 'consent', string>>>({});
@@ -179,8 +179,6 @@ export default function UploadDocumentPage() {
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles && acceptedFiles.length > 0) {
-      const file = acceptedFiles[0];
-      
       // Accept all document and image types
       const allowedTypes = [
         'application/pdf',
@@ -205,12 +203,30 @@ export default function UploadDocumentPage() {
         'application/vnd.oasis.opendocument.spreadsheet'
       ];
       
-      if (allowedTypes.includes(file.type) || file.name.toLowerCase().match(/\.(pdf|doc|docx|xls|xlsx|csv|txt|rtf|jpg|jpeg|png|gif|bmp|tiff|webp|zip|odt|ods)$/)) {
-        setFormData((prev) => ({ ...prev, file }));
+      // Filter valid files and limit to 10
+      const validFiles = acceptedFiles.filter(file => 
+        allowedTypes.includes(file.type) || 
+        file.name.toLowerCase().match(/\.(pdf|doc|docx|xls|xlsx|csv|txt|rtf|jpg|jpeg|png|gif|bmp|tiff|webp|zip|odt|ods)$/)
+      ).slice(0, 10);
+      
+      if (validFiles.length > 0) {
+        setFormData((prev) => ({ ...prev, files: [...prev.files, ...validFiles].slice(0, 10) }));
         setErrors((prev) => ({ ...prev, file: undefined }));
+        
+        if (validFiles.length < acceptedFiles.length) {
+          toast.warning("Some files skipped", { 
+            description: "Some files were not supported or exceeded the 10 file limit." 
+          });
+        }
+        
+        if (validFiles.length > 1) {
+          toast.success(`${validFiles.length} files added`, {
+            description: "You can upload multiple documents at once."
+          });
+        }
       } else {
         setErrors((prev) => ({ ...prev, file: "Unsupported file type. Please upload documents, images, or text files." }));
-        toast.error("Invalid File Type", { description: "Please upload a supported document or image file." });
+        toast.error("Invalid File Type", { description: "Please upload supported document or image files." });
       }
     }
   }, []);
@@ -413,8 +429,9 @@ export default function UploadDocumentPage() {
       'application/vnd.oasis.opendocument.text': ['.odt'],
       'application/vnd.oasis.opendocument.spreadsheet': ['.ods']
     },
-    multiple: false,
-    noClick: true, // We use a custom button to open the dialog
+    multiple: true,  // Enable multiple file selection
+    maxFiles: 10,    // Limit to 10 files
+    noClick: true,   // We use a custom button to open the dialog
     noKeyboard: true,
   });
 
@@ -527,8 +544,8 @@ export default function UploadDocumentPage() {
       newErrors.documentLanguage = "Document language is required.";
     }
 
-    if (!formData.file && capturedPhotos.length === 0) {
-      newErrors.file = "Please select a file to upload or capture photos with camera.";
+    if (formData.files.length === 0 && capturedPhotos.length === 0) {
+      newErrors.file = "Please select at least one file to upload or capture photos with camera.";
     }
 
     if (!consentChecked) {
@@ -556,16 +573,17 @@ export default function UploadDocumentPage() {
     setUploadProgress({ step: "Uploading file...", progress: 0 });
     toast.loading("Uploading file...", { id: "upload-toast" });
 
-    // Prepare file for upload
-    let fileToUpload = formData.file;
+    // Prepare files for upload
+    let filesToUpload: File[] = [...formData.files];
     
-    // If using camera mode with multiple photos, combine them
+    // If using camera mode with multiple photos, combine them into one file
     if (isCameraMode && capturedPhotos.length > 0) {
       try {
         if (capturedPhotos.length > 1) {
           toast.loading("Combining photos into single image...", { id: "upload-toast" });
         }
-        fileToUpload = await combinePhotosIntoPDF(capturedPhotos);
+        const combinedFile = await combinePhotosIntoPDF(capturedPhotos);
+        filesToUpload = [combinedFile];
       } catch (error) {
         console.error("Error combining photos:", error);
         toast.error("Error combining photos", { id: "upload-toast", description: "Failed to combine photos. Please try again." });
@@ -574,30 +592,44 @@ export default function UploadDocumentPage() {
       }
     }
     
-    if (!fileToUpload) {
-      toast.error("File Missing", { id: "upload-toast", description: "Please select a file to upload or capture photos." });
+    if (filesToUpload.length === 0) {
+      toast.error("Files Missing", { id: "upload-toast", description: "Please select files to upload or capture photos." });
       setIsSubmitting(false);
       return;
     }
 
     try {
-      // Upload using the new backend API
+      // Upload using the backend API
       setUploadProgress({ step: "Scanning for viruses...", progress: 20 });
-      toast.loading("Scanning file for viruses...", { id: "upload-toast" });
+      toast.loading(`Scanning ${filesToUpload.length} file(s) for viruses...`, { id: "upload-toast" });
       
       // Create FormData for the backend upload
       const uploadFormData = new FormData();
-      uploadFormData.append('file', fileToUpload);
+      
+      // Use multi-file endpoint if more than one file, otherwise use single file endpoint
+      const useMultiUpload = filesToUpload.length > 1;
+      
+      if (useMultiUpload) {
+        // Append all files for multi-upload
+        filesToUpload.forEach((file) => {
+          uploadFormData.append('files', file);
+        });
+      } else {
+        // Single file upload
+        uploadFormData.append('file', filesToUpload[0]);
+      }
+      
       uploadFormData.append('title', formData.title);
       uploadFormData.append('country', formData.country);
-      uploadFormData.append('state', formData.stateProvince || formData.country); // Use country as fallback
-      uploadFormData.append('document_language', formData.documentLanguage); // Add document language
+      uploadFormData.append('state', formData.stateProvince || formData.country);
+      uploadFormData.append('document_language', formData.documentLanguage);
       if (formData.description) {
         uploadFormData.append('description', formData.description);
       }
 
-      // Call the backend upload API
-      const uploadResponse = await fetch('/api/file-uploader/upload', {
+      // Call the appropriate backend upload API
+      const uploadEndpoint = useMultiUpload ? '/api/file-uploader/upload-multiple' : '/api/file-uploader/upload';
+      const uploadResponse = await fetch(uploadEndpoint, {
         method: 'POST',
         body: uploadFormData,
       });
@@ -672,7 +704,7 @@ export default function UploadDocumentPage() {
             country: "", 
             stateProvince: "", 
             adminLevel: "", 
-            file: null,
+            files: [],  // Reset files array
             documentLanguage: "english"
         });
         setCapturedPhotos([]);
@@ -935,19 +967,79 @@ export default function UploadDocumentPage() {
                 `}>
                   <input {...getInputProps()} id="file-upload" name="file"/>
                   <UploadCloud className={`mx-auto h-12 w-12 mb-3 ${errors.file ? "text-destructive" : "text-muted-foreground"}`} />
-                  {formData.file ? (
-                    <div className="text-center">
-                      <FileText className="mx-auto h-8 w-8 text-green-600 mb-2" />
-                      <p className="font-semibold text-foreground">{formData.file.name}</p>
-                      <p className="text-sm text-muted-foreground">({(formData.file.size / 1024 / 1024).toFixed(2)} MB)</p>
-                      <Button type="button" variant="link" size="sm" className="text-xs mt-1 text-destructive" onClick={(e) => { e.stopPropagation(); setFormData(p => ({...p, file: null})); }}>Remove file</Button>
+                  {formData.files.length > 0 ? (
+                    <div className="text-center space-y-3">
+                      <div className="flex items-center justify-center gap-2">
+                        <FileText className="h-8 w-8 text-green-600" />
+                        <div>
+                          <p className="font-semibold text-foreground">
+                            {formData.files.length} file{formData.files.length > 1 ? 's' : ''} selected
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Total: {(formData.files.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024).toFixed(2)} MB
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {/* File list */}
+                      <div className="max-h-32 overflow-y-auto border rounded p-2 bg-muted/20">
+                        {formData.files.map((file, index) => (
+                          <div key={index} className="flex items-center justify-between py-1 px-2 hover:bg-muted/40 rounded text-sm">
+                            <span className="truncate max-w-[200px]">{file.name}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground">
+                                {(file.size / 1024 / 1024).toFixed(1)} MB
+                              </span>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setFormData(p => ({
+                                    ...p, 
+                                    files: p.files.filter((_, i) => i !== index)
+                                  }));
+                                }}
+                                className="text-destructive hover:text-destructive/80 text-xs font-medium"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <div className="flex gap-2 justify-center">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={(e) => { e.stopPropagation(); open(); }}
+                          disabled={formData.files.length >= 10}
+                        >
+                          Add more files {formData.files.length}/10
+                        </Button>
+                        <Button 
+                          type="button" 
+                          variant="link" 
+                          size="sm" 
+                          className="text-destructive" 
+                          onClick={(e) => { e.stopPropagation(); setFormData(p => ({...p, files: []})); }}
+                        >
+                          Clear all
+                        </Button>
+                      </div>
                     </div>
                   ) : isDragActive ? (
-                    <p className="text-primary font-semibold">Drop the file here ...</p>
+                    <p className="text-primary font-semibold">Drop the files here ...</p>
                   ) : (
-                    <p className="text-muted-foreground">
-                      Drag & drop any document or image file here, or <Button type="button" variant="link" className="p-0 h-auto" onClick={open}>click to select</Button>
-                    </p>
+                    <div>
+                      <p className="text-muted-foreground mb-2">
+                        Drag & drop documents or images here, or <Button type="button" variant="link" className="p-0 h-auto" onClick={open}>click to select</Button>
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        You can select up to 10 files at once
+                      </p>
+                    </div>
                   )}
                 </div>
               ) : (
