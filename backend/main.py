@@ -67,6 +67,10 @@ def setup_cors(app: FastAPI):
 
 def setup_security_middleware(app: FastAPI):
     """Setup security middleware."""
+    # Add security headers middleware
+    from app.middleware.security_headers import SecurityHeadersMiddleware
+    app.add_middleware(SecurityHeadersMiddleware)
+    
     # Trusted host middleware
     # Allow all hosts in Kubernetes (health checks come from internal IPs)
     # Set DISABLE_HOST_CHECK=true in k8s environments

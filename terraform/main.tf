@@ -8,6 +8,10 @@ terraform {
       source  = "hashicorp/local"
       version = "~> 2.4"
     }
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
   }
   required_version = ">= 1.0"
 }
@@ -16,6 +20,42 @@ terraform {
 provider "exoscale" {
   key    = var.exoscale_api_key
   secret = var.exoscale_secret_key
+}
+
+# AWS Provider configured for Exoscale SOS (S3-compatible) - Primary Region (Zurich)
+# Using main Exoscale API credentials (work across all regions)
+provider "aws" {
+  alias                       = "exoscale_primary"
+  region                      = "us-east-1"  # Required but not used by Exoscale
+  skip_credentials_validation = true
+  skip_metadata_api_check     = true
+  skip_region_validation      = true
+  skip_requesting_account_id  = true
+  
+  access_key = var.exoscale_api_key
+  secret_key = var.exoscale_secret_key
+  
+  endpoints {
+    s3 = "https://sos-${var.zone}.exo.io"
+  }
+}
+
+# AWS Provider configured for Exoscale SOS (S3-compatible) - DR Region (Vienna)
+# Using main Exoscale API credentials (work across all regions)
+provider "aws" {
+  alias                       = "exoscale_dr"
+  region                      = "us-east-1"  # Required but not used by Exoscale
+  skip_credentials_validation = true
+  skip_metadata_api_check     = true
+  skip_region_validation      = true
+  skip_requesting_account_id  = true
+  
+  access_key = var.exoscale_api_key
+  secret_key = var.exoscale_secret_key
+  
+  endpoints {
+    s3 = "https://sos-${var.dr_zone}.exo.io"
+  }
 }
 
 # EXOscale Database as a Service (DBaaS) - MySQL
@@ -207,4 +247,40 @@ output "postgres_rag_host" {
   description = "PostgreSQL RAG database host"
   value       = data.exoscale_database_uri.foi_postgres_rag_uri.uri
   sensitive   = true
+}
+
+# ============================================
+# Disaster Recovery - S3 Bucket in Vienna
+# ============================================
+
+# SOS Bucket for cross-region backups (Vienna, Austria)
+# Using AWS provider since Exoscale SOS is S3-compatible
+resource "aws_s3_bucket" "foi_dr_bucket" {
+  count    = var.dr_enabled ? 1 : 0
+  provider = aws.exoscale_dr
+  
+  bucket = var.dr_bucket_name
+  
+  tags = {
+    Name        = var.dr_bucket_name
+    Environment = var.environment
+    Purpose     = "disaster-recovery"
+    Region      = var.dr_zone
+  }
+}
+
+# Outputs for DR configuration
+output "dr_bucket_name" {
+  description = "Disaster recovery S3 bucket name"
+  value       = var.dr_enabled ? aws_s3_bucket.foi_dr_bucket[0].bucket : null
+}
+
+output "dr_bucket_endpoint" {
+  description = "Disaster recovery S3 bucket endpoint"
+  value       = var.dr_enabled ? "sos-${var.dr_zone}.exo.io" : null
+}
+
+output "dr_bucket_url" {
+  description = "Disaster recovery S3 bucket URL"
+  value       = var.dr_enabled ? "https://sos-${var.dr_zone}.exo.io/${var.dr_bucket_name}" : null
 } 
