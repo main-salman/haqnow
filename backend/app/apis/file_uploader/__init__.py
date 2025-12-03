@@ -5,7 +5,7 @@ from pydantic import BaseModel
 import os
 import time
 import mimetypes
-from typing import Optional
+from typing import Optional, List
 import structlog
 from sqlalchemy import func
 
@@ -39,6 +39,14 @@ class FileUploadResponse(BaseModel):
     message: str
     document_id: int
     job_id: Optional[int] = None  # Job ID for tracking processing status
+
+class MultiFileUploadResponse(BaseModel):
+    """Response model for multiple file uploads"""
+    uploaded_files: List[FileUploadResponse]
+    total_count: int
+    success_count: int
+    failed_count: int
+    message: str
 
 class DocumentUploadRequest(BaseModel):
     title: str
@@ -250,6 +258,179 @@ async def upload_file(
             status_code=500,
             detail="An unexpected error occurred during file upload"
         )
+
+@router.post("/upload-multiple", response_model=MultiFileUploadResponse)
+async def upload_multiple_files(
+    request: Request,
+    files: List[UploadFile] = File(...),
+    title: str = Form(...),
+    country: str = Form(...),
+    state: str = Form(...),
+    document_language: str = Form(default="english"),
+    description: Optional[str] = Form(None),
+    db: Session = Depends(get_db),
+    api_consumer: Optional[APIConsumer] = Depends(validate_api_key)
+):
+    """
+    Upload multiple document files to S3 and create database entries.
+    Rate limited to 1 upload session per IP per 2 minutes.
+    Supports multiple languages including Arabic with Mistral API processing.
+    """
+    
+    # Check rate limit only for anonymous or web clients
+    is_api_allowed = api_consumer is not None and (api_consumer.scopes and "upload" in api_consumer.scopes)
+    if not is_api_allowed:
+        check_upload_rate_limit(request)
+    
+    if not files or len(files) == 0:
+        raise HTTPException(status_code=400, detail="No files provided")
+    
+    if len(files) > 10:  # Limit to 10 files per upload
+        raise HTTPException(status_code=400, detail="Maximum 10 files allowed per upload")
+    
+    uploaded_results = []
+    success_count = 0
+    failed_count = 0
+    
+    for idx, file in enumerate(files):
+        try:
+            # Validate file size (100MB limit per file)
+            MAX_FILE_SIZE = 100 * 1024 * 1024
+            file_content = await file.read()
+            
+            if len(file_content) > MAX_FILE_SIZE:
+                failed_count += 1
+                logger.warning(f"File {file.filename} too large, skipping")
+                continue
+            
+            if not file.filename:
+                failed_count += 1
+                continue
+            
+            # Validate document language
+            valid_languages = ["english", "arabic", "french", "german", "spanish", "chinese", "russian", "other"]
+            doc_language = document_language if document_language in valid_languages else "english"
+            
+            logger.info("Processing file in multi-upload", 
+                       filename=file.filename,
+                       file_index=idx + 1,
+                       total_files=len(files))
+            
+            # Virus scan
+            is_safe, virus_name = virus_scanning_service.scan_file_content(file_content, file.filename)
+            if not is_safe:
+                failed_count += 1
+                logger.warning(f"Virus detected in {file.filename}, skipping")
+                continue
+            
+            # Metadata stripping
+            try:
+                clean_pdf_bytes, clean_filename = metadata_service.process_uploaded_file(
+                    file_content, 
+                    file.filename, 
+                    file.content_type or "application/octet-stream"
+                )
+            except Exception as e:
+                failed_count += 1
+                logger.error(f"Metadata stripping failed for {file.filename}", error=str(e))
+                continue
+            
+            # Upload to S3
+            import io
+            clean_file_stream = io.BytesIO(clean_pdf_bytes)
+            file_path = s3_service.upload_file(
+                clean_file_stream,
+                clean_filename,
+                "application/pdf"
+            )
+            
+            if not file_path:
+                failed_count += 1
+                continue
+            
+            file_url = s3_service.get_file_url(file_path)
+            
+            # Generate unique title for each file if multiple
+            file_title = f"{title} - Part {idx + 1}" if len(files) > 1 else title
+            
+            # Create database entry
+            document = Document(
+                title=file_title,
+                country=country,
+                state=state,
+                description=description,
+                document_language=doc_language,
+                file_path=file_path,
+                file_url=file_url,
+                original_filename=clean_filename,
+                file_size=len(clean_pdf_bytes),
+                content_type="application/pdf",
+                status="pending",
+                generated_tags=[]
+            )
+            
+            try:
+                db.add(document)
+                db.commit()
+                db.refresh(document)
+                
+                uploaded_results.append(FileUploadResponse(
+                    file_url=file_url,
+                    file_path=file_path,
+                    document_id=document.id,
+                    message=f"File {file.filename} uploaded successfully",
+                    job_id=None
+                ))
+                success_count += 1
+                
+            except Exception as db_error:
+                db.rollback()
+                s3_service.delete_file(file_path)
+                failed_count += 1
+                logger.error(f"Database error for {file.filename}", error=str(db_error))
+                continue
+                
+        except Exception as e:
+            failed_count += 1
+            logger.error(f"Error processing file {file.filename}", error=str(e))
+            continue
+    
+    # Record upload for rate limiting
+    if not is_api_allowed:
+        record_upload(request)
+    
+    # Send single notification for batch upload
+    if success_count > 0:
+        try:
+            recipients: list[str] = []
+            try:
+                setting = db.query(SiteSetting).filter(SiteSetting.key == "upload_notification_emails").first()
+                if setting and setting.value:
+                    data = json.loads(setting.value)
+                    emails = data.get("emails") if isinstance(data, dict) else data
+                    if isinstance(emails, list):
+                        recipients = [e.strip() for e in emails if isinstance(e, str) and e and e.strip()]
+            except Exception:
+                recipients = []
+            
+            email_service.notify_admin_new_document(
+                document_id=f"Batch upload ({success_count} files)",
+                title=title,
+                country=country,
+                state=state,
+                uploader_ip=None,
+                extra_recipients=recipients
+            )
+        except Exception as e:
+            logger.warning("Failed to send batch email notification", error=str(e))
+    
+    return MultiFileUploadResponse(
+        uploaded_files=uploaded_results,
+        total_count=len(files),
+        success_count=success_count,
+        failed_count=failed_count,
+        message=f"Uploaded {success_count} of {len(files)} files successfully"
+    )
 
 @router.get("/rate-limit-status")
 async def get_rate_limit_status(request: Request):
