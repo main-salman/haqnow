@@ -1,0 +1,94 @@
+# Cross-Region Backup CronJob
+# Runs daily at 3 AM UTC to backup databases and sync documents to Vienna (at-vie-1)
+#
+# Prerequisites:
+# 1. Create foi-archive-dr bucket in at-vie-1 via Exoscale console
+# 2. Build and push backup image: 
+#    docker buildx build --platform linux/amd64 -f backend/Dockerfile.backup -t ghcr.io/main-salman/backup:latest --push backend/
+# 3. Apply this manifest: kubectl apply -f k8s/manifests/backup-cronjob.yaml
+
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cross-region-backup
+  namespace: haqnow
+  labels:
+    app: backup
+    component: disaster-recovery
+spec:
+  # Run daily at 3:00 AM UTC
+  schedule: "0 3 * * *"
+  
+  # Timezone (optional, requires K8s 1.27+)
+  # timeZone: "UTC"
+  
+  # Keep last 3 successful and 1 failed job for debugging
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  
+  # Don't run if previous job is still running
+  concurrencyPolicy: Forbid
+  
+  # Start job within 1 hour of scheduled time, or skip
+  startingDeadlineSeconds: 3600
+  
+  jobTemplate:
+    spec:
+      # Retry up to 2 times on failure
+      backoffLimit: 2
+      
+      # Job timeout: 2 hours max
+      activeDeadlineSeconds: 7200
+      
+      template:
+        metadata:
+          labels:
+            app: backup
+            component: disaster-recovery
+        spec:
+          restartPolicy: OnFailure
+          
+          imagePullSecrets:
+          - name: ghcr-secret
+          
+          containers:
+          - name: backup
+            image: ghcr.io/main-salman/backup:latest
+            imagePullPolicy: Always
+            
+            # Environment variables from ConfigMap and Secrets
+            envFrom:
+            - configMapRef:
+                name: haqnow-config
+            - secretRef:
+                name: haqnow-secrets
+            
+            # Additional DR-specific environment variables
+            env:
+            - name: DR_BUCKET
+              value: "foi-archive-dr"
+            - name: DR_REGION
+              value: "at-vie-1"
+            
+            resources:
+              requests:
+                memory: "128Mi"
+                cpu: "100m"
+              limits:
+                memory: "512Mi"
+                cpu: "500m"
+            
+            volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          
+          volumes:
+          - name: tmp
+            emptyDir:
+              sizeLimit: 2Gi
+
+---
+# Optional: Manual backup job for testing
+# Run with: kubectl create job --from=cronjob/cross-region-backup manual-backup-$(date +%Y%m%d) -n haqnow
+
+

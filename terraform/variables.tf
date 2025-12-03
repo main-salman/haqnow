@@ -213,3 +213,24 @@ variable "umami_app_secret" {
   type        = string
   sensitive   = true
 }
+
+# ============================================
+# Disaster Recovery Configuration
+# ============================================
+variable "dr_enabled" {
+  description = "Whether to create disaster recovery resources (S3 bucket in Vienna)"
+  type        = bool
+  default     = true
+}
+
+variable "dr_zone" {
+  description = "Exoscale zone for disaster recovery (Vienna, Austria)"
+  type        = string
+  default     = "at-vie-1"
+}
+
+variable "dr_bucket_name" {
+  description = "S3 bucket name for disaster recovery backups"
+  type        = string
+  default     = "foi-archive-dr"
+}
