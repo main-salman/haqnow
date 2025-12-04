@@ -1,3 +1,13 @@
+[2025-12-03] **DEPLOYMENT: Dev environment (v4.15.73)**
+
+Deployed latest changes to dev environment (haqnow.click):
+- Version bump: 4.15.72 → 4.15.73
+- Environment: dev (SKS Kubernetes cluster, haqnow-dev namespace)
+- Changes included: File uploader improvements, upload document page enhancements from recent git pull
+- Total deployment time: 70 seconds
+
+---
+
 [2025-01-XX] **FEATURE: Document Processing Queue System with Progress Tracking**
 
 **User Request:** Add queueing system for document processing to prevent CPU overload when multiple documents are uploaded. Show progress during upload and virus scan. Display step-by-step checklist of what happens to uploaded documents.
