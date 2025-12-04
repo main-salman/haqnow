@@ -965,7 +965,7 @@ export default function UploadDocumentPage() {
                   ${isDragActive ? "border-primary bg-primary/10" : "border-muted-foreground/30 hover:border-primary/70"}
                   ${errors.file ? "border-destructive bg-destructive/10" : ""}
                 `}>
-                  <input {...getInputProps()} id="file-upload" name="file"/>
+                  <input {...getInputProps()} id="file-upload" name="file" multiple/>
                   <UploadCloud className={`mx-auto h-12 w-12 mb-3 ${errors.file ? "text-destructive" : "text-muted-foreground"}`} />
                   {formData.files.length > 0 ? (
                     <div className="text-center space-y-3">
@@ -1037,7 +1037,7 @@ export default function UploadDocumentPage() {
                         Drag & drop documents or images here, or <Button type="button" variant="link" className="p-0 h-auto" onClick={open}>click to select</Button>
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        You can select up to 10 files at once
+                        You can select multiple files (up to 10) at once
                       </p>
                     </div>
                   )}
