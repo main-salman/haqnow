@@ -433,6 +433,12 @@ export default function UploadDocumentPage() {
     maxFiles: 10,    // Limit to 10 files
     noClick: true,   // We use a custom button to open the dialog
     noKeyboard: true,
+    onDropAccepted: (acceptedFiles) => {
+      // Ensure onDrop is called with all accepted files
+      if (acceptedFiles && acceptedFiles.length > 0) {
+        onDrop(acceptedFiles, []);
+      }
+    },
   });
 
   useEffect(() => {
@@ -965,7 +971,7 @@ export default function UploadDocumentPage() {
                   ${isDragActive ? "border-primary bg-primary/10" : "border-muted-foreground/30 hover:border-primary/70"}
                   ${errors.file ? "border-destructive bg-destructive/10" : ""}
                 `}>
-                  <input {...getInputProps()} id="file-upload" name="file" multiple/>
+                  <input {...getInputProps({ multiple: true })} id="file-upload" name="file" />
                   <UploadCloud className={`mx-auto h-12 w-12 mb-3 ${errors.file ? "text-destructive" : "text-muted-foreground"}`} />
                   {formData.files.length > 0 ? (
                     <div className="text-center space-y-3">
