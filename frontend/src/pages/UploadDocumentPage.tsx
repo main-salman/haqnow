@@ -80,7 +80,7 @@ export default function UploadDocumentPage() {
     files: [],  // Changed to support multiple files
   });
   const [currentStates, setCurrentStates] = useState<State[]>([]); // Changed type to State[]
-  const [errors, setErrors] = useState<Partial<Record<keyof FormData | 'captcha' | 'consent', string>>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof FormData | 'captcha' | 'consent' | 'file', string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [isCameraMode, setIsCameraMode] = useState(false);
@@ -460,6 +460,14 @@ export default function UploadDocumentPage() {
     noKeyboard: true,
   });
 
+  // Ensure the file input has multiple attribute set
+  useEffect(() => {
+    const fileInput = document.getElementById('file-upload') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.setAttribute('multiple', 'multiple');
+    }
+  }, []);
+
   useEffect(() => {
     if (formData.country) {
       const selectedCountry = countriesData.find(c => c.name === formData.country);
@@ -551,7 +559,7 @@ export default function UploadDocumentPage() {
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<Record<keyof FormData | 'captcha' | 'consent', string>> = {};
+    const newErrors: Partial<Record<keyof FormData | 'captcha' | 'consent' | 'file', string>> = {};
 
     if (!formData.title.trim()) {
       newErrors.title = "Document title is required.";
@@ -990,7 +998,7 @@ export default function UploadDocumentPage() {
                   ${isDragActive ? "border-primary bg-primary/10" : "border-muted-foreground/30 hover:border-primary/70"}
                   ${errors.file ? "border-destructive bg-destructive/10" : ""}
                 `}>
-                  <input {...getInputProps()} id="file-upload" name="file" />
+                  <input {...getInputProps({ multiple: true })} id="file-upload" name="file" />
                   <UploadCloud className={`mx-auto h-12 w-12 mb-3 ${errors.file ? "text-destructive" : "text-muted-foreground"}`} />
                   {formData.files.length > 0 ? (
                     <div className="text-center space-y-3">
