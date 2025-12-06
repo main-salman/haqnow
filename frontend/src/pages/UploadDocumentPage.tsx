@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 // Remove Supabase import - we don't use it anymore
 // import { supabase } from "../utils/supabaseClient";
 // Remove brain import - we'll use direct fetch instead
@@ -94,6 +94,7 @@ export default function UploadDocumentPage() {
     jobId?: number;
   } | null>(null);
   const [isPolling, setIsPolling] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Available document languages - comprehensive list for all supported OCR languages
   const documentLanguages = [
@@ -255,6 +256,26 @@ export default function UploadDocumentPage() {
       });
     }
   }, [formData.files.length]);
+
+  // Custom function to open file picker with multiple selection
+  const handleFileButtonClick = useCallback(() => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  }, []);
+
+  // Handle file selection from custom input
+  const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const fileArray = Array.from(files);
+      onDrop(fileArray, []);
+      // Reset input so same files can be selected again if needed
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  }, [onDrop]);
 
   // Function to combine multiple photos into a single image
   const combinePhotosIntoPDF = async (photos: File[]): Promise<File> => {
@@ -945,12 +966,20 @@ export default function UploadDocumentPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => { setIsCameraMode(false); open(); }}
+                  onClick={() => { setIsCameraMode(false); handleFileButtonClick(); }}
                   className={!isCameraMode ? "bg-primary text-primary-foreground" : ""}
                 >
                   <UploadCloud className="h-4 w-4 mr-2" />
                   {t('upload.uploadFile')}
                 </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.rtf,.jpg,.jpeg,.png,.gif,.bmp,.tiff,.webp,.zip,.odt,.ods"
+                  onChange={handleFileInputChange}
+                  style={{ display: 'none' }}
+                />
                 <Button
                   type="button"
                   variant="outline"
@@ -1046,7 +1075,7 @@ export default function UploadDocumentPage() {
                           type="button" 
                           variant="outline" 
                           size="sm" 
-                          onClick={(e) => { e.stopPropagation(); open(); }}
+                          onClick={(e) => { e.stopPropagation(); handleFileButtonClick(); }}
                           disabled={formData.files.length >= 10}
                         >
                           Add more files {formData.files.length}/10
@@ -1067,7 +1096,7 @@ export default function UploadDocumentPage() {
                   ) : (
                     <div>
                       <p className="text-muted-foreground mb-2">
-                        Drag & drop documents or images here, or <Button type="button" variant="link" className="p-0 h-auto" onClick={open}>click to select</Button>
+                        Drag & drop documents or images here, or <Button type="button" variant="link" className="p-0 h-auto" onClick={handleFileButtonClick}>click to select</Button>
                       </p>
                       <p className="text-xs text-muted-foreground">
                         You can select multiple files (up to 10) at once
