@@ -177,7 +177,7 @@ export default function UploadDocumentPage() {
     { value: "other", label: "Other (use English OCR)" }
   ];
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
+  const onDrop = useCallback((acceptedFiles: File[], rejectedFiles?: any[]) => {
     if (acceptedFiles && acceptedFiles.length > 0) {
       // Accept all document and image types
       const allowedTypes = [
@@ -203,11 +203,15 @@ export default function UploadDocumentPage() {
         'application/vnd.oasis.opendocument.spreadsheet'
       ];
       
-      // Filter valid files and limit to 10
+      // Calculate how many files we can still add (max 10 total)
+      const currentFileCount = formData.files.length;
+      const remainingSlots = Math.max(0, 10 - currentFileCount);
+      
+      // Filter valid files and limit to remaining slots
       const validFiles = acceptedFiles.filter(file => 
         allowedTypes.includes(file.type) || 
         file.name.toLowerCase().match(/\.(pdf|doc|docx|xls|xlsx|csv|txt|rtf|jpg|jpeg|png|gif|bmp|tiff|webp|zip|odt|ods)$/)
-      ).slice(0, 10);
+      ).slice(0, remainingSlots);
       
       if (validFiles.length > 0) {
         setFormData((prev) => ({ ...prev, files: [...prev.files, ...validFiles].slice(0, 10) }));
@@ -223,13 +227,34 @@ export default function UploadDocumentPage() {
           toast.success(`${validFiles.length} files added`, {
             description: "You can upload multiple documents at once."
           });
+        } else if (validFiles.length === 1 && currentFileCount > 0) {
+          toast.success("File added", {
+            description: `${currentFileCount + 1}/10 files selected`
+          });
         }
       } else {
-        setErrors((prev) => ({ ...prev, file: "Unsupported file type. Please upload documents, images, or text files." }));
-        toast.error("Invalid File Type", { description: "Please upload supported document or image files." });
+        if (remainingSlots === 0) {
+          toast.warning("File limit reached", { 
+            description: "You can upload a maximum of 10 files. Please remove some files first." 
+          });
+        } else {
+          setErrors((prev) => ({ ...prev, file: "Unsupported file type. Please upload documents, images, or text files." }));
+          toast.error("Invalid File Type", { description: "Please upload supported document or image files." });
+        }
       }
     }
-  }, []);
+    
+    // Handle rejected files
+    if (rejectedFiles && rejectedFiles.length > 0) {
+      const reasons = rejectedFiles.map(({ file, errors }) => {
+        const errorMessages = errors.map(e => e.message).join(', ');
+        return `${file.name}: ${errorMessages}`;
+      });
+      toast.error("Some files were rejected", {
+        description: reasons.join('; ')
+      });
+    }
+  }, [formData.files.length]);
 
   // Function to combine multiple photos into a single image
   const combinePhotosIntoPDF = async (photos: File[]): Promise<File> => {
@@ -433,12 +458,6 @@ export default function UploadDocumentPage() {
     maxFiles: 10,    // Limit to 10 files
     noClick: true,   // We use a custom button to open the dialog
     noKeyboard: true,
-    onDropAccepted: (acceptedFiles) => {
-      // Ensure onDrop is called with all accepted files
-      if (acceptedFiles && acceptedFiles.length > 0) {
-        onDrop(acceptedFiles, []);
-      }
-    },
   });
 
   useEffect(() => {
@@ -971,7 +990,7 @@ export default function UploadDocumentPage() {
                   ${isDragActive ? "border-primary bg-primary/10" : "border-muted-foreground/30 hover:border-primary/70"}
                   ${errors.file ? "border-destructive bg-destructive/10" : ""}
                 `}>
-                  <input {...getInputProps({ multiple: true })} id="file-upload" name="file" />
+                  <input {...getInputProps()} id="file-upload" name="file" />
                   <UploadCloud className={`mx-auto h-12 w-12 mb-3 ${errors.file ? "text-destructive" : "text-muted-foreground"}`} />
                   {formData.files.length > 0 ? (
                     <div className="text-center space-y-3">
