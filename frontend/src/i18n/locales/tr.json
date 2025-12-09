@@ -238,6 +238,8 @@
     "fundingBody": "Bu projenin barındırması, <link>TechForPalestine.org</link> tarafından sağlanan cömert finansman sayesinde mümkün olmaktadır.",
     "affiliatesTitle": "Ortaklarımız ve Bağlı Kuruluşlarımız",
     "affiliatesBody": "Güvenilir ortaklarımız ve bağlı kuruluşlarımız hakkında bilgiler burada görüntülenecektir. Bu bölüm yöneticiler tarafından yönetilir.",
+    "collaboratorsTitle": "İşbirlikçiler ve Şampiyonlar",
+    "collaboratorsDescription": "Güvenilir ortaklarımız ve destekçilerimiz",
     "hostingTitle": "Barındırma ve Altyapı",
     "hostingBody": "HaqNow, İsviçre merkezli Avrupa bulut platformu Exoscale üzerinde barındırılmaktadır. Hizmetlerimiz Exoscale Compute, veritabanları (MySQL ve PostgreSQL + pgvector) ve SOS nesne depolamada çalışır; tüm katmanlarda gizlilik odaklı yapılandırmalarla.",
     "learnMoreDocs": "GitHub README'mizde daha fazlası",

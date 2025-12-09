@@ -8,6 +8,7 @@ import CountryDocStatsList from '../components/CountryDocStatsList';
 import InteractiveWorldMap from '../components/InteractiveWorldMap';
 import TopViewedDocuments from '../components/TopViewedDocuments';
 import RecentlySharedDocuments from '../components/RecentlySharedDocuments';
+import CollaboratorsSection from '../components/CollaboratorsSection';
 import Version from '../components/Version';
 import Navigation from '../components/Navigation';
 import ProminentLanguageBar from '../components/ProminentLanguageBar';
@@ -398,6 +399,23 @@ export default function App() {
             {/* Original CountryDocStatsList kept for additional functionality */}
             <div className="mt-8 md:mt-12">
               <CountryDocStatsList />
+            </div>
+          </section>
+
+          {/* Collaborators and Champions Section */}
+          <section className="mt-12">
+            <div className="w-full py-8 px-4">
+              <div className="max-w-6xl mx-auto">
+                <div className="mb-6">
+                  <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-center mb-2">
+                    {t('about.collaboratorsTitle', 'Collaborators and Champions')}
+                  </h2>
+                  <p className="text-slate-600 text-center">
+                    {t('about.collaboratorsDescription', 'Our trusted partners and supporters')}
+                  </p>
+                </div>
+                <CollaboratorsSection />
+              </div>
             </div>
           </section>
 

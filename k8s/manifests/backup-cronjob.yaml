@@ -92,3 +92,7 @@ spec:
 # Run with: kubectl create job --from=cronjob/cross-region-backup manual-backup-$(date +%Y%m%d) -n haqnow
 
 
+
+
+
+

@@ -250,3 +250,7 @@ The HaqNow platform demonstrates a **strong security posture** with:
 *Next scheduled scan: January 2026*
 
 
+
+
+
+

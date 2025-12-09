@@ -216,6 +216,8 @@
     "fundingBody": "This project's hosting is made possible through the generous funding provided by <link>TechForPalestine.org</link>.",
     "affiliatesTitle": "Our Affiliates & Partners",
     "affiliatesBody": "Information about our trusted affiliates and partners will be displayed here. This section is managed by administrators.",
+    "collaboratorsTitle": "Collaborators and Champions",
+    "collaboratorsDescription": "Our trusted partners and supporters",
     "hostingTitle": "Hosting & Infrastructure",
     "hostingBody": "HaqNow is hosted on Exoscale, a European cloud platform based in Switzerland. Our services run on Exoscale compute, databases (MySQL and PostgreSQL + pgvector), and SOS object storage, with privacy-focused configurations across the stack.",
     "learnMoreDocs": "Learn more in our GitHub README"

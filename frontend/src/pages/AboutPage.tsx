@@ -4,6 +4,7 @@ import { ArrowLeft, ExternalLink, Globe, Users, Shield, List } from "lucide-reac
 import { useNavigate } from "react-router-dom";
 import { useTranslation, Trans } from "react-i18next";
 import Navigation from "@/components/Navigation";
+import CollaboratorsSection from "@/components/CollaboratorsSection";
 
 export default function AboutPage() {
   const navigate = useNavigate();
@@ -56,12 +57,10 @@ export default function AboutPage() {
           </nav>
         </div>
 
-        {/* Affiliates Section */}
+        {/* Collaborators and Champions Section */}
         <div id="affiliates" className="bg-white text-gray-800 rounded-lg shadow-lg p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('about.affiliatesTitle')}</h2>
-          <div className="prose prose-lg text-gray-700 space-y-4">
-            <p>{t('about.affiliatesBody')}</p>
-          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('about.collaboratorsTitle', 'Collaborators and Champions')}</h2>
+          <CollaboratorsSection />
         </div>
 
         {/* Founder Section */}
