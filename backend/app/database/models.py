@@ -492,3 +492,39 @@ class JobQueue(Base):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
+
+class Collaborator(Base):
+    """Model for storing collaborators/champions information."""
+    
+    __tablename__ = "collaborators"
+    
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    name = Column(String(255), nullable=False, index=True)
+    description = Column(Text, nullable=False)  # 1-sentence description
+    logo_url = Column(String(1000), nullable=False)  # S3 URL to logo image
+    logo_path = Column(String(500), nullable=False)  # S3 file path
+    website_url = Column(String(1000), nullable=False)  # External URL
+    priority = Column(Integer, nullable=False, default=5, index=True)  # 1-10 for sorting
+    is_active = Column(Boolean, nullable=False, default=True, index=True)
+    created_by = Column(String(255), nullable=True)  # Admin email
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    
+    def __repr__(self):
+        return f"<Collaborator(id={self.id}, name='{self.name}', priority={self.priority})>"
+    
+    def to_dict(self):
+        """Convert model to dictionary."""
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "logo_url": self.logo_url,
+            "logo_path": self.logo_path,
+            "website_url": self.website_url,
+            "priority": self.priority,
+            "is_active": self.is_active,
+            "created_by": self.created_by,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }

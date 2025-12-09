@@ -211,6 +211,8 @@
     "fundingBody": "L’hébergement de ce projet est rendu possible grâce au financement généreux fourni par <link>TechForPalestine.org</link>.",
     "affiliatesTitle": "Nos Affiliés et Partenaires",
     "affiliatesBody": "Les informations sur nos affiliés et partenaires de confiance seront affichées ici. Cette section est gérée par les administrateurs.",
+    "collaboratorsTitle": "Collaborateurs et Champions",
+    "collaboratorsDescription": "Nos partenaires et supporters de confiance",
     "hostingTitle": "Hébergement & Infrastructure",
     "hostingBody": "HaqNow est hébergé sur Exoscale, une plateforme cloud européenne basée en Suisse. Nos services s'exécutent sur le calcul Exoscale, des bases de données (MySQL et PostgreSQL + pgvector) et le stockage d'objets SOS, avec des configurations axées sur la confidentialité à tous les niveaux.",
     "learnMoreDocs": "En savoir plus dans notre README GitHub"
