@@ -154,6 +154,46 @@ async def create_collaborator(
         raise HTTPException(status_code=500, detail=f"Failed to create collaborator: {str(e)}")
 
 
+@router.put("/reorder", response_model=CollaboratorsListResponse)
+async def reorder_collaborators(
+    request: ReorderRequest,
+    admin_user: AdminUser = Depends(AdminUser),
+    db: Session = Depends(get_db)
+):
+    """Reorder collaborators by updating display_order (admin only)."""
+    try:
+        # Update display_order for each collaborator based on their position in the list
+        for index, collaborator_id in enumerate(request.collaborator_ids):
+            collaborator = db.query(Collaborator).filter(Collaborator.id == collaborator_id).first()
+            if collaborator:
+                collaborator.display_order = index
+        
+        db.commit()
+        
+        # Return updated list
+        collaborators = (
+            db.query(Collaborator)
+            .order_by(Collaborator.display_order.asc(), Collaborator.created_at.asc())
+            .all()
+        )
+        
+        logger.info("Collaborators reordered", 
+                   admin_email=getattr(admin_user, "email", None),
+                   count=len(request.collaborator_ids))
+        
+        return CollaboratorsListResponse(
+            collaborators=[CollaboratorResponse(**c.to_dict()) for c in collaborators],
+            total=len(collaborators)
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error("Failed to reorder collaborators", error=str(e))
+        raise HTTPException(status_code=500, detail=f"Failed to reorder collaborators: {str(e)}")
+
+
 @router.put("/{collaborator_id}", response_model=CollaboratorResponse)
 async def update_collaborator(
     collaborator_id: int,
@@ -219,46 +259,6 @@ async def update_collaborator(
         db.rollback()
         logger.error("Failed to update collaborator", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to update collaborator: {str(e)}")
-
-
-@router.put("/reorder", response_model=CollaboratorsListResponse)
-async def reorder_collaborators(
-    request: ReorderRequest,
-    admin_user: AdminUser = Depends(AdminUser),
-    db: Session = Depends(get_db)
-):
-    """Reorder collaborators by updating display_order (admin only)."""
-    try:
-        # Update display_order for each collaborator based on their position in the list
-        for index, collaborator_id in enumerate(request.collaborator_ids):
-            collaborator = db.query(Collaborator).filter(Collaborator.id == collaborator_id).first()
-            if collaborator:
-                collaborator.display_order = index
-        
-        db.commit()
-        
-        # Return updated list
-        collaborators = (
-            db.query(Collaborator)
-            .order_by(Collaborator.display_order.asc(), Collaborator.created_at.asc())
-            .all()
-        )
-        
-        logger.info("Collaborators reordered", 
-                   admin_email=getattr(admin_user, "email", None),
-                   count=len(request.collaborator_ids))
-        
-        return CollaboratorsListResponse(
-            collaborators=[CollaboratorResponse(**c.to_dict()) for c in collaborators],
-            total=len(collaborators)
-        )
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        db.rollback()
-        logger.error("Failed to reorder collaborators", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Failed to reorder collaborators: {str(e)}")
 
 
 @router.delete("/{collaborator_id}")
