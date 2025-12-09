@@ -162,6 +162,9 @@ async def reorder_collaborators(
 ):
     """Reorder collaborators by updating display_order (admin only)."""
     try:
+        # Validate request
+        if not request.collaborator_ids or len(request.collaborator_ids) == 0:
+            raise HTTPException(status_code=400, detail="collaborator_ids cannot be empty")
         # Update display_order for each collaborator based on their position in the list
         for index, collaborator_id in enumerate(request.collaborator_ids):
             collaborator = db.query(Collaborator).filter(Collaborator.id == collaborator_id).first()
