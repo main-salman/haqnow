@@ -157,7 +157,7 @@ async def create_collaborator(
 @router.put("/reorder", response_model=CollaboratorsListResponse)
 async def reorder_collaborators(
     request: ReorderRequest,
-    admin_user: AdminUser = Depends(AdminUser),
+    admin_user: AdminUser,
     db: Session = Depends(get_db)
 ):
     """Reorder collaborators by updating display_order (admin only)."""
