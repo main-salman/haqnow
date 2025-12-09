@@ -6,7 +6,8 @@ import structlog
 import io
 
 from app.auth.user import AdminUser
-from app.database import get_db, Collaborator
+from app.database import get_db
+from app.database.models import Collaborator
 from app.services.s3_service import s3_service
 
 logger = structlog.get_logger()
