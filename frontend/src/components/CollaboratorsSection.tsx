@@ -8,7 +8,7 @@ interface Collaborator {
   description: string;
   logo_url: string;
   website_url: string;
-  priority: number;
+  display_order: number;
 }
 
 export default function CollaboratorsSection() {
