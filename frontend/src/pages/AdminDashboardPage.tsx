@@ -25,8 +25,24 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Slider } from "@/components/ui/slider";
-import { LayoutDashboard, FileCheck, FileText, Tag, Users, Settings, LogOut, ShieldBan, Loader2, Languages, TrendingUp, MessageSquare, BarChart3, Plus, Edit, Trash2, ExternalLink } from "lucide-react";
+import { 
+  DndContext, 
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { LayoutDashboard, FileCheck, FileText, Tag, Users, Settings, LogOut, ShieldBan, Loader2, Languages, TrendingUp, MessageSquare, BarChart3, Plus, Edit, Trash2, ExternalLink, GripVertical } from "lucide-react";
 
 // Logout function
 const handleLogout = (navigate: Function) => {
@@ -60,6 +76,93 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label, isExternal }) => (
   </Button>
 );
 
+// Sortable Collaborator Item Component
+interface SortableCollaboratorItemProps {
+  collaborator: Collaborator;
+  onEdit: (collaborator: Collaborator) => void;
+  onDelete: (id: number) => void;
+}
+
+function SortableCollaboratorItem({ collaborator, onEdit, onDelete }: SortableCollaboratorItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: collaborator.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 ${
+        isDragging ? 'bg-muted shadow-lg' : ''
+      }`}
+    >
+      <div className="flex items-center gap-4 flex-1">
+        {/* Drag Handle */}
+        <div
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground p-2 -ml-2"
+        >
+          <GripVertical className="h-5 w-5" />
+        </div>
+        
+        <img
+          src={collaborator.logo_url}
+          alt={collaborator.name}
+          className="h-16 w-32 object-contain"
+        />
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold">{collaborator.name}</h3>
+            {!collaborator.is_active && (
+              <Badge variant="secondary">Inactive</Badge>
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground line-clamp-1">
+            {collaborator.description}
+          </p>
+          <a
+            href={collaborator.website_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-1"
+          >
+            {collaborator.website_url}
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onEdit(collaborator)}
+        >
+          <Edit className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onDelete(collaborator.id)}
+        >
+          <Trash2 className="h-4 w-4 text-destructive" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 interface Collaborator {
   id: number;
   name: string;
@@ -67,7 +170,7 @@ interface Collaborator {
   logo_url: string;
   logo_path: string;
   website_url: string;
-  priority: number;
+  display_order: number;
   is_active: boolean;
   created_by: string | null;
   created_at: string;
@@ -96,11 +199,19 @@ export default function AdminDashboardPage() {
   const [formName, setFormName] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [formWebsiteUrl, setFormWebsiteUrl] = useState("");
-  const [formPriority, setFormPriority] = useState([5]);
   const [formIsActive, setFormIsActive] = useState(true);
   const [formLogo, setFormLogo] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isReordering, setIsReordering] = useState(false);
+  
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Fetch pending documents count
   const fetchPendingCount = async () => {
@@ -238,7 +349,6 @@ export default function AdminDashboardPage() {
     setFormName("");
     setFormDescription("");
     setFormWebsiteUrl("");
-    setFormPriority([5]);
     setFormIsActive(true);
     setFormLogo(null);
     setLogoPreview(null);
@@ -256,7 +366,6 @@ export default function AdminDashboardPage() {
     setFormName(collaborator.name);
     setFormDescription(collaborator.description);
     setFormWebsiteUrl(collaborator.website_url);
-    setFormPriority([collaborator.priority]);
     setFormIsActive(collaborator.is_active);
     setLogoPreview(collaborator.logo_url);
     setEditingCollaborator(collaborator);
@@ -282,7 +391,6 @@ export default function AdminDashboardPage() {
       formData.append('name', formName);
       formData.append('description', formDescription);
       formData.append('website_url', formWebsiteUrl);
-      formData.append('priority', formPriority[0].toString());
       formData.append('is_active', formIsActive.toString());
       
       if (formLogo) {
@@ -315,6 +423,61 @@ export default function AdminDashboardPage() {
       alert(error.message || 'Failed to save collaborator');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // Handle drag end
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    const oldIndex = collaborators.findIndex((c) => c.id === active.id);
+    const newIndex = collaborators.findIndex((c) => c.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) {
+      return;
+    }
+
+    // Optimistically update UI
+    const newCollaborators = arrayMove(collaborators, oldIndex, newIndex);
+    setCollaborators(newCollaborators);
+
+    // Update backend
+    setIsReordering(true);
+    try {
+      const token = localStorage.getItem('jwt_token');
+      if (!token) {
+        navigate("/admin-login-page");
+        return;
+      }
+
+      const collaboratorIds = newCollaborators.map((c) => c.id);
+
+      const response = await fetch('/api/collaborators/reorder', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ collaborator_ids: collaboratorIds }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to reorder collaborators');
+      }
+
+      // Refresh to get updated data
+      fetchCollaborators();
+    } catch (error: any) {
+      console.error('Error reordering collaborators:', error);
+      // Revert on error
+      fetchCollaborators();
+      alert('Failed to reorder collaborators');
+    } finally {
+      setIsReordering(false);
     }
   };
 
@@ -497,21 +660,6 @@ export default function AdminDashboardPage() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="priority">Priority: {formPriority[0]}</Label>
-                          <Slider
-                            id="priority"
-                            min={1}
-                            max={10}
-                            step={1}
-                            value={formPriority}
-                            onValueChange={setFormPriority}
-                            className="w-full"
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            Higher priority items appear first (1-10)
-                          </p>
-                        </div>
-                        <div className="space-y-2">
                           <Label htmlFor="logo">Logo {editingCollaborator && !formLogo ? '(optional)' : '*'}</Label>
                           <Input
                             id="logo"
@@ -572,62 +720,38 @@ export default function AdminDashboardPage() {
                     No collaborators yet. Click "Add Collaborator" to get started.
                   </p>
                 ) : (
-                  <div className="space-y-4">
-                    {collaborators.map((collaborator) => (
-                      <div
-                        key={collaborator.id}
-                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50"
-                      >
-                        <div className="flex items-center gap-4 flex-1">
-                          <img
-                            src={collaborator.logo_url}
-                            alt={collaborator.name}
-                            className="h-16 w-32 object-contain"
-                          />
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-semibold">{collaborator.name}</h3>
-                              {!collaborator.is_active && (
-                                <Badge variant="secondary">Inactive</Badge>
-                              )}
-                              <Badge variant="outline">Priority: {collaborator.priority}</Badge>
-                            </div>
-                            <p className="text-sm text-muted-foreground line-clamp-1">
-                              {collaborator.description}
-                            </p>
-                            <a
-                              href={collaborator.website_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-1"
-                            >
-                              {collaborator.website_url}
-                              <ExternalLink className="h-3 w-3" />
-                            </a>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditClick(collaborator)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setDeletingId(collaborator.id);
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext
+                      items={collaborators.map((c) => c.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <div className="space-y-4">
+                        {collaborators.map((collaborator) => (
+                          <SortableCollaboratorItem
+                            key={collaborator.id}
+                            collaborator={collaborator}
+                            onEdit={handleEditClick}
+                            onDelete={(id) => {
+                              setDeletingId(id);
                               setDeleteDialogOpen(true);
                             }}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                          />
+                        ))}
+                      </div>
+                    </SortableContext>
+                    {isReordering && (
+                      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                        <div className="bg-white p-4 rounded-lg">
+                          <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                          <p className="mt-2 text-sm">Reordering...</p>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    )}
+                  </DndContext>
                 )}
               </CardContent>
             </Card>
