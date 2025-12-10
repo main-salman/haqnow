@@ -14,33 +14,49 @@ from app.database.database import SessionLocal
 from app.database.models import Document
 from app.services.ai_summary_service import ai_summary_service
 
-async def generate_summaries_for_recent_docs(limit: int = 3):
+async def generate_summaries_for_recent_docs(limit: int = 3, force_recent: bool = False):
     """Generate AI summaries for the most recently uploaded documents."""
     db: Session = SessionLocal()
     
     try:
-        # Find the most recent approved documents, prioritizing those without summaries
-        # First try documents without summaries
-        documents_no_summary = db.query(Document).filter(
-            (Document.ai_summary.is_(None)) | (Document.ai_summary == ""),
-            Document.status == "approved",
-            Document.ocr_text.isnot(None),
-            Document.ocr_text != ""
-        ).order_by(Document.created_at.desc()).limit(limit).all()
-        
-        # If we need more, get the most recent documents regardless of summary status
-        if len(documents_no_summary) < limit:
-            remaining = limit - len(documents_no_summary)
-            documents_with_summary = db.query(Document).filter(
+        if force_recent:
+            # Get the most recent documents regardless of summary status
+            # But prioritize those without summaries
+            all_recent = db.query(Document).filter(
                 Document.status == "approved",
                 Document.ocr_text.isnot(None),
-                Document.ocr_text != "",
-                Document.ai_summary.isnot(None),
-                Document.ai_summary != ""
-            ).order_by(Document.created_at.desc()).limit(remaining).all()
-            documents = list(documents_no_summary) + list(documents_with_summary)
+                Document.ocr_text != ""
+            ).order_by(Document.created_at.desc()).limit(limit * 2).all()
+            
+            # Separate into those with and without summaries
+            no_summary = [d for d in all_recent if not d.ai_summary or not d.ai_summary.strip()]
+            with_summary = [d for d in all_recent if d.ai_summary and d.ai_summary.strip()]
+            
+            # Take up to limit documents, prioritizing those without summaries
+            documents = (no_summary + with_summary)[:limit]
         else:
-            documents = documents_no_summary
+            # Find the most recent approved documents, prioritizing those without summaries
+            # First try documents without summaries
+            documents_no_summary = db.query(Document).filter(
+                (Document.ai_summary.is_(None)) | (Document.ai_summary == ""),
+                Document.status == "approved",
+                Document.ocr_text.isnot(None),
+                Document.ocr_text != ""
+            ).order_by(Document.created_at.desc()).limit(limit).all()
+            
+            # If we need more, get the most recent documents regardless of summary status
+            if len(documents_no_summary) < limit:
+                remaining = limit - len(documents_no_summary)
+                documents_with_summary = db.query(Document).filter(
+                    Document.status == "approved",
+                    Document.ocr_text.isnot(None),
+                    Document.ocr_text != "",
+                    Document.ai_summary.isnot(None),
+                    Document.ai_summary != ""
+                ).order_by(Document.created_at.desc()).limit(remaining).all()
+                documents = list(documents_no_summary) + list(documents_with_summary)
+            else:
+                documents = documents_no_summary
         
         if not documents:
             print("✅ No documents found that need summaries.")
@@ -116,6 +132,6 @@ if __name__ == "__main__":
         print("   Please set THAURA_API_KEY in your .env file")
         sys.exit(1)
     
-    # Run async function
-    asyncio.run(generate_summaries_for_recent_docs(limit=3))
+    # Run async function - force_recent=True to get the 3 most recent documents
+    asyncio.run(generate_summaries_for_recent_docs(limit=3, force_recent=True))
 
