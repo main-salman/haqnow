@@ -70,6 +70,21 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
       setPdfError(null);
       setUseIframeFallback(false);
       
+      // Check if PDF URL is from S3/Exoscale (known CORS issues)
+      // Skip PDF.js for S3 URLs and use iframe directly
+      const isS3Url = pdfUrl.includes('sos-ch-dk-2.exo.io') || 
+                      pdfUrl.includes('s3.amazonaws.com') ||
+                      pdfUrl.includes('.exo.io');
+      
+      if (isS3Url) {
+        // S3 URLs don't support CORS for PDF.js, use iframe directly
+        console.log('S3 URL detected, using iframe fallback directly');
+        setPdfDoc(null);
+        setUseIframeFallback(true);
+        setPdfLoading(false);
+        return;
+      }
+      
       // Set a timeout for PDF.js loading (8 seconds)
       const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error('PDF.js loading timeout')), 8000)
