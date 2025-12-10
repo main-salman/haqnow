@@ -35,9 +35,6 @@ interface DocumentAnnotationsProps {
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs`;
 
 export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnnotationsProps) {
-  // #region agent log
-  console.log('[DEBUG-A] Component props:', {documentId, pdfUrl, pdfUrlLength: pdfUrl?.length, pdfUrlType: typeof pdfUrl});
-  // #endregion
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -81,9 +78,6 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
       
       if (isS3Url) {
         // S3 URLs don't support CORS for PDF.js, use iframe directly
-        // #region agent log
-        console.log('[DEBUG-B] S3 URL detected, setting iframe fallback:', {pdfUrl, isS3Url});
-        // #endregion
         setPdfDoc(null);
         setUseIframeFallback(true);
         setPdfLoading(false);
@@ -391,13 +385,7 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
     });
   };
 
-  // #region agent log
-  console.log('[DEBUG-BE] Render state:', {loading, pdfLoading, pdfDoc: !!pdfDoc, useIframeFallback, pdfUrl: pdfUrl?.substring(0,50), willShowEmbed: (!pdfDoc||useIframeFallback)&&!pdfLoading});
-  // #endregion
   if (loading) {
-    // #region agent log
-    console.log('[DEBUG-E] Early return - loading=true');
-    // #endregion
     return (
       <div className="flex items-center justify-center py-8">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -580,9 +568,6 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
         {(!pdfDoc || useIframeFallback) && !pdfLoading && (
           <div
             ref={(el) => {
-              // #region agent log
-              console.log('[DEBUG-CD] Embed section ref:', {pdfUrl: pdfUrl?.substring(0,80), elExists: !!el, elHeight: el?.clientHeight, elWidth: el?.clientWidth});
-              // #endregion
               if (pdfContainerRef) pdfContainerRef.current = el;
             }}
             className="relative w-full"
@@ -603,16 +588,6 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
                   backgroundColor: 'transparent'
                 }}
                 title="PDF Viewer"
-                ref={(el) => {
-                  // #region agent log
-                  if (el) {
-                    console.log('[DEBUG-CD] Embed element ref:', {embedExists: !!el, embedSrc: el?.getAttribute('src')?.substring(0,80), clientHeight: el?.clientHeight, clientWidth: el?.clientWidth});
-                    setTimeout(() => {
-                      console.log('[DEBUG-CD-500ms] Embed element after 500ms:', {clientHeight: el?.clientHeight, offsetHeight: el?.offsetHeight, naturalWidth: (el as any)?.naturalWidth});
-                    }, 500);
-                  }
-                  // #endregion
-                }}
               />
               {/* Fallback iframe if embed doesn't work */}
               <iframe
