@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Highlighter, X, Loader2, Trash2 } from "lucide-react";
+import { Highlighter, X, Loader2, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import * as pdfjsLib from 'pdfjs-dist';
 
 interface Annotation {
   id: number;
@@ -29,6 +30,10 @@ interface DocumentAnnotationsProps {
   pdfUrl: string;
 }
 
+// Configure PDF.js worker - use CDN for reliability
+// Using version 4.10.38 which matches the installed pdfjs-dist version
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs`;
+
 export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnnotationsProps) {
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,11 +45,79 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
   const [noteText, setNoteText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [pdfDoc, setPdfDoc] = useState<any>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [pdfLoading, setPdfLoading] = useState(true);
+  const [pdfError, setPdfError] = useState<string | null>(null);
   const pdfContainerRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     fetchAnnotations();
-  }, [documentId]);
+    loadPDF();
+  }, [documentId, pdfUrl]);
+
+  const loadPDF = async () => {
+    try {
+      setPdfLoading(true);
+      setPdfError(null);
+      
+      // Load PDF document with CORS handling
+      const loadingTask = pdfjsLib.getDocument({
+        url: pdfUrl,
+        withCredentials: false,
+        httpHeaders: {},
+        // Use fetch API for better CORS handling
+        verbosity: 0, // Suppress console warnings
+      });
+      
+      const pdf = await loadingTask.promise;
+      setPdfDoc(pdf);
+      setTotalPages(pdf.numPages);
+      setCurrentPage(1);
+    } catch (err: any) {
+      console.error('Error loading PDF:', err);
+      // If PDF.js fails, fallback to iframe
+      setPdfError('PDF.js failed to load. Using fallback viewer.');
+      // Set a flag to use iframe fallback
+      setPdfDoc(null);
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+  const renderPage = async (pageNum: number) => {
+    if (!pdfDoc || !canvasRef.current) return;
+
+    try {
+      const page = await pdfDoc.getPage(pageNum);
+      const canvas = canvasRef.current;
+      const context = canvas.getContext('2d');
+      
+      if (!context) return;
+
+      const viewport = page.getViewport({ scale: 1.5 });
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+
+      const renderContext = {
+        canvasContext: context,
+        viewport: viewport,
+      };
+
+      await page.render(renderContext).promise;
+    } catch (err: any) {
+      console.error('Error rendering PDF page:', err);
+      setPdfError('Failed to render PDF page');
+    }
+  };
+
+  useEffect(() => {
+    if (pdfDoc && currentPage) {
+      renderPage(currentPage);
+    }
+  }, [pdfDoc, currentPage]);
 
   const fetchAnnotations = async () => {
     try {
@@ -67,32 +140,10 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
   };
 
   const handleTextSelection = (e?: MouseEvent) => {
-    // Try to get selection from the main window first
-    let selection = window.getSelection();
-    let range: Range | null = null;
+    // Get selection from the main window
+    const selection = window.getSelection();
     
-    // If no selection in main window, try to get it from the iframe
     if (!selection || selection.rangeCount === 0) {
-      // Check if we can access iframe content (only works if same-origin)
-      const iframe = pdfContainerRef.current?.querySelector('iframe');
-      if (iframe && iframe.contentWindow) {
-        try {
-          const iframeSelection = iframe.contentWindow.getSelection();
-          if (iframeSelection && iframeSelection.rangeCount > 0) {
-            selection = iframeSelection;
-            range = iframeSelection.getRangeAt(0);
-          }
-        } catch (err) {
-          // Cross-origin restriction - can't access iframe content
-          console.log('Cannot access iframe selection (cross-origin restriction)');
-        }
-      }
-    } else {
-      range = selection.getRangeAt(0);
-    }
-
-    if (!selection || !range || selection.rangeCount === 0) {
-      // If no selection found, check if user has copied text to clipboard
       if (isSelecting) {
         // User might have selected text in PDF and copied it
         // Show instructions to paste the text
@@ -101,6 +152,7 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
       return;
     }
 
+    const range = selection.getRangeAt(0);
     const rect = range.getBoundingClientRect();
     const containerRect = pdfContainerRef.current?.getBoundingClientRect();
     
@@ -421,20 +473,104 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
       )}
 
       {/* PDF Container with annotations */}
-      <div
-        ref={pdfContainerRef}
-        className="relative"
-        onMouseUp={handleTextSelection}
-      >
-        <iframe
-          src={pdfUrl}
-          title="PDF Viewer"
-          width="100%"
-          height="600px"
-          className="border rounded"
-          style={{ pointerEvents: isSelecting ? 'auto' : 'auto' }}
-        />
-        {renderAnnotationOverlays()}
+      <div className="space-y-4">
+        {pdfLoading && (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mr-2" />
+            <span className="text-muted-foreground">Loading PDF...</span>
+          </div>
+        )}
+        
+        {pdfError && (
+          <div className="bg-destructive/10 text-destructive p-3 rounded-lg text-sm">
+            PDF Error: {pdfError}
+            <div className="mt-2">
+              <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                Open PDF in new tab
+              </a>
+            </div>
+          </div>
+        )}
+
+        {pdfDoc && !pdfError && (
+          <>
+            {/* PDF Navigation Controls */}
+            <div className="flex items-center justify-between bg-muted/50 p-2 rounded-lg">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (currentPage > 1) {
+                    setCurrentPage(currentPage - 1);
+                  }
+                }}
+                disabled={currentPage <= 1}
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Previous
+              </Button>
+              
+              <span className="text-sm text-muted-foreground">
+                Page {currentPage} of {totalPages}
+              </span>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (currentPage < totalPages) {
+                    setCurrentPage(currentPage + 1);
+                  }
+                }}
+                disabled={currentPage >= totalPages}
+              >
+                Next
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+
+            {/* PDF Canvas Container */}
+            <div
+              ref={pdfContainerRef}
+              className="relative border rounded-lg overflow-auto bg-gray-100"
+              style={{ maxHeight: '800px' }}
+              onMouseUp={handleTextSelection}
+            >
+              <div className="flex justify-center p-4">
+                <canvas
+                  ref={canvasRef}
+                  className="shadow-lg"
+                  style={{ maxWidth: '100%', height: 'auto' }}
+                />
+              </div>
+              {renderAnnotationOverlays()}
+            </div>
+          </>
+        )}
+
+        {/* Fallback to iframe if PDF.js fails */}
+        {!pdfDoc && !pdfLoading && (
+          <div
+            ref={pdfContainerRef}
+            className="relative"
+            onMouseUp={handleTextSelection}
+          >
+            <iframe
+              src={pdfUrl}
+              title="PDF Viewer"
+              width="100%"
+              height="600px"
+              className="border rounded"
+              style={{ pointerEvents: isSelecting ? 'auto' : 'auto' }}
+            />
+            {renderAnnotationOverlays()}
+            {pdfError && (
+              <div className="mt-2 text-xs text-muted-foreground">
+                Note: Using fallback viewer. Some features may be limited.
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Annotation list */}
