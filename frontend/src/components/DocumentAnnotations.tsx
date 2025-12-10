@@ -572,16 +572,33 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
             className="relative w-full"
             onMouseUp={handleTextSelection}
           >
-            <div className="border rounded-lg overflow-hidden bg-gray-50" style={{ minHeight: '600px' }}>
+            <div className="border rounded-lg overflow-hidden bg-gray-50" style={{ minHeight: '600px', position: 'relative' }}>
               <iframe
                 src={pdfUrl}
                 title="PDF Viewer"
                 width="100%"
                 height="600px"
-                className="w-full"
-                style={{ border: 'none', display: 'block' }}
+                className="w-full border-0"
+                style={{ 
+                  border: 'none', 
+                  display: 'block',
+                  minHeight: '600px',
+                  backgroundColor: '#f9fafb'
+                }}
                 allow="fullscreen"
+                loading="lazy"
+                onLoad={() => {
+                  console.log('PDF iframe loaded successfully');
+                }}
+                onError={(e) => {
+                  console.error('PDF iframe failed to load:', e);
+                }}
               />
+              {!pdfUrl && (
+                <div className="absolute inset-0 flex items-center justify-center text-gray-500">
+                  <p>PDF URL not available</p>
+                </div>
+              )}
             </div>
             {renderAnnotationOverlays()}
             <div className="mt-2 text-xs text-muted-foreground text-center">
