@@ -50,6 +50,7 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
   const [totalPages, setTotalPages] = useState(0);
   const [pdfLoading, setPdfLoading] = useState(true);
   const [pdfError, setPdfError] = useState<string | null>(null);
+  const [useIframeFallback, setUseIframeFallback] = useState(false);
   const pdfContainerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -59,6 +60,7 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
     setPdfDoc(null);
     setPdfError(null);
     setPdfLoading(true);
+    setUseIframeFallback(false);
     loadPDF();
   }, [documentId, pdfUrl]);
 
@@ -66,10 +68,11 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
     try {
       setPdfLoading(true);
       setPdfError(null);
+      setUseIframeFallback(false);
       
-      // Set a timeout for PDF.js loading (10 seconds)
+      // Set a timeout for PDF.js loading (8 seconds)
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('PDF.js loading timeout')), 10000)
+        setTimeout(() => reject(new Error('PDF.js loading timeout')), 8000)
       );
       
       // Try loading PDF with PDF.js first
@@ -87,9 +90,10 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
       setCurrentPage(1);
     } catch (err: any) {
       console.error('Error loading PDF with PDF.js:', err);
-      // If PDF.js fails due to CORS, timeout, or other issues, fallback to iframe
-      setPdfError(null); // Don't show error, just use iframe fallback
-      setPdfDoc(null); // This will trigger iframe fallback
+      // If PDF.js fails due to CORS, timeout, or other issues, use iframe fallback
+      setPdfError(null);
+      setPdfDoc(null);
+      setUseIframeFallback(true); // Explicitly set fallback flag
     } finally {
       setPdfLoading(false);
     }
