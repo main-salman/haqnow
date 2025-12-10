@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Highlighter, X, Loader2, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Highlighter, X, Loader2, Trash2, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -55,6 +55,10 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
 
   useEffect(() => {
     fetchAnnotations();
+    // Reset PDF state when URL changes
+    setPdfDoc(null);
+    setPdfError(null);
+    setPdfLoading(true);
     loadPDF();
   }, [documentId, pdfUrl]);
 
@@ -63,25 +67,27 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
       setPdfLoading(true);
       setPdfError(null);
       
-      // For S3 URLs, we may need to handle CORS differently
+      // Set a timeout for PDF.js loading (10 seconds)
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('PDF.js loading timeout')), 10000)
+      );
+      
       // Try loading PDF with PDF.js first
       const loadingTask = pdfjsLib.getDocument({
         url: pdfUrl,
         withCredentials: false,
         httpHeaders: {},
         verbosity: 0, // Suppress console warnings
-        // Add CORS mode for fetch
-        cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/cmaps/',
-        cMapPacked: true,
       });
       
-      const pdf = await loadingTask.promise;
+      // Race between loading and timeout
+      const pdf = await Promise.race([loadingTask.promise, timeoutPromise]) as any;
       setPdfDoc(pdf);
       setTotalPages(pdf.numPages);
       setCurrentPage(1);
     } catch (err: any) {
       console.error('Error loading PDF with PDF.js:', err);
-      // If PDF.js fails due to CORS or other issues, fallback to iframe
+      // If PDF.js fails due to CORS, timeout, or other issues, fallback to iframe
       setPdfError(null); // Don't show error, just use iframe fallback
       setPdfDoc(null); // This will trigger iframe fallback
     } finally {
@@ -482,17 +488,6 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
             <span className="text-muted-foreground">Loading PDF...</span>
           </div>
         )}
-        
-        {pdfError && (
-          <div className="bg-destructive/10 text-destructive p-3 rounded-lg text-sm">
-            PDF Error: {pdfError}
-            <div className="mt-2">
-              <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                Open PDF in new tab
-              </a>
-            </div>
-          </div>
-        )}
 
         {pdfDoc && !pdfError && (
           <>
@@ -550,27 +545,30 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
           </>
         )}
 
-        {/* Fallback to iframe if PDF.js fails */}
+        {/* Fallback to iframe if PDF.js fails or hasn't loaded */}
         {!pdfDoc && !pdfLoading && (
           <div
             ref={pdfContainerRef}
-            className="relative"
+            className="relative w-full"
             onMouseUp={handleTextSelection}
           >
-            <iframe
-              src={pdfUrl}
-              title="PDF Viewer"
-              width="100%"
-              height="600px"
-              className="border rounded"
-              style={{ pointerEvents: isSelecting ? 'auto' : 'auto' }}
-            />
+            <div className="border rounded-lg overflow-hidden bg-gray-50">
+              <iframe
+                src={pdfUrl}
+                title="PDF Viewer"
+                width="100%"
+                height="600px"
+                className="w-full"
+                style={{ border: 'none' }}
+              />
+            </div>
             {renderAnnotationOverlays()}
-            {pdfError && (
-              <div className="mt-2 text-xs text-muted-foreground">
-                Note: Using fallback viewer. Some features may be limited.
-              </div>
-            )}
+            <div className="mt-2 text-xs text-muted-foreground text-center">
+              <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline inline-flex items-center gap-1">
+                <ExternalLink className="h-3 w-3" />
+                Open PDF in new tab
+              </a>
+            </div>
           </div>
         )}
       </div>
