@@ -72,31 +72,54 @@ async def process_job(job):
             # Process document (async)
             result = await process_document_internal(job.document_id, db)
             
+            # Refresh document to get latest state after processing
+            document = db.query(Document).filter(Document.id == job.document_id).first()
+            if document:
+                db.refresh(document)
+            
             if result:
-                # Update progress: Generating tags
-                queue_service.update_job_progress(
-                    db,
-                    job.id,
-                    current_step="Generating tags and summary",
-                    progress_percent=80
-                )
-                
-                # Update progress: Finalizing
-                queue_service.update_job_progress(
-                    db,
-                    job.id,
-                    current_step="Finalizing",
-                    progress_percent=95
-                )
-                
-                # Mark job as completed
-                queue_service.complete_job(db, job.id)
-                logger.info(
-                    "Job completed successfully",
-                    job_id=job.id,
-                    document_id=job.document_id
-                )
-                return True
+                # Verify document was actually updated
+                if document and document.ocr_text and document.ocr_text.strip():
+                    # Update progress: Generating tags
+                    queue_service.update_job_progress(
+                        db,
+                        job.id,
+                        current_step="Generating tags and summary",
+                        progress_percent=80
+                    )
+                    
+                    # Update progress: Finalizing
+                    queue_service.update_job_progress(
+                        db,
+                        job.id,
+                        current_step="Finalizing",
+                        progress_percent=95
+                    )
+                    
+                    # Mark job as completed
+                    queue_service.complete_job(db, job.id)
+                    logger.info(
+                        "Job completed successfully",
+                        job_id=job.id,
+                        document_id=job.document_id,
+                        ocr_length=len(document.ocr_text) if document.ocr_text else 0,
+                        has_summary=bool(document.ai_summary)
+                    )
+                    return True
+                else:
+                    # Processing returned result but document wasn't updated
+                    logger.warning(
+                        "Processing returned result but document not updated",
+                        job_id=job.id,
+                        document_id=job.document_id
+                    )
+                    queue_service.fail_job(
+                        db,
+                        job.id,
+                        "Document processing completed but document not updated in database",
+                        retry=True
+                    )
+                    return False
             else:
                 # Processing failed
                 queue_service.fail_job(
