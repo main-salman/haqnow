@@ -94,8 +94,7 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
       setPdfError(null);
       setPdfDoc(null);
       setUseIframeFallback(true); // Explicitly set fallback flag
-    } finally {
-      setPdfLoading(false);
+      setPdfLoading(false); // Ensure loading is false so fallback shows
     }
   };
 
