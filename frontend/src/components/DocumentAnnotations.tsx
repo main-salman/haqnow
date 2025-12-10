@@ -549,21 +549,22 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
           </>
         )}
 
-        {/* Fallback to iframe if PDF.js fails or hasn't loaded */}
-        {!pdfDoc && !pdfLoading && (
+        {/* Fallback to iframe if PDF.js fails or times out */}
+        {(!pdfDoc || useIframeFallback) && !pdfLoading && (
           <div
             ref={pdfContainerRef}
             className="relative w-full"
             onMouseUp={handleTextSelection}
           >
-            <div className="border rounded-lg overflow-hidden bg-gray-50">
+            <div className="border rounded-lg overflow-hidden bg-gray-50" style={{ minHeight: '600px' }}>
               <iframe
                 src={pdfUrl}
                 title="PDF Viewer"
                 width="100%"
                 height="600px"
                 className="w-full"
-                style={{ border: 'none' }}
+                style={{ border: 'none', display: 'block' }}
+                allow="fullscreen"
               />
             </div>
             {renderAnnotationOverlays()}
