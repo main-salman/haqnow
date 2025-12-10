@@ -574,21 +574,21 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
           >
             <div className="border rounded-lg overflow-hidden bg-gray-50" style={{ minHeight: '600px', position: 'relative' }}>
               <iframe
-                src={pdfUrl}
+                src={`${pdfUrl}#toolbar=1&navpanes=1&scrollbar=1`}
                 title="PDF Viewer"
                 width="100%"
                 height="600px"
-                className="w-full border-0"
+                className="w-full"
                 style={{ 
                   border: 'none', 
                   display: 'block',
                   minHeight: '600px',
-                  backgroundColor: '#f9fafb'
+                  backgroundColor: 'transparent'
                 }}
                 allow="fullscreen"
-                loading="lazy"
+                loading="eager"
                 onLoad={() => {
-                  console.log('PDF iframe loaded successfully');
+                  console.log('PDF iframe loaded successfully', pdfUrl);
                 }}
                 onError={(e) => {
                   console.error('PDF iframe failed to load:', e);
