@@ -35,6 +35,9 @@ interface DocumentAnnotationsProps {
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs`;
 
 export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnnotationsProps) {
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/44b05fcc-8ae3-4e7c-b73e-7bb6aa6f9d67',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DocumentAnnotations.tsx:38',message:'Component mounted with props',data:{documentId,pdfUrl,pdfUrlLength:pdfUrl?.length,pdfUrlType:typeof pdfUrl},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -79,6 +82,9 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
       if (isS3Url) {
         // S3 URLs don't support CORS for PDF.js, use iframe directly
         console.log('S3 URL detected, using iframe fallback directly');
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/44b05fcc-8ae3-4e7c-b73e-7bb6aa6f9d67',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DocumentAnnotations.tsx:loadPDF',message:'S3 URL detected - setting iframe fallback',data:{pdfUrl,isS3Url},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
         setPdfDoc(null);
         setUseIframeFallback(true);
         setPdfLoading(false);
@@ -386,7 +392,13 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
     });
   };
 
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/44b05fcc-8ae3-4e7c-b73e-7bb6aa6f9d67',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DocumentAnnotations.tsx:render',message:'Render state check',data:{loading,pdfLoading,pdfDoc:!!pdfDoc,useIframeFallback,pdfUrl:pdfUrl?.substring(0,50),willShowEmbed:(!pdfDoc||useIframeFallback)&&!pdfLoading},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B,E'})}).catch(()=>{});
+  // #endregion
   if (loading) {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/44b05fcc-8ae3-4e7c-b73e-7bb6aa6f9d67',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DocumentAnnotations.tsx:earlyReturn',message:'Early return due to loading=true',data:{loading},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
+    // #endregion
     return (
       <div className="flex items-center justify-center py-8">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -568,7 +580,12 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
         {/* Fallback to iframe if PDF.js fails or times out */}
         {(!pdfDoc || useIframeFallback) && !pdfLoading && (
           <div
-            ref={pdfContainerRef}
+            ref={(el) => {
+              // #region agent log
+              fetch('http://127.0.0.1:7242/ingest/44b05fcc-8ae3-4e7c-b73e-7bb6aa6f9d67',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DocumentAnnotations.tsx:embedSection',message:'Embed section rendered',data:{pdfUrl:pdfUrl?.substring(0,80),elExists:!!el,elHeight:el?.clientHeight,elWidth:el?.clientWidth},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C,D'})}).catch(()=>{});
+              // #endregion
+              if (pdfContainerRef) pdfContainerRef.current = el;
+            }}
             className="relative w-full"
             onMouseUp={handleTextSelection}
           >
@@ -587,6 +604,15 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
                   backgroundColor: 'transparent'
                 }}
                 title="PDF Viewer"
+                ref={(el) => {
+                  // #region agent log
+                  if (el) {
+                    setTimeout(() => {
+                      fetch('http://127.0.0.1:7242/ingest/44b05fcc-8ae3-4e7c-b73e-7bb6aa6f9d67',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DocumentAnnotations.tsx:embedElement',message:'Embed element mounted',data:{embedExists:!!el,embedSrc:el?.getAttribute('src')?.substring(0,80),clientHeight:el?.clientHeight,clientWidth:el?.clientWidth,offsetHeight:el?.offsetHeight,offsetWidth:el?.offsetWidth},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C,D'})}).catch(()=>{});
+                    }, 500);
+                  }
+                  // #endregion
+                }}
               />
               {/* Fallback iframe if embed doesn't work */}
               <iframe
