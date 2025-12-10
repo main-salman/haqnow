@@ -63,13 +63,16 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
       setPdfLoading(true);
       setPdfError(null);
       
-      // Load PDF document with CORS handling
+      // For S3 URLs, we may need to handle CORS differently
+      // Try loading PDF with PDF.js first
       const loadingTask = pdfjsLib.getDocument({
         url: pdfUrl,
         withCredentials: false,
         httpHeaders: {},
-        // Use fetch API for better CORS handling
         verbosity: 0, // Suppress console warnings
+        // Add CORS mode for fetch
+        cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/cmaps/',
+        cMapPacked: true,
       });
       
       const pdf = await loadingTask.promise;
@@ -77,11 +80,10 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
       setTotalPages(pdf.numPages);
       setCurrentPage(1);
     } catch (err: any) {
-      console.error('Error loading PDF:', err);
-      // If PDF.js fails, fallback to iframe
-      setPdfError('PDF.js failed to load. Using fallback viewer.');
-      // Set a flag to use iframe fallback
-      setPdfDoc(null);
+      console.error('Error loading PDF with PDF.js:', err);
+      // If PDF.js fails due to CORS or other issues, fallback to iframe
+      setPdfError(null); // Don't show error, just use iframe fallback
+      setPdfDoc(null); // This will trigger iframe fallback
     } finally {
       setPdfLoading(false);
     }
