@@ -504,19 +504,24 @@ async def process_document_internal(document_id: int, db: Session) -> dict | Non
         tags_source_text = english_for_tags if (english_for_tags and english_for_tags.strip()) else extracted_text
         generated_tags = extract_tags_from_text(tags_source_text, db=db)
         
-        # Generate AI summary using Groq API
+        # Generate AI summary using Thaura AI
         ai_summary = None
         try:
             summary_text = tags_source_text[:5000]  # Use first 5000 chars for summary
-            ai_summary = await ai_summary_service.generate_summary(
-                text=summary_text,
-                title=document.title,
-                max_length=200
-            )
-            if ai_summary:
-                logger.info("AI summary generated", document_id=document_id, length=len(ai_summary))
+            if summary_text and len(summary_text.strip()) >= 50:  # Ensure minimum text length
+                ai_summary = await ai_summary_service.generate_summary(
+                    text=summary_text,
+                    title=document.title,
+                    max_length=200
+                )
+                if ai_summary:
+                    logger.info("AI summary generated", document_id=document_id, length=len(ai_summary))
+                else:
+                    logger.warning("AI summary generation returned None", document_id=document_id)
+            else:
+                logger.warning("Text too short for summary generation", document_id=document_id, text_length=len(summary_text) if summary_text else 0)
         except Exception as e:
-            logger.warning("Failed to generate AI summary", error=str(e))
+            logger.warning("Failed to generate AI summary", error=str(e), document_id=document_id)
         
         # Update document in database with searchable text (top 1000 words)
         document.ocr_text = searchable_text
@@ -777,19 +782,24 @@ async def process_document(
         tags_source_text = english_for_tags if (english_for_tags and english_for_tags.strip()) else extracted_text
         generated_tags = extract_tags_from_text(tags_source_text, db=db)
         
-        # Generate AI summary using Groq API
+        # Generate AI summary using Thaura AI
         ai_summary = None
         try:
             summary_text = tags_source_text[:5000]  # Use first 5000 chars for summary
-            ai_summary = await ai_summary_service.generate_summary(
-                text=summary_text,
-                title=document.title,
-                max_length=200
-            )
-            if ai_summary:
-                logger.info("AI summary generated", document_id=document_id, length=len(ai_summary))
+            if summary_text and len(summary_text.strip()) >= 50:  # Ensure minimum text length
+                ai_summary = await ai_summary_service.generate_summary(
+                    text=summary_text,
+                    title=document.title,
+                    max_length=200
+                )
+                if ai_summary:
+                    logger.info("AI summary generated", document_id=document_id, length=len(ai_summary))
+                else:
+                    logger.warning("AI summary generation returned None", document_id=document_id)
+            else:
+                logger.warning("Text too short for summary generation", document_id=document_id, text_length=len(summary_text) if summary_text else 0)
         except Exception as e:
-            logger.warning("Failed to generate AI summary", error=str(e))
+            logger.warning("Failed to generate AI summary", error=str(e), document_id=document_id)
         
         # Update document in database with searchable text (top 1000 words)
         document.ocr_text = searchable_text
