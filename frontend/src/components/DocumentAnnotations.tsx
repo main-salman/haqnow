@@ -573,9 +573,10 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
             onMouseUp={handleTextSelection}
           >
             <div className="border rounded-lg overflow-hidden bg-gray-50" style={{ minHeight: '600px', position: 'relative' }}>
-              <iframe
+              {/* Use embed tag for better PDF rendering in browsers */}
+              <embed
                 src={`${pdfUrl}#toolbar=1&navpanes=1&scrollbar=1`}
-                title="PDF Viewer"
+                type="application/pdf"
                 width="100%"
                 height="600px"
                 className="w-full"
@@ -585,14 +586,22 @@ export default function DocumentAnnotations({ documentId, pdfUrl }: DocumentAnno
                   minHeight: '600px',
                   backgroundColor: 'transparent'
                 }}
+                title="PDF Viewer"
+              />
+              {/* Fallback iframe if embed doesn't work */}
+              <iframe
+                src={pdfUrl}
+                title="PDF Viewer"
+                width="100%"
+                height="600px"
+                className="w-full hidden"
+                style={{ 
+                  border: 'none', 
+                  display: 'none',
+                  minHeight: '600px'
+                }}
                 allow="fullscreen"
                 loading="eager"
-                onLoad={() => {
-                  console.log('PDF iframe loaded successfully', pdfUrl);
-                }}
-                onError={(e) => {
-                  console.error('PDF iframe failed to load:', e);
-                }}
               />
               {!pdfUrl && (
                 <div className="absolute inset-0 flex items-center justify-center text-gray-500">
