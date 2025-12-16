@@ -12,10 +12,16 @@
 #   ./scripts/deploy.sh --env=prod patch   # Merge main→prod, deploy to production (haqnow.com)
 #   ./scripts/deploy.sh patch              # Default: dev environment
 #
+# MULTI-DEVELOPER SUPPORT:
+#   - Automatically pulls latest changes from remote before deploying
+#   - Auto-merges other developers' changes (since you work on different parts)
+#   - Aborts cleanly if merge conflict occurs (rare case)
+#
 # PROD DEPLOYMENT WORKFLOW:
 #   1. Ensures you're on prod branch (switches if needed)
-#   2. Merges latest main into prod
-#   3. Builds and deploys to haqnow.com
+#   2. Pulls latest from origin/prod (other developers' changes)
+#   3. Merges latest main into prod
+#   4. Builds and deploys to haqnow.com
 #
 # SPEED OPTIMIZATIONS:
 # - Uses pre-built base image (dependencies built once)
@@ -132,8 +138,44 @@ if [ "$CURRENT_BRANCH" != "$GIT_BRANCH" ]; then
     echo "🔄 Switching from '$CURRENT_BRANCH' to '$GIT_BRANCH' branch..."
     git fetch origin $GIT_BRANCH
     git checkout $GIT_BRANCH
-    git pull origin $GIT_BRANCH
     echo "✅ Now on '$GIT_BRANCH' branch"
+fi
+
+# ============================================
+# PULL LATEST FROM REMOTE (Multi-developer support)
+# ============================================
+echo ""
+echo "⬇️  Pulling latest changes from remote '$GIT_BRANCH'..."
+git fetch origin $GIT_BRANCH
+
+# Check if remote has new commits
+REMOTE_COMMITS=$(git rev-list --count HEAD..origin/$GIT_BRANCH 2>/dev/null || echo "0")
+if [ "$REMOTE_COMMITS" -gt 0 ]; then
+    echo "   Found $REMOTE_COMMITS new commit(s) from other developers"
+    
+    # Try to merge remote changes (auto-merge)
+    if ! git merge origin/$GIT_BRANCH --no-edit -m "Merge remote changes before deploy"; then
+        echo ""
+        echo "❌ Merge conflict with remote changes!"
+        echo ""
+        echo "   Another developer's changes conflict with your local state."
+        echo "   Please resolve the conflicts manually:"
+        echo ""
+        echo "   1. Run: git status (to see conflicting files)"
+        echo "   2. Edit the conflicting files to resolve"
+        echo "   3. Run: git add <resolved-files>"
+        echo "   4. Run: git commit"
+        echo "   5. Run deploy again"
+        echo ""
+        echo "   Or to abort: git merge --abort"
+        if [ "$STASHED" = true ]; then
+            echo "   Your stashed changes: git stash pop"
+        fi
+        exit 1
+    fi
+    echo "✅ Merged remote changes successfully"
+else
+    echo "✅ Already up-to-date with remote"
 fi
 
 # For PROD deployments: merge main into prod

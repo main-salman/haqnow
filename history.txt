@@ -1,3 +1,30 @@
+[2025-12-16] **FEATURE: Multi-Developer Support in Deploy Script**
+
+**Request:** Support multiple developers working on the same branch without overwriting each other's changes.
+
+**Solution:** Added auto-pull step to `scripts/deploy.sh`:
+1. Before committing local changes, fetch and merge latest from remote
+2. Auto-merge strategy (developers work on different parts, conflicts rare)
+3. If merge conflict occurs, abort cleanly with clear resolution instructions
+
+**Workflow:**
+```
+1. Stash local uncommitted changes
+2. Switch to correct branch (main for dev, prod for prod)
+3. NEW: Pull latest from remote (auto-merge other developers' changes)
+4. For prod: merge main into prod
+5. Restore stashed changes
+6. Commit all changes together
+7. Push to remote
+8. Build and deploy
+```
+
+**Files Changed:**
+- `scripts/deploy.sh` - Added remote pull with auto-merge before commit
+- `README.md` - Added multi-developer workflow documentation
+
+---
+
 [2025-12-16] **FIX: Deploy Script Environment Isolation**
 
 **Problem:** When deploying with `--env=dev`, changes could accidentally appear on production (haqnow.com) instead of development (haqnow.click).

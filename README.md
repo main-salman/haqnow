@@ -252,13 +252,32 @@ HaqNow runs on **Exoscale SKS (Managed Kubernetes)** with:
 
 1. ✅ Version bumping in package.json
 2. ✅ Automatic branch switching
-3. ✅ **Merge main→prod for production deploys**
-4. ✅ Frontend build (Vite)
-5. ✅ Git commit and push
-6. ✅ Docker image builds (backend-api, worker, frontend)
-7. ✅ Push to GitHub Container Registry (GHCR)
-8. ✅ Kubernetes deployment with rolling updates
-9. ✅ Health checks and rollout status
+3. ✅ **Auto-pull from remote** (integrates other developers' changes)
+4. ✅ **Merge main→prod for production deploys**
+5. ✅ Frontend build (Vite)
+6. ✅ Git commit and push
+7. ✅ Docker image builds (backend-api, worker, frontend)
+8. ✅ Push to GitHub Container Registry (GHCR)
+9. ✅ Kubernetes deployment with rolling updates
+10. ✅ Health checks and rollout status
+
+### **Multi-Developer Workflow**
+
+The deploy script supports multiple developers working on the same branch:
+
+```
+Developer A                    Remote (origin)                Developer B
+    |                               |                              |
+    |-- deploy.sh ----------------->|                              |
+    |   (commits + pushes)          |                              |
+    |                               |<------------ deploy.sh ------|
+    |                               |   (pulls A's changes first,  |
+    |                               |    then commits + pushes)    |
+```
+
+- **Auto-pull**: Before committing, the script pulls the latest changes from remote
+- **Auto-merge**: Since developers work on different parts, changes merge automatically
+- **Conflict handling**: If a rare conflict occurs, the script aborts with clear instructions
 
 ### **Important Notes**
 
