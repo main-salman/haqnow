@@ -204,23 +204,73 @@ HaqNow runs on **Exoscale SKS (Managed Kubernetes)** with:
 - **Network Load Balancer** for traffic distribution
 - **Deflect CDN** for DDoS protection and SSL termination
 
-### **Quick Deploy**
+### **Environment & Branch Mapping**
+
+| Environment | Domain | Git Branch | K8s Namespace | Image Tag |
+|-------------|--------|------------|---------------|-----------|
+| **Development** | `haqnow.click` | `main` | `haqnow-dev` | `:dev` |
+| **Production** | `haqnow.com` | `prod` | `haqnow` | `:latest` |
+
+### **Deployment Commands**
 
 ```bash
-# Deploy changes (auto-detects SKS)
-./scripts/deploy.sh patch   # Bug fixes
-./scripts/deploy.sh minor   # New features
-./scripts/deploy.sh major   # Breaking changes
+# Deploy to DEVELOPMENT (haqnow.click)
+./scripts/deploy.sh --env=dev patch    # Bug fixes
+./scripts/deploy.sh --env=dev minor    # New features  
+./scripts/deploy.sh --env=dev major    # Breaking changes
+
+# Deploy to PRODUCTION (haqnow.com)
+./scripts/deploy.sh --env=prod patch   # Bug fixes
+./scripts/deploy.sh --env=prod minor   # New features
+./scripts/deploy.sh --env=prod major   # Breaking changes
+
+# Default (no --env) deploys to dev
+./scripts/deploy.sh patch              # Same as --env=dev patch
 ```
 
-The deploy script handles:
-1. Version bumping in package.json
-2. Frontend build (Vite)
-3. Git commit and push
-4. Docker image builds (backend-api, worker, frontend)
-5. Push to GitHub Container Registry
-6. Kubernetes deployment with rolling updates
-7. Health checks
+### **Deployment Workflow**
+
+#### **Development Deployment (`--env=dev`)**
+1. Switches to `main` branch (if not already)
+2. Pulls latest from `origin/main`
+3. Commits any local changes
+4. Pushes to `main` branch
+5. Builds Docker images with `:dev` tag
+6. Deploys to `haqnow-dev` namespace
+7. Accessible at `haqnow.click`
+
+#### **Production Deployment (`--env=prod`)**
+1. Switches to `prod` branch (if not already)
+2. **Merges latest `main` into `prod`** (automatic)
+3. Commits any local changes
+4. Pushes to `prod` branch
+5. Builds Docker images with `:latest` tag
+6. Deploys to `haqnow` namespace
+7. Accessible at `haqnow.com`
+
+### **What the Deploy Script Handles**
+
+1. ✅ Version bumping in package.json
+2. ✅ Automatic branch switching
+3. ✅ **Merge main→prod for production deploys**
+4. ✅ Frontend build (Vite)
+5. ✅ Git commit and push
+6. ✅ Docker image builds (backend-api, worker, frontend)
+7. ✅ Push to GitHub Container Registry (GHCR)
+8. ✅ Kubernetes deployment with rolling updates
+9. ✅ Health checks and rollout status
+
+### **Important Notes**
+
+⚠️ **Never manually deploy to production without going through the script** - it ensures:
+- Changes are tested in dev first (via the main branch)
+- Production always receives merged changes from main
+- Proper version tracking and git history
+
+⚠️ **Branch Protection**: The script will automatically:
+- Switch to the correct branch for the target environment
+- Stash uncommitted changes, deploy, then restore them
+- Abort if there are merge conflicts (requires manual resolution)
 
 ### **Environment Configuration**
 
