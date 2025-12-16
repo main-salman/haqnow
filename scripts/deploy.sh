@@ -12,16 +12,18 @@
 #   ./scripts/deploy.sh --env=prod patch   # Merge main→prod, deploy to production (haqnow.com)
 #   ./scripts/deploy.sh patch              # Default: dev environment
 #
-# MULTI-DEVELOPER SUPPORT:
-#   - Automatically pulls latest changes from remote before deploying
-#   - Auto-merges other developers' changes (since you work on different parts)
-#   - Aborts cleanly if merge conflict occurs (rare case)
+# WORKFLOW:
+#   1. Verify you're on the correct branch (main for dev, prod for prod)
+#   2. Pull latest from remote (auto-merge other developers' changes)
+#   3. For prod: also merge main → prod
+#   4. Commit your changes (uncommitted files are auto-committed)
+#   5. Push to remote
+#   6. Build and deploy
 #
-# PROD DEPLOYMENT WORKFLOW:
-#   1. Ensures you're on prod branch (switches if needed)
-#   2. Pulls latest from origin/prod (other developers' changes)
-#   3. Merges latest main into prod
-#   4. Builds and deploys to haqnow.com
+# MULTI-DEVELOPER SUPPORT:
+#   - Pulls latest changes from remote before committing yours
+#   - Auto-merges since developers work on different parts
+#   - Aborts cleanly if merge conflict occurs (rare case)
 #
 # SPEED OPTIMIZATIONS:
 # - Uses pre-built base image (dependencies built once)
@@ -118,34 +120,43 @@ echo "📦 Target: $([ "$DEPLOY_TARGET" = "--sks" ] && echo "SKS" || echo "VM")"
 START_TIME=$(date +%s)
 
 # ============================================
-# STRICT BRANCH MANAGEMENT
+# BRANCH VERIFICATION
 # ============================================
 CURRENT_BRANCH=$(git branch --show-current)
 
-# Check for uncommitted changes
-if ! git diff --quiet || ! git diff --staged --quiet; then
-    echo ""
-    echo "📝 You have uncommitted changes. Stashing them temporarily..."
-    git stash push -m "deploy-stash-$(date +%s)"
-    STASHED=true
-else
-    STASHED=false
-fi
-
-# Switch to correct branch if needed
+# Verify you're on the correct branch
 if [ "$CURRENT_BRANCH" != "$GIT_BRANCH" ]; then
     echo ""
-    echo "🔄 Switching from '$CURRENT_BRANCH' to '$GIT_BRANCH' branch..."
-    git fetch origin $GIT_BRANCH
-    git checkout $GIT_BRANCH
-    echo "✅ Now on '$GIT_BRANCH' branch"
+    echo "❌ ERROR: Wrong branch!"
+    echo ""
+    echo "   You're on: $CURRENT_BRANCH"
+    echo "   Expected:  $GIT_BRANCH (for $DEPLOY_ENV deployment)"
+    echo ""
+    echo "   Please switch to the correct branch first:"
+    echo "   git checkout $GIT_BRANCH"
+    echo ""
+    exit 1
 fi
+
+echo "✅ Branch verified: $CURRENT_BRANCH"
 
 # ============================================
 # PULL LATEST FROM REMOTE (Multi-developer support)
 # ============================================
+# Note: We need to stash uncommitted changes temporarily because
+# git merge requires a clean working tree. Your changes will be
+# restored after pulling, then committed together with any remote changes.
+
+HAS_UNCOMMITTED=false
+if ! git diff --quiet || ! git diff --staged --quiet; then
+    HAS_UNCOMMITTED=true
+    echo ""
+    echo "📝 Temporarily stashing your uncommitted changes..."
+    git stash push -m "deploy-stash-$(date +%s)"
+fi
+
 echo ""
-echo "⬇️  Pulling latest changes from remote '$GIT_BRANCH'..."
+echo "⬇️  Pulling latest changes from remote..."
 git fetch origin $GIT_BRANCH
 
 # Check if remote has new commits
@@ -153,27 +164,20 @@ REMOTE_COMMITS=$(git rev-list --count HEAD..origin/$GIT_BRANCH 2>/dev/null || ec
 if [ "$REMOTE_COMMITS" -gt 0 ]; then
     echo "   Found $REMOTE_COMMITS new commit(s) from other developers"
     
-    # Try to merge remote changes (auto-merge)
     if ! git merge origin/$GIT_BRANCH --no-edit -m "Merge remote changes before deploy"; then
         echo ""
         echo "❌ Merge conflict with remote changes!"
         echo ""
-        echo "   Another developer's changes conflict with your local state."
-        echo "   Please resolve the conflicts manually:"
+        echo "   Another developer's changes conflict with the codebase."
+        echo "   Please resolve manually, then run deploy again."
         echo ""
-        echo "   1. Run: git status (to see conflicting files)"
-        echo "   2. Edit the conflicting files to resolve"
-        echo "   3. Run: git add <resolved-files>"
-        echo "   4. Run: git commit"
-        echo "   5. Run deploy again"
-        echo ""
-        echo "   Or to abort: git merge --abort"
-        if [ "$STASHED" = true ]; then
-            echo "   Your stashed changes: git stash pop"
+        echo "   To abort: git merge --abort"
+        if [ "$HAS_UNCOMMITTED" = true ]; then
+            echo "   Your changes are stashed. Restore with: git stash pop"
         fi
         exit 1
     fi
-    echo "✅ Merged remote changes successfully"
+    echo "✅ Merged $REMOTE_COMMITS commit(s) from other developers"
 else
     echo "✅ Already up-to-date with remote"
 fi
@@ -184,41 +188,42 @@ if [ "$DEPLOY_ENV" = "prod" ]; then
     echo "🔀 Merging latest 'main' into 'prod'..."
     git fetch origin main
     
-    # Check if there are changes to merge
     MAIN_COMMITS=$(git rev-list --count HEAD..origin/main 2>/dev/null || echo "0")
     if [ "$MAIN_COMMITS" -gt 0 ]; then
         echo "   Found $MAIN_COMMITS new commit(s) from main to merge"
         if ! git merge origin/main --no-edit; then
             echo ""
-            echo "❌ Merge conflict detected!"
-            echo "   Please resolve conflicts manually, then run deploy again."
+            echo "❌ Merge conflict with main branch!"
+            echo "   Please resolve manually, then run deploy again."
             echo "   To abort: git merge --abort"
-            if [ "$STASHED" = true ]; then
-                echo "   Your stashed changes: git stash pop"
+            if [ "$HAS_UNCOMMITTED" = true ]; then
+                echo "   Your changes are stashed. Restore with: git stash pop"
             fi
             exit 1
         fi
-        echo "✅ Merged main into prod successfully"
+        echo "✅ Merged main into prod"
     else
         echo "✅ prod is already up-to-date with main"
     fi
 fi
 
-# Restore stashed changes
-if [ "$STASHED" = true ]; then
+# Restore your uncommitted changes
+if [ "$HAS_UNCOMMITTED" = true ]; then
     echo ""
-    echo "📝 Restoring your stashed changes..."
-    git stash pop
-fi
-
-# Verify we're on the correct branch
-FINAL_BRANCH=$(git branch --show-current)
-if [ "$FINAL_BRANCH" != "$GIT_BRANCH" ]; then
-    echo ""
-    echo "❌ ERROR: Failed to switch to '$GIT_BRANCH' branch"
-    echo "   Current branch: $FINAL_BRANCH"
-    echo "   Please switch manually: git checkout $GIT_BRANCH"
-    exit 1
+    echo "📝 Restoring your changes..."
+    if ! git stash pop; then
+        echo ""
+        echo "❌ Conflict restoring your changes!"
+        echo ""
+        echo "   Your changes conflict with what was pulled from remote."
+        echo "   Please resolve manually:"
+        echo "   1. Run: git stash show -p (to see your changes)"
+        echo "   2. Manually apply your changes"
+        echo "   3. Run: git stash drop (to clear the stash)"
+        echo "   4. Run deploy again"
+        exit 1
+    fi
+    echo "✅ Your changes restored"
 fi
 
 echo ""
