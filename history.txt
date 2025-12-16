@@ -1,3 +1,21 @@
+[2025-12-10] **FIX: PDF Preview Not Displaying (Blank Window)**
+
+**Problem:** PDF preview in DocumentAnnotations component showed blank window despite embed element being rendered with correct dimensions.
+
+**Root Cause:** The `Cross-Origin-Embedder-Policy: credentialless` header in `frontend/nginx.conf` was blocking cross-origin PDF embeds from Exoscale S3 storage. COEP requires cross-origin resources to explicitly opt-in via CORS headers, which S3 doesn't provide for direct PDF access.
+
+**Fix:** Removed COEP/COOP/CORP headers from nginx.conf (lines 21-23) that were blocking the embed:
+- `Cross-Origin-Opener-Policy: same-origin`
+- `Cross-Origin-Embedder-Policy: credentialless`  
+- `Cross-Origin-Resource-Policy: same-origin`
+
+**Files Changed:**
+- `frontend/nginx.conf` - Removed restrictive cross-origin headers
+
+**Debugging Process:** Used console.log instrumentation to confirm embed element was rendering correctly with proper dimensions (600x974), which ruled out React rendering issues and pointed to browser security policy blocking content.
+
+---
+
 [2025-12-03] **DEPLOYMENT: Dev environment (v4.15.73)**
 
 Deployed latest changes to dev environment (haqnow.click):
