@@ -230,66 +230,110 @@ HaqNow runs on **Exoscale SKS (Managed Kubernetes)** with:
 
 ### **Deployment Workflow**
 
+#### **Your Typical Workflow**
+```bash
+# 1. Work on main branch (for dev features)
+git checkout main
+
+# 2. Make your changes (no need to commit manually)
+# ... edit files ...
+
+# 3. Deploy - script handles commit, push, and deploy
+./scripts/deploy.sh --env=dev patch
+```
+
+#### **What the Script Does**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    DEPLOY SCRIPT FLOW                       │
+├─────────────────────────────────────────────────────────────┤
+│ 1. ✓ Verify you're on correct branch (main or prod)         │
+│ 2. ✓ Stash your uncommitted changes temporarily             │
+│ 3. ✓ Pull latest from remote (other developers' changes)    │
+│ 4. ✓ For prod: merge main → prod                            │
+│ 5. ✓ Restore your changes                                   │
+│ 6. ✓ Commit everything together                             │
+│ 7. ✓ Push to remote                                         │
+│ 8. ✓ Build Docker images & deploy to Kubernetes             │
+└─────────────────────────────────────────────────────────────┘
+```
+
 #### **Development Deployment (`--env=dev`)**
-1. Switches to `main` branch (if not already)
-2. Pulls latest from `origin/main`
-3. Commits any local changes
-4. Pushes to `main` branch
-5. Builds Docker images with `:dev` tag
-6. Deploys to `haqnow-dev` namespace
-7. Accessible at `haqnow.click`
+- **Requires**: You must be on `main` branch
+- **Pulls**: Latest changes from `origin/main`
+- **Commits**: Your uncommitted changes
+- **Deploys to**: `haqnow.click` (haqnow-dev namespace)
 
 #### **Production Deployment (`--env=prod`)**
-1. Switches to `prod` branch (if not already)
-2. **Merges latest `main` into `prod`** (automatic)
-3. Commits any local changes
-4. Pushes to `prod` branch
-5. Builds Docker images with `:latest` tag
-6. Deploys to `haqnow` namespace
-7. Accessible at `haqnow.com`
+- **Requires**: You must be on `prod` branch
+- **Pulls**: Latest changes from `origin/prod`
+- **Merges**: Latest `main` into `prod` (automatic)
+- **Commits**: Your uncommitted changes
+- **Deploys to**: `haqnow.com` (haqnow namespace)
+
+### **Multi-Developer Support**
+
+Multiple developers can work on `main` branch simultaneously:
+
+```
+Developer A                    GitHub                    Developer B
+    │                            │                            │
+    │── deploy.sh ──────────────►│                            │
+    │   (commits v5.1.13)        │                            │
+    │                            │                            │
+    │                            │◄────────── deploy.sh ──────│
+    │                            │  1. Pulls v5.1.13 first    │
+    │                            │  2. Auto-merges            │
+    │                            │  3. Commits v5.1.14        │
+```
+
+- **Auto-pull**: Script pulls remote changes before committing yours
+- **Auto-merge**: Changes merge automatically (developers work on different parts)
+- **Conflict handling**: If rare conflict occurs, script aborts with clear instructions
+
+### **Branch Requirements**
+
+⚠️ **Important**: The script requires you to be on the correct branch:
+
+```bash
+# If you try to deploy dev while on prod branch:
+$ ./scripts/deploy.sh --env=dev patch
+
+❌ ERROR: Wrong branch!
+   You're on: prod
+   Expected:  main (for dev deployment)
+   
+   Please switch: git checkout main
+```
 
 ### **What the Deploy Script Handles**
 
-1. ✅ Version bumping in package.json
-2. ✅ Automatic branch switching
-3. ✅ **Auto-pull from remote** (integrates other developers' changes)
-4. ✅ **Merge main→prod for production deploys**
-5. ✅ Frontend build (Vite)
-6. ✅ Git commit and push
-7. ✅ Docker image builds (backend-api, worker, frontend)
-8. ✅ Push to GitHub Container Registry (GHCR)
-9. ✅ Kubernetes deployment with rolling updates
-10. ✅ Health checks and rollout status
-
-### **Multi-Developer Workflow**
-
-The deploy script supports multiple developers working on the same branch:
-
-```
-Developer A                    Remote (origin)                Developer B
-    |                               |                              |
-    |-- deploy.sh ----------------->|                              |
-    |   (commits + pushes)          |                              |
-    |                               |<------------ deploy.sh ------|
-    |                               |   (pulls A's changes first,  |
-    |                               |    then commits + pushes)    |
-```
-
-- **Auto-pull**: Before committing, the script pulls the latest changes from remote
-- **Auto-merge**: Since developers work on different parts, changes merge automatically
-- **Conflict handling**: If a rare conflict occurs, the script aborts with clear instructions
+1. ✅ Branch verification (errors if wrong branch)
+2. ✅ Pull latest from remote (multi-developer support)
+3. ✅ **Merge main→prod for production deploys**
+4. ✅ Auto-commit your uncommitted changes
+5. ✅ Version bumping in package.json
+6. ✅ Frontend build (Vite)
+7. ✅ Git push to remote
+8. ✅ Docker image builds (backend-api, worker, frontend)
+9. ✅ Push to GitHub Container Registry (GHCR)
+10. ✅ Kubernetes deployment with rolling updates
+11. ✅ Health checks and rollout status
 
 ### **Important Notes**
 
-⚠️ **Never manually deploy to production without going through the script** - it ensures:
-- Changes are tested in dev first (via the main branch)
+⚠️ **Always use deploy.sh** - it ensures:
+- Your changes include other developers' recent commits
 - Production always receives merged changes from main
 - Proper version tracking and git history
+- No accidental overwrites of teammates' work
 
-⚠️ **Branch Protection**: The script will automatically:
-- Switch to the correct branch for the target environment
-- Stash uncommitted changes, deploy, then restore them
-- Abort if there are merge conflicts (requires manual resolution)
+⚠️ **The script will**:
+- Verify you're on the correct branch (errors if not)
+- Temporarily stash your changes to pull remote updates
+- Auto-merge other developers' changes
+- Abort cleanly if merge conflicts occur (with instructions)
 
 ### **Environment Configuration**
 
