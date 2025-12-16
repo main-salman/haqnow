@@ -260,6 +260,9 @@ export default function UploadDocumentPage() {
   // Custom function to open file picker with multiple selection
   const handleFileButtonClick = useCallback(() => {
     if (fileInputRef.current) {
+      // Ensure multiple attribute is set
+      fileInputRef.current.setAttribute('multiple', 'multiple');
+      fileInputRef.current.multiple = true;
       fileInputRef.current.click();
     }
   }, []);
@@ -483,9 +486,9 @@ export default function UploadDocumentPage() {
 
   // Ensure the file input has multiple attribute set
   useEffect(() => {
-    const fileInput = document.getElementById('file-upload') as HTMLInputElement;
-    if (fileInput) {
-      fileInput.setAttribute('multiple', 'multiple');
+    if (fileInputRef.current) {
+      fileInputRef.current.setAttribute('multiple', 'multiple');
+      fileInputRef.current.multiple = true;
     }
   }, []);
 
@@ -975,8 +978,8 @@ export default function UploadDocumentPage() {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  multiple
-                  accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.rtf,.jpg,.jpeg,.png,.gif,.bmp,.tiff,.webp,.zip,.odt,.ods"
+                  multiple={true}
+                  accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,text/plain,text/rtf,application/rtf,image/jpeg,image/png,image/gif,image/bmp,image/tiff,image/webp,application/zip,application/vnd.oasis.opendocument.text,application/vnd.oasis.opendocument.spreadsheet,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.rtf,.jpg,.jpeg,.png,.gif,.bmp,.tiff,.webp,.zip,.odt,.ods"
                   onChange={handleFileInputChange}
                   style={{ display: 'none' }}
                 />
