@@ -3,10 +3,19 @@
 # FAST deployment script for HaqNow - Single source of truth
 # Usage: ./scripts/deploy.sh [--env=dev|prod] [patch|minor|major] [--sks|--vm]
 # 
+# BRANCH/ENVIRONMENT MAPPING:
+#   - dev (haqnow.click)  → main branch  → haqnow-dev namespace → :dev images
+#   - prod (haqnow.com)   → prod branch  → haqnow namespace     → :latest images
+#
 # Examples:
 #   ./scripts/deploy.sh --env=dev patch    # Deploy main branch to dev (haqnow.click)
-#   ./scripts/deploy.sh --env=prod patch   # Deploy prod branch to production (haqnow.com)
+#   ./scripts/deploy.sh --env=prod patch   # Merge main→prod, deploy to production (haqnow.com)
 #   ./scripts/deploy.sh patch              # Default: dev environment
+#
+# PROD DEPLOYMENT WORKFLOW:
+#   1. Ensures you're on prod branch (switches if needed)
+#   2. Merges latest main into prod
+#   3. Builds and deploys to haqnow.com
 #
 # SPEED OPTIMIZATIONS:
 # - Uses pre-built base image (dependencies built once)
@@ -61,10 +70,16 @@ else
     BACKEND_REPLICAS=1
 fi
 
+echo ""
+echo "============================================"
+echo "🎯 DEPLOYMENT CONFIGURATION"
+echo "============================================"
 echo "🌐 Environment: $DEPLOY_ENV"
 echo "🏷️  Image tag: $IMAGE_TAG"
 echo "🌿 Git branch: $GIT_BRANCH"
 echo "🔗 Domain: $DOMAIN"
+echo "📦 Namespace: $NAMESPACE"
+echo "============================================"
 echo ""
 
 # Auto-detect deployment target
@@ -96,18 +111,76 @@ echo "🚀 Starting FAST deployment to $DEPLOY_ENV..."
 echo "📦 Target: $([ "$DEPLOY_TARGET" = "--sks" ] && echo "SKS" || echo "VM")"
 START_TIME=$(date +%s)
 
-# Ensure we're on the correct branch
+# ============================================
+# STRICT BRANCH MANAGEMENT
+# ============================================
 CURRENT_BRANCH=$(git branch --show-current)
+
+# Check for uncommitted changes
+if ! git diff --quiet || ! git diff --staged --quiet; then
+    echo ""
+    echo "📝 You have uncommitted changes. Stashing them temporarily..."
+    git stash push -m "deploy-stash-$(date +%s)"
+    STASHED=true
+else
+    STASHED=false
+fi
+
+# Switch to correct branch if needed
 if [ "$CURRENT_BRANCH" != "$GIT_BRANCH" ]; then
     echo ""
-    echo "⚠️  Warning: You're on branch '$CURRENT_BRANCH' but deploying to $DEPLOY_ENV (expects '$GIT_BRANCH')"
-    read -p "   Continue anyway? (y/N) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "❌ Deployment cancelled"
-        exit 1
+    echo "🔄 Switching from '$CURRENT_BRANCH' to '$GIT_BRANCH' branch..."
+    git fetch origin $GIT_BRANCH
+    git checkout $GIT_BRANCH
+    git pull origin $GIT_BRANCH
+    echo "✅ Now on '$GIT_BRANCH' branch"
+fi
+
+# For PROD deployments: merge main into prod
+if [ "$DEPLOY_ENV" = "prod" ]; then
+    echo ""
+    echo "🔀 Merging latest 'main' into 'prod'..."
+    git fetch origin main
+    
+    # Check if there are changes to merge
+    MAIN_COMMITS=$(git rev-list --count HEAD..origin/main 2>/dev/null || echo "0")
+    if [ "$MAIN_COMMITS" -gt 0 ]; then
+        echo "   Found $MAIN_COMMITS new commit(s) from main to merge"
+        if ! git merge origin/main --no-edit; then
+            echo ""
+            echo "❌ Merge conflict detected!"
+            echo "   Please resolve conflicts manually, then run deploy again."
+            echo "   To abort: git merge --abort"
+            if [ "$STASHED" = true ]; then
+                echo "   Your stashed changes: git stash pop"
+            fi
+            exit 1
+        fi
+        echo "✅ Merged main into prod successfully"
+    else
+        echo "✅ prod is already up-to-date with main"
     fi
 fi
+
+# Restore stashed changes
+if [ "$STASHED" = true ]; then
+    echo ""
+    echo "📝 Restoring your stashed changes..."
+    git stash pop
+fi
+
+# Verify we're on the correct branch
+FINAL_BRANCH=$(git branch --show-current)
+if [ "$FINAL_BRANCH" != "$GIT_BRANCH" ]; then
+    echo ""
+    echo "❌ ERROR: Failed to switch to '$GIT_BRANCH' branch"
+    echo "   Current branch: $FINAL_BRANCH"
+    echo "   Please switch manually: git checkout $GIT_BRANCH"
+    exit 1
+fi
+
+echo ""
+echo "✅ Branch verified: $FINAL_BRANCH"
 
 # Step 1: Update version (~5s)
 echo ""

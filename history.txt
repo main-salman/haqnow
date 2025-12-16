@@ -1,3 +1,32 @@
+[2025-12-16] **FIX: Deploy Script Environment Isolation**
+
+**Problem:** When deploying with `--env=dev`, changes could accidentally appear on production (haqnow.com) instead of development (haqnow.click).
+
+**Root Cause:** 
+1. Script only warned about wrong branch instead of enforcing branch switching
+2. Git commits went to current branch regardless of target environment
+3. Prod deployments didn't automatically merge main→prod
+4. Users could deploy from any branch to any environment
+
+**Fix - Enhanced `scripts/deploy.sh`:**
+1. **Automatic branch switching**: Script now switches to correct branch (`main` for dev, `prod` for prod)
+2. **Main→Prod merge for production**: Prod deployments automatically merge latest `main` into `prod` before deploying
+3. **Stash/restore uncommitted changes**: Safely handles uncommitted work during deploy
+4. **Merge conflict detection**: Aborts cleanly if conflicts exist, prompting manual resolution
+5. **Branch verification**: Double-checks correct branch before proceeding
+
+**Branch/Environment Mapping (now enforced):**
+| Environment | Domain | Branch | Namespace | Image Tag |
+|-------------|--------|--------|-----------|-----------|
+| dev | haqnow.click | main | haqnow-dev | :dev |
+| prod | haqnow.com | prod | haqnow | :latest |
+
+**Files Changed:**
+- `scripts/deploy.sh` - Added strict branch management, auto-merge for prod
+- `README.md` - Added comprehensive deployment documentation
+
+---
+
 [2025-12-10] **FIX: PDF Preview Not Displaying (Blank Window)**
 
 **Problem:** PDF preview in DocumentAnnotations component showed blank window despite embed element being rendered with correct dimensions.
