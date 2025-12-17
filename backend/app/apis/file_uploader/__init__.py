@@ -14,6 +14,7 @@ from app.services.s3_service import s3_service
 from app.services.email_service import email_service
 from app.services.metadata_service import metadata_service
 from app.services.virus_scanning_service import virus_scanning_service
+from app.services.captcha_service import captcha_service
 from app.services.queue_service import queue_service
 from app.database import SiteSetting
 import json
@@ -63,6 +64,7 @@ async def upload_file(
     state: str = Form(...),
     document_language: str = Form(default="english"),  # Added document language parameter
     description: Optional[str] = Form(None),
+    captcha_token: Optional[str] = Form(None),
     db: Session = Depends(get_db),
     api_consumer: Optional[APIConsumer] = Depends(validate_api_key)
 ):
@@ -73,10 +75,20 @@ async def upload_file(
     """
     
     # Check rate limit only for anonymous or web clients.
-    # If a valid API key is provided with 'upload' scope, skip rate limit.
+    # If a valid API key is provided with 'upload' scope, skip rate limit and captcha.
     is_api_allowed = api_consumer is not None and (api_consumer.scopes and "upload" in api_consumer.scopes)
     if not is_api_allowed:
         check_upload_rate_limit(request)
+        
+        # Validate captcha token for web clients (only if secret key is configured)
+        # If secret key is not configured, rely on frontend validation only (old behavior)
+        if captcha_service.available:
+            client_ip = request.client.host if request.client else None
+            if not captcha_service.verify_token(captcha_token or "", client_ip):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Security verification failed. Please complete the captcha and try again."
+                )
     
     try:
         # Validate file size (100MB limit)
@@ -268,6 +280,7 @@ async def upload_multiple_files(
     state: str = Form(...),
     document_language: str = Form(default="english"),
     description: Optional[str] = Form(None),
+    captcha_token: Optional[str] = Form(None),
     db: Session = Depends(get_db),
     api_consumer: Optional[APIConsumer] = Depends(validate_api_key)
 ):
@@ -281,6 +294,16 @@ async def upload_multiple_files(
     is_api_allowed = api_consumer is not None and (api_consumer.scopes and "upload" in api_consumer.scopes)
     if not is_api_allowed:
         check_upload_rate_limit(request)
+        
+        # Validate captcha token for web clients (only if secret key is configured)
+        # If secret key is not configured, rely on frontend validation only (old behavior)
+        if captcha_service.available:
+            client_ip = request.client.host if request.client else None
+            if not captcha_service.verify_token(captcha_token or "", client_ip):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Security verification failed. Please complete the captcha and try again."
+                )
     
     if not files or len(files) == 0:
         raise HTTPException(status_code=400, detail="No files provided")
