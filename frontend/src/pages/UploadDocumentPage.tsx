@@ -609,6 +609,10 @@ export default function UploadDocumentPage() {
       newErrors.consent = "You must confirm authorization to share this document.";
     }
 
+    if (!captchaToken) {
+      newErrors.captcha = "Please complete the security verification.";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -682,6 +686,9 @@ export default function UploadDocumentPage() {
       uploadFormData.append('document_language', formData.documentLanguage);
       if (formData.description) {
         uploadFormData.append('description', formData.description);
+      }
+      if (captchaToken) {
+        uploadFormData.append('captcha_token', captchaToken);
       }
 
       // Call the appropriate backend upload API
