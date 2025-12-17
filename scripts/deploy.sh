@@ -385,6 +385,15 @@ if [ "$DEPLOY_TARGET" = "--sks" ]; then
         kubectl rollout status deployment/frontend -n haqnow --timeout=60s || true
     fi
     
+    # Deploy Umami analytics (shared service for both dev and prod)
+    if [ -f "k8s/manifests/umami-deployment.yaml" ]; then
+        echo ""
+        echo "📊 Deploying Umami Analytics..."
+        kubectl apply -f k8s/manifests/umami-deployment.yaml
+        kubectl rollout restart deployment/umami -n umami || true
+        echo "✅ Umami Analytics deployed"
+    fi
+    
     TOTAL_TIME=$(($(date +%s) - START_TIME))
     echo ""
     echo "============================================"
