@@ -1,11 +1,13 @@
 import os
 import json
 import dotenv
-from fastapi import FastAPI, APIRouter, Depends, HTTPException
+import asyncio
+from fastapi import FastAPI, APIRouter, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, Response
 import structlog
+import requests
 
 # Load environment variables
 dotenv.load_dotenv()
@@ -155,6 +157,46 @@ def create_app() -> FastAPI:
         except Exception as e:
             logger.error("Error serving document", filename=filename, error=str(e))
             raise HTTPException(status_code=404, detail="Document not found")
+    
+    # Umami Analytics Proxy - proxies tracking requests to avoid CORS issues
+    @app.post("/api/umami/send")
+    @app.get("/api/umami/send")
+    async def umami_proxy(request: Request):
+        """Proxy Umami tracking requests to avoid CORS issues."""
+        umami_url = os.getenv("UMAMI_URL", "https://analytics.haqnow.com")
+        
+        try:
+            # Get request body if present
+            body = await request.body() if request.method == "POST" else None
+            
+            # Prepare headers (exclude host and content-length)
+            headers = {k: v for k, v in request.headers.items() 
+                      if k.lower() not in ['host', 'content-length', 'connection']}
+            
+            # Forward request to Umami using requests in executor
+            def forward_request():
+                return requests.request(
+                    method=request.method,
+                    url=f"{umami_url}/api/send",
+                    data=body,
+                    headers=headers,
+                    params=dict(request.query_params),
+                    timeout=5
+                )
+            
+            response = await asyncio.to_thread(forward_request)
+            
+            # Return response with CORS headers (handled by CORS middleware)
+            return Response(
+                content=response.content,
+                status_code=response.status_code,
+                headers={k: v for k, v in response.headers.items() 
+                        if k.lower() not in ['content-encoding', 'transfer-encoding', 'connection']}
+            )
+        except Exception as e:
+            logger.error("Umami proxy error", error=str(e))
+            # Return empty response to avoid breaking tracking
+            return Response(status_code=200, content=b"")
     
     # Health check endpoint
     @app.get("/health")
