@@ -15,7 +15,8 @@
   <load src="head.html" />
   
   <!-- Umami Analytics - Privacy-focused, self-hosted -->
-  <script defer src="https://analytics.haqnow.com/script.js" data-website-id="d3c71a00-2391-418e-abf0-ce376c3e6879"></script>
+  <!-- Using backend proxy to avoid CORS issues -->
+  <script defer src="https://analytics.haqnow.com/script.js" data-website-id="d3c71a00-2391-418e-abf0-ce376c3e6879" data-host-url="/api/umami"></script>
 </head>
 
 <body>
