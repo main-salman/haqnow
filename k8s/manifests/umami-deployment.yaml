@@ -95,26 +95,14 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
     # CORS configuration to allow requests from haqnow.com domains
+    # Using regex pattern to match multiple origins
     nginx.ingress.kubernetes.io/enable-cors: "true"
-    nginx.ingress.kubernetes.io/cors-allow-origin-regex: "https?://(www\\.)?(haqnow\\.com|haqnow\\.click|localhost(:5173|:3000)?)"
+    nginx.ingress.kubernetes.io/cors-allow-origin-regex: "^https?://(www\\.)?(haqnow\\.com|haqnow\\.click)(:.*)?$|^https?://localhost(:5173|:3000)?$"
     nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, OPTIONS"
     nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Accept"
     nginx.ingress.kubernetes.io/cors-expose-headers: "Content-Length,Content-Range"
     nginx.ingress.kubernetes.io/cors-allow-credentials: "false"
     nginx.ingress.kubernetes.io/cors-max-age: "86400"
-    # Handle OPTIONS preflight requests
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      more_set_headers "Access-Control-Allow-Origin: $http_origin";
-      more_set_headers "Access-Control-Allow-Methods: GET, POST, OPTIONS";
-      more_set_headers "Access-Control-Allow-Headers: DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Accept";
-      more_set_headers "Access-Control-Max-Age: 86400";
-      if ($request_method = 'OPTIONS') {
-        more_set_headers "Access-Control-Allow-Origin: $http_origin";
-        more_set_headers "Access-Control-Allow-Methods: GET, POST, OPTIONS";
-        more_set_headers "Access-Control-Allow-Headers: DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Accept";
-        more_set_headers "Access-Control-Max-Age: 86400";
-        return 204;
-      }
 spec:
   ingressClassName: nginx
   rules:
