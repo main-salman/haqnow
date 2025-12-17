@@ -53,6 +53,8 @@ spec:
           value: "1"
         - name: TRACKER_SCRIPT_NAME
           value: script.js
+        - name: CORS_MAX_AGE
+          value: "86400"
         resources:
           requests:
             memory: "128Mi"
@@ -95,9 +97,9 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
     # CORS configuration to allow requests from haqnow.com domains
-    # Using regex pattern to match multiple origins
+    # Using regex pattern to match multiple origins - simplified pattern
     nginx.ingress.kubernetes.io/enable-cors: "true"
-    nginx.ingress.kubernetes.io/cors-allow-origin-regex: "^https?://(www\\.)?(haqnow\\.com|haqnow\\.click)(:.*)?$|^https?://localhost(:5173|:3000)?$"
+    nginx.ingress.kubernetes.io/cors-allow-origin-regex: "https?://(www\\.)?haqnow\\.(com|click)|https?://localhost(:5173|:3000)?"
     nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, OPTIONS"
     nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Accept"
     nginx.ingress.kubernetes.io/cors-expose-headers: "Content-Length,Content-Range"
