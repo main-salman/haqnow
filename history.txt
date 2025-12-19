@@ -1,3 +1,19 @@
+[2025-01-XX] **UPDATE: Reordered Sections - Investigative Research Partners Above Collaborators**
+
+**Request:** Move "Investigative Research Partners" section to appear directly above "Collaborators and Champions" section on both homepage and about page.
+
+**Solution:**
+1. Reordered sections in App.tsx (homepage) - InvestigativeResearchPartnersSection now appears before CollaboratorsSection
+2. Reordered sections in AboutPage.tsx - Investigative Research Partners section now appears before Collaborators section
+3. Admin dashboard order remains unchanged as requested
+4. All styling and spacing preserved
+
+**Files Changed:**
+- `frontend/src/pages/App.tsx` - Swapped order of sections
+- `frontend/src/pages/AboutPage.tsx` - Swapped order of sections
+
+---
+
 [2025-01-XX] **FIX: GitHub Actions Workflow - Build and Push Docker Images**
 
 **Problem:** GitHub Actions workflow was failing with two issues:
