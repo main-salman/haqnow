@@ -8,8 +8,8 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+# Install system dependencies in one layer and clean up immediately
+RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr \
     tesseract-ocr-ara \
     tesseract-ocr-fra \
@@ -25,12 +25,33 @@ RUN apt-get update && apt-get install -y \
     libmariadb-dev \
     python3-dev \
     build-essential \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /var/cache/apt/*
 
-# Install ALL Python dependencies (the slow part)
+# Install Python dependencies
 COPY requirements.txt requirements-rag.txt ./
 RUN pip install --no-cache-dir --prefer-binary -r requirements.txt && \
-    pip install --no-cache-dir --prefer-binary "sentence-transformers>=2.2.2,<3.0.0"
+    pip install --no-cache-dir --prefer-binary "sentence-transformers>=2.2.2,<3.0.0" && \
+    pip cache purge
+
+# Remove build dependencies to reduce image size (keep runtime libs)
+RUN apt-get purge -y \
+    python3-dev \
+    build-essential \
+    pkg-config \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/* \
+    && rm -rf /var/tmp/* \
+    && find /usr/local/lib/python3.11 -type d -name __pycache__ -exec rm -r {} + 2>/dev/null || true \
+    && find /usr/local/lib/python3.11 -name "*.pyc" -delete \
+    && find /usr/local/lib/python3.11 -name "*.pyo" -delete
+
+# Prevent sentence-transformers from downloading models during build
+# Models will be downloaded at runtime when needed
+ENV SENTENCE_TRANSFORMERS_HOME=/tmp/.sentence_transformers
+ENV TRANSFORMERS_CACHE=/tmp/.transformers_cache
 
 # This base image has everything except the app code
 # App images will use: FROM ghcr.io/main-salman/backend-base:latest
