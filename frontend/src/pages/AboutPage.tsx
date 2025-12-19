@@ -58,16 +58,16 @@ export default function AboutPage() {
           </nav>
         </div>
 
-        {/* Collaborators and Champions Section */}
-        <div id="affiliates" className="bg-white text-gray-800 rounded-lg shadow-lg p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('about.collaboratorsTitle', 'Collaborators and Champions')}</h2>
-          <CollaboratorsSection />
-        </div>
-
         {/* Investigative Research Partners Section */}
         <div id="investigative-research-partners" className="bg-white text-gray-800 rounded-lg shadow-lg p-8 mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('about.investigativeResearchPartnersTitle', 'Investigative Research Partners')}</h2>
           <InvestigativeResearchPartnersSection />
+        </div>
+
+        {/* Collaborators and Champions Section */}
+        <div id="affiliates" className="bg-white text-gray-800 rounded-lg shadow-lg p-8 mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('about.collaboratorsTitle', 'Collaborators and Champions')}</h2>
+          <CollaboratorsSection />
         </div>
 
         {/* Founder Section */}

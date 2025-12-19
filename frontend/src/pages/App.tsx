@@ -403,23 +403,6 @@ export default function App() {
             </div>
           </section>
 
-          {/* Collaborators and Champions Section */}
-          <section className="mt-12">
-            <div className="w-full py-8 px-4">
-              <div className="max-w-6xl mx-auto">
-                <div className="mb-6">
-                  <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-center mb-2">
-                    {t('about.collaboratorsTitle', 'Collaborators and Champions')}
-                  </h2>
-                  <p className="text-slate-600 text-center">
-                    {t('about.collaboratorsDescription', 'Our trusted partners and supporters')}
-                  </p>
-                </div>
-                <CollaboratorsSection />
-              </div>
-            </div>
-          </section>
-
           {/* Investigative Research Partners Section */}
           <section className="mt-12">
             <div className="w-full py-8 px-4">
@@ -433,6 +416,23 @@ export default function App() {
                   </p>
                 </div>
                 <InvestigativeResearchPartnersSection />
+              </div>
+            </div>
+          </section>
+
+          {/* Collaborators and Champions Section */}
+          <section className="mt-12">
+            <div className="w-full py-8 px-4">
+              <div className="max-w-6xl mx-auto">
+                <div className="mb-6">
+                  <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-center mb-2">
+                    {t('about.collaboratorsTitle', 'Collaborators and Champions')}
+                  </h2>
+                  <p className="text-slate-600 text-center">
+                    {t('about.collaboratorsDescription', 'Our trusted partners and supporters')}
+                  </p>
+                </div>
+                <CollaboratorsSection />
               </div>
             </div>
           </section>

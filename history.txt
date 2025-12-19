@@ -1,3 +1,42 @@
+[2025-01-XX] **UPDATE: Reordered Sections - Investigative Research Partners Above Collaborators**
+
+**Request:** Move "Investigative Research Partners" section to appear directly above "Collaborators and Champions" section on both homepage and about page.
+
+**Solution:**
+1. Reordered sections in App.tsx (homepage) - InvestigativeResearchPartnersSection now appears before CollaboratorsSection
+2. Reordered sections in AboutPage.tsx - Investigative Research Partners section now appears before Collaborators section
+3. Admin dashboard order remains unchanged as requested
+4. All styling and spacing preserved
+
+**Files Changed:**
+- `frontend/src/pages/App.tsx` - Swapped order of sections
+- `frontend/src/pages/AboutPage.tsx` - Swapped order of sections
+
+---
+
+[2025-01-XX] **FIX: GitHub Actions Workflow - Build and Push Docker Images**
+
+**Problem:** GitHub Actions workflow was failing with two issues:
+1. Frontend Dockerfile expects a pre-built `dist` folder, but the workflow wasn't building the frontend before attempting to build the Docker image
+2. 403 Forbidden error when pushing to GHCR due to authentication/permissions issues
+
+**Solution:**
+1. Added Node.js setup step (v18) with npm cache
+2. Added frontend build step (`npm ci && npm run build`) before Docker build
+3. Updated workflow triggers to include frontend changes (not just backend)
+4. Fixed authentication to use `github.token` instead of `secrets.GITHUB_TOKEN` (they're equivalent, but `github.token` is more explicit)
+5. Added `continue-on-error: true` to base image check to handle cases where package doesn't exist yet
+6. Ensured username uses `github.repository_owner` to match IMAGE_PREFIX
+
+**Files Changed:**
+- `.github/workflows/build-and-push.yml` - Added Node.js setup, frontend build steps, fixed authentication, updated trigger paths
+
+**Note:** If 403 errors persist, ensure:
+- Repository has "Actions" → "General" → "Workflow permissions" set to "Read and write permissions"
+- Or create packages manually first via GitHub UI or CLI
+
+---
+
 [2025-01-XX] **UPDATE: Enhanced Upload Consent Text with Terms & Conditions Link**
 
 **Request:** Update the upload document consent checkbox text to include:
