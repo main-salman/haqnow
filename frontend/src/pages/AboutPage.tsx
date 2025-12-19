@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation, Trans } from "react-i18next";
 import Navigation from "@/components/Navigation";
 import CollaboratorsSection from "@/components/CollaboratorsSection";
+import InvestigativeResearchPartnersSection from "@/components/InvestigativeResearchPartnersSection";
 
 export default function AboutPage() {
   const navigate = useNavigate();
@@ -61,6 +62,12 @@ export default function AboutPage() {
         <div id="affiliates" className="bg-white text-gray-800 rounded-lg shadow-lg p-8 mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('about.collaboratorsTitle', 'Collaborators and Champions')}</h2>
           <CollaboratorsSection />
+        </div>
+
+        {/* Investigative Research Partners Section */}
+        <div id="investigative-research-partners" className="bg-white text-gray-800 rounded-lg shadow-lg p-8 mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('about.investigativeResearchPartnersTitle', 'Investigative Research Partners')}</h2>
+          <InvestigativeResearchPartnersSection />
         </div>
 
         {/* Founder Section */}

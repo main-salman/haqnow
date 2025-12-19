@@ -120,22 +120,16 @@ echo "📦 Target: $([ "$DEPLOY_TARGET" = "--sks" ] && echo "SKS" || echo "VM")"
 START_TIME=$(date +%s)
 
 # ============================================
-# BRANCH VERIFICATION
+# BRANCH MANAGEMENT
 # ============================================
 CURRENT_BRANCH=$(git branch --show-current)
 
-# Verify you're on the correct branch
+# Auto-switch to the correct branch if needed
 if [ "$CURRENT_BRANCH" != "$GIT_BRANCH" ]; then
     echo ""
-    echo "❌ ERROR: Wrong branch!"
-    echo ""
-    echo "   You're on: $CURRENT_BRANCH"
-    echo "   Expected:  $GIT_BRANCH (for $DEPLOY_ENV deployment)"
-    echo ""
-    echo "   Please switch to the correct branch first:"
-    echo "   git checkout $GIT_BRANCH"
-    echo ""
-    exit 1
+    echo "🔀 Switching from '$CURRENT_BRANCH' to '$GIT_BRANCH'..."
+    git checkout $GIT_BRANCH
+    CURRENT_BRANCH=$GIT_BRANCH
 fi
 
 echo "✅ Branch verified: $CURRENT_BRANCH"
@@ -227,7 +221,7 @@ if [ "$HAS_UNCOMMITTED" = true ]; then
 fi
 
 echo ""
-echo "✅ Branch verified: $FINAL_BRANCH"
+echo "✅ Ready to deploy from branch: $GIT_BRANCH"
 
 # Step 1: Update version (~5s)
 echo ""
@@ -395,6 +389,14 @@ if [ "$DEPLOY_TARGET" = "--sks" ]; then
     fi
     
     TOTAL_TIME=$(($(date +%s) - START_TIME))
+    
+    # Switch back to main branch
+    if [ "$(git branch --show-current)" != "main" ]; then
+        echo ""
+        echo "🔀 Switching back to 'main' branch..."
+        git checkout main
+    fi
+    
     echo ""
     echo "============================================"
     echo "✅ SKS DEPLOYMENT COMPLETE!"
@@ -402,6 +404,7 @@ if [ "$DEPLOY_TARGET" = "--sks" ]; then
     echo "⏱️  Total time: ${TOTAL_TIME}s ($(($TOTAL_TIME / 60))m $(($TOTAL_TIME % 60))s)"
     echo "🔗 URL: https://$DOMAIN"
     echo "📊 Status: kubectl get pods -n $NAMESPACE"
+    echo "🌿 Current branch: main"
     echo "============================================"
     exit 0
 fi
@@ -432,10 +435,19 @@ echo "✅ Services restarted"
 EOF
 
 TOTAL_TIME=$(($(date +%s) - START_TIME))
+
+# Switch back to main branch
+if [ "$(git branch --show-current)" != "main" ]; then
+    echo ""
+    echo "🔀 Switching back to 'main' branch..."
+    git checkout main
+fi
+
 echo ""
 echo "============================================"
 echo "✅ VM DEPLOYMENT COMPLETE!"
 echo "🌐 Environment: $DEPLOY_ENV"
 echo "⏱️  Total time: ${TOTAL_TIME}s"
 echo "🔗 URL: https://$DOMAIN"
+echo "🌿 Current branch: main"
 echo "============================================"
