@@ -1,36 +1,46 @@
-# Base image with all heavy dependencies - BUILD ONCE, REUSE MANY TIMES
-# Rebuild only when requirements.txt changes
-# Tag: ghcr.io/main-salman/backend-base:latest
-#
-# Build command: docker buildx build --platform linux/amd64 -f Dockerfile.base -t ghcr.io/main-salman/backend-base:latest --push .
+# OPTIMIZED Base image - Target: <1GB  
+# Build: docker buildx build --platform linux/amd64 -f Dockerfile.base -t ghcr.io/main-salman/backend-base:latest --push .
 
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+# Install ONLY essential system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr \
     tesseract-ocr-ara \
-    tesseract-ocr-fra \
-    tesseract-ocr-deu \
-    tesseract-ocr-spa \
-    tesseract-ocr-rus \
-    tesseract-ocr-chi-sim \
-    tesseract-ocr-jpn \
     poppler-utils \
-    libgl1 \
-    libglib2.0-0 \
-    pkg-config \
-    libmariadb-dev \
-    python3-dev \
-    build-essential \
+    libjpeg62-turbo \
+    libpng16-16 \
+    libpq5 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install ALL Python dependencies (the slow part)
-COPY requirements.txt requirements-rag.txt ./
-RUN pip install --no-cache-dir --prefer-binary -r requirements.txt && \
-    pip install --no-cache-dir --prefer-binary "sentence-transformers>=2.2.2,<3.0.0"
+# Install CPU-only PyTorch 2.2.0 (compatible with transformers 4.36.x)
+RUN pip install --no-cache-dir \
+    torch==2.2.0+cpu \
+    --index-url https://download.pytorch.org/whl/cpu
 
-# This base image has everything except the app code
-# App images will use: FROM ghcr.io/main-salman/backend-base:latest
+# Pin compatible versions of transformers and sentence-transformers
+RUN pip install --no-cache-dir \
+    transformers==4.36.0 \
+    sentence-transformers==2.3.0
+
+# Install remaining Python dependencies
+COPY requirements.txt ./
+RUN pip install --no-cache-dir --prefer-binary -r requirements.txt \
+    && pip cache purge
+
+# Verify no NVIDIA packages (they shouldn't be installed with CPU torch)
+RUN pip uninstall -y nvidia-cublas-cu12 nvidia-cuda-cupti-cu12 nvidia-cuda-nvrtc-cu12 \
+    nvidia-cuda-runtime-cu12 nvidia-cudnn-cu12 nvidia-cufft-cu12 nvidia-curand-cu12 \
+    nvidia-cusolver-cu12 nvidia-cusparse-cu12 nvidia-nccl-cu12 nvidia-nvtx-cu12 \
+    nvidia-nvjitlink-cu12 triton 2>/dev/null || true
+
+# Clean up
+RUN find /usr/local/lib/python3.11 -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true \
+    && find /usr/local/lib/python3.11 -type d -name tests -exec rm -rf {} + 2>/dev/null || true \
+    && rm -rf /tmp/* /var/tmp/* /root/.cache
+
+ENV SENTENCE_TRANSFORMERS_HOME=/tmp/.cache/st
+ENV TRANSFORMERS_CACHE=/tmp/.cache/tf
+ENV HF_HOME=/tmp/.cache/hf

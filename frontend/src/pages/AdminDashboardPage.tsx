@@ -170,6 +170,7 @@ interface Collaborator {
   logo_url: string;
   logo_path: string;
   website_url: string;
+  type?: string;
   display_order: number;
   is_active: boolean;
   created_by: string | null;
@@ -195,6 +196,14 @@ export default function AdminDashboardPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   
+  // Investigative Research Partners state
+  const [investigativePartners, setInvestigativePartners] = useState<Collaborator[]>([]);
+  const [isLoadingInvestigativePartners, setIsLoadingInvestigativePartners] = useState(false);
+  const [isInvestigativeDialogOpen, setIsInvestigativeDialogOpen] = useState(false);
+  const [editingInvestigativePartner, setEditingInvestigativePartner] = useState<Collaborator | null>(null);
+  const [deleteInvestigativeDialogOpen, setDeleteInvestigativeDialogOpen] = useState(false);
+  const [deletingInvestigativeId, setDeletingInvestigativeId] = useState<number | null>(null);
+  
   // Form state
   const [formName, setFormName] = useState("");
   const [formDescription, setFormDescription] = useState("");
@@ -204,6 +213,16 @@ export default function AdminDashboardPage() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isReordering, setIsReordering] = useState(false);
+  
+  // Investigative Research Partners form state
+  const [investigativeFormName, setInvestigativeFormName] = useState("");
+  const [investigativeFormDescription, setInvestigativeFormDescription] = useState("");
+  const [investigativeFormWebsiteUrl, setInvestigativeFormWebsiteUrl] = useState("");
+  const [investigativeFormIsActive, setInvestigativeFormIsActive] = useState(true);
+  const [investigativeFormLogo, setInvestigativeFormLogo] = useState<File | null>(null);
+  const [investigativeLogoPreview, setInvestigativeLogoPreview] = useState<string | null>(null);
+  const [isSavingInvestigative, setIsSavingInvestigative] = useState(false);
+  const [isReorderingInvestigative, setIsReorderingInvestigative] = useState(false);
   
   // Drag and drop sensors
   const sensors = useSensors(
@@ -299,7 +318,7 @@ export default function AdminDashboardPage() {
         return;
       }
 
-      const response = await fetch('/api/collaborators/all', {
+      const response = await fetch('/api/collaborators/all?type=collaborator', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -324,11 +343,47 @@ export default function AdminDashboardPage() {
     }
   };
 
+  // Fetch investigative research partners
+  const fetchInvestigativePartners = async () => {
+    setIsLoadingInvestigativePartners(true);
+    try {
+      const token = localStorage.getItem('jwt_token');
+      if (!token) {
+        navigate("/admin-login-page");
+        return;
+      }
+
+      const response = await fetch('/api/collaborators/all?type=investigative_research_partner', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          navigate("/admin-login-page");
+          return;
+        }
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setInvestigativePartners(data.collaborators || []);
+    } catch (error: any) {
+      console.error('Error fetching investigative research partners:', error);
+    } finally {
+      setIsLoadingInvestigativePartners(false);
+    }
+  };
+
   // Fetch data on component mount
   useEffect(() => {
     fetchPendingCount();
     fetchBannedTagsCount();
     fetchCollaborators();
+    fetchInvestigativePartners();
   }, []);
 
   // Handle logo file selection
@@ -392,6 +447,7 @@ export default function AdminDashboardPage() {
       formData.append('description', formDescription);
       formData.append('website_url', formWebsiteUrl);
       formData.append('is_active', formIsActive.toString());
+      formData.append('type', 'collaborator');
       
       if (formLogo) {
         formData.append('logo', formLogo);
@@ -456,7 +512,7 @@ export default function AdminDashboardPage() {
 
       const collaboratorIds = newCollaborators.map((c) => c.id);
 
-      const response = await fetch('/api/collaborators/reorder', {
+      const response = await fetch('/api/collaborators/reorder?type=collaborator', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -510,6 +566,183 @@ export default function AdminDashboardPage() {
     } catch (error: any) {
       console.error('Error deleting collaborator:', error);
       alert('Failed to delete collaborator');
+    }
+  };
+
+  // Investigative Research Partners handlers
+  const handleInvestigativeLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setInvestigativeFormLogo(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setInvestigativeLogoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const resetInvestigativeForm = () => {
+    setInvestigativeFormName("");
+    setInvestigativeFormDescription("");
+    setInvestigativeFormWebsiteUrl("");
+    setInvestigativeFormIsActive(true);
+    setInvestigativeFormLogo(null);
+    setInvestigativeLogoPreview(null);
+    setEditingInvestigativePartner(null);
+  };
+
+  const handleInvestigativeAddClick = () => {
+    resetInvestigativeForm();
+    setIsInvestigativeDialogOpen(true);
+  };
+
+  const handleInvestigativeEditClick = (partner: Collaborator) => {
+    setInvestigativeFormName(partner.name);
+    setInvestigativeFormDescription(partner.description);
+    setInvestigativeFormWebsiteUrl(partner.website_url);
+    setInvestigativeFormIsActive(partner.is_active);
+    setInvestigativeLogoPreview(partner.logo_url);
+    setEditingInvestigativePartner(partner);
+    setIsInvestigativeDialogOpen(true);
+  };
+
+  const handleInvestigativeSave = async () => {
+    if (!investigativeFormName || !investigativeFormDescription || !investigativeFormWebsiteUrl) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
+    setIsSavingInvestigative(true);
+    try {
+      const token = localStorage.getItem('jwt_token');
+      if (!token) {
+        navigate("/admin-login-page");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('name', investigativeFormName);
+      formData.append('description', investigativeFormDescription);
+      formData.append('website_url', investigativeFormWebsiteUrl);
+      formData.append('is_active', investigativeFormIsActive.toString());
+      formData.append('type', 'investigative_research_partner');
+      
+      if (investigativeFormLogo) {
+        formData.append('logo', investigativeFormLogo);
+      }
+
+      const url = editingInvestigativePartner 
+        ? `/api/collaborators/${editingInvestigativePartner.id}`
+        : '/api/collaborators';
+      const method = editingInvestigativePartner ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to save investigative research partner');
+      }
+
+      setIsInvestigativeDialogOpen(false);
+      resetInvestigativeForm();
+      fetchInvestigativePartners();
+    } catch (error: any) {
+      console.error('Error saving investigative research partner:', error);
+      alert(error.message || 'Failed to save investigative research partner');
+    } finally {
+      setIsSavingInvestigative(false);
+    }
+  };
+
+  const handleInvestigativeDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    const oldIndex = investigativePartners.findIndex((p) => p.id === active.id);
+    const newIndex = investigativePartners.findIndex((p) => p.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) {
+      return;
+    }
+
+    // Optimistically update UI
+    const newPartners = arrayMove(investigativePartners, oldIndex, newIndex);
+    setInvestigativePartners(newPartners);
+
+    // Update backend
+    setIsReorderingInvestigative(true);
+    try {
+      const token = localStorage.getItem('jwt_token');
+      if (!token) {
+        navigate("/admin-login-page");
+        return;
+      }
+
+      const partnerIds = newPartners.map((p) => p.id);
+
+      const response = await fetch('/api/collaborators/reorder?type=investigative_research_partner', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ collaborator_ids: partnerIds }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to reorder investigative research partners');
+      }
+
+      // Refresh to get updated data
+      fetchInvestigativePartners();
+    } catch (error: any) {
+      console.error('Error reordering investigative research partners:', error);
+      // Revert on error
+      fetchInvestigativePartners();
+      alert('Failed to reorder investigative research partners');
+    } finally {
+      setIsReorderingInvestigative(false);
+    }
+  };
+
+  const handleInvestigativeDelete = async () => {
+    if (!deletingInvestigativeId) return;
+
+    try {
+      const token = localStorage.getItem('jwt_token');
+      if (!token) {
+        navigate("/admin-login-page");
+        return;
+      }
+
+      const response = await fetch(`/api/collaborators/${deletingInvestigativeId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete investigative research partner');
+      }
+
+      setDeleteInvestigativeDialogOpen(false);
+      setDeletingInvestigativeId(null);
+      fetchInvestigativePartners();
+    } catch (error: any) {
+      console.error('Error deleting investigative research partner:', error);
+      alert('Failed to delete investigative research partner');
     }
   };
 
@@ -768,6 +1001,175 @@ export default function AdminDashboardPage() {
                 <AlertDialogFooter>
                   <AlertDialogCancel onClick={() => setDeletingId(null)}>Cancel</AlertDialogCancel>
                   <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Investigative Research Partners Management */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Investigative Research Partners</CardTitle>
+                    <CardDescription>Manage investigative research partner logos and descriptions</CardDescription>
+                  </div>
+                  <Dialog open={isInvestigativeDialogOpen} onOpenChange={setIsInvestigativeDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button onClick={handleInvestigativeAddClick}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Partner
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>
+                          {editingInvestigativePartner ? 'Edit Investigative Research Partner' : 'Add New Investigative Research Partner'}
+                        </DialogTitle>
+                        <DialogDescription>
+                          Add or update an investigative research partner. Logo will be displayed on homepage and about page.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="investigative-name">Name *</Label>
+                          <Input
+                            id="investigative-name"
+                            value={investigativeFormName}
+                            onChange={(e) => setInvestigativeFormName(e.target.value)}
+                            placeholder="Organization name"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="investigative-description">Description *</Label>
+                          <Textarea
+                            id="investigative-description"
+                            value={investigativeFormDescription}
+                            onChange={(e) => setInvestigativeFormDescription(e.target.value)}
+                            placeholder="One sentence description"
+                            rows={3}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="investigative-website_url">Website URL *</Label>
+                          <Input
+                            id="investigative-website_url"
+                            value={investigativeFormWebsiteUrl}
+                            onChange={(e) => setInvestigativeFormWebsiteUrl(e.target.value)}
+                            placeholder="https://example.com"
+                            type="url"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="investigative-logo">Logo {editingInvestigativePartner && !investigativeFormLogo ? '(optional)' : '*'}</Label>
+                          <Input
+                            id="investigative-logo"
+                            type="file"
+                            accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                            onChange={handleInvestigativeLogoChange}
+                          />
+                          {investigativeLogoPreview && (
+                            <div className="mt-2">
+                              <img
+                                src={investigativeLogoPreview}
+                                alt="Logo preview"
+                                className="max-h-32 max-w-full object-contain border rounded"
+                              />
+                            </div>
+                          )}
+                          <p className="text-xs text-muted-foreground">
+                            PNG, JPG, SVG, or WebP. Max 2MB.
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id="investigative-is_active"
+                            checked={investigativeFormIsActive}
+                            onChange={(e) => setInvestigativeFormIsActive(e.target.checked)}
+                            className="rounded"
+                          />
+                          <Label htmlFor="investigative-is_active">Active (visible on site)</Label>
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsInvestigativeDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button onClick={handleInvestigativeSave} disabled={isSavingInvestigative}>
+                          {isSavingInvestigative ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Saving...
+                            </>
+                          ) : (
+                            'Save'
+                          )}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {isLoadingInvestigativePartners ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : investigativePartners.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">
+                    No investigative research partners yet. Click "Add Partner" to get started.
+                  </p>
+                ) : (
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleInvestigativeDragEnd}
+                  >
+                    <SortableContext
+                      items={investigativePartners.map((p) => p.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <div className="space-y-4">
+                        {investigativePartners.map((partner) => (
+                          <SortableCollaboratorItem
+                            key={partner.id}
+                            collaborator={partner}
+                            onEdit={handleInvestigativeEditClick}
+                            onDelete={(id) => {
+                              setDeletingInvestigativeId(id);
+                              setDeleteInvestigativeDialogOpen(true);
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </SortableContext>
+                    {isReorderingInvestigative && (
+                      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                        <div className="bg-white p-4 rounded-lg">
+                          <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                          <p className="mt-2 text-sm">Reordering...</p>
+                        </div>
+                      </div>
+                    )}
+                  </DndContext>
+                )}
+              </CardContent>
+            </Card>
+
+            <AlertDialog open={deleteInvestigativeDialogOpen} onOpenChange={setDeleteInvestigativeDialogOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Investigative Research Partner?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will remove the partner from the site. The logo will also be deleted from storage.
+                    This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel onClick={() => setDeletingInvestigativeId(null)}>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleInvestigativeDelete} className="bg-destructive text-destructive-foreground">
                     Delete
                   </AlertDialogAction>
                 </AlertDialogFooter>

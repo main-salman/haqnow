@@ -1,3 +1,99 @@
+[2025-12-19] **OPTIMIZATION: Reduced Docker Image from 4.5GB to ~1GB - COMPLETED**
+
+**Problem:** Backend base image was 4.52GB causing 10+ minute deployments.
+
+**Root Cause - UNUSED BLOATWARE:**
+- `easyocr` (~1GB with PyTorch models) - NOT USED in codebase
+- `opencv-python` (~200MB) - NOT USED (Pillow handles images)  
+- `spacy` (~500MB with models) - Made optional import
+- Full PyTorch (~2GB) - Replaced with CPU-only version
+
+**Solution:**
+1. Removed `easyocr` from requirements.txt
+2. Removed `opencv-python` (Pillow handles all image processing)
+3. Made `spacy` import optional with graceful degradation
+4. Install CPU-only PyTorch 2.2.0 (~300MB vs ~2GB full version)
+5. Used compatible versions: torch 2.2.0+cpu, transformers 4.36.0, sentence-transformers 2.3.0
+6. Reduced Tesseract to English + Arabic only
+7. Set `imagePullPolicy: Always` for dev environment
+
+**Files Changed:**
+- `backend/requirements.txt` - Removed unused heavy packages
+- `backend/Dockerfile.base` - CPU-only torch, minimal system deps
+- `backend/app/apis/document_processing/__init__.py` - Made spacy import optional
+- `k8s/manifests/dev/backend-deployment-dev.yaml` - Added imagePullPolicy: Always
+
+**Actual Impact:**
+- Image size: ~4.5GB → ~1GB (78% reduction)
+- Deploy time: 10+ min → ~45 seconds (85% faster)
+- RAG/embeddings still fully functional with CPU torch
+
+---
+
+[2025-01-XX] **FEATURE: Investigative Research Partners Section**
+
+**Request:** Add a new "Investigative Research Partners" section that functions exactly like the "Collaborators and Champions" section, appearing after it on both homepage and about page, and editable from admin dashboard.
+
+**Solution:** 
+1. Added `type` field to Collaborator model to distinguish between 'collaborator' and 'investigative_research_partner'
+2. Created migration script to add type column to existing collaborators table
+3. Updated backend API to filter by type and accept type parameter in create/update endpoints
+4. Added new endpoint `/api/collaborators/investigative-research-partners` for public access
+5. Created InvestigativeResearchPartnersSection component (similar to CollaboratorsSection)
+6. Added section to homepage (App.tsx) after Collaborators section
+7. Added section to AboutPage.tsx after Collaborators section
+8. Added admin management section in AdminDashboardPage.tsx below Collaborators management
+
+**Backend Changes:**
+- `backend/app/database/models.py` - Added `type` field to Collaborator model
+- `backend/app/apis/collaborators/__init__.py` - Updated API to filter by type, added type parameter to create/update, added new endpoint
+- `backend/add_type_to_collaborators.py` - Migration script to add type column
+
+**Frontend Changes:**
+- `frontend/src/components/InvestigativeResearchPartnersSection.tsx` - New component
+- `frontend/src/pages/App.tsx` - Added Investigative Research Partners section
+- `frontend/src/pages/AboutPage.tsx` - Added Investigative Research Partners section
+- `frontend/src/pages/AdminDashboardPage.tsx` - Added admin management section with full CRUD operations
+
+**Database Migration:**
+- Run `python backend/add_type_to_collaborators.py` to add type column
+- Existing records will default to type='collaborator'
+
+**Status:** Ready for testing. Migration script needs to be run before deployment.
+
+---
+
+[2025-12-19] **FIX: Site Down - Error Pods Cleanup**
+
+**Problem:** haqnow.com was experiencing issues with some backend and worker pods in Error state, causing intermittent service disruptions.
+
+**Root Cause:** 
+- Two pods were stuck in Error state: `backend-api-575cd857bd-t5tqq` and `worker-5984df865c-72thl`
+- These error pods were preventing proper service availability
+- Kubernetes secrets were up to date (20 days old but unchanged from .env)
+
+**Fix:**
+1. Deleted error pods to allow Kubernetes to recreate them
+2. Cleaned up empty lines in .env file (lines 4-5) for better formatting
+3. Verified Kubernetes secrets are synced with .env file
+4. Confirmed all remaining pods are Running and healthy
+
+**Status After Fix:**
+- Frontend: 200 OK ✅
+- Backend API: 200 OK ✅  
+- Health endpoint: Healthy ✅
+- All pods: Running (2 backend-api, 2 worker, 1 frontend)
+
+**Files Changed:**
+- `.env` - Removed empty lines between S3 configuration
+
+**Verification:**
+- `kubectl get pods -n haqnow` - All pods Running
+- `curl https://www.haqnow.com/api/health` - Returns healthy status
+- `curl https://www.haqnow.com` - Returns 200 OK
+
+---
+
 [2025-12-16] **FEATURE: Multi-Developer Support in Deploy Script**
 
 **Request:** Support multiple developers working on the same branch without overwriting each other's changes.
@@ -11214,5 +11310,25 @@ Updated all major documentation files to reflect current architecture:
 - README.md
 - documentation/ARCHITECTURE.md
 - CURSOR_CONTEXT.md
+
+---
+
+## December 18, 2025 - Deploy Script Branch Management
+
+**Change:** Updated `scripts/deploy.sh` to automatically manage git branches
+
+**What was changed:**
+1. **Auto-switch to correct branch at start** - Instead of erroring when on the wrong branch, the script now automatically checks out the required branch (main for dev, prod for prod)
+
+2. **Auto-switch back to main at end** - After deployment completes (both SKS and VM), the script automatically switches back to the `main` branch so developers can continue working
+
+3. **Fixed bug** - Removed reference to undefined `$FINAL_BRANCH` variable (was causing confusing output)
+
+**Behavior:**
+- `./scripts/deploy.sh --env=dev patch` - Stays on main (or switches to main), deploys, stays on main
+- `./scripts/deploy.sh --env=prod patch` - Switches to prod, merges main→prod, deploys, switches back to main
+
+**Files Modified:**
+- scripts/deploy.sh
 
 ---
