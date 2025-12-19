@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'backend/**'
+      - 'frontend/**'
       - '.github/workflows/build-and-push.yml'
   workflow_dispatch:
 
@@ -18,6 +19,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
 
     steps:
       - name: Checkout repository
@@ -30,8 +32,15 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ github.repository_owner }}
+          password: ${{ github.token }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Check if base image exists
         id: check_base
@@ -41,6 +50,7 @@ jobs:
           else
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
+        continue-on-error: true
 
       - name: Build and push base image (if not exists)
         if: steps.check_base.outputs.exists == 'false'
@@ -75,6 +85,12 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/worker:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm ci
+          npm run build
 
       - name: Build and push frontend
         uses: docker/build-push-action@v5
