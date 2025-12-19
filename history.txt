@@ -1,3 +1,17 @@
+[2025-01-XX] **FIX: GitHub Actions Workflow - Build and Push Docker Images**
+
+**Problem:** GitHub Actions workflow was failing because frontend Dockerfile expects a pre-built `dist` folder, but the workflow wasn't building the frontend before attempting to build the Docker image.
+
+**Solution:**
+1. Added Node.js setup step (v18) with npm cache
+2. Added frontend build step (`npm ci && npm run build`) before Docker build
+3. Updated workflow triggers to include frontend changes (not just backend)
+
+**Files Changed:**
+- `.github/workflows/build-and-push.yml` - Added Node.js setup and frontend build steps, updated trigger paths
+
+---
+
 [2025-01-XX] **UPDATE: Enhanced Upload Consent Text with Terms & Conditions Link**
 
 **Request:** Update the upload document consent checkbox text to include:
