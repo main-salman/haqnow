@@ -1,14 +1,23 @@
 [2025-01-XX] **FIX: GitHub Actions Workflow - Build and Push Docker Images**
 
-**Problem:** GitHub Actions workflow was failing because frontend Dockerfile expects a pre-built `dist` folder, but the workflow wasn't building the frontend before attempting to build the Docker image.
+**Problem:** GitHub Actions workflow was failing with two issues:
+1. Frontend Dockerfile expects a pre-built `dist` folder, but the workflow wasn't building the frontend before attempting to build the Docker image
+2. 403 Forbidden error when pushing to GHCR due to authentication/permissions issues
 
 **Solution:**
 1. Added Node.js setup step (v18) with npm cache
 2. Added frontend build step (`npm ci && npm run build`) before Docker build
 3. Updated workflow triggers to include frontend changes (not just backend)
+4. Fixed authentication to use `github.token` instead of `secrets.GITHUB_TOKEN` (they're equivalent, but `github.token` is more explicit)
+5. Added `continue-on-error: true` to base image check to handle cases where package doesn't exist yet
+6. Ensured username uses `github.repository_owner` to match IMAGE_PREFIX
 
 **Files Changed:**
-- `.github/workflows/build-and-push.yml` - Added Node.js setup and frontend build steps, updated trigger paths
+- `.github/workflows/build-and-push.yml` - Added Node.js setup, frontend build steps, fixed authentication, updated trigger paths
+
+**Note:** If 403 errors persist, ensure:
+- Repository has "Actions" → "General" → "Workflow permissions" set to "Read and write permissions"
+- Or create packages manually first via GitHub UI or CLI
 
 ---
 
