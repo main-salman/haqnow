@@ -1,57 +1,53 @@
-# Base image with all heavy dependencies - BUILD ONCE, REUSE MANY TIMES
+# OPTIMIZED Base image - Target: <1GB
 # Rebuild only when requirements.txt changes
 # Tag: ghcr.io/main-salman/backend-base:latest
 #
-# Build command: docker buildx build --platform linux/amd64 -f Dockerfile.base -t ghcr.io/main-salman/backend-base:latest --push .
+# Build: docker buildx build --platform linux/amd64 -f Dockerfile.base -t ghcr.io/main-salman/backend-base:latest --push .
 
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies in one layer and clean up immediately
+# Install ONLY essential system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    # Tesseract OCR - only English + Arabic (most common, add others if needed)
     tesseract-ocr \
     tesseract-ocr-ara \
-    tesseract-ocr-fra \
-    tesseract-ocr-deu \
-    tesseract-ocr-spa \
-    tesseract-ocr-rus \
-    tesseract-ocr-chi-sim \
-    tesseract-ocr-jpn \
+    # PDF processing
     poppler-utils \
-    libgl1 \
-    libglib2.0-0 \
-    pkg-config \
-    libmariadb-dev \
-    python3-dev \
-    build-essential \
+    # Required for Pillow
+    libjpeg62-turbo \
+    libpng16-16 \
+    # Required for psycopg2
+    libpq5 \
+    # Required for mysqlclient/pymysql build
+    libmariadb-dev-compat \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /var/cache/apt/*
 
-# Install Python dependencies
-COPY requirements.txt requirements-rag.txt ./
-RUN pip install --no-cache-dir --prefer-binary -r requirements.txt && \
-    pip install --no-cache-dir --prefer-binary "sentence-transformers>=2.2.2,<3.0.0" && \
-    pip cache purge
+# Install CPU-only PyTorch first (much smaller than full torch)
+# This is the key optimization - CPU-only torch is ~200MB vs ~2GB for full
+RUN pip install --no-cache-dir \
+    torch==2.1.0+cpu \
+    --index-url https://download.pytorch.org/whl/cpu
 
-# Remove build dependencies to reduce image size (keep runtime libs)
-RUN apt-get purge -y \
-    python3-dev \
-    build-essential \
-    pkg-config \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm -rf /tmp/* \
-    && rm -rf /var/tmp/* \
-    && find /usr/local/lib/python3.11 -type d -name __pycache__ -exec rm -r {} + 2>/dev/null || true \
+# Install sentence-transformers (uses CPU torch above, ~90MB model)
+RUN pip install --no-cache-dir sentence-transformers==2.2.2
+
+# Install remaining Python dependencies
+COPY requirements.txt ./
+RUN pip install --no-cache-dir --prefer-binary -r requirements.txt \
+    && pip cache purge
+
+# Clean up to reduce size
+RUN find /usr/local/lib/python3.11 -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true \
     && find /usr/local/lib/python3.11 -name "*.pyc" -delete \
-    && find /usr/local/lib/python3.11 -name "*.pyo" -delete
+    && find /usr/local/lib/python3.11 -name "*.pyo" -delete \
+    && rm -rf /tmp/* /var/tmp/*
 
-# Prevent sentence-transformers from downloading models during build
-# Models will be downloaded at runtime when needed
-ENV SENTENCE_TRANSFORMERS_HOME=/tmp/.sentence_transformers
-ENV TRANSFORMERS_CACHE=/tmp/.transformers_cache
+# Set model cache to temp (models downloaded at runtime if needed)
+ENV SENTENCE_TRANSFORMERS_HOME=/tmp/.cache/sentence_transformers
+ENV TRANSFORMERS_CACHE=/tmp/.cache/transformers
+ENV HF_HOME=/tmp/.cache/huggingface
 
 # This base image has everything except the app code
-# App images will use: FROM ghcr.io/main-salman/backend-base:latest
