@@ -1,3 +1,37 @@
+[2025-01-XX] **OPTIMIZATION: Reduced Backend Base Image Size**
+
+**Problem:** Backend base image was 4.52GB, causing slow deployments and high storage costs.
+
+**Root Cause:**
+- Build dependencies (build-essential, python3-dev, pkg-config) were not removed after pip install
+- Pip cache and Python bytecode files were not cleaned
+- Temporary files and caches were accumulating
+- sentence-transformers models might download during build
+
+**Solution:**
+1. Added `--no-install-recommends` to apt-get to reduce package bloat
+2. Removed build dependencies after pip install (python3-dev, build-essential, pkg-config)
+3. Cleaned pip cache with `pip cache purge`
+4. Removed Python bytecode files (__pycache__, *.pyc, *.pyo)
+5. Cleaned temporary directories (/tmp, /var/tmp)
+6. Set environment variables to prevent model downloads during build
+7. Added aggressive cleanup of apt caches
+
+**Expected Impact:**
+- Base image size should reduce from ~4.5GB to ~2-3GB
+- Faster image pulls during deployment
+- Lower storage costs
+
+**Files Changed:**
+- `backend/Dockerfile.base` - Optimized with multi-stage cleanup
+
+**Next Steps:**
+- Rebuild base image: `docker buildx build --platform linux/amd64 -f backend/Dockerfile.base -t ghcr.io/main-salman/backend-base:latest --push backend/`
+- This is a one-time rebuild (~10-15 minutes)
+- Future deployments will use the optimized base image
+
+---
+
 [2025-01-XX] **FEATURE: Investigative Research Partners Section**
 
 **Request:** Add a new "Investigative Research Partners" section that functions exactly like the "Collaborators and Champions" section, appearing after it on both homepage and about page, and editable from admin dashboard.
