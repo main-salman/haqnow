@@ -15,25 +15,26 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install CPU-only PyTorch FIRST from PyTorch's CPU wheel index
-# This MUST happen before any package that depends on torch
+# Install CPU-only PyTorch 2.2.0 (compatible with transformers 4.36.x)
 RUN pip install --no-cache-dir \
-    torch==2.1.2+cpu \
-    torchvision==0.16.2+cpu \
+    torch==2.2.0+cpu \
     --index-url https://download.pytorch.org/whl/cpu
 
-# Now install sentence-transformers - it will use the already-installed CPU torch
+# Pin compatible versions of transformers and sentence-transformers
+RUN pip install --no-cache-dir \
+    transformers==4.36.0 \
+    sentence-transformers==2.3.0
+
+# Install remaining Python dependencies
 COPY requirements.txt ./
-RUN pip install --no-cache-dir sentence-transformers==2.2.2 \
-    && pip install --no-cache-dir -r requirements.txt \
+RUN pip install --no-cache-dir --prefer-binary -r requirements.txt \
     && pip cache purge
 
-# Verify no NVIDIA packages snuck in, remove if any
+# Verify no NVIDIA packages (they shouldn't be installed with CPU torch)
 RUN pip uninstall -y nvidia-cublas-cu12 nvidia-cuda-cupti-cu12 nvidia-cuda-nvrtc-cu12 \
     nvidia-cuda-runtime-cu12 nvidia-cudnn-cu12 nvidia-cufft-cu12 nvidia-curand-cu12 \
     nvidia-cusolver-cu12 nvidia-cusparse-cu12 nvidia-nccl-cu12 nvidia-nvtx-cu12 \
-    nvidia-nvjitlink-cu12 nvidia-cusparselt-cu12 nvidia-cufile-cu12 nvidia-nvshmem-cu12 \
-    triton 2>/dev/null || true
+    nvidia-nvjitlink-cu12 triton 2>/dev/null || true
 
 # Clean up
 RUN find /usr/local/lib/python3.11 -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true \
