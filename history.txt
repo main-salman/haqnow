@@ -1,3 +1,34 @@
+[2025-01-XX] **UPDATE: Enhanced Upload Consent Text with Terms & Conditions Link**
+
+**Request:** Update the upload document consent checkbox text to include:
+1. Keep existing "lawful means" text
+2. Add "By uploading, I accept Terms and Conditions" with link to https://haqnow.com/disclaimer
+3. Add "HaqNow Foundation is not responsible for content shared by users"
+4. All text should be part of the same checkbox
+5. Terms link opens in new tab
+6. Update in all languages (machine translation used)
+
+**Solution:**
+1. Split consent text into three translation keys: `consentText`, `termsAndConditions`, `consentTextAfter`
+2. Added clickable link to Terms and Conditions that opens in new tab
+3. Updated UploadDocumentPage.tsx to use translations with inline link component
+4. Added translations for all languages: en, ar, de, fr, pl, ru, tr
+
+**Files Changed:**
+- `frontend/src/pages/UploadDocumentPage.tsx` - Updated consent label with translation keys and link
+- `frontend/src/i18n/locales/en.json` - Added consentText, termsAndConditions, consentTextAfter keys
+- `frontend/src/i18n/locales/ar.json` - Added Arabic translations
+- `frontend/src/i18n/locales/de.json` - Added German translations
+- `frontend/src/i18n/locales/fr.json` - Added French translations
+- `frontend/src/i18n/locales/pl.json` - Added Polish translations
+- `frontend/src/i18n/locales/ru.json` - Added Russian translations
+- `frontend/src/i18n/locales/tr.json` - Added Turkish translations
+
+**Final Text (English):**
+"This document was obtained through lawful means, and I have the necessary authorization to share it. By uploading, I accept [Terms and Conditions]. HaqNow Foundation is not responsible for content shared by users."
+
+---
+
 [2025-12-19] **OPTIMIZATION: Reduced Docker Image from 4.5GB to ~1GB - COMPLETED**
 
 **Problem:** Backend base image was 4.52GB causing 10+ minute deployments.
