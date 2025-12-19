@@ -1,0 +1,26 @@
+# Force CPU-only PyTorch - prevents NVIDIA CUDA packages (~4GB bloat)
+torch==2.1.2
+torchvision==0.16.2
+# Exclude all NVIDIA packages
+nvidia-cublas-cu11==0.0.0
+nvidia-cublas-cu12==0.0.0
+nvidia-cuda-cupti-cu11==0.0.0
+nvidia-cuda-cupti-cu12==0.0.0
+nvidia-cuda-nvrtc-cu11==0.0.0
+nvidia-cuda-nvrtc-cu12==0.0.0
+nvidia-cuda-runtime-cu11==0.0.0
+nvidia-cuda-runtime-cu12==0.0.0
+nvidia-cudnn-cu11==0.0.0
+nvidia-cudnn-cu12==0.0.0
+nvidia-cufft-cu11==0.0.0
+nvidia-cufft-cu12==0.0.0
+nvidia-curand-cu11==0.0.0
+nvidia-curand-cu12==0.0.0
+nvidia-cusolver-cu11==0.0.0
+nvidia-cusolver-cu12==0.0.0
+nvidia-cusparse-cu11==0.0.0
+nvidia-cusparse-cu12==0.0.0
+nvidia-nccl-cu11==0.0.0
+nvidia-nccl-cu12==0.0.0
+nvidia-nvtx-cu11==0.0.0
+nvidia-nvtx-cu12==0.0.0

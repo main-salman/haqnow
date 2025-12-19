@@ -1,7 +1,4 @@
-# OPTIMIZED Base image - Target: <1GB
-# Rebuild only when requirements.txt changes
-# Tag: ghcr.io/main-salman/backend-base:latest
-#
+# OPTIMIZED Base image - Target: <1GB  
 # Build: docker buildx build --platform linux/amd64 -f Dockerfile.base -t ghcr.io/main-salman/backend-base:latest --push .
 
 FROM python:3.11-slim
@@ -10,44 +7,39 @@ WORKDIR /app
 
 # Install ONLY essential system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    # Tesseract OCR - only English + Arabic (most common, add others if needed)
     tesseract-ocr \
     tesseract-ocr-ara \
-    # PDF processing
     poppler-utils \
-    # Required for Pillow
     libjpeg62-turbo \
     libpng16-16 \
-    # Required for psycopg2
     libpq5 \
-    # Required for mysqlclient/pymysql build
-    libmariadb-dev-compat \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm -rf /var/cache/apt/*
+    && rm -rf /var/lib/apt/lists/*
 
-# Install CPU-only PyTorch first (much smaller than full torch)
-# This is the key optimization - CPU-only torch is ~200MB vs ~2GB for full
+# Install CPU-only PyTorch FIRST from PyTorch's CPU wheel index
+# This MUST happen before any package that depends on torch
 RUN pip install --no-cache-dir \
-    torch==2.1.0+cpu \
+    torch==2.1.2+cpu \
+    torchvision==0.16.2+cpu \
     --index-url https://download.pytorch.org/whl/cpu
 
-# Install sentence-transformers (uses CPU torch above, ~90MB model)
-RUN pip install --no-cache-dir sentence-transformers==2.2.2
-
-# Install remaining Python dependencies
+# Now install sentence-transformers - it will use the already-installed CPU torch
 COPY requirements.txt ./
-RUN pip install --no-cache-dir --prefer-binary -r requirements.txt \
+RUN pip install --no-cache-dir sentence-transformers==2.2.2 \
+    && pip install --no-cache-dir -r requirements.txt \
     && pip cache purge
 
-# Clean up to reduce size
+# Verify no NVIDIA packages snuck in, remove if any
+RUN pip uninstall -y nvidia-cublas-cu12 nvidia-cuda-cupti-cu12 nvidia-cuda-nvrtc-cu12 \
+    nvidia-cuda-runtime-cu12 nvidia-cudnn-cu12 nvidia-cufft-cu12 nvidia-curand-cu12 \
+    nvidia-cusolver-cu12 nvidia-cusparse-cu12 nvidia-nccl-cu12 nvidia-nvtx-cu12 \
+    nvidia-nvjitlink-cu12 nvidia-cusparselt-cu12 nvidia-cufile-cu12 nvidia-nvshmem-cu12 \
+    triton 2>/dev/null || true
+
+# Clean up
 RUN find /usr/local/lib/python3.11 -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true \
-    && find /usr/local/lib/python3.11 -name "*.pyc" -delete \
-    && find /usr/local/lib/python3.11 -name "*.pyo" -delete \
-    && rm -rf /tmp/* /var/tmp/*
+    && find /usr/local/lib/python3.11 -type d -name tests -exec rm -rf {} + 2>/dev/null || true \
+    && rm -rf /tmp/* /var/tmp/* /root/.cache
 
-# Set model cache to temp (models downloaded at runtime if needed)
-ENV SENTENCE_TRANSFORMERS_HOME=/tmp/.cache/sentence_transformers
-ENV TRANSFORMERS_CACHE=/tmp/.cache/transformers
-ENV HF_HOME=/tmp/.cache/huggingface
-
-# This base image has everything except the app code
+ENV SENTENCE_TRANSFORMERS_HOME=/tmp/.cache/st
+ENV TRANSFORMERS_CACHE=/tmp/.cache/tf
+ENV HF_HOME=/tmp/.cache/hf
