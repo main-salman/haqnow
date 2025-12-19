@@ -18,7 +18,7 @@ redis>=5.0.0
 # Storage
 boto3>=1.35.0
 
-# Document processing
+# Document processing (lightweight)
 Pillow==10.1.0
 PyPDF2==3.0.1
 pypdf==3.17.4
@@ -26,12 +26,12 @@ python-docx>=1.1.0
 pandas>=2.0.0
 numpy==1.26.4
 
-# OCR and translation
+# OCR - pytesseract only (uses system Tesseract, ~10KB)
 pytesseract>=0.3.10
 pdf2image>=1.16.3
-easyocr==1.7.0
-opencv-python==4.8.1.78
 reportlab>=4.0.0
+# NOTE: Removed easyocr (~1GB) - not used, pytesseract handles all OCR
+# NOTE: Removed opencv-python (~200MB) - not used, Pillow handles all image processing
 
 # Authentication
 pyotp==2.9.0
@@ -40,22 +40,12 @@ qrcode==7.4.2
 # Email
 sendgrid>=6.11.0
 
-# NLP (optional - graceful degradation if fails)
-spacy>=3.7.0
-
 # Fuzzy string matching for typo-tolerant search
 rapidfuzz>=3.0.0
 
-# RAG/AI stack - Groq (cloud LLM) + OpenAI (cloud embeddings)
+# RAG/AI stack - Cloud LLM + Local embeddings
 groq>=0.4.1
 openai>=1.12.0
-sentence-transformers>=2.2.2,<3.0.0  # Required for semantic search
 
-# Virus scanning
-# No dependencies needed - uses VirusTotal API (cloud-based)
-
-# Mistral (conflicts with old googletrans so removed for now)
-# mistralai==0.1.2
-
-# Translation (conflicts with httpx so removed - use Google Translate API directly)
-# googletrans==4.0.0rc1
+# NOTE: Removed spacy (~500MB) - not used anywhere in codebase
+# NOTE: sentence-transformers moved to Dockerfile for CPU-only torch install

@@ -23,6 +23,7 @@ class CollaboratorResponse(BaseModel):
     logo_url: str
     logo_path: str
     website_url: str
+    type: str
     display_order: int
     is_active: bool
     created_by: Optional[str]
@@ -44,11 +45,12 @@ class ReorderRequest(BaseModel):
 
 @router.get("", response_model=CollaboratorsListResponse)
 async def get_collaborators(db: Session = Depends(get_db)):
-    """Get all active collaborators, sorted by display_order (public endpoint)."""
+    """Get all active collaborators (type='collaborator'), sorted by display_order (public endpoint)."""
     try:
         collaborators = (
             db.query(Collaborator)
             .filter(Collaborator.is_active == True)
+            .filter(Collaborator.type == 'collaborator')
             .order_by(Collaborator.display_order.asc(), Collaborator.created_at.asc())
             .all()
         )
@@ -65,12 +67,18 @@ async def get_collaborators(db: Session = Depends(get_db)):
 @router.get("/all", response_model=CollaboratorsListResponse)
 async def get_all_collaborators(
     admin_user: AdminUser,
+    type: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
-    """Get all collaborators including inactive (admin only)."""
+    """Get all collaborators including inactive, optionally filtered by type (admin only)."""
     try:
+        query = db.query(Collaborator)
+        
+        if type:
+            query = query.filter(Collaborator.type == type)
+        
         collaborators = (
-            db.query(Collaborator)
+            query
             .order_by(Collaborator.display_order.asc(), Collaborator.created_at.asc())
             .all()
         )
@@ -84,6 +92,27 @@ async def get_all_collaborators(
         raise HTTPException(status_code=500, detail="Failed to get all collaborators")
 
 
+@router.get("/investigative-research-partners", response_model=CollaboratorsListResponse)
+async def get_investigative_research_partners(db: Session = Depends(get_db)):
+    """Get all active investigative research partners, sorted by display_order (public endpoint)."""
+    try:
+        partners = (
+            db.query(Collaborator)
+            .filter(Collaborator.is_active == True)
+            .filter(Collaborator.type == 'investigative_research_partner')
+            .order_by(Collaborator.display_order.asc(), Collaborator.created_at.asc())
+            .all()
+        )
+        
+        return CollaboratorsListResponse(
+            collaborators=[CollaboratorResponse(**c.to_dict()) for c in partners],
+            total=len(partners)
+        )
+    except Exception as e:
+        logger.error("Failed to get investigative research partners", error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to get investigative research partners")
+
+
 @router.post("", response_model=CollaboratorResponse)
 async def create_collaborator(
     admin_user: AdminUser,
@@ -91,10 +120,15 @@ async def create_collaborator(
     description: str = Form(...),
     website_url: str = Form(...),
     logo: UploadFile = File(...),
+    type: str = Form(default='collaborator'),
     db: Session = Depends(get_db)
 ):
-    """Create a new collaborator (admin only)."""
+    """Create a new collaborator or investigative research partner (admin only)."""
     try:
+        # Validate type
+        if type not in ['collaborator', 'investigative_research_partner']:
+            raise HTTPException(status_code=400, detail="type must be 'collaborator' or 'investigative_research_partner'")
+        
         # Validate website URL format
         if not website_url.startswith(('http://', 'https://')):
             website_url = f"https://{website_url}"
@@ -119,8 +153,12 @@ async def create_collaborator(
         # Get admin email
         admin_email = getattr(admin_user, "email", None) or getattr(admin_user, "sub", None)
         
-        # Get the highest display_order and add 1 for the new item
-        max_order = db.query(func.max(Collaborator.display_order)).scalar() or 0
+        # Get the highest display_order for this type and add 1 for the new item
+        max_order = (
+            db.query(func.max(Collaborator.display_order))
+            .filter(Collaborator.type == type)
+            .scalar() or 0
+        )
         new_display_order = max_order + 1
         
         # Create collaborator
@@ -130,6 +168,7 @@ async def create_collaborator(
             logo_url=logo_url,
             logo_path=logo_path,
             website_url=website_url,
+            type=type,
             display_order=new_display_order,
             is_active=True,
             created_by=admin_email
@@ -142,6 +181,7 @@ async def create_collaborator(
         logger.info("Collaborator created", 
                    collaborator_id=collaborator.id,
                    name=name,
+                   type=type,
                    created_by=admin_email)
         
         return CollaboratorResponse(**collaborator.to_dict())
@@ -158,30 +198,40 @@ async def create_collaborator(
 async def reorder_collaborators(
     request: ReorderRequest,
     admin_user: AdminUser,
+    type: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
-    """Reorder collaborators by updating display_order (admin only)."""
+    """Reorder collaborators by updating display_order, optionally filtered by type (admin only)."""
     try:
         # Validate request
         if not request.collaborator_ids or len(request.collaborator_ids) == 0:
             raise HTTPException(status_code=400, detail="collaborator_ids cannot be empty")
+        
         # Update display_order for each collaborator based on their position in the list
         for index, collaborator_id in enumerate(request.collaborator_ids):
             collaborator = db.query(Collaborator).filter(Collaborator.id == collaborator_id).first()
             if collaborator:
+                # If type is specified, only reorder items of that type
+                if type and collaborator.type != type:
+                    continue
                 collaborator.display_order = index
         
         db.commit()
         
-        # Return updated list
+        # Return updated list, filtered by type if provided
+        query = db.query(Collaborator)
+        if type:
+            query = query.filter(Collaborator.type == type)
+        
         collaborators = (
-            db.query(Collaborator)
+            query
             .order_by(Collaborator.display_order.asc(), Collaborator.created_at.asc())
             .all()
         )
         
         logger.info("Collaborators reordered", 
                    admin_email=getattr(admin_user, "email", None),
+                   type=type,
                    count=len(request.collaborator_ids))
         
         return CollaboratorsListResponse(
@@ -205,6 +255,7 @@ async def update_collaborator(
     description: str = Form(...),
     website_url: str = Form(...),
     is_active: bool = Form(default=True),
+    type: Optional[str] = Form(None),
     logo: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db)
 ):
@@ -214,6 +265,10 @@ async def update_collaborator(
         
         if not collaborator:
             raise HTTPException(status_code=404, detail="Collaborator not found")
+        
+        # Validate type if provided
+        if type and type not in ['collaborator', 'investigative_research_partner']:
+            raise HTTPException(status_code=400, detail="type must be 'collaborator' or 'investigative_research_partner'")
         
         # Validate website URL format
         if not website_url.startswith(('http://', 'https://')):
@@ -246,13 +301,16 @@ async def update_collaborator(
         collaborator.description = description
         collaborator.website_url = website_url
         collaborator.is_active = is_active
+        if type:
+            collaborator.type = type
         
         db.commit()
         db.refresh(collaborator)
         
         logger.info("Collaborator updated", 
                    collaborator_id=collaborator_id,
-                   name=name)
+                   name=name,
+                   type=collaborator.type)
         
         return CollaboratorResponse(**collaborator.to_dict())
         

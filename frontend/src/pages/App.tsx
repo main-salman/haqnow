@@ -9,6 +9,7 @@ import InteractiveWorldMap from '../components/InteractiveWorldMap';
 import TopViewedDocuments from '../components/TopViewedDocuments';
 import RecentlySharedDocuments from '../components/RecentlySharedDocuments';
 import CollaboratorsSection from '../components/CollaboratorsSection';
+import InvestigativeResearchPartnersSection from '../components/InvestigativeResearchPartnersSection';
 import Version from '../components/Version';
 import Navigation from '../components/Navigation';
 import ProminentLanguageBar from '../components/ProminentLanguageBar';
@@ -415,6 +416,23 @@ export default function App() {
                   </p>
                 </div>
                 <CollaboratorsSection />
+              </div>
+            </div>
+          </section>
+
+          {/* Investigative Research Partners Section */}
+          <section className="mt-12">
+            <div className="w-full py-8 px-4">
+              <div className="max-w-6xl mx-auto">
+                <div className="mb-6">
+                  <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-center mb-2">
+                    {t('about.investigativeResearchPartnersTitle', 'Investigative Research Partners')}
+                  </h2>
+                  <p className="text-slate-600 text-center">
+                    {t('about.investigativeResearchPartnersDescription', 'Our research and investigation partners')}
+                  </p>
+                </div>
+                <InvestigativeResearchPartnersSection />
               </div>
             </div>
           </section>
