@@ -5,7 +5,6 @@ from sqlalchemy import func
 import requests
 import pytesseract
 from pdf2image import convert_from_bytes
-import spacy
 import io
 import re
 import os
@@ -38,11 +37,12 @@ logger = structlog.get_logger()
 
 router = APIRouter()
 
-# Load spaCy model
+# Optional spaCy import - gracefully degrades if not available
 try:
+    import spacy
     nlp = spacy.load("en_core_web_sm")
     logger.info("spaCy model loaded successfully")
-except OSError:
+except (ImportError, OSError):
     logger.warning("spaCy model 'en_core_web_sm' not found. Tagging will be limited.")
     nlp = None 
 
