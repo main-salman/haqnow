@@ -1295,7 +1295,17 @@ export default function UploadDocumentPage() {
                   aria-describedby={errors.consent ? 'consent-error' : undefined}
                 />
                 <Label htmlFor="lawful-consent" className="text-sm font-normal cursor-pointer">
-                  This document was obtained through lawful means, and I have the necessary authorization to share it.
+                  {t("upload.consentText")}{" "}
+                  <a
+                    href="https://haqnow.com/disclaimer"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary underline hover:text-primary/80"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {t("upload.termsAndConditions")}
+                  </a>
+                  {t("upload.consentTextAfter")}
                 </Label>
               </div>
               {errors.consent && (
