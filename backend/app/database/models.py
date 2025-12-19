@@ -494,7 +494,7 @@ class JobQueue(Base):
         }
 
 class Collaborator(Base):
-    """Model for storing collaborators/champions information."""
+    """Model for storing collaborators/champions and investigative research partners information."""
     
     __tablename__ = "collaborators"
     
@@ -504,6 +504,7 @@ class Collaborator(Base):
     logo_url = Column(String(1000), nullable=False)  # S3 URL to logo image
     logo_path = Column(String(500), nullable=False)  # S3 file path
     website_url = Column(String(1000), nullable=False)  # External URL
+    type = Column(String(50), nullable=False, default='collaborator', index=True)  # 'collaborator' or 'investigative_research_partner'
     display_order = Column(Integer, nullable=False, default=0, index=True)  # Order for drag-and-drop (lower = first)
     is_active = Column(Boolean, nullable=False, default=True, index=True)
     created_by = Column(String(255), nullable=True)  # Admin email
@@ -511,7 +512,7 @@ class Collaborator(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     
     def __repr__(self):
-        return f"<Collaborator(id={self.id}, name='{self.name}', display_order={self.display_order})>"
+        return f"<Collaborator(id={self.id}, name='{self.name}', type='{self.type}', display_order={self.display_order})>"
     
     def to_dict(self):
         """Convert model to dictionary."""
@@ -522,6 +523,7 @@ class Collaborator(Base):
             "logo_url": self.logo_url,
             "logo_path": self.logo_path,
             "website_url": self.website_url,
+            "type": self.type,
             "display_order": self.display_order,
             "is_active": self.is_active,
             "created_by": self.created_by,
