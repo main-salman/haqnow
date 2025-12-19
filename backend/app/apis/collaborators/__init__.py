@@ -92,6 +92,27 @@ async def get_all_collaborators(
         raise HTTPException(status_code=500, detail="Failed to get all collaborators")
 
 
+@router.get("/investigative-research-partners", response_model=CollaboratorsListResponse)
+async def get_investigative_research_partners(db: Session = Depends(get_db)):
+    """Get all active investigative research partners, sorted by display_order (public endpoint)."""
+    try:
+        partners = (
+            db.query(Collaborator)
+            .filter(Collaborator.is_active == True)
+            .filter(Collaborator.type == 'investigative_research_partner')
+            .order_by(Collaborator.display_order.asc(), Collaborator.created_at.asc())
+            .all()
+        )
+        
+        return CollaboratorsListResponse(
+            collaborators=[CollaboratorResponse(**c.to_dict()) for c in partners],
+            total=len(partners)
+        )
+    except Exception as e:
+        logger.error("Failed to get investigative research partners", error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to get investigative research partners")
+
+
 @router.post("", response_model=CollaboratorResponse)
 async def create_collaborator(
     admin_user: AdminUser,
@@ -299,27 +320,6 @@ async def update_collaborator(
         db.rollback()
         logger.error("Failed to update collaborator", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to update collaborator: {str(e)}")
-
-
-@router.get("/investigative-research-partners", response_model=CollaboratorsListResponse)
-async def get_investigative_research_partners(db: Session = Depends(get_db)):
-    """Get all active investigative research partners, sorted by display_order (public endpoint)."""
-    try:
-        partners = (
-            db.query(Collaborator)
-            .filter(Collaborator.is_active == True)
-            .filter(Collaborator.type == 'investigative_research_partner')
-            .order_by(Collaborator.display_order.asc(), Collaborator.created_at.asc())
-            .all()
-        )
-        
-        return CollaboratorsListResponse(
-            collaborators=[CollaboratorResponse(**c.to_dict()) for c in partners],
-            total=len(partners)
-        )
-    except Exception as e:
-        logger.error("Failed to get investigative research partners", error=str(e))
-        raise HTTPException(status_code=500, detail="Failed to get investigative research partners")
 
 
 @router.delete("/{collaborator_id}")
