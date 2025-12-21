@@ -11425,3 +11425,21 @@ Updated all major documentation files to reflect current architecture:
 
 ---
 
+
+## January 20, 2025 - Fixed Hero Video Frame Sizing (object-fit cover)
+
+**Problem:** Video frame was still larger than video element even after previous fix. The `object-fit: contain` was maintaining aspect ratio but leaving empty space.
+
+**Solution:**
+Changed `objectFit: 'contain'` to `objectFit: 'cover'` so the video fills the entire container frame exactly, matching the frame size without empty space. The video will now fill the 400px height container completely.
+
+**Files Modified:**
+- frontend/src/pages/App.tsx - Changed objectFit from 'contain' to 'cover'
+
+**Deployment:**
+- Deployed to dev (v5.2.3) - https://haqnow.click
+- Deployed to prod (v5.2.5) - https://haqnow.com
+- Resolved merge conflict in package.json during prod deployment
+
+---
+
