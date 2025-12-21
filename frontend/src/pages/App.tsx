@@ -292,7 +292,7 @@ export default function App() {
                 loop
                 muted
                 playsInline
-                style={{ maxHeight: '400px', objectFit: 'cover' }}
+                style={{ maxHeight: '400px', maxWidth: '80%', objectFit: 'contain' }}
               >
                 <source src="/video.mp4" type="video/mp4" />
                 Your browser does not support the video tag.
