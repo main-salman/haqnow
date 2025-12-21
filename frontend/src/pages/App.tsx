@@ -353,14 +353,15 @@ export default function App() {
           </p>
           </section>
 
+          {/* Search Section */}
           <section className="max-w-2xl mx-auto">
             <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-6 shadow-sm border border-green-200">
               <div className="text-center mb-6">
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  {t('homepage.uploadTitle', 'Upload Documents')}
+                  {t('homepage.searchTitle', 'Search Documents')}
                 </h3>
                 <p className="text-gray-600">
-                  {t('homepage.uploadDescription', 'Share anonymous documents to expose corruption worldwide')}
+                  {t('homepage.searchDescription', 'Find corruption documents by keyword, country, or organization')}
                 </p>
               </div>
               
@@ -379,9 +380,23 @@ export default function App() {
                   {t('homepage.searchButton')}
                 </Button>
               </div>
+            </div>
+          </section>
+
+          {/* Upload Documents Section */}
+          <section className="max-w-2xl mx-auto">
+            <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-6 shadow-sm border border-green-200">
+              <div className="text-center mb-6">
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  {t('homepage.uploadTitle', 'Upload Documents')}
+                </h3>
+                <p className="text-gray-600">
+                  {t('homepage.uploadDescription', 'Share anonymous documents to expose corruption worldwide')}
+                </p>
+              </div>
               
               {/* Enhanced Upload Button */}
-              <div className="mt-6 text-center">
+              <div className="text-center">
                 <Button 
                   size="lg"
                   onClick={() => navigate('/upload-document-page')}
