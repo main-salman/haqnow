@@ -294,7 +294,7 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
 
   if (loading) {
     return (
-      <div className="w-full h-[500px] bg-gradient-to-br from-slate-50 to-blue-50 rounded-lg flex items-center justify-center">
+      <div className="w-full h-[400px] bg-gradient-to-br from-slate-50 to-blue-50 rounded-lg flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
           <p className="text-slate-600">Loading world map...</p>
@@ -304,7 +304,7 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
   }
 
   return (
-    <div className="w-full h-[500px] rounded-lg overflow-hidden shadow-lg relative z-[0]">
+    <div className="w-full h-[400px] rounded-lg overflow-hidden shadow-lg relative z-[0]">
       <MapContainer
         center={[20, 0]}
         zoom={2}
@@ -312,6 +312,11 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
         worldCopyJump={true}
         maxBounds={[[-90, -180], [90, 180]]}
         maxBoundsViscosity={1.0}
+        zoomControl={false}
+        dragging={true}
+        touchZoom={false}
+        doubleClickZoom={false}
+        scrollWheelZoom={false}
       >
         {/* Map tiles */}
         <TileLayer
@@ -323,6 +328,30 @@ const InteractiveWorldMap: React.FC<InteractiveWorldMapProps> = ({
         {/* Circle markers for countries with documents */}
         {renderCircleMarkers()}
       </MapContainer>
+      
+      {/* Zoom controls */}
+      <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-lg z-[1000] flex flex-col gap-1">
+        <button 
+          onClick={() => {
+            const map = (document.querySelector('.leaflet-container') as any)?.__leaflet?.map;
+            if (map) map.zoomIn();
+          }}
+          className="w-8 h-8 bg-white hover:bg-gray-100 rounded border flex items-center justify-center text-sm font-semibold"
+          aria-label="Zoom in"
+        >
+          +
+        </button>
+        <button 
+          onClick={() => {
+            const map = (document.querySelector('.leaflet-container') as any)?.__leaflet?.map;
+            if (map) map.zoomOut();
+          }}
+          className="w-8 h-8 bg-white hover:bg-gray-100 rounded border flex items-center justify-center text-sm font-semibold"
+          aria-label="Zoom out"
+        >
+          -
+        </button>
+      </div>
       
       {/* Legend for circle sizes */}
       <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-lg z-[1000]">

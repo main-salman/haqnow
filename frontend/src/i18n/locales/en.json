@@ -1,6 +1,7 @@
 {
   "navigation": {
     "brand": "HaqNow",
+    "home": "Home",
     "search": "Search",
     "upload": "Upload",
     "privacy": "Privacy",
@@ -23,6 +24,9 @@
     "searchButton": "Search",
     "mapTitle": "Global Corruption Document Distribution",
     "mapPlaceholder": "Interactive World Map Coming Soon",
+    "uploadTitle": "Upload Documents",
+    "uploadDescription": "Share anonymous documents to expose corruption worldwide",
+    "uploadAnonymous": "Upload anonymously and securely",
     "topViewedTitle": "Most Viewed Documents",
     "topViewedDescription": "Discover the most accessed corruption documents",
     "views": "views",
