@@ -11443,3 +11443,31 @@ Changed `objectFit: 'contain'` to `objectFit: 'cover'` so the video fills the en
 
 ---
 
+
+## January 20, 2025 - Separated Search and Upload Sections on Homepage
+
+**Change:** Split the combined search/upload section into two separate, distinct sections on the homepage.
+
+**What was changed:**
+1. **Search Section (First)** - New dedicated section with:
+   - Title: "Search Documents"
+   - Description: "Find corruption documents by keyword, country, or organization"
+   - Search input field and button
+
+2. **Upload Documents Section (Second)** - Separate section with:
+   - Title: "Upload Documents"
+   - Description: "Share anonymous documents to expose corruption worldwide"
+   - Upload button
+
+Both sections maintain the same styling (gradient background, rounded corners, shadow) but are now visually separated for better UX and clarity.
+
+**Files Modified:**
+- frontend/src/pages/App.tsx - Split single section into two separate sections
+
+**Deployment:**
+- Deployed to dev (v5.2.4) - https://haqnow.click
+- Deployed to prod (v5.2.6) - https://haqnow.com
+- Resolved merge conflict in package.json during prod deployment
+
+---
+
