@@ -31,6 +31,9 @@ export default function Navigation() {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4">
             <nav className="flex space-x-6">
+              <Button variant="ghost" onClick={() => navigate('/')}>
+                {t('navigation.home')}
+              </Button>
               <Button variant="ghost" onClick={() => navigate('/about')}>
                 {t('navigation.about')}
               </Button>
@@ -89,6 +92,13 @@ export default function Navigation() {
         {isMobileMenuOpen && (
           <div className="md:hidden mt-4 py-4 border-t border-border">
             <nav className="flex flex-col space-y-2">
+              <Button 
+                variant="ghost" 
+                className="justify-start" 
+                onClick={() => handleMobileNavigation('/')}
+              >
+                {t('navigation.home')}
+              </Button>
               <Button 
                 variant="ghost" 
                 className="justify-start" 

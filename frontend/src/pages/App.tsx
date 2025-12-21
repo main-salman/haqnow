@@ -284,7 +284,7 @@ export default function App() {
         <div className="space-y-10 md:space-y-16">
           {/* Hero Video Section */}
           <section className="w-full max-w-4xl mx-auto">
-            <div className="relative rounded-lg overflow-hidden shadow-lg bg-gray-100">
+            <div className="relative rounded-lg overflow-hidden shadow-lg bg-gradient-to-br from-green-50 to-blue-50">
               <video
                 id="hero-video"
                 className="w-full h-auto"
@@ -292,7 +292,7 @@ export default function App() {
                 loop
                 muted
                 playsInline
-                style={{ maxHeight: '500px', objectFit: 'cover' }}
+                style={{ maxHeight: '400px', objectFit: 'cover' }}
               >
                 <source src="/video.mp4" type="video/mp4" />
                 Your browser does not support the video tag.
@@ -339,54 +339,77 @@ export default function App() {
           </section>
 
           <section className="text-center space-y-4">
-            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
+            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-gray-900">
               {t('homepage.title')}
             </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-gray-700 max-w-2xl mx-auto">
               {t('homepage.subtitle')}
             </p>
-          <p className="text-muted-foreground max-w-2xl mx-auto [&_a]:text-green-600 [&_a]:underline [&_a:hover]:text-green-800">
+          <p className="text-gray-700 max-w-2xl mx-auto [&_a]:text-green-600 [&_a]:underline [&_a:hover]:text-green-800">
             {renderHtml(t('homepage.newsletterHtml'))}
           </p>
-          <p className="text-muted-foreground max-w-2xl mx-auto [&_a]:text-green-600 [&_a]:underline [&_a:hover]:text-green-800">
+          <p className="text-gray-700 max-w-2xl mx-auto [&_a]:text-green-600 [&_a]:underline [&_a:hover]:text-green-800">
             {renderHtml(t('homepage.feedbackHtml'))}
           </p>
           </section>
 
-          <section className="max-w-xl mx-auto">
-            <div className="flex w-full items-center space-x-2">
-              <Input
-                type="search"
-                placeholder={t('homepage.searchPlaceholder')}
-                className="flex-grow"
-                aria-label="Search documents"
-                value={searchTerm} // Added value
-                onChange={(e) => setSearchTerm(e.target.value)} // Added onChange
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()} // Added onKeyPress for Enter
-              />
-              <Button type="button" aria-label="Submit search" onClick={handleSearch}> {/* Changed to type="button" and added onClick */}
-                <Search className="h-4 w-4 mr-2" />
-                {t('homepage.searchButton')}
-              </Button>
+          <section className="max-w-2xl mx-auto">
+            <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-6 shadow-sm border border-green-200">
+              <div className="text-center mb-6">
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  {t('homepage.uploadTitle', 'Upload Documents')}
+                </h3>
+                <p className="text-gray-600">
+                  {t('homepage.uploadDescription', 'Share anonymous documents to expose corruption worldwide')}
+                </p>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-4 items-center">
+                <Input
+                  type="search"
+                  placeholder={t('homepage.searchPlaceholder')}
+                  className="flex-grow"
+                  aria-label="Search documents"
+                  value={searchTerm} // Added value
+                  onChange={(e) => setSearchTerm(e.target.value)} // Added onChange
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()} // Added onKeyPress for Enter
+                />
+                <Button type="button" aria-label="Submit search" onClick={handleSearch} className="bg-green-600 hover:bg-green-700">
+                  <Search className="h-4 w-4 mr-2" />
+                  {t('homepage.searchButton')}
+                </Button>
+              </div>
+              
+              {/* Enhanced Upload Button */}
+              <div className="mt-6 text-center">
+                <Button 
+                  size="lg"
+                  onClick={() => navigate('/upload-document-page')}
+                  className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200"
+                >
+                  <Upload className="h-6 w-6 mr-3" />
+                  {t('navigation.upload')}
+                </Button>
+                <p className="text-sm text-gray-500 mt-3">
+                  {t('homepage.uploadAnonymous', 'Upload anonymously and securely')}
+                </p>
+              </div>
             </div>
-            
-            {/* Additional Upload Button */}
-            <div className="mt-4 text-center">
-              <Button 
-                variant="outline" 
-                size="lg"
-                onClick={() => navigate('/upload-document-page')}
-                className="px-8 py-3"
-              >
-                <Upload className="h-5 w-5 mr-2" />
-                {t('navigation.upload')}
-              </Button>
-            </div>
+          </section>
+
+          {/* Top Viewed Documents Section - Moved up for better visibility */}
+          <section className="mt-12">
+            <TopViewedDocuments />
+          </section>
+
+          {/* Recently Shared Documents Section - Moved up for better visibility */}
+          <section className="mt-8">
+            <RecentlySharedDocuments />
           </section>
 
           <section className="space-y-6">
             <div className="text-center">
-              <h3 className="text-2xl md:text-3xl font-semibold tracking-tight">
+              <h3 className="text-2xl md:text-3xl font-semibold tracking-tight text-gray-900">
                 {t('homepage.mapTitle')}
               </h3>
             </div>
@@ -408,10 +431,10 @@ export default function App() {
             <div className="w-full py-8 px-4">
               <div className="max-w-6xl mx-auto">
                 <div className="mb-6">
-                  <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-center mb-2">
+                  <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-center mb-2 text-gray-900">
                     {t('about.investigativeResearchPartnersTitle', 'Investigative Research Partners')}
                   </h2>
-                  <p className="text-slate-600 text-center">
+                  <p className="text-gray-700 text-center">
                     {t('about.investigativeResearchPartnersDescription', 'Our research and investigation partners')}
                   </p>
                 </div>
@@ -420,15 +443,15 @@ export default function App() {
             </div>
           </section>
 
-          {/* Collaborators and Champions Section */}
+          {/* Collaborators and Champions Section - moved after map */}
           <section className="mt-12">
             <div className="w-full py-8 px-4">
               <div className="max-w-6xl mx-auto">
                 <div className="mb-6">
-                  <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-center mb-2">
+                  <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-center mb-2 text-gray-900">
                     {t('about.collaboratorsTitle', 'Collaborators and Champions')}
                   </h2>
-                  <p className="text-slate-600 text-center">
+                  <p className="text-gray-700 text-center">
                     {t('about.collaboratorsDescription', 'Our trusted partners and supporters')}
                   </p>
                 </div>
@@ -437,15 +460,6 @@ export default function App() {
             </div>
           </section>
 
-          {/* Top Viewed Documents Section */}
-          <section className="mt-12">
-            <TopViewedDocuments />
-          </section>
-
-          {/* Recently Shared Documents Section */}
-          <section className="mt-8">
-            <RecentlySharedDocuments />
-          </section>
         </div>
       </main>
 
