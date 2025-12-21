@@ -11402,3 +11402,26 @@ Updated all major documentation files to reflect current architecture:
 - scripts/deploy.sh
 
 ---
+
+## January 20, 2025 - Fixed Hero Video Sizing Issue
+
+**Problem:** Hero video container frame was larger than the video element, causing visual mismatch.
+
+**Solution:**
+1. Removed `maxWidth: '80%'` constraint from video inline styles that was making the video smaller than container
+2. Changed container from `minHeight: '400px'` to fixed height `h-[400px]` (400px)
+3. Added flex centering classes (`flex items-center justify-center`) to container
+4. Changed video from `w-full h-auto` to `w-full h-full` to fill container properly
+5. Removed redundant `maxHeight: '400px'` from video styles since container now has fixed height
+
+**Result:** Video now matches frame size exactly (400px height, full width of container) while maintaining aspect ratio with `objectFit: 'contain'`.
+
+**Files Modified:**
+- frontend/src/pages/App.tsx
+
+**Deployment:**
+- Deployed to dev (v5.2.2) - https://haqnow.click
+- Deployed to prod (v5.2.4) - https://haqnow.com
+
+---
+
