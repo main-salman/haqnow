@@ -284,15 +284,15 @@ export default function App() {
         <div className="space-y-10 md:space-y-16">
           {/* Hero Video Section */}
           <section className="w-full max-w-4xl mx-auto">
-            <div className="relative rounded-lg overflow-hidden shadow-lg bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center h-[400px]">
+            <div className="relative rounded-lg overflow-hidden shadow-lg bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center min-h-[300px] max-h-[500px] md:max-h-[600px]">
               <video
                 id="hero-video"
-                className="w-full h-full"
+                className="w-full h-auto max-h-full"
                 autoPlay
                 loop
                 muted
                 playsInline
-                style={{ objectFit: 'cover' }}
+                style={{ objectFit: 'contain', maxHeight: '100%' }}
               >
                 <source src="/video.mp4" type="video/mp4" />
                 Your browser does not support the video tag.
