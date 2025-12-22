@@ -187,13 +187,71 @@ if [ "$DEPLOY_ENV" = "prod" ]; then
         echo "   Found $MAIN_COMMITS new commit(s) from main to merge"
         if ! git merge origin/main --no-edit; then
             echo ""
-            echo "❌ Merge conflict with main branch!"
-            echo "   Please resolve manually, then run deploy again."
-            echo "   To abort: git merge --abort"
-            if [ "$HAS_UNCOMMITTED" = true ]; then
-                echo "   Your changes are stashed. Restore with: git stash pop"
+            echo "⚠️  Merge conflict detected. Attempting automatic resolution..."
+            
+            # Check if conflict is only in package.json (version conflict)
+            CONFLICTED_FILES=$(git diff --name-only --diff-filter=U)
+            if [ "$CONFLICTED_FILES" = "frontend/package.json" ]; then
+                echo "   Detected version conflict in package.json. Resolving automatically..."
+                
+                # Extract versions from conflict markers
+                # Get our version (between <<<<<<< HEAD and =======)
+                OUR_VERSION=$(sed -n '/^<<<<<<< HEAD/,/^=======/p' frontend/package.json | grep '"version"' | sed 's/.*"version": *"\([^"]*\)".*/\1/' | head -1)
+                # Get their version (between ======= and >>>>>>>)
+                THEIR_VERSION=$(sed -n '/^=======/,/^>>>>>>>/p' frontend/package.json | grep '"version"' | sed 's/.*"version": *"\([^"]*\)".*/\1/' | head -1)
+                
+                # Use the higher version (or ours if comparison fails)
+                if [ -n "$OUR_VERSION" ] && [ -n "$THEIR_VERSION" ]; then
+                    # Compare versions and pick the higher one using sort -V (version sort)
+                    HIGHER_VERSION=$(printf '%s\n%s\n' "$OUR_VERSION" "$THEIR_VERSION" | sort -V | tail -1)
+                    echo "   Our version: $OUR_VERSION, Their version: $THEIR_VERSION"
+                    echo "   Using higher version: $HIGHER_VERSION"
+                    
+                    # Resolve conflict: remove conflict markers and use the higher version
+                    # Create a temp file with resolved content
+                    awk -v higher="$HIGHER_VERSION" '
+                    BEGIN { in_conflict = 0 }
+                    /^<<<<<<< HEAD/ { in_conflict = 1; next }
+                    /^=======/ { next }
+                    /^>>>>>>> origin\/main/ { in_conflict = 0; next }
+                    {
+                        if (in_conflict && /"version"/) {
+                            # Replace version with higher version
+                            gsub(/"version": *"[^"]*"/, "\"version\": \"" higher "\"")
+                            in_conflict = 0
+                        }
+                        print
+                    }
+                    ' frontend/package.json > frontend/package.json.resolved
+                    
+                    mv frontend/package.json.resolved frontend/package.json
+                    
+                    # Stage the resolved file
+                    git add frontend/package.json
+                    
+                    # Complete the merge
+                    git commit --no-edit
+                    echo "✅ Automatically resolved version conflict"
+                else
+                    # Fallback: use ours strategy for package.json
+                    echo "   Using fallback: keeping our version"
+                    git checkout --ours frontend/package.json
+                    git add frontend/package.json
+                    git commit --no-edit
+                    echo "✅ Resolved conflict using our version"
+                fi
+            else
+                # Other conflicts - manual resolution needed
+                echo ""
+                echo "❌ Merge conflict in files other than package.json!"
+                echo "   Conflicted files: $CONFLICTED_FILES"
+                echo "   Please resolve manually, then run deploy again."
+                echo "   To abort: git merge --abort"
+                if [ "$HAS_UNCOMMITTED" = true ]; then
+                    echo "   Your changes are stashed. Restore with: git stash pop"
+                fi
+                exit 1
             fi
-            exit 1
         fi
         echo "✅ Merged main into prod"
     else

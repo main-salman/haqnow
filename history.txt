@@ -11471,3 +11471,47 @@ Both sections maintain the same styling (gradient background, rounded corners, s
 
 ---
 
+
+## January 20, 2025 - Fixed Video Vertical Cropping on Wide Screens
+
+**Problem:** On wide screens, the hero video was being vertically cropped due to `object-fit: cover` with a fixed height container.
+
+**Solution:**
+1. Changed `object-fit` from `cover` to `contain` to prevent any cropping
+2. Made container responsive with `min-h-[300px]` and `max-h-[500px]` (up to `600px` on medium+ screens) instead of fixed height
+3. Changed video to use `h-auto` to maintain natural aspect ratio
+4. Added `maxHeight: '100%'` to video style to ensure it fits within container
+
+**Result:** Video now scales to fit within the container without being cropped on any screen size, maintaining its natural aspect ratio while adapting to different screen widths.
+
+**Files Modified:**
+- frontend/src/pages/App.tsx - Made video container responsive and changed object-fit to contain
+
+**Deployment:**
+- Deployed to dev (v5.2.5) - https://haqnow.click
+- Deployed to prod (v5.2.7) - https://haqnow.com
+- Resolved merge conflict in package.json during prod deployment
+
+---
+
+
+## January 20, 2025 - Fixed Deploy Script to Auto-Resolve Version Conflicts
+
+**Problem:** Every prod deployment caused merge conflicts in `frontend/package.json` because dev deployments update the version in `main` branch, and prod deployments merge `main` into `prod` which already has a different version number.
+
+**Solution:**
+Added automatic conflict resolution for `package.json` version conflicts in `scripts/deploy.sh`:
+1. When a merge conflict occurs, check if it's only in `frontend/package.json`
+2. If so, extract both version numbers (ours and theirs)
+3. Compare versions using `sort -V` and automatically use the higher version
+4. Resolve the conflict by removing conflict markers and replacing with the higher version
+5. Stage the resolved file and complete the merge automatically
+6. If conflict is in other files, still require manual resolution
+
+**Result:** Prod deployments no longer get blocked by version conflicts - they're automatically resolved by using the higher version number.
+
+**Files Modified:**
+- scripts/deploy.sh - Added automatic version conflict resolution logic
+
+---
+
