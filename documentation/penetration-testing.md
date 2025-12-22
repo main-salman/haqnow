@@ -267,3 +267,4 @@ The HaqNow platform demonstrates a **strong security posture** with:
 
 
 
+
