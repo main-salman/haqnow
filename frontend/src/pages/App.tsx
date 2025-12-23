@@ -13,6 +13,7 @@ import InvestigativeResearchPartnersSection from '../components/InvestigativeRes
 import Version from '../components/Version';
 import Navigation from '../components/Navigation';
 import ProminentLanguageBar from '../components/ProminentLanguageBar';
+import PartnersCarousel from '../components/PartnersCarousel';
 
 interface CountryStats {
   countryCode: string;
@@ -353,6 +354,9 @@ export default function App() {
           </p>
           </section>
 
+          {/* Partners Carousel */}
+          <PartnersCarousel />
+
           {/* Search Section */}
           <section className="max-w-2xl mx-auto">
             <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-6 shadow-sm border border-green-200">
@@ -441,39 +445,7 @@ export default function App() {
             </div>
           </section>
 
-          {/* Investigative Research Partners Section */}
-          <section className="mt-12">
-            <div className="w-full py-8 px-4">
-              <div className="max-w-6xl mx-auto">
-                <div className="mb-6">
-                  <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-center mb-2 text-gray-900">
-                    {t('about.investigativeResearchPartnersTitle', 'Investigative Research Partners')}
-                  </h2>
-                  <p className="text-gray-700 text-center">
-                    {t('about.investigativeResearchPartnersDescription', 'Our research and investigation partners')}
-                  </p>
-                </div>
-                <InvestigativeResearchPartnersSection />
-              </div>
-            </div>
-          </section>
 
-          {/* Collaborators and Champions Section - moved after map */}
-          <section className="mt-12">
-            <div className="w-full py-8 px-4">
-              <div className="max-w-6xl mx-auto">
-                <div className="mb-6">
-                  <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-center mb-2 text-gray-900">
-                    {t('about.collaboratorsTitle', 'Collaborators and Champions')}
-                  </h2>
-                  <p className="text-gray-700 text-center">
-                    {t('about.collaboratorsDescription', 'Our trusted partners and supporters')}
-                  </p>
-                </div>
-                <CollaboratorsSection />
-              </div>
-            </div>
-          </section>
 
         </div>
       </main>
