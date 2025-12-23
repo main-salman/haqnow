@@ -1,8 +1,9 @@
 {
   "name": "foi-archive",
   "private": true,
-  "version": "5.2.7",
+  "version": "5.2.9",
   "version": "5.2.6",
+  "version": "5.2.9",
   "type": "module",
   "scripts": {
     "dev": "vite",
