@@ -1,36 +1,44 @@
-[2025-01-XX] **UPDATE: Partners Carousel Implementation**
+[2025-01-XX] **UPDATE: Scrolling Partners Carousel with Individual Partner Display**
 
-**Request:** Convert "Investigative Research Partners" and "Collaborators and Champions" sections into a carousel format, positioned just below the feedback text section.
+**Request:** Convert partners sections into a scrolling carousel showing individual partners with 1-second display time, fade transitions, and pause/play functionality.
 
 **Solution:**
-1. Created new PartnersCarousel.tsx component with:
-   - Horizontal sliding carousel with smooth transitions
-   - Auto-advancing every 8 seconds
-   - Navigation arrows (previous/next)
-   - Dot indicators for slide selection
-   - Progress bar showing current slide position
+1. Completely redesigned PartnersCarousel.tsx component with:
+   - **Individual partner scrolling**: Shows one partner at a time from both categories combined
+   - **1-second display time**: Each partner appears for exactly 1 second
+   - **Fade transitions**: Smooth opacity transitions with varying transparency (30% for adjacent partners)
+   - **Left-to-right scrolling**: Partners move horizontally across the screen
+   - **Continuous loop**: Automatically cycles through all partners endlessly
+   - **Pause/play toggle**: Users can pause/resume the carousel with a button
+   - **Category headings**: Dynamic title changes based on current partner's category
+   - **Progress indicators**: Small dots showing current position in the cycle
+   - **Progress bar**: Visual progress indicator at the bottom
+
+2. **Data Integration**:
+   - Fetches from both `/api/collaborators/investigative-research-partners` and `/api/collaborators` APIs
+   - Combines all partners into single scrolling sequence
+   - Maintains category information for proper heading display
+   - Handles loading states and error conditions
+
+3. **Visual Features**:
+   - One partner fully visible (100% opacity) at center
+   - Adjacent partners partially visible (30% opacity) during transitions
+   - Smooth CSS transitions with 1-second duration
+   - External link icons on hover for partner websites
    - Responsive design for mobile and desktop
 
-2. Updated App.tsx to:
-   - Import PartnersCarousel component
-   - Remove separate sections for Investigative Research Partners and Collaborators
-   - Position carousel just below feedback text section
-   - Maintain responsive layout and styling
+4. **User Controls**:
+   - Pause/play button in top-right corner
+   - Automatic pause on carousel interaction
+   - No speed adjustment (fixed at 1 second per partner)
+   - Touch-friendly for mobile devices
 
-3. Carousel Features:
-   - Two slides: Investigative Research Partners and Collaborators and Champions
-   - Smooth fade transitions between slides
-   - Touch-friendly navigation on mobile
-   - Accessible controls with proper ARIA labels
-   - Auto-pause on hover for better UX
-
-4. Deployed to both development (haqnow.click) and production (haqnow.com) environments
-5. Fixed .env file issue with invalid environment variable format
+5. Deployed to both development (haqnow.click v5.2.10) and production (haqnow.com v5.2.11) environments
 
 **Files Changed:**
-- frontend/src/components/PartnersCarousel.tsx (new)
-- frontend/src/pages/App.tsx (modified)
-- .env (fixed invalid env var format)
+- frontend/src/components/PartnersCarousel.tsx (completely rewritten)
+- frontend/src/pages/App.tsx (unchanged - carousel already positioned)
+- history.txt (updated)
 
 ---
 

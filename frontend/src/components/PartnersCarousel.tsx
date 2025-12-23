@@ -76,7 +76,7 @@ export default function PartnersCarousel() {
     if (!isPaused && partners.length > 0) {
       intervalRef.current = setInterval(() => {
         setCurrentIndex((prev) => (prev + 1) % partners.length);
-      }, 1000); // 1 second per partner
+      }, 4000); // 4 seconds per partner
     } else {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
