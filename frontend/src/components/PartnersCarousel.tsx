@@ -161,11 +161,11 @@ export default function PartnersCarousel() {
                   className="group flex flex-col items-center justify-center p-6 transition-all duration-200"
                 >
                   {/* Logo */}
-                  <div className="mb-4 flex items-center justify-center h-20 w-full">
+                  <div className="mb-4 flex items-center justify-center h-40 w-full">
                     <img
                       src={partner.logo_url}
                       alt={partner.name}
-                      className="max-h-20 max-w-full object-contain"
+                      className="max-h-40 max-w-full object-contain"
                       loading="lazy"
                     />
                   </div>

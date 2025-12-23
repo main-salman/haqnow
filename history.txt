@@ -5,7 +5,7 @@
 **Solution:**
 1. Completely redesigned PartnersCarousel.tsx component with:
    - **Individual partner scrolling**: Shows one partner at a time from both categories combined
-   - **1-second display time**: Each partner appears for exactly 1 second
+   - **4-second display time**: Each partner appears for exactly 4 seconds
    - **Fade transitions**: Smooth opacity transitions with varying transparency (30% for adjacent partners)
    - **Left-to-right scrolling**: Partners move horizontally across the screen
    - **Continuous loop**: Automatically cycles through all partners endlessly
