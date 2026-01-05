@@ -31,6 +31,12 @@ export default function AboutPage() {
             <h2 className="text-xl font-bold text-gray-900">Table of Contents</h2>
           </div>
           <nav className="space-y-2">
+            <a href="#mission-statement" className="block text-blue-600 hover:text-blue-800 hover:underline transition-colors">
+              • Mission Statement
+            </a>
+            <a href="#investigative-research-partners" className="block text-blue-600 hover:text-blue-800 hover:underline transition-colors">
+              • {t('about.investigativeResearchPartnersTitle', 'Investigative Research Partners')}
+            </a>
             <a href="#affiliates" className="block text-blue-600 hover:text-blue-800 hover:underline transition-colors">
               • {t('about.affiliatesTitle')}
             </a>
@@ -43,9 +49,6 @@ export default function AboutPage() {
             <a href="#projects" className="block text-blue-600 hover:text-blue-800 hover:underline transition-colors">
               • Connected Projects & Links
             </a>
-            <a href="#mission-statement" className="block text-blue-600 hover:text-blue-800 hover:underline transition-colors">
-              • Mission Statement
-            </a>
             <a href="#technical" className="block text-blue-600 hover:text-blue-800 hover:underline transition-colors">
               • Platform Features & Technical Details
             </a>
@@ -56,6 +59,94 @@ export default function AboutPage() {
               • {t('about.hostingTitle')}
             </a>
           </nav>
+        </div>
+
+        {/* Mission Statement */}
+        <div id="mission-statement" className="bg-white text-gray-800 rounded-lg shadow-lg p-8 mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('about.missionTitle')}</h2>
+          <p className="text-lg text-gray-600 mb-6">{t('about.missionAuthor')}</p>
+          
+          <div className="prose prose-lg text-gray-700 space-y-4">
+            <p>
+              {t('about.missionIntro')}
+            </p>
+            
+            <p>
+              {t('about.missionRealization')}
+            </p>
+            
+            <p>
+              {t('about.missionPurpose')}
+            </p>
+            
+            <p>
+              {t('about.missionNotLeakSite')}
+            </p>
+            
+            <h3 className="text-xl font-bold text-gray-900 mt-6 mb-4">{t('about.missionOathTitle')}</h3>
+            <p>
+              {t('about.missionOathDesc')}
+            </p>
+            <ul className="list-disc list-inside space-y-2 ml-4">
+              <li>{t('about.missionOathNo')}</li>
+              <li>{t('about.missionOathYes')}</li>
+            </ul>
+            
+            <h3 className="text-xl font-bold text-gray-900 mt-6 mb-4">{t('about.missionPrivacyTitle')}</h3>
+            <p>
+              {t('about.missionPrivacyDesc')}
+            </p>
+            <ul className="list-disc list-inside space-y-2 ml-4">
+              <li>
+                <Trans
+                  i18nKey="about.missionPrivacyNoTracking"
+                  components={{
+                    link: (
+                      <a
+                        className="text-indigo-600 hover:text-indigo-800 underline"
+                        href="https://www.haqnow.com/privacy-guaranteed-page"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      />
+                    ),
+                  }}
+                />
+              </li>
+              <li>
+                <Trans
+                  i18nKey="about.missionPrivacyEthicalAI"
+                  components={{
+                    link: (
+                      <a
+                        className="text-indigo-600 hover:text-indigo-800 underline"
+                        href="https://thaura.ai/home"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      />
+                    ),
+                  }}
+                />
+              </li>
+            </ul>
+            
+            <p className="mt-4">
+              {t('about.missionNonprofit')}
+            </p>
+            
+            <p>
+              {t('about.missionHaqMeaning')}
+            </p>
+            
+            <p className="font-semibold mt-6">
+              {t('about.missionWelcome')}
+            </p>
+            
+            <div className="mt-6">
+              <p className="font-semibold">{t('about.missionSignature')}</p>
+              <p>{t('about.missionFounder')}</p>
+              <p className="font-semibold">{t('about.missionHaqNow')}</p>
+            </div>
+          </div>
         </div>
 
         {/* Investigative Research Partners Section */}
@@ -151,94 +242,6 @@ export default function AboutPage() {
                   <ExternalLink className="w-4 h-4 text-gray-400" />
                 </div>
               </a>
-            </div>
-          </div>
-        </div>
-
-        {/* Mission Statement */}
-        <div id="mission-statement" className="bg-white text-gray-800 rounded-lg shadow-lg p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('about.missionTitle')}</h2>
-          <p className="text-lg text-gray-600 mb-6">{t('about.missionAuthor')}</p>
-          
-          <div className="prose prose-lg text-gray-700 space-y-4">
-            <p>
-              {t('about.missionIntro')}
-            </p>
-            
-            <p>
-              {t('about.missionRealization')}
-            </p>
-            
-            <p>
-              {t('about.missionPurpose')}
-            </p>
-            
-            <p>
-              {t('about.missionNotLeakSite')}
-            </p>
-            
-            <h3 className="text-xl font-bold text-gray-900 mt-6 mb-4">{t('about.missionOathTitle')}</h3>
-            <p>
-              {t('about.missionOathDesc')}
-            </p>
-            <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>{t('about.missionOathNo')}</li>
-              <li>{t('about.missionOathYes')}</li>
-            </ul>
-            
-            <h3 className="text-xl font-bold text-gray-900 mt-6 mb-4">{t('about.missionPrivacyTitle')}</h3>
-            <p>
-              {t('about.missionPrivacyDesc')}
-            </p>
-            <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>
-                <Trans
-                  i18nKey="about.missionPrivacyNoTracking"
-                  components={{
-                    link: (
-                      <a
-                        className="text-indigo-600 hover:text-indigo-800 underline"
-                        href="https://www.haqnow.com/privacy-guaranteed-page"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      />
-                    ),
-                  }}
-                />
-              </li>
-              <li>
-                <Trans
-                  i18nKey="about.missionPrivacyEthicalAI"
-                  components={{
-                    link: (
-                      <a
-                        className="text-indigo-600 hover:text-indigo-800 underline"
-                        href="https://thaura.ai/home"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      />
-                    ),
-                  }}
-                />
-              </li>
-            </ul>
-            
-            <p className="mt-4">
-              {t('about.missionNonprofit')}
-            </p>
-            
-            <p>
-              {t('about.missionHaqMeaning')}
-            </p>
-            
-            <p className="font-semibold mt-6">
-              {t('about.missionWelcome')}
-            </p>
-            
-            <div className="mt-6">
-              <p className="font-semibold">{t('about.missionSignature')}</p>
-              <p>{t('about.missionFounder')}</p>
-              <p className="font-semibold">{t('about.missionHaqNow')}</p>
             </div>
           </div>
         </div>
