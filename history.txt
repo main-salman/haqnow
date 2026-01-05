@@ -1,3 +1,69 @@
+[2025-01-XX] **UPDATE: Changed "About" to "Our Mission" and Replaced Mission Statement**
+
+**Request:** 
+1. Change "About" navigation to "Our Mission" across all languages
+2. Replace mission statement section with new content by Salman Naqvi
+3. Add links to "Our codebase is open-source" (links to privacy-guaranteed-page) and "Thaura.ai" (links to thaura.ai/home)
+4. Translate all pages to appropriate languages
+5. Deploy to dev and prod
+
+**Solution:**
+1. **Navigation Update:**
+   - Changed `navigation.about` translation key from "About" to "Our Mission" in all language files:
+     - English: "Our Mission"
+     - Arabic: "مهمتنا"
+     - French: "Notre Mission"
+     - German: "Unsere Mission"
+     - Russian: "Наша Миссия"
+     - Turkish: "Misyonumuz"
+     - Polish: "Nasza Misja"
+
+2. **Mission Statement Replacement:**
+   - Completely replaced mission statement section in AboutPage.tsx with new content structure
+   - Added new translation keys for all mission statement content:
+     - `missionTitle`: "Why I Built HaqNow: A Library for the Truth"
+     - `missionAuthor`: "By Salman Naqvi"
+     - `missionIntro`, `missionRealization`, `missionPurpose`, `missionNotLeakSite`
+     - `missionOathTitle`, `missionOathDesc`, `missionOathNo`, `missionOathYes`
+     - `missionPrivacyTitle`, `missionPrivacyDesc`, `missionPrivacyNoTracking`, `missionPrivacyEthicalAI`
+     - `missionNonprofit`, `missionHaqMeaning`, `missionWelcome`
+     - `missionSignature`, `missionFounder`, `missionHaqNow`
+
+3. **Link Implementation:**
+   - Used React i18next `Trans` component for links in mission statement
+   - "Our codebase is open-source" links to https://www.haqnow.com/privacy-guaranteed-page
+   - "Thaura.ai" links to https://thaura.ai/home
+   - Links properly integrated with translation system using `<link>` placeholder tags
+
+4. **Translation Updates:**
+   - Added complete translations for all new mission statement keys in:
+     - English (en.json)
+     - Arabic (ar.json) - Full Arabic translation
+     - French (fr.json) - Full French translation
+     - German (de.json) - Full German translation
+     - Russian (ru.json) - Full Russian translation
+     - Turkish (tr.json) - Full Turkish translation
+     - Polish (pl.json) - Full Polish translation
+
+5. **Component Structure:**
+   - Updated AboutPage.tsx mission statement section with proper HTML structure
+   - Added author byline
+   - Structured content with headings, paragraphs, and bullet lists
+   - Maintained responsive design and styling consistency
+
+**Files Changed:**
+- frontend/src/pages/AboutPage.tsx (mission statement section completely replaced)
+- frontend/src/i18n/locales/en.json (navigation.about + all new mission keys)
+- frontend/src/i18n/locales/ar.json (navigation.about + all new mission keys)
+- frontend/src/i18n/locales/fr.json (navigation.about + all new mission keys)
+- frontend/src/i18n/locales/de.json (navigation.about + all new mission keys)
+- frontend/src/i18n/locales/ru.json (navigation.about + all new mission keys)
+- frontend/src/i18n/locales/tr.json (navigation.about + all new mission keys)
+- frontend/src/i18n/locales/pl.json (navigation.about + all new mission keys)
+- history.txt (updated)
+
+---
+
 [2025-01-XX] **UPDATE: Scrolling Partners Carousel with Individual Partner Display**
 
 **Request:** Convert partners sections into a scrolling carousel showing individual partners with 1-second display time, fade transitions, and pause/play functionality.
@@ -6,6 +72,7 @@
 1. Completely redesigned PartnersCarousel.tsx component with:
    - **Individual partner scrolling**: Shows one partner at a time from both categories combined
    - **4-second display time**: Each partner appears for exactly 4 seconds
+   - **Doubled image size**: Partner logos now display at 160px height (doubled from 80px) while maintaining aspect ratio
    - **Fade transitions**: Smooth opacity transitions with varying transparency (30% for adjacent partners)
    - **Left-to-right scrolling**: Partners move horizontally across the screen
    - **Continuous loop**: Automatically cycles through all partners endlessly
