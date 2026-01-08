@@ -6,7 +6,7 @@ import React, { useState, useCallback, useEffect, useRef } from "react";
 // import { v4 as uuidv4 } from 'uuid'; // Not available, will use Date.now() + random string
 import { useDropzone } from "react-dropzone";
 import { useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
+import { useTranslation, Trans } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -1348,9 +1348,27 @@ export default function UploadDocumentPage() {
       
       {/* Footer */}
       <footer className="border-t border-border bg-muted/10 py-6 mt-8">
-        <div className="container mx-auto px-4 flex items-center justify-center">
-          <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} {t('navigation.brand')}. {t('footer.rights')}
+        <div className="container mx-auto px-4 flex flex-col items-center justify-center space-y-2">
+          <p className="text-sm text-muted-foreground text-center">
+            {t('footer.copyright')}
+          </p>
+          <p className="text-sm text-muted-foreground text-center">
+            {t('footer.privacyPromise')}
+          </p>
+          <p className="text-sm text-muted-foreground text-center">
+            <Trans
+              i18nKey="footer.poweredBy"
+              components={{
+                link: (
+                  <a
+                    className="text-indigo-600 hover:text-indigo-800 underline"
+                    href="https://thaura.ai/home"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  />
+                ),
+              }}
+            />
           </p>
         </div>
       </footer>
