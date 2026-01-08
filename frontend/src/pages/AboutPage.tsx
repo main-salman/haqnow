@@ -83,6 +83,17 @@ export default function AboutPage() {
               {t('about.missionNotLeakSite')}
             </p>
             
+            <h3 className="text-xl font-bold text-gray-900 mt-6 mb-4">{t('about.missionWhoWeServeTitle')}</h3>
+            <p className="mb-4">
+              {t('about.missionWhoWeServeDesc')}
+            </p>
+            <ul className="list-disc list-inside space-y-3 ml-4">
+              <li><strong>{t('about.missionWhistleblower')}</strong></li>
+              <li><strong>{t('about.missionJournalist')}</strong></li>
+              <li><strong>{t('about.missionResearcher')}</strong></li>
+              <li><strong>{t('about.missionLawyer')}</strong></li>
+            </ul>
+            
             <h3 className="text-xl font-bold text-gray-900 mt-6 mb-4">{t('about.missionOathTitle')}</h3>
             <p>
               {t('about.missionOathDesc')}
@@ -98,19 +109,7 @@ export default function AboutPage() {
             </p>
             <ul className="list-disc list-inside space-y-2 ml-4">
               <li>
-                <Trans
-                  i18nKey="about.missionPrivacyNoTracking"
-                  components={{
-                    link: (
-                      <a
-                        className="text-indigo-600 hover:text-indigo-800 underline"
-                        href="https://www.haqnow.com/privacy-guaranteed-page"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      />
-                    ),
-                  }}
-                />
+                {t('about.missionPrivacyNoTracking')}
               </li>
               <li>
                 <Trans
@@ -129,11 +128,12 @@ export default function AboutPage() {
               </li>
             </ul>
             
-            <p className="mt-4">
-              {t('about.missionNonprofit')}
+            <h3 className="text-xl font-bold text-gray-900 mt-6 mb-4">{t('about.missionGovernanceTitle')}</h3>
+            <p>
+              {t('about.missionGovernanceDesc')}
             </p>
             
-            <p>
+            <p className="mt-6">
               {t('about.missionHaqMeaning')}
             </p>
             
@@ -144,7 +144,6 @@ export default function AboutPage() {
             <div className="mt-6">
               <p className="font-semibold">{t('about.missionSignature')}</p>
               <p>{t('about.missionFounder')}</p>
-              <p className="font-semibold">{t('about.missionHaqNow')}</p>
             </div>
           </div>
         </div>
