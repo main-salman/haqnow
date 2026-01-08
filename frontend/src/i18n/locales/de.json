@@ -12,7 +12,9 @@
     "blog": "Blog"
   },
   "footer": {
-    "rights": "Alle Rechte vorbehalten"
+    "copyright": "© 2026 HaqNow. Eine gemeinnützige Initiative für öffentliche Verantwortlichkeit.",
+    "privacyPromise": "Datenschutzversprechen: Wir verwenden Zero-Knowledge-Architektur. Keine Cookies. Keine Tracker. Keine Protokolle.",
+    "poweredBy": "Unterstützt von <link>Thaura AI</link> & Open Source."
   },
   "homepage": {
     "title": "Korruptionsdokumente Weltweit Aufdecken",

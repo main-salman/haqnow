@@ -12,7 +12,9 @@
     "blog": "Blog"
   },
   "footer": {
-    "rights": "Tous Droits Réservés"
+    "copyright": "© 2026 HaqNow. Une Initiative à But Non Lucratif pour la Responsabilité Publique.",
+    "privacyPromise": "Promesse de Confidentialité : Nous utilisons une Architecture à Connaissance Zéro. Pas de cookies. Pas de traqueurs. Pas de journaux.",
+    "poweredBy": "Propulsé par <link>Thaura AI</link> et Open Source."
   },
   "homepage": {
     "title": "Exposer les Documents de Corruption Mondiaux",
