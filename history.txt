@@ -1,3 +1,52 @@
+[2025-01-08] **UPDATE: Updated Mission Statement with New Content Including "Who We Serve" and Governance Sections**
+
+**Request:** Update the mission statement section with new content that includes:
+- Updated intro text mentioning "systemic silencing of dissent"
+- New "Who We Serve" section with four pillars (Whistleblower, Journalist, Researcher, Lawyer)
+- Updated Privacy section (removed open-source link from No Tracking, updated Ethical AI text)
+- New "The Road Ahead: Institutional Governance" section
+- Updated closing (combined Founder and HaqNow into single line)
+
+**Solution:**
+1. **Updated Translation Keys:**
+   - Modified `missionIntro` to include "systemic silencing"
+   - Shortened `missionNotLeakSite` text
+   - Added new keys: `missionWhoWeServeTitle`, `missionWhoWeServeDesc`, `missionWhistleblower`, `missionJournalist`, `missionResearcher`, `missionLawyer`
+   - Updated `missionPrivacyNoTracking` (removed open-source link)
+   - Updated `missionPrivacyEthicalAI` (new text about Thaura AI processing locally)
+   - Added new keys: `missionGovernanceTitle`, `missionGovernanceDesc`
+   - Updated `missionFounder` to include "HaqNow" (combined with founder name)
+   - Removed `missionNonprofit` and `missionHaqNow` keys (replaced by governance section)
+
+2. **Updated AboutPage.tsx Component:**
+   - Added "Who We Serve" section with four bullet points
+   - Updated Privacy section structure
+   - Added "The Road Ahead: Institutional Governance" section
+   - Updated closing signature format
+
+3. **Translations:**
+   - Updated all 7 language files (en, ar, fr, de, ru, tr, pl) with new content
+   - Created `backend/update_mission_statement_translations.py` script to sync database translations
+
+4. **Deployment:**
+   - Deployed to dev (v5.2.18) - successful
+   - Deployed to prod (v5.2.19) - successful
+   - Note: Database translations can be updated using the migration script if needed
+
+**Files Changed:**
+- frontend/src/pages/AboutPage.tsx (updated mission statement structure)
+- frontend/src/i18n/locales/en.json (updated mission statement keys)
+- frontend/src/i18n/locales/ar.json (updated mission statement keys)
+- frontend/src/i18n/locales/fr.json (updated mission statement keys)
+- frontend/src/i18n/locales/de.json (updated mission statement keys)
+- frontend/src/i18n/locales/ru.json (updated mission statement keys)
+- frontend/src/i18n/locales/tr.json (updated mission statement keys)
+- frontend/src/i18n/locales/pl.json (updated mission statement keys)
+- backend/update_mission_statement_translations.py (new script for database sync)
+- history.txt (updated)
+
+---
+
 [2025-01-XX] **UPDATE: Moved Mission Statement to First Position on About Page**
 
 **Request:** Move the Mission Statement section to be the first item on the About page, right after the Table of Contents.
