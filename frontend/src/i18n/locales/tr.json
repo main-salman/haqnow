@@ -12,7 +12,9 @@
     "blog": "Blog"
   },
   "footer": {
-    "rights": "Tüm Hakları Saklıdır"
+    "copyright": "© 2026 HaqNow. Kamu Hesap Verebilirliği için Kâr Amacı Gütmeyen Bir Girişim.",
+    "privacyPromise": "Gizlilik Sözü: Sıfır Bilgi Mimarisi kullanıyoruz. Çerez yok. İzleyici yok. Log yok.",
+    "poweredBy": "<link>Thaura AI</link> ve Açık Kaynak tarafından desteklenmektedir."
   },
   "homepage": {
     "title": "Dünya Çapında Yolsuzluk Belgelerini İfşa Edin",

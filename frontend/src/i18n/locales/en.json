@@ -13,7 +13,9 @@
     "blog": "Blog"
   },
   "footer": {
-    "rights": "All Rights Reserved"
+    "copyright": "© 2026 HaqNow. A Nonprofit Initiative for Public Accountability.",
+    "privacyPromise": "Privacy Promise: We use Zero-Knowledge Architecture. No cookies. No trackers. No logs.",
+    "poweredBy": "Powered by <link>Thaura AI</link> & Open Source."
   },
   "homepage": {
     "title": "Expose Corruption Documents Worldwide",

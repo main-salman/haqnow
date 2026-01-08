@@ -12,7 +12,9 @@
     "blog": "Blog"
   },
   "footer": {
-    "rights": "Wszelkie Prawa Zastrzeżone"
+    "copyright": "© 2026 HaqNow. Inicjatywa Non-Profit dla Odpowiedzialności Publicznej.",
+    "privacyPromise": "Obietnica Prywatności: Używamy Architektury Zero-Knowledge. Brak plików cookie. Brak trackerów. Brak logów.",
+    "poweredBy": "Napędzane przez <link>Thaura AI</link> i Open Source."
   },
   "homepage": {
     "title": "Ujawnij Dokumenty Korupcji na Całym Świecie",
