@@ -1,3 +1,58 @@
+[2025-01-08] **UPDATE: Updated Footer Text on All Pages**
+
+**Request:** Update footer on all pages to display:
+- "© 2026 HaqNow. A Nonprofit Initiative for Public Accountability."
+- "Privacy Promise: We use Zero-Knowledge Architecture. No cookies. No trackers. No logs."
+- "Powered by Thaura AI & Open Source." (with Thaura AI linked to https://thaura.ai/home)
+
+**Solution:**
+1. **Updated Translation Keys:**
+   - Replaced `footer.rights` with three new keys:
+     - `footer.copyright`: "© 2026 HaqNow. A Nonprofit Initiative for Public Accountability."
+     - `footer.privacyPromise`: "Privacy Promise: We use Zero-Knowledge Architecture. No cookies. No trackers. No logs."
+     - `footer.poweredBy`: "Powered by <link>Thaura AI</link> & Open Source." (with link placeholder)
+
+2. **Updated All Language Files:**
+   - English (en.json)
+   - Arabic (ar.json) - Full translation
+   - French (fr.json) - Full translation
+   - German (de.json) - Full translation
+   - Russian (ru.json) - Full translation
+   - Turkish (tr.json) - Full translation
+   - Polish (pl.json) - Full translation
+
+3. **Updated Footer Components:**
+   - Updated footer sections in all pages:
+     - App.tsx (homepage)
+     - AboutPage.tsx
+     - PrivacyGuaranteedPage.tsx
+     - FOIPage.tsx
+     - UploadDocumentPage.tsx
+   - Changed footer layout from single line to multi-line centered layout
+   - Added Trans component for Thaura AI link
+   - Added Trans import to pages that didn't have it
+
+4. **Deployment:**
+   - Deployed to dev (v5.2.19) - successful
+   - Deployed to prod (v5.2.20) - successful
+
+**Files Changed:**
+- frontend/src/pages/App.tsx (updated footer section)
+- frontend/src/pages/AboutPage.tsx (updated footer section)
+- frontend/src/pages/PrivacyGuaranteedPage.tsx (updated footer section)
+- frontend/src/pages/FOIPage.tsx (updated footer section)
+- frontend/src/pages/UploadDocumentPage.tsx (updated footer section)
+- frontend/src/i18n/locales/en.json (updated footer keys)
+- frontend/src/i18n/locales/ar.json (updated footer keys)
+- frontend/src/i18n/locales/fr.json (updated footer keys)
+- frontend/src/i18n/locales/de.json (updated footer keys)
+- frontend/src/i18n/locales/ru.json (updated footer keys)
+- frontend/src/i18n/locales/tr.json (updated footer keys)
+- frontend/src/i18n/locales/pl.json (updated footer keys)
+- history.txt (updated)
+
+---
+
 [2025-01-08] **UPDATE: Updated Mission Statement with New Content Including "Who We Serve" and Governance Sections**
 
 **Request:** Update the mission statement section with new content that includes:
