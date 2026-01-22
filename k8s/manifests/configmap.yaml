@@ -14,8 +14,8 @@ data:
   UPLOAD_TIMEOUT_SECONDS: "120"
   
   # CORS Configuration
-  ALLOWED_ORIGINS: "http://www.haqnow.com,https://www.haqnow.com,http://haqnow.com,https://haqnow.com"
-  ALLOWED_HOSTS: "localhost,127.0.0.1,www.haqnow.com,haqnow.com"
+  ALLOWED_ORIGINS: "http://haqnow.org,https://haqnow.org,http://www.haqnow.com,https://www.haqnow.com,http://haqnow.com,https://haqnow.com"
+  ALLOWED_HOSTS: "localhost,127.0.0.1,haqnow.org,www.haqnow.com,haqnow.com"
   
   # Kubernetes health check compatibility
   DISABLE_HOST_CHECK: "true"
