@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const BASE = 'https://www.haqnow.com';
+const BASE = 'https://haqnow.org';
 
 // Helper: wait for backend health with retries to avoid flaky CI failures
 async function waitForBackendHealth(request: any, retries = 10, delayMs = 3000): Promise<boolean> {

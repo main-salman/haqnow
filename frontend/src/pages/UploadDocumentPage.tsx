@@ -1297,7 +1297,7 @@ export default function UploadDocumentPage() {
                 <Label htmlFor="lawful-consent" className="text-sm font-normal cursor-pointer">
                   {t("upload.consentText")}{" "}
                   <a
-                    href="https://haqnow.com/disclaimer"
+                    href="https://haqnow.org/disclaimer"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-primary underline hover:text-primary/80"
