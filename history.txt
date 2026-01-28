@@ -11856,4 +11856,7 @@ Added automatic conflict resolution for `package.json` version conflicts in `scr
 **Deployment:**
 - Permanently deployed to production via `./scripts/deploy.sh --env=prod patch` (rebuilt images + applied manifests).
 
+**Follow-up:**
+- Removed the temporary `umami-proxy-ingress` from the cluster (it caused `/api/umami/api/send` to proxy to the wrong upstream path after the backend proxy was deployed).
+
 
