@@ -290,3 +290,10 @@ settings_local.py
 
 # Project history file (contains sensitive information)
 history.txt 
+
+/temp/
+/temp/*
+temp/
+temp/*
+
+

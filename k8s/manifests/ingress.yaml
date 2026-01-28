@@ -8,6 +8,7 @@ metadata:
   namespace: haqnow
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
   ingressClassName: nginx
   tls:
@@ -75,6 +76,7 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/permanent-redirect: "https://haqnow.org$request_uri"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
   ingressClassName: nginx
   tls:
@@ -126,6 +128,34 @@ spec:
               number: 8000
       - path: /health
         pathType: Exact
+        backend:
+          service:
+            name: backend-service
+            port:
+              number: 8000
+
+---
+# Umami proxy compatibility:
+# The Umami tracker uses `data-host-url="/api/umami"` and posts to `/api/umami/api/send`.
+# Our backend currently exposes the proxy at `/api/umami/send`, so this ingress rewrites
+# `/api/umami/api/send` -> `/api/umami/send` to restore tracking without requiring
+# frontend rebuilds.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: umami-proxy-ingress
+  namespace: haqnow
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /api/umami/send
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: haqnow.org
+    http:
+      paths:
+      - path: /api/umami/api/send
+        pathType: ImplementationSpecific
         backend:
           service:
             name: backend-service
