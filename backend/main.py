@@ -158,44 +158,82 @@ def create_app() -> FastAPI:
             logger.error("Error serving document", filename=filename, error=str(e))
             raise HTTPException(status_code=404, detail="Document not found")
     
-    # Umami Analytics Proxy - proxies tracking requests to avoid CORS issues
-    @app.post("/api/umami/send")
-    @app.get("/api/umami/send")
-    async def umami_proxy(request: Request):
-        """Proxy Umami tracking requests to avoid CORS issues."""
-        umami_url = os.getenv("UMAMI_URL", "https://analytics.haqnow.com")
-        
+    # Umami Analytics Proxy - proxies tracker + API requests to avoid CORS issues.
+    #
+    # IMPORTANT:
+    # - In production, Ingress rewrites `/api/...` -> `/<...>` (strips `/api`).
+    #   So browser requests to `/api/umami/...` reach the backend as `/umami/...`.
+    # - In local/dev, requests may hit the backend as `/api/umami/...` directly.
+    #
+    # To support both, we expose BOTH route prefixes.
+    @app.api_route("/umami/{path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"])
+    @app.api_route("/api/umami/{path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"])
+    async def umami_proxy(path: str, request: Request):
+        """Reverse-proxy Umami endpoints (e.g. script.js, /api/send) via this backend."""
+        umami_url = os.getenv("UMAMI_URL", "https://analytics.haqnow.com").rstrip("/")
+
+        # Preserve the exact path the client requested under /umami/*
+        target_url = f"{umami_url}/{path.lstrip('/')}"
+
         try:
-            # Get request body if present
-            body = await request.body() if request.method == "POST" else None
-            
-            # Prepare headers (exclude host and content-length)
-            headers = {k: v for k, v in request.headers.items() 
-                      if k.lower() not in ['host', 'content-length', 'connection']}
-            
-            # Forward request to Umami using requests in executor
+            body = await request.body()
+
+            # Prepare headers (exclude hop-by-hop + host/content-length).
+            excluded_request_headers = {
+                "host",
+                "content-length",
+                "connection",
+                "keep-alive",
+                "proxy-authenticate",
+                "proxy-authorization",
+                "te",
+                "trailers",
+                "transfer-encoding",
+                "upgrade",
+            }
+            headers = {
+                k: v
+                for k, v in request.headers.items()
+                if k.lower() not in excluded_request_headers
+            }
+
             def forward_request():
                 return requests.request(
                     method=request.method,
-                    url=f"{umami_url}/api/send",
-                    data=body,
+                    url=target_url,
+                    data=body if body else None,
                     headers=headers,
                     params=dict(request.query_params),
-                    timeout=5
+                    timeout=10,
                 )
-            
-            response = await asyncio.to_thread(forward_request)
-            
-            # Return response with CORS headers (handled by CORS middleware)
+
+            upstream = await asyncio.to_thread(forward_request)
+
+            excluded_response_headers = {
+                "content-encoding",
+                "transfer-encoding",
+                "connection",
+                "keep-alive",
+                "proxy-authenticate",
+                "proxy-authorization",
+                "te",
+                "trailers",
+                "upgrade",
+            }
+            response_headers = {
+                k: v
+                for k, v in upstream.headers.items()
+                if k.lower() not in excluded_response_headers
+            }
+
             return Response(
-                content=response.content,
-                status_code=response.status_code,
-                headers={k: v for k, v in response.headers.items() 
-                        if k.lower() not in ['content-encoding', 'transfer-encoding', 'connection']}
+                content=upstream.content,
+                status_code=upstream.status_code,
+                headers=response_headers,
             )
         except Exception as e:
-            logger.error("Umami proxy error", error=str(e))
-            # Return empty response to avoid breaking tracking
+            logger.error("Umami proxy error", path=path, error=str(e))
+            # Return empty 200 to avoid breaking page loads/tracking.
             return Response(status_code=200, content=b"")
     
     # Health check endpoint

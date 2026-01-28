@@ -11757,3 +11757,103 @@ Added automatic conflict resolution for `package.json` version conflicts in `scr
 
 ---
 
+
+## January 28, 2026 - Drafted IDAH Call for Projects Grant Application
+
+**Change:** Created a polished, funder-ready grant application draft in Markdown, aligned to the grant-writing guidance (problem → activities → outcomes/KPIs → budget → capacity → sustainability).
+
+**What was produced:**
+- Clear **problem statement** (who is affected + why this matters)
+- Concrete **tactic description** (secure evidence portal + repository + AI Q&A + translation)
+- 12-month **activities & timeline** (phased plan from design to launch)
+- Measurable **outcomes and KPIs** (with reporting cadence)
+- High-level **$90,000 budget allocation** tied to delivery needs
+- **Risks & mitigation** (privacy/safety, abuse handling, model reliability)
+- Included a **guidance reference section** linking to `temp/grant-guidance.txt`
+
+**Files Added:**
+- grant-application.md
+
+---
+
+## January 28, 2026 - Updated IDAH Grant Draft (Temp) With Presentation + Detailed Budget
+
+**Change:** Updated the working draft at `temp/grant-application.md` using HaqNow presentation context and the IDAH budget sheet, with a significantly more detailed plan for the $70,000 “Advocacy Coordination and Partner Management” role.
+
+**What was changed:**
+- Updated scope to **global / worldwide** and added mission positioning (“Truth. Evidence. Accountability.”)
+- Confirmed **nonprofit status achieved Dec 24, 2025**
+- Added explicit differentiation vs **WikiLeaks** (accessibility + legally conservative approach)
+- Added current partner list and links (Tech For Palestine, Freedom Advocacy Network, Jaywalk, FindAProtest.info, Metanoia Community, Thaura.ai)
+- Replaced budget section to match the provided line-items exactly and expanded the **$70,000** role into responsibilities, time allocation, and milestones
+- Added first-year target: **500 documents surfaced in 12 months**
+
+**Files Modified:**
+- temp/grant-application.md
+
+---
+
+## January 28, 2026 - Refocused IDAH Grant Draft on Go-To-Market
+
+**Change:** Updated `temp/grant-application.md` to clearly state the platform is already built and live, and refocused the proposed work on marketing and partner outreach (with redundancy as a smaller hosting line item).
+
+**What was changed:**
+- Added `https://haqnow.org/` as the primary live platform reference
+- Shifted activities/timeline away from building features toward **go-to-market execution**
+- Updated audience framing to **general public** (avoiding “whistleblower-first” messaging)
+- Added KPI recommendations aligned to guidance (analytics, conversion, partner-driven traffic, reporting cadence)
+- Updated the $70k role to emphasize **marketing ops + partner outreach** as the core scope
+
+**Files Modified:**
+- temp/grant-application.md
+
+---
+
+## January 28, 2026 - Polished Go-To-Market Audience Language
+
+**Change:** Cleaned up `temp/grant-application.md` to remove “whistleblower-first” language in the main Target Audience section and problem framing, keeping the outward-facing focus on the general public while preserving safety intent.
+
+**Files Modified:**
+- temp/grant-application.md
+
+---
+
+## January 28, 2026 - Revised Timeline for Post-Launch Reality
+
+**Change:** Updated the “Activities & Timeline” section in `temp/grant-application.md` to reflect a soft-launched, low-traction platform (already built), shifting from “launch” framing to a post-launch go-to-market plan with front-loaded awareness campaigns and partner conversion by Month 9.
+
+**Files Modified:**
+- temp/grant-application.md
+
+---
+
+## January 28, 2026 - Marked Safeguards and Capacity as Already Implemented
+
+**Change:** Updated `temp/grant-application.md` to reflect that key privacy/safety safeguards and the core platform are already implemented (per `README.md`), and reframed “Capacity to Deliver” around post-launch go-to-market execution led by the Advocacy/Partner Manager.
+
+**Files Modified:**
+- temp/grant-application.md
+
+---
+
+## January 28, 2026 - Restored Umami Tracking (haqnow.com + haqnow.org)
+
+**Problem:** Umami tracking stopped because the frontend was configured to post to `/api/umami/api/send`, but the backend proxy route and the `/api` ingress rewrite did not line up.
+
+**Solution:**
+- Added `umami-proxy-ingress` to rewrite `/api/umami/api/send` → `/api/umami/send` for `haqnow.org` (immediate production fix without requiring a rebuild).
+- Updated the tracking snippet in `frontend/index.html` to use the provided website id and proxy the tracker through `/api/umami/*` (requires frontend deploy to take effect).
+- Expanded the backend proxy to support both `/umami/*` (post-ingress rewrite) and `/api/umami/*` (local/dev) and to proxy arbitrary Umami paths such as `script.js` and `/api/send` (requires backend deploy to take effect).
+- Fixed accidental duplicate `"version"` keys in `frontend/package.json` and hardened `scripts/update-version.sh` to read only the first version entry.
+
+**Files Modified:**
+- backend/main.py
+- frontend/index.html
+- k8s/manifests/ingress.yaml
+- frontend/package.json
+- scripts/update-version.sh
+
+**Deployment:**
+- Permanently deployed to production via `./scripts/deploy.sh --env=prod patch` (rebuilt images + applied manifests).
+
+
