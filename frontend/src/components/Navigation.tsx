@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 
+const DONATE_URL = "https://www.zeffy.com/en-CA/donation-form/haqnow-expose-corruption-worldwide";
+
 export default function Navigation() {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -62,11 +64,7 @@ export default function Navigation() {
                 </a>
               </Button>
               <Button asChild>
-                <a
-                  href="https://www.zeffy.com/en-CA/donation-form/haqnow-expose-corruption-worldwide"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <a href={DONATE_URL} target="_blank" rel="noopener noreferrer">
                   {t('navigation.donate')}
                 </a>
               </Button>
@@ -151,11 +149,7 @@ export default function Navigation() {
                   </a>
                 </Button>
                 <Button className="justify-start" asChild>
-                  <a
-                    href="https://www.zeffy.com/en-CA/donation-form/haqnow-expose-corruption-worldwide"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <a href={DONATE_URL} target="_blank" rel="noopener noreferrer">
                     {t('navigation.donate')}
                   </a>
                 </Button>
