@@ -63,7 +63,7 @@ export default function Navigation() {
               </Button>
               <Button asChild>
                 <a
-                  href="https://www.nonviolenceinternational.net/dignity_for_palestinians"
+                  href="https://www.zeffy.com/en-CA/donation-form/haqnow-expose-corruption-worldwide"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -152,7 +152,7 @@ export default function Navigation() {
                 </Button>
                 <Button className="justify-start" asChild>
                   <a
-                    href="https://www.nonviolenceinternational.net/dignity_for_palestinians"
+                    href="https://www.zeffy.com/en-CA/donation-form/haqnow-expose-corruption-worldwide"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
