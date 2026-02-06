@@ -11836,6 +11836,14 @@ Added automatic conflict resolution for `package.json` version conflicts in `scr
 
 ---
 
+## January 29, 2026 - Added Team Section to Grant Application
+
+**Change:** Added a concise “Team” section to `temp/grant-application.md` listing key roles (Founder, Product, Infrastructure/Monitoring, Mentors/Partners/Research, Security) along with founder links and contact details.
+
+**Files Modified:**
+- temp/grant-application.md
+
+
 ## January 28, 2026 - Restored Umami Tracking (haqnow.com + haqnow.org)
 
 **Problem:** Umami tracking stopped because the frontend was configured to post to `/api/umami/api/send`, but the backend proxy route and the `/api` ingress rewrite did not line up.
@@ -11859,4 +11867,61 @@ Added automatic conflict resolution for `package.json` version conflicts in `scr
 **Follow-up:**
 - Removed the temporary `umami-proxy-ingress` from the cluster (it caused `/api/umami/api/send` to proxy to the wrong upstream path after the backend proxy was deployed).
 
+---
+
+## February 5, 2026 - Infrastructure Cost Reduction
+
+**Problem:** Monthly bills were consistently exceeding the 230 CHF budget (hitting 260-300 CHF).
+
+**Solution:** Reduced infrastructure costs by ~CHF 46/month (savings target: ~45-50 CHF):
+1. Reduced SKS node count from 2 to 1 (~CHF 43/month savings)
+2. Disabled anti-affinity (not needed with 1 node)
+3. Disabled DR backup bucket (~CHF 3/month savings)
+4. Reduced backend replicas from 2 to 1
+5. Reduced worker replicas from 2 to 1
+
+**Estimated new monthly cost:** ~CHF 145-165/month (well under 230 CHF budget)
+
+**Files Modified:**
+- terraform/terraform.tfvars (sks_node_count, sks_anti_affinity, dr_enabled)
+- k8s/manifests/backend-deployment.yaml (replicas: 1)
+- k8s/manifests/worker-deployment.yaml (replicas: 1)
+
+**Deployment Required:**
+1. Terraform: `cd terraform && terraform apply` (removes 1 SKS node, deletes DR bucket)
+2. Kubernetes: `kubectl apply -f k8s/manifests/` (reduces pod replicas)
+
+**Trade-offs:**
+- No HA for SKS (single node = single point of failure)
+- No DR backup bucket (rely on primary S3 bucket only)
+- Single pod replicas (brief downtime during deployments)
+- All acceptable for minimal usage scenario
+
+
+
+---
+
+## February 5, 2026 - Consolidated Umami into RAG PostgreSQL
+
+**Problem:** Running a separate PostgreSQL database for Umami analytics was costing ~CHF 26/month unnecessarily.
+
+**Solution:** Consolidated Umami to use the existing RAG PostgreSQL instance:
+1. Created a separate 'umami' database within the RAG PostgreSQL instance (foi-archive-postgres-rag-production)
+2. Updated Umami secrets to connect to the new database
+3. Disabled termination protection on the old Umami database
+4. Deleted the separate Umami PostgreSQL instance via Terraform
+
+**Savings:** ~CHF 26/month
+
+**Files Modified:**
+- terraform/terraform.tfvars (umami_enabled = false)
+- terraform/umami.tf (added termination_protection = false)
+- k8s/manifests/umami-secrets.yaml (updated DATABASE_URL to use RAG PostgreSQL)
+
+**Combined Cost Reduction (this session):**
+- SKS nodes: 2 → 1 (~CHF 43/mo)
+- Umami PostgreSQL: eliminated (~CHF 26/mo)
+- **Total savings: ~CHF 69/month**
+
+**New estimated monthly cost: ~CHF 118-128/month** (well under 230 CHF budget)
 
