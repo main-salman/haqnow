@@ -20,6 +20,7 @@ spec:
       containers:
       - name: frontend
         image: ghcr.io/main-salman/frontend:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 80
           name: http
