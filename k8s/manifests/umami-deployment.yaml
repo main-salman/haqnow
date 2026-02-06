@@ -2,8 +2,8 @@
 # Self-hosted, privacy-focused web analytics
 #
 # Prerequisites:
-# 1. Run: cd terraform && terraform apply (creates database + secrets)
-# 2. Apply: kubectl apply -f k8s/manifests/umami-secrets.yaml (auto-generated)
+# 1. Run: cd terraform && terraform apply (generates k8s/manifests/umami-secrets.yaml - do not commit it)
+# 2. Apply: kubectl apply -f k8s/manifests/umami-secrets.yaml
 # 3. Apply: kubectl apply -f k8s/manifests/umami-deployment.yaml (this file)
 ---
 apiVersion: v1

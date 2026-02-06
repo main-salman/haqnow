@@ -52,6 +52,9 @@ jobs:
           fi
         continue-on-error: true
 
+      # backend-base is used by backend-api and worker Dockerfiles. If you get 403 when pushing,
+      # grant this repo access: GitHub → Your profile → Packages → backend-base → Package settings
+      # → Manage Actions access → Add repository (main-salman/haqnow) with Write role.
       - name: Build and push base image (if not exists)
         if: steps.check_base.outputs.exists == 'false'
         uses: docker/build-push-action@v5
@@ -63,6 +66,7 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend-base:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: false
 
       - name: Build and push backend API
         uses: docker/build-push-action@v5
