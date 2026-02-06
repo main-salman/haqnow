@@ -60,3 +60,24 @@ gh api user/packages/container/worker -X PATCH -f visibility=public
 gh api user/packages/container/frontend -X PATCH -f visibility=public
 ```
 
+## Fix 403 Forbidden when GitHub Actions pushes (e.g. backend-base)
+
+If the "Build and Push Docker Images" workflow fails with:
+
+```text
+ERROR: failed to push ghcr.io/main-salman/backend-base:latest: ... 403 Forbidden
+```
+
+the package may have been created by a different login (e.g. `deploy.sh` with a PAT), so the workflow’s `GITHUB_TOKEN` has no write access.
+
+**Fix:** Grant the repository permission to write to the package:
+
+1. Open https://github.com/main-salman?tab=packages (or the org that owns the package).
+2. Click the **backend-base** package.
+3. Open **Package settings** (left sidebar).
+4. Under **Danger Zone** or **Manage Actions access**, click **Add repository** (or **Manage Actions access**).
+5. Select repository **main-salman/haqnow** and set role **Write**.
+6. Save. Re-run the failed workflow.
+
+After this, the workflow can push `backend-base:latest` without 403.
+
