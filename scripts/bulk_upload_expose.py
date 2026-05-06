@@ -20,7 +20,7 @@ from fpdf import FPDF
 
 # --- Configuration ---
 API_BASE = os.getenv("API_BASE", "https://haqnow.org/api")
-DB_URL = os.getenv("DATABASE_URL", None)
+DB_URL = os.getenv("DATABASE_URL")
 
 # --- Document definitions: (title, country, state, description, language) ---
 DOCUMENTS = [
@@ -353,7 +353,7 @@ def main():
     print(f"Documents to upload: {len(DOCUMENTS)}")
     print()
     
-    api_key = os.getenv("HAQNOW_API_KEY", None)
+    api_key = os.getenv("HAQNOW_API_KEY")
     print(f"Using API key: {api_key[:20]}...")
     
     start_from = 1
