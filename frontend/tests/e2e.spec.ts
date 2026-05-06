@@ -31,7 +31,7 @@ test.beforeEach(async () => {
 // Basic homepage UI checks
 test('homepage renders and country dropdown overlays map', async ({ page }) => {
   await page.goto(BASE);
-  await expect(page.getByText('Global Corruption Document Distribution')).toBeVisible();
+  await expect(page.getByText('Worldwide Public Interest Documents')).toBeVisible();
   // Open country select by clicking its placeholder text to avoid role differences
   await page.getByText('Choose a country to view documents...').first().click();
   const list = page.locator('[role="listbox"]');
