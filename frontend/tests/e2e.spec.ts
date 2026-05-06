@@ -30,13 +30,20 @@ test.beforeEach(async () => {
 
 // Basic homepage UI checks
 test('homepage renders and country dropdown overlays map', async ({ page }) => {
-  await page.goto(BASE);
-  await expect(page.getByText('Worldwide Public Interest Documents')).toBeVisible();
-  // Open country select by clicking its placeholder text to avoid role differences
+  await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  // Wait for React SPA to hydrate and render content
+  await page.waitForFunction(
+    () => document.body && document.body.textContent && document.body.textContent.length > 200,
+    { timeout: 30000 }
+  );
+  await expect(page.getByText('Worldwide Public Interest Documents')).toBeVisible({ timeout: 20000 });
+  // Open country select - wait for the async API fetch to complete first
+  await expect(page.getByText('Choose a country to view documents...')).toBeVisible({ timeout: 30000 });
   await page.getByText('Choose a country to view documents...').first().click();
   const list = page.locator('[role="listbox"]');
-  await expect(list).toBeVisible();
+  await expect(list).toBeVisible({ timeout: 10000 });
 });
+
 
 // Admin login + approve flow (requires valid creds set as env in CI)
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || '';
