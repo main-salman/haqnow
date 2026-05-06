@@ -14,18 +14,31 @@
   "footer": {
     "copyright": "© 2026 HaqNow. Une Initiative à But Non Lucratif pour la Responsabilité Publique.",
     "privacyPromise": "Promesse de Confidentialité : Nous utilisons une Architecture à Connaissance Zéro. Pas de cookies. Pas de traqueurs. Pas de journaux.",
-    "poweredBy": "Propulsé par <link>Thaura AI</link> et Open Source."
+    "poweredBy": "Une infrastructure transparente pour un monde plus responsable.",
+    "complianceJargon": "HaqNow est une plateforme neutre pour le partage d'informations d'intérêt public. Nous sommes conformes au DMCA et au RGPD. Si vous avez des inquiétudes concernant un document, veuillez soumettre votre problème via notre formulaire de contact, en incluant l'URL du document. Nous agissons rapidement pour répondre aux préoccupations juridiques et de confidentialité légitimes."
   },
   "homepage": {
-    "title": "Exposer les Documents de Corruption Mondiaux",
-    "subtitle": "HaqNow est une plateforme dédiée à la collecte, l'organisation et l'accès aux documents qui exposent la corruption du monde entier. Notre système avancé traduit automatiquement les documents de plus de 60 langues, rendant les documents originaux et les traductions accessibles aux utilisateurs du monde entier. Téléchargez anonymement, recherchez librement, et contribuez à un référentiel croissant de vérité et de transparence.",
+    "title": "Éclairer la Vérité pour la Justice Mondiale",
+    "subtitle": "HaqNow fournit l'infrastructure neutre et de soutien nécessaire pour partager des informations critiques en toute sécurité. Explorez un référentiel croissant de documents d'intérêt public, ou partagez des informations vitales pour aider à construire un monde plus responsable.",
     "newsletterHtml": "<a href=\"https://subscribepage.io/haqnow\" target=\"_blank\" rel=\"noopener noreferrer\">Abonnez-vous à notre newsletter</a> et recevez un récapitulatif mensuel mettant en avant les documents les plus populaires et les plus utiles disponibles sur HaqNow.",
     "feedbackHtml": "Nous apprécions vos retours et <a href=\"https://subscribepage.io/haqnow\" target=\"_blank\" rel=\"noopener noreferrer\">accueillons toujours vos questions ou commentaires</a>. Conformes au DMCA et au RGPD, nous traitons les signalements concernant des documents avec sérieux et réactivité. Pour une résolution plus rapide, veuillez soumettre votre demande via le <a href=\"https://subscribepage.io/haqnow\" target=\"_blank\" rel=\"noopener noreferrer\">formulaire de contact</a> en indiquant l’URL du document.",
-    "searchPlaceholder": "Rechercher des documents de corruption par mot-clé, pays, organisation...",
+    "searchPlaceholder": "Rechercher des documents d'intérêt public par mot-clé, pays, organisation...",
     "searchButton": "Rechercher",
-    "mapTitle": "Distribution Mondiale des Documents de Corruption",
+    "mapTitle": "Répartition des documents de responsabilité mondiale",
     "mapPlaceholder": "Carte Mondiale Interactive Bientôt Disponible",
-    "copyright": "Tous droits réservés."
+    "copyright": "Tous droits réservés.",
+    "recentlySharedDescription": "Les derniers documents d'intérêt public ajoutés aux archives mondiales.",
+    "topViewedDescription": "Les documents d'intérêt public les plus percutants actuellement analysés par la communauté mondiale.",
+    "missionTitle": "La Mission",
+    "missionDescription": "La transparence est le pont entre les actions cachées et la conscience publique. Nous fournissons les outils pour construire ce pont.",
+    "thrivingTitle": "La Transparence Favorise des Communautés Prospères",
+    "thrivingDescription": "Lorsque les institutions sont éclairées, elles servent le peuple. Nos archives aident les communautés à demander des comptes au pouvoir par le biais de preuves.",
+    "protectedTitle": "Partage Sûr et Protégé pour les Porteurs de Vérité",
+    "protectedDescription": "Notre architecture sans connaissance et notre accessibilité alimentée par l'IA garantissent que les informations vitales atteignent le monde sans compromettre la source.",
+    "searchTitle": "Rechercher des Documents Publics",
+    "searchDescription": "Accédez aux archives mondiales des documents de responsabilité institutionnelle.",
+    "uploadTitle": "Partager des Informations",
+    "uploadDescription": "Contribuez en toute sécurité aux dossiers d'intérêt public pour le mouvement mondial de transparence."
   },
   "search": {
     "title": "Rechercher des Documents par Étiquettes",
@@ -48,7 +61,7 @@
   },
   "upload": {
     "title": "Télécharger un Document",
-    "subtitle": "Partagez des preuves de corruption de manière anonyme et sécurisée",
+    "subtitle": "Partagez des documents d'intérêt public de manière anonyme et sécurisée",
     "processSteps": {
       "title": "Que se passe‑t‑il après le téléchargement de votre document",
       "step1": "Votre document est transmis en toute sécurité à la plateforme HaqNow.",
@@ -169,11 +182,11 @@
     "founderSubtext": "Fondé par Salman Naqvi",
     "foundationType": "Organisation à but non lucratif",
     "globalTransparency": "Transparence Mondiale",
-    "globalTransparencyDesc": "Exposer la corruption dans le monde entier grâce à la divulgation de documents",
+    "globalTransparencyDesc": "Éclairer les institutions du monde entier par la divulgation de documents",
     "humanRights": "Droits Humains",
     "humanRightsDesc": "Protéger les civils grâce à la responsabilité et à la transparence",
-    "antiCorruption": "Anti-Corruption",
-    "antiCorruptionDesc": "Lutter contre la corruption systémique grâce à l'exposition fondée sur des preuves",
+    "antiCorruption": "Responsabilité Institutionnelle",
+    "antiCorruptionDesc": "Promouvoir la responsabilité systémique par la divulgation fondée sur des preuves.",
     "connectedProjects": "Projets Connexes",
     "ministryOfWoke": "Freedom Advocacy Network",
     "ministryOfWokeDesc": "Plateforme de plaidoyer anti-corruption",
