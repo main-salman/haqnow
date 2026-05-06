@@ -340,9 +340,9 @@ export default function App() {
           </section>
 
           <section className="text-center space-y-4">
-            <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-gray-900">
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900">
               {t('homepage.title')}
-            </h2>
+            </h1>
             <p className="text-gray-700 max-w-2xl mx-auto">
               {t('homepage.subtitle')}
             </p>
@@ -352,6 +352,30 @@ export default function App() {
           <p className="text-gray-700 max-w-2xl mx-auto [&_a]:text-green-600 [&_a]:underline [&_a:hover]:text-green-800">
             {renderHtml(t('homepage.feedbackHtml'))}
           </p>
+          </section>
+
+          {/* New Sections: The Mission, Thriving Communities, Safe Sharing */}
+          <section className="max-w-4xl mx-auto space-y-12 py-8">
+            <div className="space-y-4">
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-900">{t('homepage.missionTitle')}</h2>
+              <p className="text-lg text-gray-700 leading-relaxed">
+                {t('homepage.missionDescription')}
+              </p>
+            </div>
+            
+            <div className="space-y-4">
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-900">{t('homepage.thrivingTitle')}</h2>
+              <p className="text-lg text-gray-700 leading-relaxed">
+                {t('homepage.thrivingDescription')}
+              </p>
+            </div>
+            
+            <div className="space-y-4">
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-900">{t('homepage.protectedTitle')}</h2>
+              <p className="text-lg text-gray-700 leading-relaxed whitespace-pre-line">
+                {t('homepage.protectedDescription')}
+              </p>
+            </div>
           </section>
 
           {/* Partners Carousel */}
@@ -454,6 +478,9 @@ export default function App() {
         <div className="container mx-auto px-4 flex flex-col items-center justify-center space-y-2">
           <p className="text-sm text-muted-foreground text-center">
             {t('footer.copyright')}
+          </p>
+          <p className="text-sm text-muted-foreground text-center max-w-2xl mb-4">
+            {t('footer.complianceJargon')}
           </p>
           <p className="text-sm text-muted-foreground text-center">
             {t('footer.privacyPromise')}

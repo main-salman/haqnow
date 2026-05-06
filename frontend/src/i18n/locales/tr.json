@@ -14,18 +14,31 @@
   "footer": {
     "copyright": "© 2026 HaqNow. Kamu Hesap Verebilirliği için Kâr Amacı Gütmeyen Bir Girişim.",
     "privacyPromise": "Gizlilik Sözü: Sıfır Bilgi Mimarisi kullanıyoruz. Çerez yok. İzleyici yok. Log yok.",
-    "poweredBy": "<link>Thaura AI</link> ve Açık Kaynak tarafından desteklenmektedir."
+    "poweredBy": "Daha hesap verebilir bir dünya için şeffaf altyapı.",
+    "complianceJargon": "HaqNow, kamu yararına olan bilgilerin paylaşımı için tarafsız bir platformdur. DMCA ve KVKK (GDPR) uyumluyuz. Bir belgeyle ilgili endişeleriniz varsa, lütfen belgenin URL'sini ekleyerek iletişim formumuzu kullanarak sorununuzu iletin. Meşru yasal ve gizlilik endişelerini gidermek için hızla hareket ediyoruz."
   },
   "homepage": {
-    "title": "Dünya Çapında Yolsuzluk Belgelerini İfşa Edin",
-    "subtitle": "HaqNow, dünyanın dört bir yanından yolsuzluğu ifşa eden belgeleri toplama, organize etme ve bunlara erişim sağlama konusunda özel bir platformdur. Gelişmiş sistemimiz 60'tan fazla dilden belgeleri otomatik olarak çevirerek hem orijinal belgeleri hem de çevirileri dünya çapındaki kullanıcılara erişilebilir hale getirir. Anonim olarak yükleyin, özgürce arayın ve büyüyen gerçek ve şeffaflık deposuna katkıda bulunun.",
+    "title": "Küresel Adalet İçin Gerçeği Aydınlatmak",
+    "subtitle": "HaqNow, kritik bilgileri güvenli bir şekilde paylaşmak için gereken tarafsız, destekleyici altyapıyı sağlar. Kamu yararına olan belgelerin giderek büyüyen deposunu keşfedin veya daha hesap verebilir bir dünya inşa etmeye yardımcı olmak için hayati bilgileri paylaşın.",
     "newsletterHtml": "<a href=\"https://subscribepage.io/haqnow\" target=\"_blank\" rel=\"noopener noreferrer\">Bültenimize abone olun</a> ve HaqNow’da yer alan en popüler ve değerli belgeleri öne çıkaran aylık bir özet alın.",
     "feedbackHtml": "Görüşlerinize değer veriyoruz ve <a href=\"https://subscribepage.io/haqnow\" target=\"_blank\" rel=\"noopener noreferrer\">sorularınızı ya da geri bildirimlerinizi her zaman memnuniyetle karşılıyoruz</a>. DMCA ve GDPR ile uyumlu olduğumuz için belgeyle ilgili endişeleri ciddiyetle ve hızlıca ele alıyoruz. En hızlı çözüm için lütfen <a href=\"https://subscribepage.io/haqnow\" target=\"_blank\" rel=\"noopener noreferrer\">iletişim formu</a> üzerinden, belgenin URL’sini ekleyerek bize iletin.",
-    "searchPlaceholder": "Yolsuzluk belgelerini arayın...",
+    "searchPlaceholder": "Kamu yararına olan belgeleri anahtar kelime, ülke, kuruluş bazında arayın...",
     "searchButton": "Search",
-    "mapTitle": "Ülkelere Göre Belgeler",
+    "mapTitle": "Küresel Hesap Verebilirlik Belgelerinin Dağılımı",
     "mapPlaceholder": "Interactive World Map Coming Soon",
-    "copyright": "© 2025 HaqNow. Tüm hakları saklıdır."
+    "copyright": "© 2025 HaqNow. Tüm hakları saklıdır.",
+    "recentlySharedDescription": "Küresel arşive eklenen en yeni kamu yararına olan kayıtlar.",
+    "topViewedDescription": "Şu anda küresel topluluk tarafından analiz edilen en etkili kamu yararına olan belgeler.",
+    "missionTitle": "Misyon",
+    "missionDescription": "Şeffaflık, gizli eylemler ile kamu bilinci arasındaki köprüdür. Bu köprüyü inşa etmek için araçlar sağlıyoruz.",
+    "thrivingTitle": "Şeffaflık Gelişen Toplulukları Destekler",
+    "thrivingDescription": "Kurumlar aydınlatıldığında halka hizmet ederler. Arşivimiz, toplulukların kanıtlar aracılığıyla gücü hesap verebilir tutmasına yardımcı olur.",
+    "protectedTitle": "Gerçekleri Söyleyenler İçin Güvenli, Korumalı Paylaşım",
+    "protectedDescription": "Sıfır bilgi mimarimiz ve yapay zeka destekli erişilebilirliğimiz, hayati bilgilerin kaynağı tehlikeye atmadan dünyaya ulaşmasını sağlar.",
+    "searchTitle": "Kamu Kayıtlarını Ara",
+    "searchDescription": "Kurumsal hesap verebilirlik belgelerinin küresel arşivine erişin.",
+    "uploadTitle": "Bilgi Paylaş",
+    "uploadDescription": "Küresel şeffaflık hareketi için kamu yararına olan kayıtlara güvenli bir şekilde katkıda bulunun."
   },
   "search": {
     "title": "Yolsuzluk Belgelerini Ara",
@@ -53,7 +66,7 @@
   },
   "upload": {
     "title": "Yolsuzluk Belgesi Yükle",
-    "subtitle": "Yolsuzluğu ifşa eden belgeleri anonim olarak yükleyin. Kimliğiniz korunacaktır.",
+    "subtitle": "Kamu yararına olan kayıtları anonim ve güvenli bir şekilde paylaşın",
     "processSteps": {
       "title": "Belgeniz yüklendikten sonra neler olur",
       "step1": "Belgeniz güvenli bir şekilde HaqNow platformuna yüklenir.",
@@ -196,11 +209,11 @@
     "founderSubtext": "Salman Naqvi Tarafından Kuruldu",
     "foundationType": "Kâr amacı gütmeyen organizasyon",
     "globalTransparency": "Küresel Şeffaflık",
-    "globalTransparencyDesc": "Exposing corruption worldwide through document disclosure",
+    "globalTransparencyDesc": "Belge ifşası yoluyla dünya çapındaki kurumları aydınlatmak",
     "humanRights": "İnsan Hakları",
     "humanRightsDesc": "Protecting civilians through accountability and transparency",
-    "antiCorruption": "Yolsuzlukla Mücadele",
-    "antiCorruptionDesc": "Fighting systemic corruption through evidence-based exposure",
+    "antiCorruption": "Kurumsal Hesap Verebilirlik",
+    "antiCorruptionDesc": "Kanıta dayalı ifşa yoluyla sistemsel hesap verebilirliği teşvik etmek.",
     "connectedProjects": "Bağlantılı Projeler",
     "ministryOfWoke": "Freedom Advocacy Network",
     "ministryOfWokeDesc": "Anti-corruption advocacy platform",

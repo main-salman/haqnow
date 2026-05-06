@@ -325,6 +325,9 @@ export default function AboutPage() {
           <p className="text-sm text-muted-foreground text-center">
             {t('footer.copyright')}
           </p>
+          <p className="text-sm text-muted-foreground text-center max-w-2xl mb-4">
+            {t('footer.complianceJargon')}
+          </p>
           <p className="text-sm text-muted-foreground text-center">
             {t('footer.privacyPromise')}
           </p>
