@@ -285,5 +285,20 @@ class SemanticSearchService:
                         error=str(e))
             return None
 
+    def unload_model(self):
+        """Unload the sentence transformer model to free memory."""
+        if self._model_loaded:
+            logger.info("Unloading semantic search model to reclaim memory", model=self.model_name)
+            self.model = None
+            self._model_loaded = False
+            import gc
+            gc.collect()
+            try:
+                import torch
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+            except ImportError:
+                pass
+
 # Global service instance
 semantic_search_service = SemanticSearchService() 
