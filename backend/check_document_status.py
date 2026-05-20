@@ -46,7 +46,7 @@ def check_document(document_id: int):
         
         # Check job queue
         job_result = db.execute(text("""
-            SELECT id, job_type, status, current_step, progress, error_message, 
+            SELECT id, job_type, status, current_step, progress_percent, error_message, 
                    created_at, started_at, completed_at, failed_at
             FROM job_queue
             WHERE document_id = :doc_id
