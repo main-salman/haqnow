@@ -92,14 +92,8 @@ class RAGService:
             )
             logger.info(f"✅ Thaura AI client initialized (LLM: {self.llm_model}, ethical AI)")
             
-            # Initialize Sentence-Transformers for local embeddings (open-source, privacy-preserving)
-            if not SENTENCE_TRANSFORMERS_AVAILABLE:
-                logger.error("sentence-transformers package not installed - run: pip install sentence-transformers")
-                raise ImportError("sentence-transformers package required for embeddings")
-            
-            logger.info(f"Loading embedding model: {self.embedding_model_name}...")
-            self.embedding_model = SentenceTransformer(self.embedding_model_name)
-            logger.info(f"✅ Sentence-Transformers initialized (model: {self.embedding_model_name}, {self.embedding_dimensions}-dim, local)")
+            # Sentence-Transformers for local embeddings will be loaded lazily on demand
+            logger.info(f"Sentence-Transformers ({self.embedding_model_name}) will be loaded lazily on demand")
             
         except Exception as e:
             logger.error(f"Failed to initialize RAG clients: {e}")
@@ -124,10 +118,29 @@ class RAGService:
             logger.error(f"Failed to initialize RAG database: {e}")
             # Don't raise exception as this shouldn't prevent the main app from starting
     
+    def _ensure_embedding_model_loaded(self):
+        """Ensure Sentence-Transformers embedding model is loaded in memory"""
+        if self.embedding_model is not None:
+            return
+        
+        try:
+            if not SENTENCE_TRANSFORMERS_AVAILABLE:
+                logger.error("sentence-transformers package not installed - run: pip install sentence-transformers")
+                raise ImportError("sentence-transformers package required for embeddings")
+            
+            logger.info(f"Loading embedding model lazily: {self.embedding_model_name}...")
+            self.embedding_model = SentenceTransformer(self.embedding_model_name)
+            logger.info(f"✅ Sentence-Transformers initialized lazily (model: {self.embedding_model_name}, {self.embedding_dimensions}-dim, local)")
+        except Exception as e:
+            logger.error(f"Failed to lazily load embedding model: {e}")
+            raise
+
     async def generate_embedding(self, text: str) -> List[float]:
         """Generate embedding for a single text string using Sentence-Transformers (local)"""
-        if not self.embedding_model:
-            logger.error("Embedding model not available")
+        try:
+            self._ensure_embedding_model_loaded()
+        except Exception as e:
+            logger.error(f"Embedding model not available for generation: {e}")
             return None
         
         try:
@@ -144,8 +157,10 @@ class RAGService:
 
     async def generate_embeddings(self, texts: List[str]) -> List[List[float]]:
         """Generate embeddings for multiple texts using Sentence-Transformers (local, batched)"""
-        if not self.embedding_model:
-            raise RuntimeError("Embedding model not available")
+        try:
+            self._ensure_embedding_model_loaded()
+        except Exception as e:
+            raise RuntimeError(f"Embedding model not available: {e}")
         
         try:
             # Sentence-transformers supports batch encoding efficiently
