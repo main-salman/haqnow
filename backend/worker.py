@@ -74,6 +74,10 @@ async def process_job(job):
             # Process document (async)
             result = await process_document_internal(job.document_id, db)
             
+            # Force garbage collection to free Tesseract/OCR PDF image memory immediately
+            import gc
+            gc.collect()
+            
             # Refresh document to get latest state after processing
             document = db.query(Document).filter(Document.id == job.document_id).first()
             if document:
