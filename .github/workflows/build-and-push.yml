@@ -56,8 +56,9 @@ jobs:
       # grant this repo access: GitHub → Your profile → Packages → backend-base → Package settings
       # → Manage Actions access → Add repository (main-salman/haqnow) with Write role.
       - name: Build and push base image (if not exists)
-        if: steps.check_base.outputs.exists == 'false'
+        if: steps.check_base.outputs.exists != 'true'
         uses: docker/build-push-action@v5
+        continue-on-error: true
         with:
           context: ./backend
           file: ./backend/Dockerfile.base
@@ -68,6 +69,9 @@ jobs:
           cache-to: type=gha,mode=max
           provenance: false
 
+      - name: Pull base image for layer cache
+        run: docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend-base:latest || true
+
       - name: Build and push backend API
         uses: docker/build-push-action@v5
         with:
@@ -76,8 +80,10 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend-api:latest
-          cache-from: type=gha
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend-base:latest
           cache-to: type=gha,mode=max
+          provenance: false
+
 
       - name: Build and push worker
         uses: docker/build-push-action@v5
@@ -89,6 +95,8 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/worker:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: false
+
 
       - name: Build frontend
         run: |

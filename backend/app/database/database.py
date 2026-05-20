@@ -70,11 +70,42 @@ def get_db():
     finally:
         db.close()
 
+def seed_initial_site_settings():
+    """Seed initial site settings if they don't exist."""
+    from .models import SiteSetting
+    import json
+    db = SessionLocal()
+    try:
+        # Check if social_media_links already exists
+        setting = db.query(SiteSetting).filter(SiteSetting.key == "social_media_links").first()
+        if not setting:
+            initial_links = {
+                "instagram": "https://www.instagram.com/haqnow_org/",
+                "linkedin": "https://www.linkedin.com/company/haqnow/",
+                "tiktok": "https://www.tiktok.com/@haqnow",
+                "youtube": "https://www.youtube.com/@haqnow-org",
+                "upscrolled": "https://share.upscrolled.com/en/user/a8f5f0b6-7dcb-4501-a869-4036311cdf72"
+            }
+            setting = SiteSetting(
+                key="social_media_links",
+                value=json.dumps(initial_links),
+                updated_by="system_seeder"
+            )
+            db.add(setting)
+            db.commit()
+            logger.info("Successfully seeded initial social media links")
+    except Exception as e:
+        db.rollback()
+        logger.error("Failed to seed initial site settings", error=str(e))
+    finally:
+        db.close()
+
 def init_db():
     """Initialize database tables."""
     try:
         Base.metadata.create_all(bind=engine)
         logger.info("Database tables created successfully")
+        seed_initial_site_settings()
     except Exception as e:
         logger.error("Failed to create database tables", error=str(e))
         raise 

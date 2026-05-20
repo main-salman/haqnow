@@ -30,7 +30,7 @@ jobs:
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
         run: |
-          npm run test:e2e -- --reporter=list
+          npm run test:e2e -- --reporter=list,github 2>&1 || (cat playwright-report/index.html 2>/dev/null | head -200; exit 1)
 
       - name: Upload Playwright report
         if: always()

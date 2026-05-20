@@ -20,6 +20,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from app.database.database import SessionLocal
 from app.services.queue_service import queue_service
 from app.apis.document_processing import process_document_internal
+from app.database import Document
+from app.services.rag_service import rag_service
 import structlog
 
 logger = structlog.get_logger()
@@ -105,6 +107,19 @@ async def process_job(job):
                         ocr_length=len(document.ocr_text) if document.ocr_text else 0,
                         has_summary=bool(document.ai_summary)
                     )
+                    
+                    # Trigger RAG indexing asynchronously
+                    try:
+                        logger.info("Triggering RAG indexing for completed document", document_id=job.document_id)
+                        await rag_service.process_new_document(job.document_id, db)
+                        logger.info("Successfully triggered RAG indexing for document", document_id=job.document_id)
+                    except Exception as rag_err:
+                        logger.error(
+                            "Failed to trigger RAG indexing after job completion",
+                            document_id=job.document_id,
+                            error=str(rag_err)
+                        )
+                        
                     return True
                 else:
                     # Processing returned result but document wasn't updated
