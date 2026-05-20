@@ -21,20 +21,22 @@ def reset_job(job_id: int):
     try:
         print(f"🔧 Resetting job {job_id} to pending...")
         
-        # Reset the job state
-        db.execute(text("""
+        # Reset the job state, clearing progress, steps, and timestamps
+        result = db.execute(text("""
             UPDATE job_queue 
             SET status = 'pending', 
                 current_step = NULL, 
                 progress_percent = 0, 
                 started_at = NULL, 
+                completed_at = NULL,
+                failed_at = NULL,
                 error_message = NULL, 
                 retry_count = 0
             WHERE id = :job_id
         """), {"job_id": job_id})
         
         db.commit()
-        print(f"✅ Successfully reset job {job_id} to pending!")
+        print(f"✅ Successfully reset job {job_id} to pending! Rows affected: {result.rowcount}")
         
     except Exception as e:
         db.rollback()
