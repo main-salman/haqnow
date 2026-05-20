@@ -579,6 +579,12 @@ async def process_document_internal(document_id: int, db: Session) -> dict | Non
             logger.warning("Error generating embedding", 
                           document_id=document.id, 
                           error=str(embedding_error))
+        finally:
+            try:
+                if semantic_search_service:
+                    semantic_search_service.unload_model()
+            except Exception as unload_err:
+                logger.warning("Error unloading semantic search model", error=str(unload_err))
         
         try:
             db.commit()
@@ -857,6 +863,12 @@ async def process_document(
             logger.warning("Error generating embedding", 
                           document_id=document.id, 
                           error=str(embedding_error))
+        finally:
+            try:
+                if semantic_search_service:
+                    semantic_search_service.unload_model()
+            except Exception as unload_err:
+                logger.warning("Error unloading semantic search model", error=str(unload_err))
         
         try:
             db.commit()

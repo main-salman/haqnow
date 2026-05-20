@@ -116,7 +116,7 @@
   },
   "privacy": {
     "title": "Privacy Features",
-          "subtitle": "HaqNow is designed for strong anonymity for whistleblowers. We implement best-practice protections across our infrastructure to minimize tracking and identification risks.",
+    "subtitle": "HaqNow is designed for strong anonymity for whistleblowers. We implement best-practice protections across our infrastructure to minimize tracking and identification risks.",
     "backToHome": "Back to Home",
     "sectionPrivacyImplementation": "Privacy Implementation Showcase",
     "cardZeroIpStorage": "Zero IP Storage",
@@ -125,7 +125,7 @@
     "cardAnonymousDescription": "Rate limiting uses session tokens instead of IP tracking. Browse and upload without fear.",
     "cardPrivacyFirstUpload": "Privacy-First Upload",
     "cardPrivacyFirstDescription": "File uploads are processed without storing any identifying information about the uploader.",
-    "cardCleanServerLogs": "Clean Server Logs", 
+    "cardCleanServerLogs": "Clean Server Logs",
     "cardCleanServerDescription": "System logs are configured to exclude IP addresses and other identifying information.",
     "sectionOpenSource": "Open Source Verification",
     "openSourceDescription": "Don't just trust our promises – verify our privacy implementations yourself. Our complete source code is available on GitHub, allowing security researchers, privacy advocates, and journalists to audit our systems.",
@@ -139,13 +139,13 @@
     "layerSecurity": "Security Layer: Rate limiting without IP tracking, secure session management",
     "layerNetwork": "Network Layer: Clean proxy configuration, privacy-compliant request handling",
     "sectionTrustedCollaborators": "Trusted Collaborators",
-          "collaboratorsDescription": "HaqNow works with trusted partners to ensure the highest standards of privacy and security for whistleblowers worldwide.",
+    "collaboratorsDescription": "HaqNow works with trusted partners to ensure the highest standards of privacy and security for whistleblowers worldwide.",
     "collaborateWithUs": "Collaborate with us through Freedom Advocacy Network",
     "partnersDescription": "Perfect for security researchers, privacy advocates, journalists, and organizations committed to transparency and accountability.",
     "sectionPrivacyVerification": "Privacy Compliance Verification",
     "verificationDescription": "All privacy tasks have been completed and verified:",
     "taskDatabaseCompliance": "Database IP removal compliance",
-    "taskUploadApiPrivacy": "Upload API privacy implementation", 
+    "taskUploadApiPrivacy": "Upload API privacy implementation",
     "taskEmailNotifications": "Email notification anonymization",
     "taskApplicationLogging": "Application logging privacy",
     "taskAdminInterface": "Admin interface anonymization",
@@ -248,7 +248,7 @@
     "platformFeaturesTitle": "Platform Features",
     "featureAnonymousSecure": "Anonymous & Secure",
     "featureAnonymousSecureDesc": "Advanced encryption and anonymization to protect whistleblowers and sources.",
-    "featureGlobalAccess": "Global Accessibility", 
+    "featureGlobalAccess": "Global Accessibility",
     "featureGlobalAccessDesc": "Multi-language support including Arabic, French, German, Russian, Polish, and Turkish.",
     "featureOpenArchive": "Open Archive",
     "featureOpenArchiveDesc": "Searchable database of public interest documents accessible to journalists and researchers.",
@@ -264,7 +264,7 @@
     "hostingBody": "HaqNow is hosted on Exoscale, a European cloud platform based in Switzerland. Our services run on Exoscale compute, databases (MySQL and PostgreSQL + pgvector), and SOS object storage, with privacy-focused configurations across the stack.",
     "learnMoreDocs": "Learn more in our GitHub README"
   },
-      "foi": {
+  "foi": {
     "title": "Freedom of Information Laws",
     "subtitle": "Your guide to accessing government information and promoting transparency worldwide",
     "whatIs": "What is Freedom of Information?",
@@ -278,7 +278,7 @@
     "howTo": "How to Submit FOI Requests",
     "step1": "Identify Agency",
     "step1Desc": "Determine which government body holds the information you need",
-    "step2": "Be Specific", 
+    "step2": "Be Specific",
     "step2Desc": "Make your request clear, specific, and focused to get better results",
     "step3": "Submit Request",
     "step3Desc": "Use official portals or contact agencies directly through proper channels",
@@ -289,7 +289,7 @@
     "submitRequest": "Submit FOI Request",
     "bestPractices": "FOI Best Practices",
     "dos": "✅ Do's",
-    "donts": "❌ Don'ts", 
+    "donts": "❌ Don'ts",
     "do1": "Be specific about dates, departments, and document types",
     "do2": "Request information, not opinions or analysis",
     "do3": "Keep records of all correspondence",
@@ -472,5 +472,27 @@
       "viewDocument": "View Document",
       "processing": "Processing..."
     }
+  },
+  "aiQna": {
+    "floatingButtonTooltip": "Ask AI about this document",
+    "bannerSubtitle": "Get instant answers · Powered by Thaura.AI",
+    "assistantTitle": "AI Document Companion",
+    "assistantSubtitle": "Ask questions about the content of this document.",
+    "poweredBy": "Powered by Thaura.AI, your ethical AI companion",
+    "suggestedTitle": "Suggested Questions",
+    "suggestedQ1": "Summarize key findings",
+    "suggestedQ2": "List key names, dates & organizations",
+    "suggestedQ3": "Identify potential red flags",
+    "inputPlaceholder": "Ask a question about this document...",
+    "inputHelp": "Press Enter to submit, Shift+Enter for new line.",
+    "askButton": "Ask AI",
+    "processing": "Processing...",
+    "answerTitle": "AI Answer",
+    "confidenceLabel": "Confidence",
+    "close": "Close",
+    "errorMessage": "An error occurred. Please try again.",
+    "pleaseEnterQuestion": "Please enter a question.",
+    "chatHistory": "Chat History",
+    "clearHistory": "Clear Chat"
   }
-} 
+}

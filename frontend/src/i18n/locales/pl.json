@@ -412,5 +412,27 @@
     "section6Content": "HaqNow ściśle przestrzega:\n\n• DMCA\n• RODO\n• oraz innych obowiązujących przepisów dotyczących prywatności i ochrony danych\n\nProcedura usuwania:\n\n• Wszystkie wnioski o usunięcie można zgłaszać przy użyciu publicznego formularza: https://subscribepage.io/haqnow\n• Link do formularza jest wyraźnie widoczny na stronie głównej HaqNow.\n• Wszystkie uzasadnione wnioski są realizowane bez sporów, aby uniknąć eskalacji prawnej.\n• HaqNow nie angażuje się w spory i procesy dotyczące zasadności usunięcia treści.\n• Usunięte dokumenty są szybko i trwale wycofywane z publicznego dostępu.\n\nJurysdykcja:\n\n• Serwery HaqNow znajdują się w Europie, a praktyki moderacji są zgodne z europejskimi standardami prawnymi i regulacjami ochrony danych.",
     "section7Title": "7. Postępowanie z treściami spornymi lub potencjalnie szkodliwymi",
     "section7Content": "Jeśli dokument budzi poważne wątpliwości prawne, etyczne lub dotyczące bezpieczeństwa, stosuje się następujące kroki:\n\n1. Publikacja dokumentu zostaje wstrzymana.\n2. Zespół moderacji konsultuje się z odpowiednimi ekspertami (prawo, bezpieczeństwo, technologia).\n3. Jeśli ryzyka nie można zredukować do akceptowalnego poziomu lub legalność publikacji nie jest wystarczająco jasna, dokument nie zostaje opublikowany.\n4. Jeśli dokument został już udostępniony, a pojawia się uzasadniony wniosek o jego usunięcie, należy go niezwłocznie usunąć.\n\nHaqNow stawia bezpieczeństwo, zgodność z prawem i odpowiedzialność ponad presją publikowania sensacyjnych materiałów."
+  },
+  "aiQna": {
+    "floatingButtonTooltip": "Zapytaj AI o ten dokument",
+    "bannerSubtitle": "Uzyskaj natychmiastowe odpowiedzi · Powered by Thaura.AI",
+    "assistantTitle": "Asystent dokumentu AI",
+    "assistantSubtitle": "Zadawaj pytania dotyczące treści tego dokumentu.",
+    "poweredBy": "Wspierane przez Thaura.AI, Twój etyczny towarzysz AI",
+    "suggestedTitle": "Sugerowane pytania",
+    "suggestedQ1": "Podsumuj kluczowe wnioski",
+    "suggestedQ2": "Wymień kluczowe nazwiska, daty i organizacje",
+    "suggestedQ3": "Zidentyfikuj potencjalne ostrzeżenia",
+    "inputPlaceholder": "Zadaj pytanie dotyczące tego dokumentu...",
+    "inputHelp": "Naciśnij Enter, aby wysłać, Shift+Enter, aby przejść do nowej linii.",
+    "askButton": "Zapytaj AI",
+    "processing": "Przetwarzanie...",
+    "answerTitle": "Odpowiedź AI",
+    "confidenceLabel": "Pewność",
+    "close": "Zamknij",
+    "errorMessage": "Wystąpił błąd. Spróbuj ponownie.",
+    "pleaseEnterQuestion": "Wprowadź pytanie.",
+    "chatHistory": "Historia czatu",
+    "clearHistory": "Wyczyść czat"
   }
 }

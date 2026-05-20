@@ -387,5 +387,27 @@
     "section6Content": "HaqNow respecte strictement :\n\n• Le DMCA\n• Le RGPD\n• Et les autres lois applicables en matière de protection de la vie privée et des données\n\nProcessus de retrait :\n\n• Toutes les demandes de retrait peuvent être envoyées via le formulaire public : https://subscribepage.io/haqnow\n• Ce lien est clairement visible sur la page d'accueil de HaqNow.\n• Toutes les demandes valides sont exécutées sans débat, afin d'éviter les escalades juridiques.\n• HaqNow n'entre pas dans des batailles judiciaires ou des polémiques autour des suppressions.\n• Les documents retirés sont rapidement et définitivement supprimés de l'accès public.\n\nJuridiction :\n\n• Les serveurs de HaqNow sont situés en Europe et les pratiques de modération respectent les normes juridiques européennes et les réglementations en matière de protection des données.",
     "section7Title": "7. Gestion du Contenu Contesté ou Préjudiciable",
     "section7Content": "Si un document soulève des inquiétudes (éthiques, de sécurité ou juridiques), la procédure suivante s'applique :\n\n1. Le modérateur suspend la publication.\n2. Il consulte les experts pertinents (juridiques, sécurité, techniques).\n3. Si le risque ne peut pas être réduit ou si la légalité ne peut pas être confirmée de façon raisonnable, la publication est refusée.\n4. Si le document est déjà en ligne et qu'une demande légitime survient, il doit être retiré immédiatement.\n\nHaqNow privilégie toujours la sécurité, la légalité et la conformité plutôt que la recherche de sensation ou la pression à publier."
+  },
+  "aiQna": {
+    "floatingButtonTooltip": "Demander à l'IA sur ce document",
+    "bannerSubtitle": "Obtenez des réponses instantanées · Propulsé par Thaura.AI",
+    "assistantTitle": "Compagnon de document IA",
+    "assistantSubtitle": "Posez des questions sur le contenu de ce document.",
+    "poweredBy": "Propulsé par Thaura.AI, votre compagnon IA éthique",
+    "suggestedTitle": "Questions suggérées",
+    "suggestedQ1": "Résumer les conclusions clés",
+    "suggestedQ2": "Lister les noms, dates et organisations clés",
+    "suggestedQ3": "Identifier les signaux d'alarme potentiels",
+    "inputPlaceholder": "Poser une question sur ce document...",
+    "inputHelp": "Appuyez sur Entrée pour soumettre, Shift+Entrée pour une nouvelle ligne.",
+    "askButton": "Demander à l'IA",
+    "processing": "Traitement...",
+    "answerTitle": "Réponse de l'IA",
+    "confidenceLabel": "Confiance",
+    "close": "Fermer",
+    "errorMessage": "Une erreur est survenue. Veuillez réessayer.",
+    "pleaseEnterQuestion": "Veuillez entrer une question.",
+    "chatHistory": "Historique du chat",
+    "clearHistory": "Effacer le chat"
   }
 }

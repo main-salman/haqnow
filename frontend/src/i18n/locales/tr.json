@@ -412,5 +412,27 @@
     "section6Content": "HaqNow aşağıdakilere sıkı sıkıya uyar:\n\n• DMCA\n• GDPR\n• ve geçerli diğer gizlilik ve veri koruma yasaları\n\nKaldırma süreci:\n\n• Tüm kaldırma talepleri, herkese açık şu form aracılığıyla iletilebilir: https://subscribepage.io/haqnow\n• Bu bağlantı HaqNow ana sayfasında görünür şekilde yer alır.\n• Hukuken geçerli olan tüm talepler, yasal anlaşmazlıkları büyütmemek için tartışmasız bir şekilde yerine getirilir.\n• HaqNow, kaldırma kararları hakkında kamusal tartışma veya yargı sürecine girmekten kaçınır.\n• Yayından kaldırılan belgeler, kamu erişiminden hızlı ve kalıcı olarak çıkarılır.\n\nYetki alanı:\n\n• HaqNow sunucuları Avrupa'da bulunmaktadır ve moderasyon uygulamaları, Avrupa hukuk standartları ve veri koruma düzenlemeleriyle uyumludur.",
     "section7Title": "7. Tartışmalı veya Zararlı İçeriklerle Nasıl Başa Çıkılır",
     "section7Content": "Bir belge hukuki, etik veya güvenlik açısından kaygı uyandırıyorsa şu adımlar izlenir:\n\n1. Belgenin yayımlanması geçici olarak durdurulur.\n2. Gerekli görülürse hukuk, güvenlik veya teknik alanlardaki uzmanlarla istişare edilir.\n3. Risk kabul edilebilir seviyeye indirilemiyorsa veya yayımlamanın yasal olup olmadığı makul ölçüde teyit edilemiyorsa, belge yayımlanmaz.\n4. Belge hâlihazırda yayımlanmışsa ve geçerli bir şikâyet iletilirse, derhal kaldırılır.\n\nHaqNow, dikkat çekici veya gürültülü yayınlardan çok daha önemli olarak güvenliği, hukuki uyumu ve sorumluluğu ön planda tutar."
+  },
+  "aiQna": {
+    "floatingButtonTooltip": "Bu belge hakkında yapay zekaya sor",
+    "bannerSubtitle": "Anında cevaplar alın · Thaura.AI tarafından desteklenmektedir",
+    "assistantTitle": "Belge Yapay Zeka Yardımcısı",
+    "assistantSubtitle": "Bu belgenin içeriği hakkında sorular sorun.",
+    "poweredBy": "Etik yapay zeka yardımcınız Thaura.AI tarafından desteklenmektedir",
+    "suggestedTitle": "Önerilen Sorular",
+    "suggestedQ1": "Önemli bulguları özetle",
+    "suggestedQ2": "Önemli isimleri, tarihleri ve kurumları listele",
+    "suggestedQ3": "Potansiyel kırmızı bayrakları belirle",
+    "inputPlaceholder": "Bu belge hakkında bir soru sor...",
+    "inputHelp": "Göndermek için Enter'a, yeni satır için Shift+Enter'a basın.",
+    "askButton": "Yapay Zekaya Sor",
+    "processing": "İşleniyor...",
+    "answerTitle": "Yapay Zeka Yanıtı",
+    "confidenceLabel": "Güven Oranı",
+    "close": "Kapat",
+    "errorMessage": "Bir hata oluştu. Lütfen tekrar deneyin.",
+    "pleaseEnterQuestion": "Lütfen bir soru girin.",
+    "chatHistory": "Sohbet Geçmişi",
+    "clearHistory": "Sohbeti Temizle"
   }
 }

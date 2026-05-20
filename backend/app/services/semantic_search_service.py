@@ -161,7 +161,12 @@ class SemanticSearchService:
         """
         try:
             # Generate query embedding
-            query_embedding = self.generate_embedding(query_text, is_query=True)
+            query_embedding = None
+            try:
+                query_embedding = self.generate_embedding(query_text, is_query=True)
+            finally:
+                self.unload_model()
+
             if not query_embedding:
                 logger.warning("Failed to generate query embedding", query=query_text)
                 return []
@@ -284,6 +289,21 @@ class SemanticSearchService:
                         doc_id=document_dict.get('id'), 
                         error=str(e))
             return None
+
+    def unload_model(self):
+        """Unload the sentence transformer model to free memory."""
+        if self._model_loaded:
+            logger.info("Unloading semantic search model to reclaim memory", model=self.model_name)
+            self.model = None
+            self._model_loaded = False
+            import gc
+            gc.collect()
+            try:
+                import torch
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+            except ImportError:
+                pass
 
 # Global service instance
 semantic_search_service = SemanticSearchService() 
