@@ -161,7 +161,12 @@ class SemanticSearchService:
         """
         try:
             # Generate query embedding
-            query_embedding = self.generate_embedding(query_text, is_query=True)
+            query_embedding = None
+            try:
+                query_embedding = self.generate_embedding(query_text, is_query=True)
+            finally:
+                self.unload_model()
+
             if not query_embedding:
                 logger.warning("Failed to generate query embedding", query=query_text)
                 return []
