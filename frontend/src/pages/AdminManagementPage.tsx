@@ -28,7 +28,13 @@ import {
   Plus,
   ToggleLeft,
   ToggleRight,
-  Copy
+  Copy,
+  Share2,
+  Instagram,
+  Linkedin,
+  Youtube,
+  Music,
+  Globe
 } from "lucide-react";
 
 interface Admin {
@@ -63,6 +69,14 @@ export default function AdminManagementPage() {
   // Upload notification recipients
   const [notificationEmails, setNotificationEmails] = useState<string[]>([]);
   const [newNotificationEmail, setNewNotificationEmail] = useState("");
+  
+  // Social Media Links state
+  const [socialInstagram, setSocialInstagram] = useState("");
+  const [socialLinkedin, setSocialLinkedin] = useState("");
+  const [socialTiktok, setSocialTiktok] = useState("");
+  const [socialYoutube, setSocialYoutube] = useState("");
+  const [socialUpscrolled, setSocialUpscrolled] = useState("");
+  const [isSavingSocial, setIsSavingSocial] = useState(false);
   
   // API Keys state (Super Admin only)
   interface ApiKey {
@@ -394,12 +408,65 @@ export default function AdminManagementPage() {
     }
   };
 
+  const fetchSocialMediaLinks = async () => {
+    try {
+      const res = await fetch('/api/site-settings/social-media');
+      if (!res.ok) return;
+      const data = await res.json();
+      setSocialInstagram(data.instagram || "");
+      setSocialLinkedin(data.linkedin || "");
+      setSocialTiktok(data.tiktok || "");
+      setSocialYoutube(data.youtube || "");
+      setSocialUpscrolled(data.upscrolled || "");
+    } catch (error) {
+      console.error("Failed to fetch social media links for admin:", error);
+    }
+  };
+
+  const handleSaveSocialMediaLinks = async () => {
+    setIsSavingSocial(true);
+    try {
+      const token = localStorage.getItem('jwt_token');
+      if (!token) {
+        alert("Session expired. Please log in again.");
+        navigate("/admin-login-page");
+        return;
+      }
+      const res = await fetch('/api/site-settings/social-media', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          instagram: socialInstagram,
+          linkedin: socialLinkedin,
+          tiktok: socialTiktok,
+          youtube: socialYoutube,
+          upscrolled: socialUpscrolled,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.detail || "Failed to update social media links");
+      }
+
+      alert("Social media links updated successfully!");
+    } catch (e: any) {
+      alert(e.message || "Failed to save social media links");
+    } finally {
+      setIsSavingSocial(false);
+    }
+  };
+
 
   useEffect(() => {
     fetchAdmins();
     fetchAnnouncement();
     fetchNotificationEmails();
     fetchApiKeys();
+    fetchSocialMediaLinks();
   }, []);
 
   if (isLoading) {
@@ -646,6 +713,100 @@ curl -H "X-API-Key: <your_key>" \
           <p className="text-muted-foreground">Manage administrator accounts and security settings</p>
         </div>
       </div>
+
+      {/* Social Media Links settings card (accessible to all admins) */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Share2 className="h-5 w-5 text-indigo-600" />
+            Social Media Links Settings
+          </CardTitle>
+          <CardDescription>
+            Configure the social media links displayed in the global page footers. Empty fields will not render icons in the footer.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="socialInstagram" className="flex items-center gap-2">
+                <Instagram className="h-4 w-4 text-[#E1306C]" />
+                Instagram URL
+              </Label>
+              <Input
+                id="socialInstagram"
+                type="url"
+                value={socialInstagram}
+                onChange={(e) => setSocialInstagram(e.target.value)}
+                placeholder="https://www.instagram.com/haqnow_org/"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="socialLinkedin" className="flex items-center gap-2">
+                <Linkedin className="h-4 w-4 text-[#0077B5]" />
+                LinkedIn URL
+              </Label>
+              <Input
+                id="socialLinkedin"
+                type="url"
+                value={socialLinkedin}
+                onChange={(e) => setSocialLinkedin(e.target.value)}
+                placeholder="https://www.linkedin.com/company/haqnow/"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="socialTiktok" className="flex items-center gap-2">
+                <Music className="h-4 w-4 text-[#FE2C55]" />
+                TikTok URL
+              </Label>
+              <Input
+                id="socialTiktok"
+                type="url"
+                value={socialTiktok}
+                onChange={(e) => setSocialTiktok(e.target.value)}
+                placeholder="https://www.tiktok.com/@haqnow"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="socialYoutube" className="flex items-center gap-2">
+                <Youtube className="h-4 w-4 text-[#FF0000]" />
+                YouTube URL
+              </Label>
+              <Input
+                id="socialYoutube"
+                type="url"
+                value={socialYoutube}
+                onChange={(e) => setSocialYoutube(e.target.value)}
+                placeholder="https://www.youtube.com/@haqnow-org"
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="socialUpscrolled" className="flex items-center gap-2">
+                <Globe className="h-4 w-4 text-[#8B5CF6]" />
+                Upscrolled Profile URL
+              </Label>
+              <Input
+                id="socialUpscrolled"
+                type="url"
+                value={socialUpscrolled}
+                onChange={(e) => setSocialUpscrolled(e.target.value)}
+                placeholder="https://share.upscrolled.com/en/user/a8f5f0b6-7dcb-4501-a869-4036311cdf72"
+              />
+            </div>
+          </div>
+          <div className="pt-2">
+            <Button
+              onClick={handleSaveSocialMediaLinks}
+              disabled={isSavingSocial}
+              className="w-full md:w-auto"
+            >
+              {isSavingSocial ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : null}
+              Save Social Media Links
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
 
       {/* Add New Admin Section - Only for Super Admins */}

@@ -4,6 +4,7 @@ import { FileText, ExternalLink, Search, Globe, Shield, Book, ArrowLeft } from '
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 
 const FOIPage: React.FC = () => {
   const navigate = useNavigate();
@@ -355,31 +356,7 @@ const FOIPage: React.FC = () => {
       </div>
       
       {/* Footer */}
-      <footer className="border-t border-border bg-muted/10 py-6 mt-8">
-        <div className="container mx-auto px-4 flex flex-col items-center justify-center space-y-2">
-          <p className="text-sm text-muted-foreground text-center">
-            {t('footer.copyright')}
-          </p>
-          <p className="text-sm text-muted-foreground text-center">
-            {t('footer.privacyPromise')}
-          </p>
-          <p className="text-sm text-muted-foreground text-center">
-            <Trans
-              i18nKey="footer.poweredBy"
-              components={{
-                link: (
-                  <a
-                    className="text-indigo-600 hover:text-indigo-800 underline"
-                    href="https://thaura.ai/home"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  />
-                ),
-              }}
-            />
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

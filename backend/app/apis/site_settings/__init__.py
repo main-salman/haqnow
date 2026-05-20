@@ -126,3 +126,80 @@ async def upsert_upload_notification_emails(
         logger.error("Failed to update upload notification emails", error=str(e))
         raise HTTPException(status_code=500, detail="Failed to update upload notification emails")
 
+
+# ---------------- Social Media Links ----------------
+class SocialMediaLinksPayload(BaseModel):
+    instagram: Optional[str] = ""
+    linkedin: Optional[str] = ""
+    tiktok: Optional[str] = ""
+    youtube: Optional[str] = ""
+    upscrolled: Optional[str] = ""
+
+
+SOCIAL_MEDIA_SETTING_KEY = "social_media_links"
+
+
+@router.get("/social-media", response_model=SocialMediaLinksPayload)
+async def get_social_media_links(db: Session = Depends(get_db)):
+    try:
+        setting = db.query(SiteSetting).filter(SiteSetting.key == SOCIAL_MEDIA_SETTING_KEY).first()
+        if not setting or not setting.value:
+            return SocialMediaLinksPayload()
+        try:
+            data = json.loads(setting.value)
+            if not isinstance(data, dict):
+                data = {}
+            return SocialMediaLinksPayload(
+                instagram=data.get("instagram", ""),
+                linkedin=data.get("linkedin", ""),
+                tiktok=data.get("tiktok", ""),
+                youtube=data.get("youtube", ""),
+                upscrolled=data.get("upscrolled", "")
+            )
+        except Exception:
+            return SocialMediaLinksPayload()
+    except Exception as e:
+        logger.error("Failed to get social media links", error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to get social media links")
+
+
+@router.put("/social-media", response_model=SocialMediaLinksPayload)
+async def upsert_social_media_links(
+    payload: SocialMediaLinksPayload,
+    admin_user: AdminUser,
+    db: Session = Depends(get_db),
+):
+    try:
+        value = json.dumps({
+            "instagram": (payload.instagram or "").strip(),
+            "linkedin": (payload.linkedin or "").strip(),
+            "tiktok": (payload.tiktok or "").strip(),
+            "youtube": (payload.youtube or "").strip(),
+            "upscrolled": (payload.upscrolled or "").strip()
+        })
+        setting = db.query(SiteSetting).filter(SiteSetting.key == SOCIAL_MEDIA_SETTING_KEY).first()
+        if setting:
+            setting.value = value
+            setting.updated_by = getattr(admin_user, "email", None) or getattr(admin_user, "sub", None)
+        else:
+            setting = SiteSetting(
+                key=SOCIAL_MEDIA_SETTING_KEY,
+                value=value,
+                updated_by=getattr(admin_user, "email", None) or getattr(admin_user, "sub", None),
+            )
+            db.add(setting)
+        db.commit()
+        db.refresh(setting)
+        stored = json.loads(setting.value)
+        return SocialMediaLinksPayload(
+            instagram=stored.get("instagram", ""),
+            linkedin=stored.get("linkedin", ""),
+            tiktok=stored.get("tiktok", ""),
+            youtube=stored.get("youtube", ""),
+            upscrolled=stored.get("upscrolled", "")
+        )
+    except Exception as e:
+        db.rollback()
+        logger.error("Failed to update social media links", error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to update social media links")
+

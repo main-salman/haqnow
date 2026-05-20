@@ -10,7 +10,7 @@ import TopViewedDocuments from '../components/TopViewedDocuments';
 import RecentlySharedDocuments from '../components/RecentlySharedDocuments';
 import CollaboratorsSection from '../components/CollaboratorsSection';
 import InvestigativeResearchPartnersSection from '../components/InvestigativeResearchPartnersSection';
-import Version from '../components/Version';
+import Footer from '../components/Footer';
 import Navigation from '../components/Navigation';
 import ProminentLanguageBar from '../components/ProminentLanguageBar';
 import PartnersCarousel from '../components/PartnersCarousel';
@@ -474,35 +474,7 @@ export default function App() {
         </div>
       </main>
 
-      <footer className="border-t border-border bg-muted/10 py-6">
-        <div className="container mx-auto px-4 flex flex-col items-center justify-center space-y-2">
-          <p className="text-sm text-muted-foreground text-center">
-            {t('footer.copyright')}
-          </p>
-          <p className="text-sm text-muted-foreground text-center max-w-2xl mb-4">
-            {t('footer.complianceJargon')}
-          </p>
-          <p className="text-sm text-muted-foreground text-center">
-            {t('footer.privacyPromise')}
-          </p>
-          <p className="text-sm text-muted-foreground text-center">
-            <Trans
-              i18nKey="footer.poweredBy"
-              components={{
-                link: (
-                  <a
-                    className="text-indigo-600 hover:text-indigo-800 underline"
-                    href="https://thaura.ai/home"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  />
-                ),
-              }}
-            />
-          </p>
-          <Version />
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
