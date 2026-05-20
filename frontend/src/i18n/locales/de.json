@@ -380,5 +380,26 @@
     "section6Content": "HaqNow hält sich strikt an:\n\n• DMCA\n• DSGVO\n• sowie weitere anwendbare Datenschutz- und Datensicherheitsgesetze\n\nAblauf bei Löschanfragen:\n\n• Alle Löschanfragen können über das öffentliche Formular unter https://subscribepage.io/haqnow gestellt werden.\n• Der Link ist auf der HaqNow‑Startseite deutlich sichtbar.\n• Alle berechtigten Löschanfragen werden ohne Streitigkeiten umgesetzt, um rechtliche Eskalationen zu vermeiden.\n• HaqNow beteiligt sich nicht an öffentlichen oder juristischen Auseinandersetzungen über Löschungen.\n• Entfernte Dokumente werden zügig und dauerhaft aus dem öffentlichen Zugriff genommen.\n\nZuständigkeit:\n\n• Die HaqNow‑Server stehen in Europa; Moderationspraktiken richten sich nach europäischen Rechtsstandards und Datenschutzvorgaben.",
     "section7Title": "7. Umgang mit strittigen oder schädlichen Inhalten",
     "section7Content": "Wenn ein Dokument rechtliche, sicherheitsrelevante oder ethische Bedenken aufwirft, gilt:\n\n1. Veröffentlichung wird vorübergehend gestoppt.\n2. Rücksprache mit relevanten Expert:innen (rechtlich, sicherheitstechnisch, technisch).\n3. Kann das Risiko nicht reduziert oder die Rechtmäßigkeit nicht hinreichend geklärt werden, wird die Veröffentlichung abgelehnt.\n4. Ist das Dokument bereits online und geht eine berechtigte Beschwerde ein, wird es unverzüglich entfernt.\n\nHaqNow stellt Sicherheit, Rechtmäßigkeit und Compliance stets über Veröffentlichungsdruck oder mediale Wirkung."
+  },
+  "aiQna": {
+    "floatingButtonTooltip": "KI zu diesem Dokument befragen",
+    "assistantTitle": "KI-Dokumentenbegleiter",
+    "assistantSubtitle": "Stellen Sie Fragen zum Inhalt dieses Dokuments.",
+    "poweredBy": "Präsentiert von Thaura.AI, Ihrem ethischen KI-Begleiter",
+    "suggestedTitle": "Vorgeschlagene Fragen",
+    "suggestedQ1": "Wichtigste Ergebnisse zusammenfassen",
+    "suggestedQ2": "Wichtige Namen, Daten & Organisationen auflisten",
+    "suggestedQ3": "Potenzielle Warnsignale identifizieren",
+    "inputPlaceholder": "Frage zu diesem Dokument stellen...",
+    "inputHelp": "Drücken Sie die Eingabetaste zum Senden, Umschalttaste+Eingabetaste für eine neue Zeile.",
+    "askButton": "KI fragen",
+    "processing": "Verarbeitung...",
+    "answerTitle": "KI-Antwort",
+    "confidenceLabel": "Konfidenz",
+    "close": "Schließen",
+    "errorMessage": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+    "pleaseEnterQuestion": "Bitte geben Sie eine Frage ein.",
+    "chatHistory": "Chat-Verlauf",
+    "clearHistory": "Verlauf löschen"
   }
 }
