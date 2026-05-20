@@ -415,6 +415,7 @@
   },
   "aiQna": {
     "floatingButtonTooltip": "Bu belge hakkında yapay zekaya sor",
+    "bannerSubtitle": "Anında cevaplar alın · Thaura.AI tarafından desteklenmektedir",
     "assistantTitle": "Belge Yapay Zeka Yardımcısı",
     "assistantSubtitle": "Bu belgenin içeriği hakkında sorular sorun.",
     "poweredBy": "Etik yapay zeka yardımcınız Thaura.AI tarafından desteklenmektedir",

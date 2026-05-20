@@ -475,6 +475,7 @@
   },
   "aiQna": {
     "floatingButtonTooltip": "Ask AI about this document",
+    "bannerSubtitle": "Get instant answers · Powered by Thaura.AI",
     "assistantTitle": "AI Document Companion",
     "assistantSubtitle": "Ask questions about the content of this document.",
     "poweredBy": "Powered by Thaura.AI, your ethical AI companion",

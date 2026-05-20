@@ -383,6 +383,7 @@
   },
   "aiQna": {
     "floatingButtonTooltip": "KI zu diesem Dokument befragen",
+    "bannerSubtitle": "Sofortige Antworten erhalten · Powered by Thaura.AI",
     "assistantTitle": "KI-Dokumentenbegleiter",
     "assistantSubtitle": "Stellen Sie Fragen zum Inhalt dieses Dokuments.",
     "poweredBy": "Präsentiert von Thaura.AI, Ihrem ethischen KI-Begleiter",

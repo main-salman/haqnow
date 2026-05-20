@@ -221,7 +221,52 @@ export default function DocumentDetailPage() {
               <span>Uploaded: {new Date(doc.created_at).toLocaleDateString()}</span>
             )}
           </div>
-          
+
+          {/* ✨ Sticky AI Banner */}
+          <button
+            onClick={() => {
+              setIsDrawerOpen(true);
+              setAiQuestion("");
+              setAiError(null);
+            }}
+            className="w-full my-4 group relative overflow-hidden rounded-xl px-5 py-3.5 flex items-center justify-between gap-3 bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 hover:from-violet-500 hover:via-indigo-500 hover:to-blue-500 text-white shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2"
+          >
+            {/* Animated shimmer overlay */}
+            <span className="pointer-events-none absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+
+            <span className="flex items-center gap-3">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/20 group-hover:bg-white/30 transition-colors">
+                <Brain className="h-4 w-4" />
+              </span>
+              <span className="flex flex-col items-start">
+                <span className="text-sm font-semibold leading-tight">
+                  {t("aiQna.floatingButtonTooltip", "Ask AI about this document")}
+                </span>
+                <span className="text-xs text-white/75 leading-tight">
+                  {t("aiQna.bannerSubtitle", "Get instant answers · Powered by Thaura.AI")}
+                </span>
+              </span>
+            </span>
+
+            <span className="flex items-center gap-2 shrink-0">
+              <span className="hidden sm:flex gap-1.5 items-center">
+                {[
+                  t("aiQna.suggestedQ1", "Summarize"),
+                  t("aiQna.suggestedQ2", "Key names"),
+                  t("aiQna.suggestedQ3", "Red flags"),
+                ].map((label, i) => (
+                  <span
+                    key={i}
+                    className="text-[10px] bg-white/15 hover:bg-white/25 rounded-full px-2 py-0.5 font-medium whitespace-nowrap transition-colors"
+                  >
+                    {label}
+                  </span>
+                ))}
+              </span>
+              <Sparkles className="h-4 w-4 opacity-75 group-hover:opacity-100 group-hover:rotate-12 transition-all duration-300" />
+            </span>
+          </button>
+
           {doc.ai_summary && (
             <div className="mb-6 p-4 bg-blue-50 border-l-4 border-l-blue-600 rounded-lg">
               <p className="text-sm font-semibold text-blue-900 mb-2 flex items-center gap-2">
@@ -243,19 +288,6 @@ export default function DocumentDetailPage() {
                 <Download className="mr-2 h-4 w-4" />
                 Download PDF
               </a>
-            </Button>
-
-            {/* AI Q&A Button */}
-            <Button 
-              variant="secondary"
-              onClick={() => {
-                setIsDrawerOpen(true);
-                setAiQuestion("");
-                setAiError(null);
-              }}
-            >
-              <Brain className="mr-2 h-4 w-4" />
-              {t("aiQna.floatingButtonTooltip", "Ask AI about this document")}
             </Button>
 
             {/* Discuss Anonymously Button */}

@@ -388,6 +388,7 @@
   },
   "aiQna": {
     "floatingButtonTooltip": "Спросить ИИ об этом документе",
+    "bannerSubtitle": "Получите мгновенные ответы · На основе Thaura.AI",
     "assistantTitle": "ИИ-помощник по документу",
     "assistantSubtitle": "Задавайте вопросы по содержанию этого документа.",
     "poweredBy": "На базе Thaura.AI, вашего этичного ИИ-помощника",

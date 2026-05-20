@@ -390,6 +390,7 @@
   },
   "aiQna": {
     "floatingButtonTooltip": "Demander à l'IA sur ce document",
+    "bannerSubtitle": "Obtenez des réponses instantanées · Propulsé par Thaura.AI",
     "assistantTitle": "Compagnon de document IA",
     "assistantSubtitle": "Posez des questions sur le contenu de ce document.",
     "poweredBy": "Propulsé par Thaura.AI, votre compagnon IA éthique",

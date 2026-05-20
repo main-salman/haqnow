@@ -386,6 +386,7 @@
   },
   "aiQna": {
     "floatingButtonTooltip": "اسأل الذكاء الاصطناعي عن هذا المستند",
+    "bannerSubtitle": "احصل على إجابات فورية · بدعم من Thaura.AI",
     "assistantTitle": "مساعد المستندات بالذكاء الاصطناعي",
     "assistantSubtitle": "اطرح أسئلة حول محتوى هذا المستند.",
     "poweredBy": "مدعوم بواسطة Thaura.AI، رفيقك الأخلاقي بالذكاء الاصطناعي",
