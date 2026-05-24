@@ -29,15 +29,16 @@ interface StatsResponse {
 }
 
 interface SiteStats {
-  totalDocuments: number;
-  totalCountries: number;
+  totalDocuments: number | null;
+  totalCountries: number | null;
+  loading: boolean;
 }
 
 export default function App() {
   const [searchTerm, setSearchTerm] = useState("");
   const [mapData, setMapData] = useState<CountryStats[]>([]);
   const [loadingMapData, setLoadingMapData] = useState(true);
-  const [siteStats, setSiteStats] = useState<SiteStats>({ totalDocuments: 0, totalCountries: 0 });
+  const [siteStats, setSiteStats] = useState<SiteStats>({ totalDocuments: null, totalCountries: null, loading: true });
   const hasFetchedMapData = useRef(false);
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -82,6 +83,26 @@ export default function App() {
     'Vatican City': 'VA', 'Andorra': 'AD', 'Liechtenstein': 'LI'
   };
 
+  // Fetch real-time global stats from the dedicated endpoint
+  useEffect(() => {
+    const fetchGlobalStats = async () => {
+      try {
+        const response = await fetch('/api/statistics/global-stats');
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+        setSiteStats({
+          totalDocuments: data.approved_documents ?? data.total_documents ?? null,
+          totalCountries: data.total_countries ?? null,
+          loading: false,
+        });
+      } catch (err) {
+        console.error('Error fetching global stats:', err);
+        setSiteStats(prev => ({ ...prev, loading: false }));
+      }
+    };
+    fetchGlobalStats();
+  }, []);
+
   useEffect(() => {
     const fetchMapData = async () => {
       const cachedData = localStorage.getItem('haqnow_map_data');
@@ -118,12 +139,6 @@ export default function App() {
         localStorage.setItem('haqnow_map_data', JSON.stringify(mappedData));
         localStorage.setItem('haqnow_map_data_timestamp', Date.now().toString());
         setMapData(mappedData);
-
-        // Update site stats from API response
-        setSiteStats({
-          totalDocuments: data.total_documents || 0,
-          totalCountries: data.total_countries || data.countries.length,
-        });
       } catch (err) {
         console.error('Error fetching map data:', err);
         setMapData([]);
@@ -249,14 +264,22 @@ export default function App() {
           <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16 text-center">
             <div>
               <div className="text-2xl md:text-3xl font-bold">
-                {siteStats.totalDocuments > 0 ? siteStats.totalDocuments.toLocaleString() + '+' : '2,400+'}
+                {siteStats.loading
+                  ? <span className="inline-block w-16 h-8 bg-green-600 rounded animate-pulse" />
+                  : siteStats.totalDocuments !== null
+                    ? siteStats.totalDocuments.toLocaleString()
+                    : '—'}
               </div>
               <div className="text-green-200 text-sm mt-0.5">Public Documents</div>
             </div>
             <div className="hidden md:block w-px h-10 bg-green-500 opacity-50" />
             <div>
               <div className="text-2xl md:text-3xl font-bold">
-                {siteStats.totalCountries > 0 ? siteStats.totalCountries + '+' : '47+'}
+                {siteStats.loading
+                  ? <span className="inline-block w-10 h-8 bg-green-600 rounded animate-pulse" />
+                  : siteStats.totalCountries !== null
+                    ? siteStats.totalCountries
+                    : '—'}
               </div>
               <div className="text-green-200 text-sm mt-0.5">Countries</div>
             </div>
