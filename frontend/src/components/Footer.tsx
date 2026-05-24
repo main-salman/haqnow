@@ -54,9 +54,31 @@ export default function Footer() {
   const isRtl = i18n.language === "ar";
 
   return (
-    <footer className="border-t border-border bg-muted/10 py-8 mt-12 w-full">
-      <div className="container mx-auto px-4 flex flex-col items-center justify-center space-y-6">
-        
+    <footer className="border-t border-border bg-gray-50 pt-10 pb-6 mt-0 w-full">
+      <div className="container mx-auto px-4">
+
+        {/* Quick Navigation Links */}
+        <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 mb-8 pb-8 border-b border-gray-200">
+          {[
+            { label: 'Search Documents', path: '/search-page' },
+            { label: 'Upload a Document', path: '/upload-document-page' },
+            { label: 'About HaqNow', path: '/about' },
+            { label: 'FOI Guides', path: '/foi' },
+            { label: 'Privacy', path: '/privacy-guaranteed-page' },
+            { label: 'Disclaimer', path: '/disclaimer' },
+          ].map((link) => (
+            <a
+              key={link.path}
+              href={link.path}
+              className="text-sm text-gray-500 hover:text-green-600 transition-colors"
+            >
+              {link.label}
+            </a>
+          ))}
+        </div>
+
+        <div className="flex flex-col items-center justify-center space-y-6">
+
         {/* Premium Social Media Links Section */}
         <div className="flex flex-wrap items-center justify-center gap-6" dir={isRtl ? "rtl" : "ltr"}>
           {/* Instagram */}
@@ -161,6 +183,7 @@ export default function Footer() {
           </div>
         </div>
 
+        </div>
       </div>
     </footer>
   );
