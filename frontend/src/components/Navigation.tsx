@@ -83,7 +83,7 @@ export default function Navigation() {
                   onClick={() => setIsMoreOpen(!isMoreOpen)}
                   className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  More
+                  {t('navigation.more', 'More')}
                   <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isMoreOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {isMoreOpen && (

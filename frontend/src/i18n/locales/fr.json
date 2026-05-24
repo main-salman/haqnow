@@ -9,13 +9,22 @@
     "foi": "Liberté d'information",
     "disclaimer": "Avertissement et FAQ",
     "donate": "Faire un don",
-    "blog": "Blog"
+    "blog": "Blog",
+    "more": "Plus"
   },
   "footer": {
     "copyright": "© 2026 HaqNow. Une Initiative à But Non Lucratif pour la Responsabilité Publique.",
     "privacyPromise": "Promesse de Confidentialité : Nous utilisons une Architecture à Connaissance Zéro. Pas de cookies. Pas de traqueurs. Pas de journaux.",
     "poweredBy": "Une infrastructure transparente pour un monde plus responsable.",
-    "complianceJargon": "HaqNow est une plateforme neutre pour le partage d'informations d'intérêt public. Nous sommes conformes au DMCA et au RGPD. Si vous avez des inquiétudes concernant un document, veuillez soumettre votre problème via notre formulaire de contact, en incluant l'URL du document. Nous agissons rapidement pour répondre aux préoccupations juridiques et de confidentialité légitimes."
+    "complianceJargon": "HaqNow est une plateforme neutre pour le partage d'informations d'intérêt public. Nous sommes conformes au DMCA et au RGPD. Si vous avez des inquiétudes concernant un document, veuillez soumettre votre problème via notre formulaire de contact, en incluant l'URL du document. Nous agissons rapidement pour répondre aux préoccupations juridiques et de confidentialité légitimes.",
+    "links": {
+      "searchDocuments": "Rechercher des documents",
+      "uploadDocument": "Téléverser un document",
+      "aboutHaqNow": "À propos de HaqNow",
+      "foiGuides": "Guides FOI",
+      "privacy": "Confidentialité",
+      "disclaimer": "Clause de non-responsabilité"
+    }
   },
   "homepage": {
     "title": "Éclairer la Vérité pour la Justice Mondiale",
@@ -38,7 +47,24 @@
     "searchTitle": "Rechercher des Documents Publics",
     "searchDescription": "Accédez aux archives mondiales des documents de responsabilité institutionnelle.",
     "uploadTitle": "Partager des Informations",
-    "uploadDescription": "Contribuez en toute sécurité aux dossiers d'intérêt public pour le mouvement mondial de transparence."
+    "uploadDescription": "Contribuez en toute sécurité aux dossiers d'intérêt public pour le mouvement mondial de transparence.",
+    "announcementBanner": "Découvrez la réunion hebdomadaire de notre organisation sœur <link>Freedom Advocacy Network</link>",
+    "statsPublicDocuments": "Documents publics",
+    "statsCountries": "Pays",
+    "statsAnonymous": "Anonyme",
+    "statsOpen": "Open",
+    "statsSource": "Source",
+    "howItWorksTitle": "Comment ça marche",
+    "step01Label": "ÉTAPE 01",
+    "step01Title": "Trouver un document",
+    "step01Desc": "Rechercher par mot-clé, pays ou organisation",
+    "step02Label": "ÉTAPE 02",
+    "step02Title": "Lire et explorer",
+    "step02Desc": "Afficher les résumés de l'IA et poser des questions sur n'importe quel document",
+    "step03Label": "ÉTAPE 03",
+    "step03Title": "Partager des preuves",
+    "step03Desc": "Télécharger anonymement — aucun compte ou identité requis",
+    "mapSubtitle": "Cliquez sur un pays pour parcourir ses documents"
   },
   "search": {
     "title": "Rechercher des Documents par Étiquettes",

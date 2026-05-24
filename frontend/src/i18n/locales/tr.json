@@ -9,13 +9,22 @@
     "foi": "BİB Bilgileri",
     "disclaimer": "Feragatname ve SSS",
     "donate": "Bağış Yap",
-    "blog": "Blog"
+    "blog": "Blog",
+    "more": "Daha Fazla"
   },
   "footer": {
     "copyright": "© 2026 HaqNow. Kamu Hesap Verebilirliği için Kâr Amacı Gütmeyen Bir Girişim.",
     "privacyPromise": "Gizlilik Sözü: Sıfır Bilgi Mimarisi kullanıyoruz. Çerez yok. İzleyici yok. Log yok.",
     "poweredBy": "Daha hesap verebilir bir dünya için şeffaf altyapı.",
-    "complianceJargon": "HaqNow, kamu yararına olan bilgilerin paylaşımı için tarafsız bir platformdur. DMCA ve KVKK (GDPR) uyumluyuz. Bir belgeyle ilgili endişeleriniz varsa, lütfen belgenin URL'sini ekleyerek iletişim formumuzu kullanarak sorununuzu iletin. Meşru yasal ve gizlilik endişelerini gidermek için hızla hareket ediyoruz."
+    "complianceJargon": "HaqNow, kamu yararına olan bilgilerin paylaşımı için tarafsız bir platformdur. DMCA ve KVKK (GDPR) uyumluyuz. Bir belgeyle ilgili endişeleriniz varsa, lütfen belgenin URL'sini ekleyerek iletişim formumuzu kullanarak sorununuzu iletin. Meşru yasal ve gizlilik endişelerini gidermek için hızla hareket ediyoruz.",
+    "links": {
+      "searchDocuments": "Belgeleri Ara",
+      "uploadDocument": "Belge Yükle",
+      "aboutHaqNow": "HaqNow Hakkında",
+      "foiGuides": "FOI Kılavuzları",
+      "privacy": "Gizlilik",
+      "disclaimer": "Feragatname"
+    }
   },
   "homepage": {
     "title": "Küresel Adalet İçin Gerçeği Aydınlatmak",
@@ -38,7 +47,24 @@
     "searchTitle": "Kamu Kayıtlarını Ara",
     "searchDescription": "Kurumsal hesap verebilirlik belgelerinin küresel arşivine erişin.",
     "uploadTitle": "Bilgi Paylaş",
-    "uploadDescription": "Küresel şeffaflık hareketi için kamu yararına olan kayıtlara güvenli bir şekilde katkıda bulunun."
+    "uploadDescription": "Küresel şeffaflık hareketi için kamu yararına olan kayıtlara güvenli bir şekilde katkıda bulunun.",
+    "announcementBanner": "Kardeş kuruluşumuz <link>Freedom Advocacy Network</link>'ün haftalık toplantısına göz atın",
+    "statsPublicDocuments": "Kamu Belgeleri",
+    "statsCountries": "Ülkeler",
+    "statsAnonymous": "Anonim",
+    "statsOpen": "Açık",
+    "statsSource": "Kaynak",
+    "howItWorksTitle": "Nasıl Çalışır",
+    "step01Label": "ADIM 01",
+    "step01Title": "Bir Belge Bul",
+    "step01Desc": "Anahtar kelime, ülke veya kuruluşa göre arayın",
+    "step02Label": "ADIM 02",
+    "step02Title": "Oku ve Keşfet",
+    "step02Desc": "Yapay zeka özetlerini görüntüleyin ve herhangi bir belge hakkında sorular sorun",
+    "step03Label": "ADIM 03",
+    "step03Title": "Kanıt Paylaş",
+    "step03Desc": "Anonim olarak yükleyin — hesap veya kimlik gerekmez",
+    "mapSubtitle": "Belgelerine göz atmak için herhangi bir ülkeye tıklayın"
   },
   "search": {
     "title": "Yolsuzluk Belgelerini Ara",

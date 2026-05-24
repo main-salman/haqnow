@@ -270,7 +270,7 @@ export default function App() {
                     ? siteStats.totalDocuments.toLocaleString()
                     : '—'}
               </div>
-              <div className="text-green-200 text-sm mt-0.5">Public Documents</div>
+              <div className="text-green-200 text-sm mt-0.5">{t('homepage.statsPublicDocuments', 'Public Documents')}</div>
             </div>
             <div className="hidden md:block w-px h-10 bg-green-500 opacity-50" />
             <div>
@@ -281,17 +281,17 @@ export default function App() {
                     ? siteStats.totalCountries
                     : '—'}
               </div>
-              <div className="text-green-200 text-sm mt-0.5">Countries</div>
+              <div className="text-green-200 text-sm mt-0.5">{t('homepage.statsCountries', 'Countries')}</div>
             </div>
             <div className="hidden md:block w-px h-10 bg-green-500 opacity-50" />
             <div>
               <div className="text-2xl md:text-3xl font-bold">100%</div>
-              <div className="text-green-200 text-sm mt-0.5">Anonymous</div>
+              <div className="text-green-200 text-sm mt-0.5">{t('homepage.statsAnonymous', 'Anonymous')}</div>
             </div>
             <div className="hidden md:block w-px h-10 bg-green-500 opacity-50" />
             <div>
-              <div className="text-2xl md:text-3xl font-bold">Open</div>
-              <div className="text-green-200 text-sm mt-0.5">Source</div>
+              <div className="text-2xl md:text-3xl font-bold">{t('homepage.statsOpen', 'Open')}</div>
+              <div className="text-green-200 text-sm mt-0.5">{t('homepage.statsSource', 'Source')}</div>
             </div>
           </div>
         </div>
@@ -334,19 +334,37 @@ export default function App() {
           ═══════════════════════════════════════════════════════════ */}
       <section className="bg-gray-50 py-12 border-b border-gray-100">
         <div className="container mx-auto px-4 max-w-4xl">
-          <h2 className="text-2xl font-semibold text-center text-gray-800 mb-8">How It Works</h2>
+          <h2 className="text-2xl font-semibold text-center text-gray-800 mb-8">{t('homepage.howItWorksTitle', 'How It Works')}</h2>
           <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-0">
             {[
-              { step: '01', icon: <Search className="h-7 w-7" />, title: 'Find a Document', desc: 'Search by keyword, country, or organisation' },
-              { step: '02', icon: <Eye className="h-7 w-7" />, title: 'Read & Explore', desc: 'View AI summaries and ask questions about any document' },
-              { step: '03', icon: <Upload className="h-7 w-7" />, title: 'Share Evidence', desc: 'Upload anonymously — no account or identity required' },
+              {
+                step: '01',
+                stepLabel: t('homepage.step01Label', 'STEP 01'),
+                icon: <Search className="h-7 w-7" />,
+                title: t('homepage.step01Title', 'Find a Document'),
+                desc: t('homepage.step01Desc', 'Search by keyword, country, or organisation')
+              },
+              {
+                step: '02',
+                stepLabel: t('homepage.step02Label', 'STEP 02'),
+                icon: <Eye className="h-7 w-7" />,
+                title: t('homepage.step02Title', 'Read & Explore'),
+                desc: t('homepage.step02Desc', 'View AI summaries and ask questions about any document')
+              },
+              {
+                step: '03',
+                stepLabel: t('homepage.step03Label', 'STEP 03'),
+                icon: <Upload className="h-7 w-7" />,
+                title: t('homepage.step03Title', 'Share Evidence'),
+                desc: t('homepage.step03Desc', 'Upload anonymously — no account or identity required')
+              },
             ].map((item, i) => (
               <React.Fragment key={item.step}>
                 <div className="flex flex-col items-center text-center flex-1 px-4">
                   <div className="w-16 h-16 rounded-2xl bg-green-600 text-white flex items-center justify-center mb-3 shadow-md">
                     {item.icon}
                   </div>
-                  <div className="text-xs font-bold text-green-600 tracking-widest mb-1">STEP {item.step}</div>
+                  <div className="text-xs font-bold text-green-600 tracking-widest mb-1">{item.stepLabel}</div>
                   <h3 className="font-semibold text-gray-900 mb-1">{item.title}</h3>
                   <p className="text-sm text-gray-500">{item.desc}</p>
                 </div>
@@ -413,7 +431,7 @@ export default function App() {
             <h2 className="text-2xl md:text-3xl font-semibold text-gray-900">
               {t('homepage.mapTitle')}
             </h2>
-            <p className="text-gray-500 mt-1 text-sm">Click any country to browse its documents</p>
+            <p className="text-gray-500 mt-1 text-sm">{t('homepage.mapSubtitle', 'Click any country to browse its documents')}</p>
           </div>
           <InteractiveWorldMap data={mapData} onCountryClick={handleCountryClick} />
           <div className="mt-8">
