@@ -15,7 +15,7 @@ Self-hosted, privacy-focused web analytics for tracking visitor metrics without 
 Umami uses:
 - **Database**: Exoscale DBaaS PostgreSQL (managed via Terraform)
 - **Application**: Runs on SKS Kubernetes cluster
-- **Access**: `https://analytics.haqnow.com`
+- **Access**: `https://analytics.haqnow.org`
 
 ## Deployment Steps
 
@@ -65,7 +65,7 @@ kubectl logs -n umami -l app=umami
 
 ### 4. Initial Setup
 
-1. Access Umami at `https://analytics.haqnow.com`
+1. Access Umami at `https://analytics.haqnow.org`
 2. Login with the default credentials (see Umami documentation)
 3. **IMMEDIATELY change the password** in Settings → Profile
 4. Add your website:
@@ -79,7 +79,7 @@ kubectl logs -n umami -l app=umami
 Update `frontend/index.html` with your website ID:
 
 ```html
-<script defer src="https://analytics.haqnow.com/script.js" 
+<script defer src="https://analytics.haqnow.org/script.js" 
         data-website-id="YOUR_WEBSITE_ID_HERE"></script>
 ```
 

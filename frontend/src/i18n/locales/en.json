@@ -10,15 +10,41 @@
     "foi": "Freedom of Information",
     "disclaimer": "Disclaimer and FAQ",
     "donate": "Donate",
-    "blog": "Blog"
+    "blog": "Blog",
+    "more": "More"
   },
   "footer": {
     "copyright": "© 2026 HaqNow. A Nonprofit Initiative for Public Accountability.",
     "privacyPromise": "Privacy Promise: We use Zero-Knowledge Architecture. No cookies. No trackers. No logs.",
     "complianceJargon": "We value your input and always welcome questions or feedback. As we are DMCA and GDPR compliant, we take document concerns seriously and act quickly. For the fastest resolution, please submit your issue using the contact form, making sure to include the document's URL.",
-    "poweredBy": "Powered by <link>Thaura AI</link> & Open Source."
+    "poweredBy": "Powered by <link>Thaura AI</link> & Open Source.",
+    "links": {
+      "searchDocuments": "Search Documents",
+      "uploadDocument": "Upload a Document",
+      "aboutHaqNow": "About HaqNow",
+      "foiGuides": "FOI Guides",
+      "privacy": "Privacy",
+      "disclaimer": "Disclaimer"
+    }
   },
   "homepage": {
+    "announcementBanner": "Check out weekly meeting by our sister organization <link>Freedom Advocacy Network</link>",
+    "statsPublicDocuments": "Public Documents",
+    "statsCountries": "Countries",
+    "statsAnonymous": "Anonymous",
+    "statsOpen": "Open",
+    "statsSource": "Source",
+    "howItWorksTitle": "How It Works",
+    "step01Label": "STEP 01",
+    "step01Title": "Find a Document",
+    "step01Desc": "Search by keyword, country, or organisation",
+    "step02Label": "STEP 02",
+    "step02Title": "Read & Explore",
+    "step02Desc": "View AI summaries and ask questions about any document",
+    "step03Label": "STEP 03",
+    "step03Title": "Share Evidence",
+    "step03Desc": "Upload anonymously — no account or identity required",
+    "mapSubtitle": "Click any country to browse its documents",
     "title": "Illuminating Truth for Global Justice",
     "subtitle": "HaqNow provides the neutral, supportive infrastructure needed to share critical information securely. Explore a growing repository of public interest documents, or share vital information to help build a more accountable world.",
     "newsletterHtml": "<a href=\"https://subscribepage.io/haqnow\" target=\"_blank\" rel=\"noopener noreferrer\">Join our newsletter</a> and receive a monthly digest that highlights the most popular and valuable documents available on HaqNow.",

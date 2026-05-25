@@ -9,13 +9,22 @@
     "foi": "Informacje FOI",
     "disclaimer": "Zastrzeżenia i FAQ",
     "donate": "Wesprzyj",
-    "blog": "Blog"
+    "blog": "Blog",
+    "more": "Więcej"
   },
   "footer": {
     "copyright": "© 2026 HaqNow. Inicjatywa Non-Profit dla Odpowiedzialności Publicznej.",
     "privacyPromise": "Obietnica Prywatności: Używamy Architektury Zero-Knowledge. Brak plików cookie. Brak trackerów. Brak logów.",
     "poweredBy": "Przejrzysta infrastruktura dla bardziej odpowiedzialnego świata.",
-    "complianceJargon": "HaqNow to neutralna platforma wymiany informacji o znaczeniu publicznym. Przestrzegamy przepisów DMCA i RODO. Jeśli masz wątpliwości dotyczące dokumentu, zgłoś je za pomocą naszego formularza kontaktowego, podając adres URL dokumentu. Działamy szybko, aby rozwiązać uzasadnione problemy prawne i dotyczące prywatności."
+    "complianceJargon": "HaqNow to neutralna platforma wymiany informacji o znaczeniu publicznym. Przestrzegamy przepisów DMCA i RODO. Jeśli masz wątpliwości dotyczące dokumentu, zgłoś je za pomocą naszego formularza kontaktowego, podając adres URL dokumentu. Działamy szybko, aby rozwiązać uzasadnione problemy prawne i dotyczące prywatności.",
+    "links": {
+      "searchDocuments": "Szukaj dokumentów",
+      "uploadDocument": "Prześlij dokument",
+      "aboutHaqNow": "O HaqNow",
+      "foiGuides": "Przewodniki FOI",
+      "privacy": "Prywatność",
+      "disclaimer": "Zastrzeżenie"
+    }
   },
   "homepage": {
     "title": "Oświetlanie prawdy dla globalnej sprawiedliwości",
@@ -38,7 +47,24 @@
     "searchTitle": "Szukaj rejestrów publicznych",
     "searchDescription": "Dostęp do globalnego archiwum dokumentów dotyczących odpowiedzialności instytucjonalnej.",
     "uploadTitle": "Udostępnij informacje",
-    "uploadDescription": "Bezpiecznie przekazuj dokumenty o znaczeniu publicznym do globalnego ruchu na rzecz przejrzystości."
+    "uploadDescription": "Bezpiecznie przekazuj dokumenty o znaczeniu publicznym do globalnego ruchu na rzecz przejrzystości.",
+    "announcementBanner": "Sprawdź cotygodniowe spotkanie naszej siostrzanej organizacji <link>Freedom Advocacy Network</link>",
+    "statsPublicDocuments": "Dokumenty publiczne",
+    "statsCountries": "Kraje",
+    "statsAnonymous": "Anonimowy",
+    "statsOpen": "Otwarte",
+    "statsSource": "Źródło",
+    "howItWorksTitle": "Jak to działa",
+    "step01Label": "KROK 01",
+    "step01Title": "Znajdź dokument",
+    "step01Desc": "Szukaj według słowa kluczowego, kraju lub organizacji",
+    "step02Label": "KROK 02",
+    "step02Title": "Czytaj i odkrywaj",
+    "step02Desc": "Wyświetlaj podsumowania AI i zadawaj pytania dotyczące dowolnego dokumentu",
+    "step03Label": "KROK 03",
+    "step03Title": "Udostępnij dowód",
+    "step03Desc": "Prześlij anonimowo — nie jest wymagane konto ani tożsamość",
+    "mapSubtitle": "Kliknij dowolny kraj, aby przeglądać jego dokumenty"
   },
   "search": {
     "title": "Wyszukaj Dokumenty Korupcji",

@@ -60,12 +60,12 @@ export default function Footer() {
         {/* Quick Navigation Links */}
         <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 mb-8 pb-8 border-b border-gray-200">
           {[
-            { label: 'Search Documents', path: '/search-page' },
-            { label: 'Upload a Document', path: '/upload-document-page' },
-            { label: 'About HaqNow', path: '/about' },
-            { label: 'FOI Guides', path: '/foi' },
-            { label: 'Privacy', path: '/privacy-guaranteed-page' },
-            { label: 'Disclaimer', path: '/disclaimer' },
+            { label: t('footer.links.searchDocuments', 'Search Documents'), path: '/search-page' },
+            { label: t('footer.links.uploadDocument', 'Upload a Document'), path: '/upload-document-page' },
+            { label: t('footer.links.aboutHaqNow', 'About HaqNow'), path: '/about' },
+            { label: t('footer.links.foiGuides', 'FOI Guides'), path: '/foi' },
+            { label: t('footer.links.privacy', 'Privacy'), path: '/privacy-guaranteed-page' },
+            { label: t('footer.links.disclaimer', 'Disclaimer'), path: '/disclaimer' },
           ].map((link) => (
             <a
               key={link.path}

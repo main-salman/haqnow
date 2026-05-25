@@ -9,13 +9,22 @@
     "foi": "Informationsfreiheit",
     "disclaimer": "Haftungsausschluss und FAQ",
     "donate": "Spenden",
-    "blog": "Blog"
+    "blog": "Blog",
+    "more": "Mehr"
   },
   "footer": {
     "copyright": "© 2026 HaqNow. Eine gemeinnützige Initiative für öffentliche Verantwortlichkeit.",
     "privacyPromise": "Datenschutzversprechen: Wir verwenden Zero-Knowledge-Architektur. Keine Cookies. Keine Tracker. Keine Protokolle.",
     "poweredBy": "Transparente Infrastruktur für eine verantwortungsvollere Welt.",
-    "complianceJargon": "HaqNow ist eine neutrale Plattform für den Austausch von Informationen von öffentlichem Interesse. Wir sind DMCA- und DSGVO-konform. Wenn Sie Bedenken bezüglich eines Dokuments haben, reichen Sie Ihr Anliegen bitte über unser Kontaktformular ein, einschließlich der URL des Dokuments. Wir handeln schnell, um legitime rechtliche und datenschutzrechtliche Bedenken auszuräumen."
+    "complianceJargon": "HaqNow ist eine neutrale Plattform für den Austausch von Informationen von öffentlichem Interesse. Wir sind DMCA- und DSGVO-konform. Wenn Sie Bedenken bezüglich eines Dokuments haben, reichen Sie Ihr Anliegen bitte über unser Kontaktformular ein, einschließlich der URL des Dokuments. Wir handeln schnell, um legitime rechtliche und datenschutzrechtliche Bedenken auszuräumen.",
+    "links": {
+      "searchDocuments": "Dokumente suchen",
+      "uploadDocument": "Dokument hochladen",
+      "aboutHaqNow": "Über HaqNow",
+      "foiGuides": "FOI-Leitfäden",
+      "privacy": "Datenschutz",
+      "disclaimer": "Haftungsausschluss"
+    }
   },
   "homepage": {
     "title": "Wahrheit beleuchten für globale Gerechtigkeit",
@@ -38,7 +47,24 @@
     "searchTitle": "Öffentliche Aufzeichnungen suchen",
     "searchDescription": "Greifen Sie auf das globale Archiv der Dokumente zur institutionellen Rechenschaftspflicht zu.",
     "uploadTitle": "Informationen teilen",
-    "uploadDescription": "Tragen Sie sicher zu Aufzeichnungen von öffentlichem Interesse für die globale Transparenzbewegung bei."
+    "uploadDescription": "Tragen Sie sicher zu Aufzeichnungen von öffentlichem Interesse für die globale Transparenzbewegung bei.",
+    "announcementBanner": "Schauen Sie sich das wöchentliche Treffen unserer Schwesterorganisation <link>Freedom Advocacy Network</link> an",
+    "statsPublicDocuments": "Öffentliche Dokumente",
+    "statsCountries": "Länder",
+    "statsAnonymous": "Anonym",
+    "statsOpen": "Open",
+    "statsSource": "Source",
+    "howItWorksTitle": "Wie es funktioniert",
+    "step01Label": "SCHRITT 01",
+    "step01Title": "Dokument finden",
+    "step01Desc": "Nach Stichwort, Land oder Organisation suchen",
+    "step02Label": "SCHRITT 02",
+    "step02Title": "Lesen & Erkunden",
+    "step02Desc": "KI-Zusammenfassungen anzeigen und Fragen zu jedem Dokument stellen",
+    "step03Label": "SCHRITT 03",
+    "step03Title": "Beweise teilen",
+    "step03Desc": "Anonym hochladen – kein Konto oder Identität erforderlich",
+    "mapSubtitle": "Klicken Sie auf ein Land, um dessen Dokumente zu durchsuchen"
   },
   "search": {
     "title": "Dokumente nach Tags Suchen",

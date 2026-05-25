@@ -139,7 +139,7 @@ resource "exoscale_nlb_service" "http" {
   healthcheck {
     mode     = "http"
     port     = 31621
-    uri      = "/health"
+    uri      = "/healthz"
     interval = 10
     timeout  = 5
     retries  = 3
