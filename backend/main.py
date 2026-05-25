@@ -163,7 +163,7 @@ def create_app() -> FastAPI:
     @app.get("/api/umami/send")
     async def umami_proxy(request: Request):
         """Proxy Umami tracking requests to avoid CORS issues."""
-        umami_url = os.getenv("UMAMI_URL", "https://analytics.haqnow.com")
+        umami_url = os.getenv("UMAMI_URL", "https://analytics.haqnow.org")
         
         try:
             # Get request body if present

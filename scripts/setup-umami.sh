@@ -124,7 +124,7 @@ check_health() {
         echo "✅ Umami Analytics Setup Complete!"
         echo "============================================"
         echo ""
-        echo "🌐 Access Umami at: https://analytics.haqnow.com"
+        echo "🌐 Access Umami at: https://analytics.haqnow.org"
         echo ""
         echo "⚠️  IMPORTANT:"
         echo "   1. Login with the default credentials (check Umami docs)"
