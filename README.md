@@ -40,7 +40,7 @@ The AI Q&A system uses a sophisticated Retrieval-Augmented Generation pipeline:
 
 ### **Umami Analytics** (Self-hosted)
 - **Privacy-focused**: No cookies, GDPR compliant visitor tracking
-- **Dashboard**: [analytics.haqnow.com](https://analytics.haqnow.com)
+- **Dashboard**: [analytics.haqnow.org](https://analytics.haqnow.org)
 - **Metrics**: Page views, referrers, device types, countries (IP not stored)
 - **Lightweight**: ~1KB tracking script, minimal performance impact
 

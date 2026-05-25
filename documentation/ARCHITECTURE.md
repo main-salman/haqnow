@@ -272,7 +272,7 @@ git merge main
 ## 📊 **Monitoring & Analytics**
 
 ### **Umami Analytics** (Self-hosted)
-- **URL**: https://analytics.haqnow.com
+- **URL**: https://analytics.haqnow.org
 - **Privacy**: No cookies, GDPR compliant
 - **Metrics**: Page views, referrers, countries, devices
 - **Integration**: Tracking script in frontend index.html

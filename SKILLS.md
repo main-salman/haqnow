@@ -295,7 +295,7 @@ python -c "from backend.app.database.rag_database import rag_engine; print(rag_e
 
 | Item | Detail |
 |------|--------|
-| **Dashboard** | https://analytics.haqnow.com |
+| **Dashboard** | https://analytics.haqnow.org |
 | **Tracking script** | `frontend/index.html` |
 | **Setup** | `scripts/setup-umami.sh` |
 | **Config** | `UMAMI_WEBSITE_ID` in `.env` |

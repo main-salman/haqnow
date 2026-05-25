@@ -182,7 +182,7 @@ User → DNS → Deflect CDN → Exoscale NLB → K8s Ingress → Pod
 ### DNS Configuration
 - `haqnow.com` → Deflect CDN → NLB
 - `haqnow.click` → NLB (direct)
-- `analytics.haqnow.com` → Umami server
+- `analytics.haqnow.org` → Umami server
 
 ---
 
@@ -249,7 +249,7 @@ kubectl get events -n haqnow --sort-by='.lastTimestamp' # Recent events
 ```
 
 ### Analytics
-- **Umami**: https://analytics.haqnow.com
+- **Umami**: https://analytics.haqnow.org
 - **Admin Dashboard**: `/admin-analytics-page`
 
 ---

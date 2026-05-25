@@ -95,6 +95,7 @@ metadata:
   name: umami-ingress
   namespace: umami
   annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
     # CORS configuration to allow requests from haqnow.com domains
     # Using regex pattern to match multiple origins - simplified pattern

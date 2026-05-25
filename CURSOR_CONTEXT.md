@@ -50,7 +50,7 @@
 - **Frontend**: `/search-page` → "AI Q&A" tab
 
 ### **Analytics**
-- **Umami**: Self-hosted at https://analytics.haqnow.com (privacy-focused)
+- **Umami**: Self-hosted at https://analytics.haqnow.org (privacy-focused)
 - **Admin Dashboard**: Built-in at /admin-analytics-page
 
 ## 🚀 **Deployment Rules**
@@ -191,7 +191,7 @@ curl -s -X POST "https://www.haqnow.com/api/rag/process-all-documents"
 - **Domains**: 
   - Production: https://www.haqnow.com (prod branch)
   - Development: https://haqnow.click (main branch)
-- **Analytics**: https://analytics.haqnow.com (Umami) - disabled for dev
+- **Analytics**: https://analytics.haqnow.org (Umami) - disabled for dev
 - **Admin panel**: https://www.haqnow.com/admin-login-page
 - **Git branches**: `main` for dev, `prod` for production
 
