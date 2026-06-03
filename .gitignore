@@ -292,4 +292,14 @@ settings_local.py
 .typings/
 
 # Project history file (contains sensitive information)
-history.txt a
+history.txt
+
+/temp/
+/temp/*
+temp/
+temp/*
+
+/resumes/
+/resumes/*
+resumes/
+resumes/*

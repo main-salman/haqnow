@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: prune-disk
+  namespace: kube-system
+spec:
+  tolerations:
+  - operator: "Exists"
+  hostPID: true
+  hostNetwork: true
+  containers:
+  - name: prune
+    image: alpine
+    securityContext:
+      privileged: true
+    command: ["nsenter", "-t", "1", "-m", "-u", "-i", "-n", "sh", "-c", "export PATH=$PATH:/usr/local/bin:/usr/bin:/usr/sbin:/sbin:/bin && ctr ns ls && echo '---' && ctr -n k8s.io images ls -q | wc -l"]
+  restartPolicy: Never

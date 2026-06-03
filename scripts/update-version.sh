@@ -11,8 +11,8 @@ if [ ! -f "$PACKAGE_JSON" ]; then
     exit 1
 fi
 
-# Get current version
-CURRENT_VERSION=$(grep '"version"' $PACKAGE_JSON | sed 's/.*"version": "\([^"]*\)".*/\1/')
+# Get current version (first match only)
+CURRENT_VERSION=$(grep -m1 '"version"' "$PACKAGE_JSON" | sed 's/.*"version": "\([^"]*\)".*/\1/')
 echo "Current version: $CURRENT_VERSION"
 
 # Parse version numbers

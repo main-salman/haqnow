@@ -71,7 +71,12 @@ All deployments go through `scripts/deploy.sh`. No exceptions. No manual server 
 - `deploy.sh` syncs `.env` to Kubernetes secrets automatically
 - Never edit `.env` on the server directly
 
-### 3.4 — Test Before Deploy
+### 3.4 — Zero-Tolerance for Hardcoded Secrets
+- Any PR or commit containing hardcoded API keys, database credentials, or private tokens will be REJECTED and the secret considered compromised.
+- Use `os.getenv()` with NO hardcoded fallback for all sensitive configurations.
+- Use pre-commit hooks or GitGuardian-like scanning to catch leaks before they are pushed.
+
+### 3.5 — Test Before Deploy
 Every change must be tested locally before deployment:
 ```bash
 ./scripts/run-local.sh    # Start local environment
@@ -79,13 +84,13 @@ Every change must be tested locally before deployment:
 ./scripts/deploy.sh       # Deploy only after verification
 ```
 
-### 3.5 — Documentation-Driven Development
+### 3.6 — Documentation-Driven Development
 - Read existing docs before writing code
 - Update documentation when making architectural changes
 - Every new service/feature should be reflected in relevant docs
 - The `documentation/` folder is the canonical reference
 
-### 3.6 — Extend Before Creating
+### 3.7 — Extend Before Creating
 Before creating a new service, component, or module:
 1. Check if an existing service can be extended
 2. Check if the pattern exists elsewhere in the codebase

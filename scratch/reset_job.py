@@ -19,28 +19,28 @@ SessionLocal = sessionmaker(bind=engine)
 def reset_job(job_id: int):
     db = SessionLocal()
     try:
-        print(f"Resetting job {job_id} to pending...")
+        print(f"🔧 Resetting job {job_id} to pending...")
         
-        # We will reset status to 'pending', started_at/completed_at/failed_at to None,
-        # progress_percent to 0, current_step to None, and error_message to None
+        # Reset the job state, clearing progress, steps, and timestamps
         result = db.execute(text("""
-            UPDATE job_queue
-            SET status = 'pending',
-                started_at = NULL,
+            UPDATE job_queue 
+            SET status = 'pending', 
+                current_step = NULL, 
+                progress_percent = 0, 
+                started_at = NULL, 
                 completed_at = NULL,
                 failed_at = NULL,
-                progress_percent = 0,
-                current_step = NULL,
-                error_message = NULL
+                error_message = NULL, 
+                retry_count = 0
             WHERE id = :job_id
         """), {"job_id": job_id})
         
         db.commit()
-        print(f"Job {job_id} successfully reset to pending! Rows affected: {result.rowcount}")
+        print(f"✅ Successfully reset job {job_id} to pending! Rows affected: {result.rowcount}")
         
     except Exception as e:
         db.rollback()
-        print(f"Error resetting job: {e}")
+        print(f"❌ Error resetting job: {e}")
     finally:
         db.close()
 

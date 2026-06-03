@@ -15,6 +15,8 @@ resource "exoscale_dbaas" "umami_postgres" {
   name = "${var.project_name}-umami-${var.environment}"
   type = "pg"
   plan = var.umami_postgres_plan
+  
+  termination_protection = false  # Disable to allow deletion
 
   pg {
     admin_username  = var.umami_db_user

@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: inspect-disk
+  namespace: kube-system
+spec:
+  tolerations:
+  - operator: "Exists"
+  containers:
+  - name: inspect
+    image: alpine
+    command: ["sh", "-c", "df -h && du -sh /host/var/log /host/var/lib/containerd /host/var/lib/docker 2>/dev/null || true"]
+    volumeMounts:
+    - name: host-root
+      mountPath: /host
+  volumes:
+  - name: host-root
+    hostPath:
+      path: /
+  restartPolicy: Never
