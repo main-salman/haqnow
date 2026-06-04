@@ -222,6 +222,53 @@ class QueueService:
         return position + 1
     
     @staticmethod
+    def recover_stale_jobs(db: Session, timeout_minutes: int = 10) -> int:
+        """
+        Reset jobs stuck in 'processing' for longer than timeout back to 'pending'.
+        
+        This handles the case where a worker pod is killed (deployment, OOM, liveness
+        probe failure) while processing a job. Without recovery, such jobs stay stuck
+        in 'processing' forever since get_next_job() only picks up 'pending' jobs.
+        
+        Args:
+            db: Database session
+            timeout_minutes: How long a job can be in 'processing' before considered stale
+            
+        Returns:
+            Number of jobs recovered
+        """
+        from datetime import timedelta
+        cutoff = datetime.utcnow() - timedelta(minutes=timeout_minutes)
+        
+        stale_jobs = db.query(JobQueue).filter(
+            and_(
+                JobQueue.status == 'processing',
+                JobQueue.started_at < cutoff
+            )
+        ).all()
+        
+        count = 0
+        for job in stale_jobs:
+            job.status = 'pending'
+            job.current_step = None
+            job.progress_percent = 0
+            job.retry_count += 1
+            count += 1
+            logger.info(
+                "Recovered stale job",
+                job_id=job.id,
+                document_id=job.document_id,
+                was_stuck_since=str(job.started_at),
+                retry_count=job.retry_count
+            )
+        
+        if count > 0:
+            db.commit()
+            logger.info("Stale job recovery completed", recovered_count=count)
+        
+        return count
+    
+    @staticmethod
     def get_failed_jobs(db: Session, limit: int = 100) -> List[JobQueue]:
         """Get failed jobs for admin review."""
         return db.query(JobQueue).filter(
