@@ -192,10 +192,39 @@ async def worker_loop():
     finally:
         db.close()
     
+    # Recover any stale jobs on startup (handles pod restart during processing)
+    db = SessionLocal()
+    try:
+        recovered = queue_service.recover_stale_jobs(db, timeout_minutes=10)
+        if recovered > 0:
+            logger.info("Recovered stale jobs on startup", count=recovered)
+        else:
+            logger.info("No stale jobs found on startup")
+    except Exception as e:
+        logger.error("Error recovering stale jobs on startup", error=str(e))
+    finally:
+        db.close()
+    
+    # Track time for periodic stale job recovery
+    import time as _time
+    last_recovery_check = _time.time()
+    RECOVERY_INTERVAL_SECONDS = 300  # Check every 5 minutes
+    
     # Main processing loop
     while not shutdown_requested:
         db = SessionLocal()
         try:
+            # Periodic stale job recovery
+            now = _time.time()
+            if now - last_recovery_check >= RECOVERY_INTERVAL_SECONDS:
+                try:
+                    recovered = queue_service.recover_stale_jobs(db, timeout_minutes=10)
+                    if recovered > 0:
+                        logger.info("Periodic stale job recovery", count=recovered)
+                except Exception as e:
+                    logger.error("Error in periodic stale job recovery", error=str(e))
+                last_recovery_check = now
+            
             # Get next job
             job = queue_service.get_next_job(db)
             
