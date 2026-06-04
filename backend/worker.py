@@ -112,12 +112,27 @@ async def process_job(job):
                         has_summary=bool(document.ai_summary)
                     )
                     
-                    # NOTE: RAG indexing skipped in worker to prevent OOM.
-                    # The all-MiniLM-L6-v2 model + PyTorch (~1GB) exceeds the
-                    # worker's 2Gi limit when combined with OCR + AI summary.
-                    # RAG indexing happens lazily when users access documents.
-                    logger.info("Skipping RAG indexing in worker to prevent OOM",
-                               document_id=job.document_id)
+                    # Trigger RAG indexing via the backend API (which has ML models loaded)
+                    # Worker delegates this to avoid loading PyTorch/models locally
+                    try:
+                        import requests as http_requests
+                        backend_url = os.environ.get('BACKEND_URL', 'http://backend-service:8000')
+                        resp = http_requests.post(
+                            f"{backend_url}/rag/process-document",
+                            json={"document_id": job.document_id},
+                            timeout=10
+                        )
+                        if resp.status_code == 200:
+                            logger.info("RAG indexing triggered via backend API",
+                                       document_id=job.document_id)
+                        else:
+                            logger.warning("RAG indexing API returned non-200",
+                                          document_id=job.document_id,
+                                          status=resp.status_code)
+                    except Exception as rag_err:
+                        logger.warning("Failed to trigger RAG indexing via API (non-fatal)",
+                                      document_id=job.document_id,
+                                      error=str(rag_err))
                         
                     return True
                 else:
