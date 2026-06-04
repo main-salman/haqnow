@@ -33,7 +33,7 @@ spec:
             memory: "256Mi"
             cpu: "100m"
           limits:
-            memory: "2Gi"
+            memory: "768Mi"
             cpu: "1000m"
         volumeMounts:
         - name: tmp
