@@ -153,25 +153,44 @@ class MultilingualOCRService:
         return LANGUAGE_MAPPING.get(language_key.lower())
     
     def _convert_pdf_to_images(self, pdf_content: bytes) -> List[Image.Image]:
-        """Convert PDF pages to PIL Images for OCR processing."""
+        """Convert PDF pages to PIL Images for OCR processing.
+        
+        Processes pages one at a time to avoid OOM on large PDFs.
+        Uses 150 DPI (sufficient for OCR, ~4x less memory than 300 DPI).
+        Limits to 50 pages max to stay within worker memory budget.
+        """
+        MAX_PAGES = 50  # Limit to prevent OOM on very large PDFs
         try:
             with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_pdf:
                 temp_pdf.write(pdf_content)
                 temp_pdf.flush()
                 
-                # Convert PDF to images
-                images = pdf2image.convert_from_path(
-                    temp_pdf.name,
-                    dpi=300,  # High DPI for better OCR accuracy
-                    first_page=1,
-                    last_page=None,  # Process all pages
-                    fmt='RGB'
-                )
+                # Convert PDF to images one page at a time to limit memory
+                all_images = []
+                page_num = 1
+                while page_num <= MAX_PAGES:
+                    try:
+                        page_images = pdf2image.convert_from_path(
+                            temp_pdf.name,
+                            dpi=150,  # 150 DPI is sufficient for OCR, uses 4x less RAM than 300
+                            first_page=page_num,
+                            last_page=page_num,
+                            fmt='RGB'
+                        )
+                        if not page_images:
+                            break  # No more pages
+                        all_images.extend(page_images)
+                        page_num += 1
+                    except Exception:
+                        break  # Reached end of PDF or error
                 
                 # Clean up temp file
                 os.unlink(temp_pdf.name)
                 
-                return images
+                if page_num > MAX_PAGES:
+                    logger.warning("PDF truncated to max pages", max_pages=MAX_PAGES)
+                
+                return all_images
                 
         except Exception as e:
             logger.error("Error converting PDF to images", error=str(e))

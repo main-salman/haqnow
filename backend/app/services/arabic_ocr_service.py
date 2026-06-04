@@ -73,12 +73,39 @@ class ArabicOCRService:
         return self.tesseract_available
     
     def _convert_pdf_to_images(self, pdf_content: bytes) -> list[Image.Image]:
-        """Convert PDF to images for OCR processing."""
+        """Convert PDF to images for OCR processing.
+        
+        Processes pages one at a time to avoid OOM on large PDFs.
+        """
+        import tempfile
+        MAX_PAGES = 50
         try:
-            # Convert PDF to images (first 10 pages max for efficiency)
-            images = convert_from_bytes(pdf_content, first_page=1, last_page=10, dpi=300)
-            logger.info("PDF converted to images", page_count=len(images))
-            return images
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_pdf:
+                temp_pdf.write(pdf_content)
+                temp_pdf.flush()
+                
+                all_images = []
+                page_num = 1
+                while page_num <= MAX_PAGES:
+                    try:
+                        from pdf2image import convert_from_path
+                        page_images = convert_from_path(
+                            temp_pdf.name,
+                            dpi=150,
+                            first_page=page_num,
+                            last_page=page_num,
+                            fmt='RGB'
+                        )
+                        if not page_images:
+                            break
+                        all_images.extend(page_images)
+                        page_num += 1
+                    except Exception:
+                        break
+                
+                os.unlink(temp_pdf.name)
+                logger.info("PDF converted to images", page_count=len(all_images))
+                return all_images
         except Exception as e:
             logger.error("Failed to convert PDF to images", error=str(e))
             return []
