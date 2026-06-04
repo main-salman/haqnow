@@ -553,38 +553,12 @@ async def process_document_internal(document_id: int, db: Session) -> dict | Non
         
         document.search_text = ' '.join(search_text_parts)
         
-        # Generate semantic search embedding
-        try:
-            if semantic_search_service and semantic_search_service.is_available():
-                document_dict = {
-                    'id': document.id,
-                    'title': document.title,
-                    'description': document.description,
-                    'search_text': document.search_text,
-                    'generated_tags': generated_tags
-                }
-                
-                embedding = semantic_search_service.generate_document_embedding(document_dict)
-                if embedding:
-                    import json
-                    document.embedding = json.dumps(embedding)
-                    logger.info("Generated semantic embedding", 
-                               document_id=document.id,
-                               embedding_dimensions=len(embedding))
-                else:
-                    logger.warning("Failed to generate embedding", document_id=document.id)
-            else:
-                logger.info("Semantic search service not available, skipping embedding generation")
-        except Exception as embedding_error:
-            logger.warning("Error generating embedding", 
-                          document_id=document.id, 
-                          error=str(embedding_error))
-        finally:
-            try:
-                if semantic_search_service:
-                    semantic_search_service.unload_model()
-            except Exception as unload_err:
-                logger.warning("Error unloading semantic search model", error=str(unload_err))
+        # NOTE: Semantic search embedding (BAAI/bge-large-en-v1.5, 1.3GB) is skipped
+        # during document processing to prevent OOMKilled in the worker pod (5Gi limit).
+        # The RAG service generates its own embeddings with the lighter all-MiniLM-L6-v2
+        # model (~90MB) during RAG indexing, which powers the AI Q&A features.
+        logger.info("Skipping heavy semantic embedding (BGE-large) in worker to prevent OOM",
+                   document_id=document.id)
         
         try:
             db.commit()
@@ -837,38 +811,12 @@ async def process_document(
         
         document.search_text = ' '.join(search_text_parts)
         
-        # Generate semantic search embedding
-        try:
-            if semantic_search_service and semantic_search_service.is_available():
-                document_dict = {
-                    'id': document.id,
-                    'title': document.title,
-                    'description': document.description,
-                    'search_text': document.search_text,
-                    'generated_tags': generated_tags
-                }
-                
-                embedding = semantic_search_service.generate_document_embedding(document_dict)
-                if embedding:
-                    import json
-                    document.embedding = json.dumps(embedding)
-                    logger.info("Generated semantic embedding", 
-                               document_id=document.id,
-                               embedding_dimensions=len(embedding))
-                else:
-                    logger.warning("Failed to generate embedding", document_id=document.id)
-            else:
-                logger.info("Semantic search service not available, skipping embedding generation")
-        except Exception as embedding_error:
-            logger.warning("Error generating embedding", 
-                          document_id=document.id, 
-                          error=str(embedding_error))
-        finally:
-            try:
-                if semantic_search_service:
-                    semantic_search_service.unload_model()
-            except Exception as unload_err:
-                logger.warning("Error unloading semantic search model", error=str(unload_err))
+        # NOTE: Semantic search embedding (BAAI/bge-large-en-v1.5, 1.3GB) is skipped
+        # during document processing to prevent OOMKilled in the worker pod (5Gi limit).
+        # The RAG service generates its own embeddings with the lighter all-MiniLM-L6-v2
+        # model (~90MB) during RAG indexing, which powers the AI Q&A features.
+        logger.info("Skipping heavy semantic embedding (BGE-large) in worker to prevent OOM",
+                   document_id=document.id)
         
         try:
             db.commit()
