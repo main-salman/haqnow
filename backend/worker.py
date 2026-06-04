@@ -112,17 +112,12 @@ async def process_job(job):
                         has_summary=bool(document.ai_summary)
                     )
                     
-                    # Trigger RAG indexing asynchronously
-                    try:
-                        logger.info("Triggering RAG indexing for completed document", document_id=job.document_id)
-                        await rag_service.process_new_document(job.document_id, db)
-                        logger.info("Successfully triggered RAG indexing for document", document_id=job.document_id)
-                    except Exception as rag_err:
-                        logger.error(
-                            "Failed to trigger RAG indexing after job completion",
-                            document_id=job.document_id,
-                            error=str(rag_err)
-                        )
+                    # NOTE: RAG indexing skipped in worker to prevent OOM.
+                    # The all-MiniLM-L6-v2 model + PyTorch (~1GB) exceeds the
+                    # worker's 2Gi limit when combined with OCR + AI summary.
+                    # RAG indexing happens lazily when users access documents.
+                    logger.info("Skipping RAG indexing in worker to prevent OOM",
+                               document_id=job.document_id)
                         
                     return True
                 else:
