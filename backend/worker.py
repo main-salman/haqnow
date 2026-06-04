@@ -239,6 +239,24 @@ async def worker_loop():
             job = queue_service.get_next_job(db)
             
             if job:
+                # Auto-skip jobs that have failed too many times
+                MAX_RETRIES = 5
+                if job.retry_count >= MAX_RETRIES:
+                    logger.warning(
+                        "Job exceeded max retries, permanently failing",
+                        job_id=job.id,
+                        document_id=job.document_id,
+                        retry_count=job.retry_count,
+                        max_retries=MAX_RETRIES
+                    )
+                    queue_service.fail_job(
+                        db, job.id,
+                        f"Exceeded max retries ({job.retry_count}/{MAX_RETRIES}) - document may be too large or corrupt",
+                        retry=False
+                    )
+                    await asyncio.sleep(1)
+                    continue
+                
                 # Process the job (async)
                 await process_job(job)
                 # Small delay after processing
