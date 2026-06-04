@@ -152,55 +152,14 @@ class MultilingualOCRService:
         """Get language information for a specific language key."""
         return LANGUAGE_MAPPING.get(language_key.lower())
     
-    def _convert_pdf_to_images(self, pdf_content: bytes) -> List[Image.Image]:
-        """Convert PDF pages to PIL Images for OCR processing.
+    def _ocr_pdf_streaming(self, pdf_content: bytes, language: str) -> str:
+        """Convert PDF to images and OCR each page one at a time.
         
-        Processes pages one at a time to avoid OOM on large PDFs.
-        Uses 150 DPI (sufficient for OCR, ~4x less memory than 300 DPI).
-        Limits to 50 pages max to stay within worker memory budget.
+        Each page is converted, OCR'd, and freed before the next page.
+        This keeps peak memory to ~1 page image (~15MB at 150 DPI).
         """
-        MAX_PAGES = 50  # Limit to prevent OOM on very large PDFs
-        try:
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_pdf:
-                temp_pdf.write(pdf_content)
-                temp_pdf.flush()
-                
-                # Convert PDF to images one page at a time to limit memory
-                all_images = []
-                page_num = 1
-                while page_num <= MAX_PAGES:
-                    try:
-                        page_images = pdf2image.convert_from_path(
-                            temp_pdf.name,
-                            dpi=150,  # 150 DPI is sufficient for OCR, uses 4x less RAM than 300
-                            first_page=page_num,
-                            last_page=page_num,
-                            fmt='RGB'
-                        )
-                        if not page_images:
-                            break  # No more pages
-                        all_images.extend(page_images)
-                        page_num += 1
-                    except Exception:
-                        break  # Reached end of PDF or error
-                
-                # Clean up temp file
-                os.unlink(temp_pdf.name)
-                
-                if page_num > MAX_PAGES:
-                    logger.warning("PDF truncated to max pages", max_pages=MAX_PAGES)
-                
-                return all_images
-                
-        except Exception as e:
-            logger.error("Error converting PDF to images", error=str(e))
-            return []
-    
-    async def _extract_text_from_images(self, images: List[Image.Image], language: str) -> str:
-        """Extract text from images using Tesseract OCR."""
-        if not images:
-            return ""
-            
+        MAX_PAGES = 50
+        
         language_info = self.get_language_info(language)
         if not language_info:
             logger.warning("Language not supported, falling back to English", language=language)
@@ -208,37 +167,64 @@ class MultilingualOCRService:
         else:
             tesseract_lang = language_info['tesseract']
         
+        custom_config = f'--oem 3 --psm 6 -l {tesseract_lang}'
         extracted_texts = []
         
-        for i, image in enumerate(images):
-            try:
-                # Configure Tesseract for optimal accuracy
-                custom_config = f'--oem 3 --psm 6 -l {tesseract_lang}'
+        try:
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_pdf:
+                temp_pdf.write(pdf_content)
+                temp_pdf.flush()
                 
-                # Run OCR on the image
-                text = pytesseract.image_to_string(image, config=custom_config)
+                page_num = 1
+                while page_num <= MAX_PAGES:
+                    try:
+                        # Convert ONE page
+                        page_images = pdf2image.convert_from_path(
+                            temp_pdf.name,
+                            dpi=150,
+                            first_page=page_num,
+                            last_page=page_num,
+                            fmt='RGB'
+                        )
+                        if not page_images:
+                            break
+                        
+                        # OCR this page
+                        image = page_images[0]
+                        try:
+                            text = pytesseract.image_to_string(image, config=custom_config)
+                            if text.strip():
+                                extracted_texts.append(text.strip())
+                        except Exception as e:
+                            logger.warning(f"OCR failed on page {page_num}", error=str(e))
+                        
+                        # FREE the image immediately
+                        image.close()
+                        del image, page_images
+                        
+                        page_num += 1
+                    except Exception:
+                        break
                 
-                if text.strip():
-                    extracted_texts.append(text.strip())
-                    logger.debug(f"Extracted text from page {i+1}", 
-                               page=i+1, 
-                               language=language,
-                               text_length=len(text))
-                else:
-                    logger.warning(f"No text extracted from page {i+1}", page=i+1)
-                    
-            except Exception as e:
-                logger.error(f"Error extracting text from page {i+1}", 
-                           page=i+1, 
-                           error=str(e))
-                continue
+                # Clean up temp file
+                os.unlink(temp_pdf.name)
+                
+                if page_num > MAX_PAGES:
+                    logger.warning("PDF truncated to max pages", max_pages=MAX_PAGES)
+        
+        except Exception as e:
+            logger.error("Error in streaming OCR", error=str(e))
+        
+        # Force garbage collection after processing all pages
+        import gc
+        gc.collect()
         
         combined_text = '\n\n'.join(extracted_texts)
-        logger.info("Text extraction completed", 
-                   total_pages=len(images),
-                   successful_pages=len(extracted_texts),
-                   total_characters=len(combined_text),
-                   language=language)
+        logger.info("Streaming OCR completed",
+                    total_pages=page_num - 1,
+                    successful_pages=len(extracted_texts),
+                    total_characters=len(combined_text),
+                    language=language)
         
         return combined_text
     
@@ -360,14 +346,8 @@ class MultilingualOCRService:
             return None, None
             
         try:
-            # Step 1: Convert document to images
-            images = self._convert_pdf_to_images(document_content)
-            if not images:
-                logger.warning("No images extracted from document")
-                return None, None
-            
-            # Step 2: Extract text using Tesseract OCR
-            original_text = await self._extract_text_from_images(images, language)
+            # Step 1+2: Stream OCR one page at a time (convert + OCR + free per page)
+            original_text = self._ocr_pdf_streaming(document_content, language)
             if not original_text:
                 logger.warning("No text extracted from document")
                 return None, None
