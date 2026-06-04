@@ -21,7 +21,7 @@ from app.database.database import SessionLocal
 from app.services.queue_service import queue_service
 from app.apis.document_processing import process_document_internal
 from app.database import Document
-from app.services.rag_service import rag_service
+# NOTE: rag_service import removed - it loads PyTorch + transformers (~1GB)
 import structlog
 
 logger = structlog.get_logger()

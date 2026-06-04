@@ -25,6 +25,9 @@ spec:
             name: haqnow-config
         - secretRef:
             name: haqnow-secrets
+        env:
+        - name: SKIP_HEAVY_MODELS
+          value: "true"
         resources:
           requests:
             memory: "256Mi"

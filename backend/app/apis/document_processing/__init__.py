@@ -17,21 +17,31 @@ from app.auth.user import AdminUser
 from app.services.s3_service import s3_service
 from app.services.email_service import email_service
 from app.services.arabic_ocr_service import arabic_ocr_service  # Add Arabic OCR service import
-try:
-    from app.services.semantic_search_service import semantic_search_service
-except ImportError:
+
+# Skip heavy ML model imports in worker to prevent OOM
+# These load PyTorch + sentence-transformers + 1.3GB+ models
+_skip_heavy = os.environ.get('SKIP_HEAVY_MODELS', '').lower() in ('1', 'true', 'yes')
+
+if _skip_heavy:
     semantic_search_service = None
+    rag_service = None
+    RAG_AVAILABLE = False
+else:
+    try:
+        from app.services.semantic_search_service import semantic_search_service
+    except ImportError:
+        semantic_search_service = None
+    # Optional RAG service import
+    try:
+        from app.services.rag_service import rag_service
+        RAG_AVAILABLE = True
+    except ImportError:
+        rag_service = None
+        RAG_AVAILABLE = False
+
 from app.services.ai_summary_service import ai_summary_service
 from app.services.queue_service import queue_service
 from app.database import get_db, Document, BannedTag, JobQueue
-
-# Optional RAG service import
-try:
-    from app.services.rag_service import rag_service
-    RAG_AVAILABLE = True
-except ImportError:
-    rag_service = None
-    RAG_AVAILABLE = False
 
 logger = structlog.get_logger()
 
