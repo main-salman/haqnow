@@ -174,9 +174,23 @@ variable "server_ip_cidr" {
   default     = "0.0.0.0/0"
 }
 
-# VM enabled flag - set to false to decommission VM after SKS migration
+# VM enabled flag - set to true for cost-optimized standalone VM architecture
 variable "vm_enabled" {
-  description = "Whether to create the VM instance (set to false after SKS migration)"
+  description = "Whether to create the VM instance (true for low-cost standalone architecture)"
+  type        = bool
+  default     = true
+}
+
+# DBaaS enabled flag - set to false to save ~90 CHF/mo by running local MySQL and PostgreSQL
+variable "dbaas_enabled" {
+  description = "Whether to provision Exoscale Managed DBaaS (false uses local DBs on VM)"
+  type        = bool
+  default     = false
+}
+
+# Elastic IP enabled flag - static IP that survives VM re-provisioning
+variable "elastic_ip_enabled" {
+  description = "Whether to allocate an Exoscale Elastic IP for the VM"
   type        = bool
   default     = true
 }

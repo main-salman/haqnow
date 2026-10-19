@@ -58,8 +58,9 @@ provider "aws" {
   }
 }
 
-# EXOscale Database as a Service (DBaaS) - MySQL
+# EXOscale Database as a Service (DBaaS) - MySQL (Optional, disabled in standalone VM mode to save costs)
 resource "exoscale_dbaas" "foi_mysql" {
+  count = var.dbaas_enabled ? 1 : 0
   zone = var.zone
   name = "${var.project_name}-mysql-${var.environment}"
   type = "mysql"
@@ -80,17 +81,19 @@ resource "exoscale_dbaas" "foi_mysql" {
 
 # Data source to get database connection URI
 data "exoscale_database_uri" "foi_mysql_uri" {
-  name = exoscale_dbaas.foi_mysql.name
-  zone = var.zone
-  type = "mysql"
+  count = var.dbaas_enabled ? 1 : 0
+  name  = exoscale_dbaas.foi_mysql[0].name
+  zone  = var.zone
+  type  = "mysql"
 }
 
-# EXOscale Database as a Service (DBaaS) - PostgreSQL for RAG/Vector Operations
+# EXOscale Database as a Service (DBaaS) - PostgreSQL for RAG/Vector Operations (Optional)
 resource "exoscale_dbaas" "foi_postgres_rag" {
-  zone = var.zone
-  name = "${var.project_name}-postgres-rag-${var.environment}"
-  type = "pg"
-  plan = var.postgres_plan
+  count = var.dbaas_enabled ? 1 : 0
+  zone  = var.zone
+  name  = "${var.project_name}-postgres-rag-${var.environment}"
+  type  = "pg"
+  plan  = var.postgres_plan
   
   pg {
     admin_username   = var.postgres_user
@@ -108,9 +111,10 @@ resource "exoscale_dbaas" "foi_postgres_rag" {
 
 # Data source to get PostgreSQL connection URI
 data "exoscale_database_uri" "foi_postgres_rag_uri" {
-  name = exoscale_dbaas.foi_postgres_rag.name
-  zone = var.zone
-  type = "pg"
+  count = var.dbaas_enabled ? 1 : 0
+  name  = exoscale_dbaas.foi_postgres_rag[0].name
+  zone  = var.zone
+  type  = "pg"
 }
 
 # Security Group for web traffic
@@ -165,7 +169,14 @@ resource "exoscale_ssh_key" "foi_key" {
   public_key = file("~/.ssh/id_rsa.pub") # Adjust path as needed
 }
 
-# Compute Instance for the application (disabled after SKS migration)
+# Static Elastic IP for the VM (persists across VM re-creations / disaster recovery)
+resource "exoscale_elastic_ip" "foi_app_ip" {
+  count       = var.vm_enabled && var.elastic_ip_enabled ? 1 : 0
+  zone        = var.zone
+  description = "Static Elastic IP for HaqNow VM"
+}
+
+# Compute Instance for the application (Standalone low-cost architecture)
 resource "exoscale_compute_instance" "foi_app" {
   count              = var.vm_enabled ? 1 : 0
   zone               = var.zone
@@ -175,77 +186,84 @@ resource "exoscale_compute_instance" "foi_app" {
   disk_size          = var.disk_size
   ssh_keys           = [exoscale_ssh_key.foi_key.name]
   security_group_ids = [exoscale_security_group.foi_web.id]
+  elastic_ip_ids     = var.elastic_ip_enabled && length(exoscale_elastic_ip.foi_app_ip) > 0 ? [exoscale_elastic_ip.foi_app_ip[0].id] : []
 
   lifecycle {
     ignore_changes = [user_data]
   }
 
   user_data = base64encode(templatefile("${path.module}/cloud-init.yml", {
-    project_name       = var.project_name
-    environment        = var.environment
-    s3_bucket          = var.s3_bucket_name
-    s3_access_key      = var.s3_access_key
-    s3_secret_key      = var.s3_secret_key
-    s3_endpoint        = var.s3_endpoint
-    s3_region          = var.s3_region
-    admin_email        = var.admin_email
-    admin_password     = var.admin_password
-    jwt_secret         = var.jwt_secret_key
-    sendgrid_api_key   = var.sendgrid_api_key
-    mysql_host         = data.exoscale_database_uri.foi_mysql_uri.uri
-    mysql_user         = var.mysql_user
-    mysql_password     = var.mysql_password
-    mysql_database     = var.mysql_database
-    postgres_rag_uri   = data.exoscale_database_uri.foi_postgres_rag_uri.uri
-    postgres_user      = var.postgres_user
-    postgres_password  = var.postgres_password
-    postgres_database  = var.postgres_database
+    project_name        = var.project_name
+    environment         = var.environment
+    s3_bucket           = var.s3_bucket_name
+    s3_access_key       = var.s3_access_key
+    s3_secret_key       = var.s3_secret_key
+    s3_endpoint         = var.s3_endpoint
+    s3_region           = var.s3_region
+    dr_bucket_name      = var.dr_bucket_name
+    dr_endpoint         = "sos-${var.dr_zone}.exo.io"
+    admin_email         = var.admin_email
+    admin_password      = var.admin_password
+    jwt_secret          = var.jwt_secret_key
+    sendgrid_api_key    = var.sendgrid_api_key
+    mysql_host          = var.dbaas_enabled && length(data.exoscale_database_uri.foi_mysql_uri) > 0 ? data.exoscale_database_uri.foi_mysql_uri[0].uri : "localhost"
+    mysql_user          = var.mysql_user
+    mysql_password      = var.mysql_password
+    mysql_database      = var.mysql_database
+    postgres_rag_uri    = var.dbaas_enabled && length(data.exoscale_database_uri.foi_postgres_rag_uri) > 0 ? data.exoscale_database_uri.foi_postgres_rag_uri[0].uri : "postgresql://${var.postgres_user}:${var.postgres_password}@localhost:5432/${var.postgres_database}"
+    postgres_user       = var.postgres_user
+    postgres_password   = var.postgres_password
+    postgres_database   = var.postgres_database
     mysql_root_password = var.mysql_root_password
   }))
 }
 
+locals {
+  app_ip = var.vm_enabled ? (var.elastic_ip_enabled && length(exoscale_elastic_ip.foi_app_ip) > 0 ? exoscale_elastic_ip.foi_app_ip[0].ip_address : (length(exoscale_compute_instance.foi_app) > 0 ? exoscale_compute_instance.foi_app[0].public_ip_address : null)) : null
+}
+
 # Outputs
 output "instance_ip" {
-  description = "Public IP of the HaqNow.com instance (null if VM disabled)"
-  value       = var.vm_enabled ? exoscale_compute_instance.foi_app[0].public_ip_address : null
+  description = "Public IP of the HaqNow.com instance (Elastic IP if enabled, else instance public IP)"
+  value       = local.app_ip
 }
 
 output "instance_id" {
   description = "Instance ID (null if VM disabled)"
-  value       = var.vm_enabled ? exoscale_compute_instance.foi_app[0].id : null
+  value       = var.vm_enabled && length(exoscale_compute_instance.foi_app) > 0 ? exoscale_compute_instance.foi_app[0].id : null
 }
 
 output "database_uri" {
   description = "Database connection URI"
-  value       = data.exoscale_database_uri.foi_mysql_uri.uri
+  value       = var.dbaas_enabled && length(data.exoscale_database_uri.foi_mysql_uri) > 0 ? data.exoscale_database_uri.foi_mysql_uri[0].uri : "mysql+pymysql://${var.mysql_user}:${var.mysql_password}@localhost:3306/${var.mysql_database}"
   sensitive   = true
 }
 
 output "database_host" {
   description = "Database host"
-  value       = data.exoscale_database_uri.foi_mysql_uri.uri
+  value       = var.dbaas_enabled && length(data.exoscale_database_uri.foi_mysql_uri) > 0 ? data.exoscale_database_uri.foi_mysql_uri[0].uri : "localhost"
   sensitive   = true
 }
 
 output "ssh_command" {
   description = "SSH command to connect to the instance"
-  value       = var.vm_enabled ? "ssh root@${exoscale_compute_instance.foi_app[0].public_ip_address}" : null
+  value       = local.app_ip != null ? "ssh root@${local.app_ip}" : null
 }
 
 output "application_url" {
   description = "URL to access the HaqNow.com application"
-  value       = var.vm_enabled ? "http://${exoscale_compute_instance.foi_app[0].public_ip_address}" : "http://www.haqnow.com (via SKS)"
+  value       = local.app_ip != null ? "http://${local.app_ip}" : "http://www.haqnow.com (via SKS)"
 }
 
 output "postgres_rag_uri" {
   description = "PostgreSQL RAG database connection URI"
-  value       = data.exoscale_database_uri.foi_postgres_rag_uri.uri
+  value       = var.dbaas_enabled && length(data.exoscale_database_uri.foi_postgres_rag_uri) > 0 ? data.exoscale_database_uri.foi_postgres_rag_uri[0].uri : "postgresql://${var.postgres_user}:${var.postgres_password}@localhost:5432/${var.postgres_database}"
   sensitive   = true
 }
 
 output "postgres_rag_host" {
   description = "PostgreSQL RAG database host"
-  value       = data.exoscale_database_uri.foi_postgres_rag_uri.uri
+  value       = var.dbaas_enabled && length(data.exoscale_database_uri.foi_postgres_rag_uri) > 0 ? data.exoscale_database_uri.foi_postgres_rag_uri[0].uri : "localhost"
   sensitive   = true
 }
 

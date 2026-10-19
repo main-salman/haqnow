@@ -44,3 +44,9 @@ ssh_key_name = "foi-archive-key"  # This will be created automatically
 # Server IP allowlist for databases (set after server is created):
 # Example: "203.0.113.10/32"
 server_ip_cidr = "159.100.250.145/32"
+
+# Cost Optimization & Architecture Configuration
+sks_enabled        = false  # Set false to disable Kubernetes & NLB (~48 CHF/mo)
+vm_enabled         = true   # Set true for standalone VM (~33 CHF/mo)
+dbaas_enabled      = false  # Set false to run local DBs and save ~90 CHF/mo
+elastic_ip_enabled = true   # Static IP (~3.50 CHF/mo) for instant DR rebuilds

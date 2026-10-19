@@ -256,17 +256,17 @@ kubectl get events -n haqnow --sort-by='.lastTimestamp' # Recent events
 
 ## 💰 Cost Overview
 
-| Component | Monthly Estimate |
-|-----------|-----------------|
-| SKS Cluster (nodes) | ~€40-60 |
-| MySQL DBaaS | ~€15 |
-| PostgreSQL DBaaS | ~€15 |
-| S3 Storage (primary) | ~€5 |
-| S3 DR Backups (Vienna) | ~€10-15 |
-| NLB | ~€10 |
-| Deflect CDN | Free (non-profit) |
-| GHCR | Free (public repo) |
-| **Total** | **~€95-120/month** |
+| Component | Architecture Role | Monthly Estimate |
+|---|---|---|
+| **Standalone VM** | 1× `standard.medium` (2 vCPU, 4GB RAM, 50GB SSD) | ~33 CHF |
+| **Elastic IP** | Static IP preserved across server rebuilds | ~3.50 CHF |
+| **Local MySQL 8.0** | Main relational database (hosted locally on VM) | 0 CHF |
+| **Local PostgreSQL 16** | Vector / RAG database with `pgvector` (hosted locally) | 0 CHF |
+| **Nginx & Let's Encrypt** | Reverse proxy, static frontend, and SSL termination | 0 CHF |
+| **S3 Storage (SOS)** | Primary documents in Zurich (`ch-dk-2`) | ~1.00 CHF |
+| **S3 DR Backups (SOS)** | Daily automated snapshots in Vienna (`at-vie-1`) | ~0.50 CHF |
+| **Deflect CDN** | Edge DDoS protection & caching | Free (non-profit) |
+| **Total** | | **~38 CHF / month** *(down from ~150 CHF)* |
 
 ---
 

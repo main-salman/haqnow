@@ -47,10 +47,14 @@ log_step() {
 load_env() {
     if [ -f ".env" ]; then
         log_info "Loading environment from .env..."
-        export $(grep -v '^#' .env | xargs)
+        set -a
+        source .env
+        set +a
     elif [ -f "../.env" ]; then
         log_info "Loading environment from ../.env..."
-        export $(grep -v '^#' ../.env | xargs)
+        set -a
+        source ../.env
+        set +a
     else
         log_warn ".env file not found. Make sure environment variables are set."
     fi
@@ -85,11 +89,11 @@ list_backups() {
 # Download and restore MySQL backup
 restore_mysql() {
     local BACKUP_DATE=$1
-    local TARGET_HOST=${2:-${MYSQL_HOST}}
-    local TARGET_PORT=${3:-${MYSQL_PORT:-21699}}
+    local TARGET_HOST=${2:-${MYSQL_HOST:-localhost}}
+    local TARGET_PORT=${3:-${MYSQL_PORT:-3306}}
     local TARGET_USER=${4:-${MYSQL_USER}}
     local TARGET_PASSWORD=${5:-${MYSQL_PASSWORD}}
-    local TARGET_DATABASE=${6:-${MYSQL_DATABASE:-defaultdb}}
+    local TARGET_DATABASE=${6:-${MYSQL_DATABASE:-foi_archive}}
     
     log_step "Restoring MySQL from backup: ${BACKUP_DATE}"
     
@@ -125,12 +129,17 @@ restore_mysql() {
     
     # Restore database
     log_info "Restoring MySQL database..."
+    SSL_FLAG="--ssl-mode=PREFERRED"
+    if [ "${TARGET_HOST}" = "localhost" ] || [ "${TARGET_HOST}" = "127.0.0.1" ]; then
+        SSL_FLAG="--ssl-mode=DISABLED"
+    fi
+
     gunzip -c "${LOCAL_FILE}" | mysql \
         --host="${TARGET_HOST}" \
         --port="${TARGET_PORT}" \
         --user="${TARGET_USER}" \
         --password="${TARGET_PASSWORD}" \
-        --ssl-mode=REQUIRED \
+        ${SSL_FLAG} \
         "${TARGET_DATABASE}"
     
     log_info "MySQL restore complete!"
@@ -140,22 +149,25 @@ restore_mysql() {
 # Download and restore PostgreSQL backup
 restore_postgres() {
     local BACKUP_DATE=$1
-    local TARGET_HOST=${2:-${POSTGRES_RAG_HOST}}
-    local TARGET_PORT=${3:-${POSTGRES_RAG_PORT:-21699}}
-    local TARGET_USER=${4:-${POSTGRES_RAG_USER}}
+    local TARGET_HOST=${2:-${POSTGRES_RAG_HOST:-localhost}}
+    local TARGET_PORT=${3:-${POSTGRES_RAG_PORT:-5432}}
+    local TARGET_USER=${4:-${POSTGRES_RAG_USER:-rag_user}}
     local TARGET_PASSWORD=${5:-${POSTGRES_RAG_PASSWORD}}
-    local TARGET_DATABASE=${6:-${POSTGRES_RAG_DATABASE:-defaultdb}}
+    local TARGET_DATABASE=${6:-${POSTGRES_RAG_DATABASE:-rag_vectors}}
     
     log_step "Restoring PostgreSQL from backup: ${BACKUP_DATE}"
     
-    BACKUP_FILE="postgres-rag-${BACKUP_DATE}.sql.gz"
+    # Check if file has postgres-rag- or postgres- prefix
+    BACKUP_FILE="postgres-${BACKUP_DATE}.sql.gz"
     LOCAL_FILE="/tmp/${BACKUP_FILE}"
     
     # Download backup
     log_info "Downloading PostgreSQL backup..."
     configure_s3
-    aws s3 cp "s3://${DR_BUCKET}/backups/postgres/${BACKUP_FILE}" "${LOCAL_FILE}" \
-        --endpoint-url "https://${DR_ENDPOINT}"
+    if ! aws s3 cp "s3://${DR_BUCKET}/backups/postgres/${BACKUP_FILE}" "${LOCAL_FILE}" --endpoint-url "https://${DR_ENDPOINT}" 2>/dev/null; then
+        BACKUP_FILE="postgres-rag-${BACKUP_DATE}.sql.gz"
+        aws s3 cp "s3://${DR_BUCKET}/backups/postgres/${BACKUP_FILE}" "${LOCAL_FILE}" --endpoint-url "https://${DR_ENDPOINT}"
+    fi
     
     # Verify download
     if [ ! -f "${LOCAL_FILE}" ]; then
